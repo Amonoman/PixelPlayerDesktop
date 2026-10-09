@@ -1,0 +1,65 @@
+name: Bug Report
+description: Create a report to help us improve PixelPlayer Desktop
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Tell us what you were trying to do and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we trigger the issue?
+      placeholder: |
+        1. Launch the app
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: What OS are you running?
+      options:
+        - Linux (Ubuntu / Debian based)
+        - Linux (Arch / Manjaro based)
+        - Linux (Fedora / RHEL based)
+        - Windows 11
+        - Windows 10
+        - Other Linux Distro
+    validations:
+      required: true
+  - type: input
+    id: desktop_env
+    attributes:
+      label: Desktop Environment / Window Manager (Linux only)
+      placeholder: e.g. GNOME 46, KDE Plasma 6, Hyprland, Sway (leave blank if Windows)
+    validations:
+      required: false
+  - type: input
+    id: app_version
+    attributes:
+      label: PixelPlayer Desktop Version
+      placeholder: e.g. 0.1.0-alpha.1
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Error Output / Screenshots
+      description: Provide terminal logs (run `pixelplayer` via terminal) or screenshots.
+      placeholder: |
+        Paste logs or screenshots here.
+    validations:
+      required: false

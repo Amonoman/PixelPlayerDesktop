@@ -1,0 +1,17 @@
+# Gradle build & cache
+.gradle/
+build/
+
+# Kotlin / IDE
+.kotlin/
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Log & OS files
+*.log
+.DS_Store
+Thumbs.db
+hs_err_pid*

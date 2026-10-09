@@ -1,0 +1,138 @@
+package com.kayoi.pixelplayerdesktop.presentation.components
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.kayoi.pixelplayerdesktop.data.model.Song
+
+@Composable
+fun AlbumArtCollage(
+    songs: List<Song>,
+    modifier: Modifier = Modifier,
+    height: Dp = 380.dp,
+    padding: Dp = 0.dp,
+    pattern: CollagePattern = CollagePattern.default,
+    onSongClick: (Song) -> Unit
+) {
+    val songsToShow = remember(songs) {
+        songs.take(6) + List((6 - songs.size).coerceAtLeast(0)) { null }
+    }
+
+    BoxWithConstraints(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(height)
+            .padding(padding)
+    ) {
+        val boxMaxHeight = maxHeight
+        val minDimension = minOf(300.dp, height)
+        val shapeConfigs = remember(pattern, minDimension, boxMaxHeight) {
+            buildCollageConfigs(pattern, minDimension, boxMaxHeight)
+        }
+
+        if (shapeConfigs.isNotEmpty()) {
+            val topConfigs = shapeConfigs.take(3)
+            val bottomConfigs = shapeConfigs.drop(3)
+
+            Column(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(boxMaxHeight * 0.6f)
+                ) {
+                    topConfigs.forEachIndexed { idx, cfg ->
+                        val song = songsToShow.getOrNull(idx)
+                        if (song != null) {
+                            Box(
+                                modifier = Modifier
+                                    .size(cfg.width, cfg.height)
+                                    .align(cfg.align)
+                                    .offset(cfg.offsetX, cfg.offsetY)
+                                    .graphicsLayer { rotationZ = cfg.rot }
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    ) { onSongClick(song) }
+                                    .background(
+                                        shape = cfg.shape,
+                                        color = MaterialTheme.colorScheme.surfaceContainerHigh
+                                    )
+                                    .clip(cfg.shape)
+                            ) {
+                                AsyncArtworkImage(
+                                    artworkUri = song.albumArtUriString,
+                                    modifier = Modifier.fillMaxSize(),
+                                    placeholderIcon = Icons.Rounded.MusicNote,
+                                    placeholderIconSize = 48.dp,
+                                    contentDescription = song.title
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(boxMaxHeight * 0.4f)
+                ) {
+                    bottomConfigs.forEachIndexed { j, cfg ->
+                        val song = songsToShow.getOrNull(j + 3)
+                        if (song != null) {
+                            Box(
+                                modifier = Modifier
+                                    .size(cfg.width, cfg.height)
+                                    .align(cfg.align)
+                                    .offset(cfg.offsetX, cfg.offsetY)
+                                    .graphicsLayer { rotationZ = cfg.rot }
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    ) { onSongClick(song) }
+                                    .background(
+                                        shape = cfg.shape,
+                                        color = MaterialTheme.colorScheme.surfaceContainerHigh
+                                    )
+                                    .clip(cfg.shape)
+                            ) {
+                                AsyncArtworkImage(
+                                    artworkUri = song.albumArtUriString,
+                                    modifier = Modifier.fillMaxSize(),
+                                    placeholderIcon = Icons.Rounded.MusicNote,
+                                    placeholderIconSize = 36.dp,
+                                    contentDescription = song.title
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (songs.isEmpty()) {
+            Box(
+                modifier = Modifier.matchParentSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.MusicNote,
+                    contentDescription = null,
+                    modifier = Modifier.size(96.dp),
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                )
+            }
+        }
+    }
+}

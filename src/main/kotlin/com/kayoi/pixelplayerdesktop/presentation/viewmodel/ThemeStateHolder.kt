@@ -1,0 +1,86 @@
+package com.kayoi.pixelplayerdesktop.presentation.viewmodel
+
+import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtColorAccuracy
+import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
+import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
+import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+class ThemeStateHolder(
+    private val settingsRepository: SettingsRepository,
+    private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+) {
+
+    init {
+        coroutineScope.launch {
+            settingsRepository.settingsFlow.collect { settings ->
+                val style = AlbumArtPaletteStyle.fromStorageKey(settings.albumArtPaletteStyle)
+                val acc = AlbumArtColorAccuracy.clamp(settings.albumArtColorAccuracy)
+                if (DynamicColorProcessor.defaultPaletteStyle != style || DynamicColorProcessor.defaultColorAccuracyLevel != acc) {
+                    DynamicColorProcessor.defaultPaletteStyle = style
+                    DynamicColorProcessor.defaultColorAccuracyLevel = acc
+                    DynamicColorProcessor.clearCache()
+                }
+            }
+        }
+    }
+
+    val isDarkMode: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.isDarkMode }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, true)
+
+    val isDynamicColorEnabled: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.isDynamicColorEnabled }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, true)
+
+    val albumArtPaletteStyle: StateFlow<AlbumArtPaletteStyle> = settingsRepository.settingsFlow
+        .map { AlbumArtPaletteStyle.fromStorageKey(it.albumArtPaletteStyle) }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, AlbumArtPaletteStyle.default)
+
+    val albumArtColorAccuracy: StateFlow<Int> = settingsRepository.settingsFlow
+        .map { AlbumArtColorAccuracy.clamp(it.albumArtColorAccuracy) }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, AlbumArtColorAccuracy.DEFAULT)
+
+    fun setDarkMode(dark: Boolean) {
+        coroutineScope.launch {
+            settingsRepository.setDarkMode(dark)
+        }
+    }
+
+    fun toggleDarkMode() {
+        setDarkMode(!isDarkMode.value)
+    }
+
+    fun setDynamicColorEnabled(enabled: Boolean) {
+        coroutineScope.launch {
+            settingsRepository.setDynamicColoringEnabled(enabled)
+        }
+    }
+
+    fun toggleDynamicColor() {
+        setDynamicColorEnabled(!isDynamicColorEnabled.value)
+    }
+
+    fun setAlbumArtPaletteStyle(style: AlbumArtPaletteStyle) {
+        coroutineScope.launch {
+            DynamicColorProcessor.defaultPaletteStyle = style
+            DynamicColorProcessor.clearCache()
+            settingsRepository.setAlbumArtPaletteStyle(style)
+        }
+    }
+
+    fun setAlbumArtColorAccuracy(accuracy: Int) {
+        coroutineScope.launch {
+            DynamicColorProcessor.defaultColorAccuracyLevel = accuracy
+            DynamicColorProcessor.clearCache()
+            settingsRepository.setAlbumArtColorAccuracy(accuracy)
+        }
+    }
+}
