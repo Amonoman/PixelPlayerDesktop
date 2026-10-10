@@ -71,6 +71,8 @@ fun FolderDetailScreen(
     folder: MusicFolder,
     viewModel: PlayerViewModel,
     onBack: () -> Unit,
+    onAddToPlaylist: ((Song) -> Unit)? = null,
+    onDelete: ((Song) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -399,7 +401,9 @@ fun FolderDetailScreen(
                             isFavorite = favoriteIds.contains(song.id),
                             onPlayNext = { viewModel.playSongNext(song) },
                             onAddToQueue = { viewModel.addSongToQueue(song) },
+                            onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
                             onToggleFavorite = { viewModel.toggleFavorite(song) },
+                            onDelete = if (onDelete != null) { { onDelete(song) } } else null,
                             onClick = { viewModel.playSongs(folderSongs.drop(index), 0) }
                         )
                     }

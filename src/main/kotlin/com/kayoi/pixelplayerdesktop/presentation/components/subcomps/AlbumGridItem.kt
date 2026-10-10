@@ -1,5 +1,8 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +22,11 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,7 +38,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
+import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.ColorSchemePair
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun AlbumGridItem(
@@ -42,14 +52,31 @@ fun AlbumGridItem(
 ) {
     val currentMaterialColorScheme = MaterialTheme.colorScheme
 
-    val itemColorScheme = remember(
+    var colorSchemePair by remember(
         album.albumArtUriString,
-        isDarkTheme,
-        currentMaterialColorScheme,
         DynamicColorProcessor.defaultPaletteStyle,
         DynamicColorProcessor.defaultColorAccuracyLevel
     ) {
-        val pair = DynamicColorProcessor.extractColorScheme(album.albumArtUriString)
+        mutableStateOf<ColorSchemePair?>(DynamicColorProcessor.getCachedColorScheme(album.albumArtUriString))
+    }
+
+    LaunchedEffect(
+        album.albumArtUriString,
+        DynamicColorProcessor.defaultPaletteStyle,
+        DynamicColorProcessor.defaultColorAccuracyLevel
+    ) {
+        if (colorSchemePair == null && !album.albumArtUriString.isNullOrBlank()) {
+            val extracted = withContext(Dispatchers.IO) {
+                DynamicColorProcessor.extractColorScheme(album.albumArtUriString)
+            }
+            if (extracted != null) {
+                colorSchemePair = extracted
+            }
+        }
+    }
+
+    val itemColorScheme = remember(colorSchemePair, isDarkTheme, currentMaterialColorScheme) {
+        val pair = colorSchemePair
         if (pair != null) {
             if (isDarkTheme) pair.dark else pair.light
         } else {
@@ -57,8 +84,19 @@ fun AlbumGridItem(
         }
     }
 
-    val gradientBaseColor = itemColorScheme.primaryContainer
-    val onGradientColor = itemColorScheme.onPrimaryContainer
+    val targetGradientBaseColor = itemColorScheme.primaryContainer
+    val targetOnGradientColor = itemColorScheme.onPrimaryContainer
+
+    val gradientBaseColor by animateColorAsState(
+        targetValue = targetGradientBaseColor,
+        animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
+        label = "albumGridContainerColor"
+    )
+    val onGradientColor by animateColorAsState(
+        targetValue = targetOnGradientColor,
+        animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
+        label = "albumGridOnContainerColor"
+    )
     val cardCornerRadius = 20.dp
     val cardShape = RoundedCornerShape(cardCornerRadius)
 

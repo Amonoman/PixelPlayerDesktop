@@ -67,7 +67,9 @@ fun AsyncArtworkImage(
 
         val cached = memoryArtworkCache[artworkUri]
         if (cached != null) {
-            imageBitmap = cached
+            if (imageBitmap != cached) {
+                imageBitmap = cached
+            }
             return@LaunchedEffect
         }
 

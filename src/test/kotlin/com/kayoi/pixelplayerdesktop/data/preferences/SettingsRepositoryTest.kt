@@ -23,12 +23,17 @@ class SettingsRepositoryTest {
         // Update settings
         repository.setDynamicColoringEnabled(false)
         repository.setVolume(0.75f)
-        repository.addMusicDirectory("/test/music")
+        repository.setAlbumsListView(true)
+        repository.setArtistsListView(true)
+        repository.setFoldersPlaylistView(true)
 
         val updated = repository.getSettings()
         assertEquals(false, updated.isDynamicColorEnabled)
         assertEquals(0.75f, updated.volume)
         assertTrue(updated.musicDirectories.contains("/test/music"))
+        assertEquals(true, updated.isAlbumsListView)
+        assertEquals(true, updated.isArtistsListView)
+        assertEquals(true, updated.isFoldersPlaylistView)
 
         // Create new repository instance from the same file to verify persistence
         val reloaded = SettingsRepositoryImpl(settingsFile = tempFile)
@@ -36,5 +41,8 @@ class SettingsRepositoryTest {
         assertEquals(false, reloadedSettings.isDynamicColorEnabled)
         assertEquals(0.75f, reloadedSettings.volume)
         assertTrue(reloadedSettings.musicDirectories.contains("/test/music"))
+        assertEquals(true, reloadedSettings.isAlbumsListView)
+        assertEquals(true, reloadedSettings.isArtistsListView)
+        assertEquals(true, reloadedSettings.isFoldersPlaylistView)
     }
 }

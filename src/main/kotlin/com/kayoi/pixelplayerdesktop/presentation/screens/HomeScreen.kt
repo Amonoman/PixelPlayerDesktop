@@ -59,6 +59,7 @@ fun HomeScreen(
     onAddToQueue: ((Song) -> Unit)? = null,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onToggleFavorite: ((Song) -> Unit)? = null,
+    onDelete: ((Song) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -259,7 +260,8 @@ fun HomeScreen(
                     onPlayNext = onPlayNext,
                     onAddToQueue = onAddToQueue,
                     onAddToPlaylist = onAddToPlaylist,
-                    onToggleFavorite = onToggleFavorite
+                    onToggleFavorite = onToggleFavorite,
+                    onDelete = onDelete
                 )
             }
         }

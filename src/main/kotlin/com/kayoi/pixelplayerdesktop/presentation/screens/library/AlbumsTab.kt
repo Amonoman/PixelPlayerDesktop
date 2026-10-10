@@ -51,7 +51,7 @@ fun AlbumsTab(
 ) {
     val colors = MaterialTheme.colorScheme
     val currentAlbumSortOption by viewModel.libraryStateHolder.albumSortOption.collectAsState()
-    var isAlbumsListView by remember { mutableStateOf(false) }
+    val isAlbumsListView by viewModel.isAlbumsListView.collectAsState()
     val albumsGridState = rememberLazyGridState()
     val albumsListState = rememberLazyListState()
     var lastHandledAlbumSortKey by remember { mutableStateOf(currentAlbumSortOption.storageKey) }
@@ -98,7 +98,7 @@ fun AlbumsTab(
             availableSortOptions = SortOption.ALBUMS,
             showViewModeToggle = true,
             isListView = isAlbumsListView,
-            onToggleViewMode = { isAlbumsListView = !isAlbumsListView },
+            onToggleViewMode = { viewModel.setAlbumsListView(!isAlbumsListView) },
             onSortOptionSelect = { option -> viewModel.setAlbumSortOption(option) },
             onShuffleClick = {
                 viewModel.shuffleRandomAlbum(filteredAlbums)

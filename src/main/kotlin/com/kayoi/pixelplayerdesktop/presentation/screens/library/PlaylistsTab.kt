@@ -53,13 +53,17 @@ fun PlaylistsTab(
     selectedPlaylistId: String?,
     onSelectPlaylist: (String?) -> Unit,
     viewModel: PlayerViewModel,
+    onAddToPlaylist: ((Song) -> Unit)? = null,
+    onDelete: ((Song) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     if (selectedPlaylistId != null) {
         PlaylistDetailScreen(
             playlistId = selectedPlaylistId,
             viewModel = viewModel,
-            onBack = { onSelectPlaylist(null) }
+            onBack = { onSelectPlaylist(null) },
+            onAddToPlaylist = onAddToPlaylist,
+            onDelete = onDelete
         )
     } else {
         val colors = MaterialTheme.colorScheme

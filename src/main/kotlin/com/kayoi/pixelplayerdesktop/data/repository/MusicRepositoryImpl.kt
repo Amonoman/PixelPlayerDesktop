@@ -53,6 +53,10 @@ class MusicRepositoryImpl(
         return musicDao.getSongByPath(path)
     }
 
+    override suspend fun deleteSong(song: Song) {
+        musicDao.deleteSong(song)
+    }
+
     override fun getAllAlbumsFlow(sortOption: SortOption): Flow<List<Album>> = flow {
         emit(musicDao.getAllAlbums(sortOption))
         database.tableInvalidationFlow.collect { table ->

@@ -86,7 +86,6 @@ fun EnhancedSongListItem(
     isCurrentSong: Boolean = false,
     showAlbumArt: Boolean = true,
     albumArtSize: Dp = 48.dp,
-    showAlbum: Boolean = true,
     showDuration: Boolean = true,
     customShape: androidx.compose.ui.graphics.Shape? = null,
     containerColorOverride: Color? = null,
@@ -245,27 +244,14 @@ fun EnhancedSongListItem(
                         overflow = TextOverflow.Ellipsis
                     )
                     Spacer(modifier = Modifier.height(2.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = song.displayArtist,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontSize = 13.5.sp,
-                            color = contentColor.copy(alpha = if (isHighlighted) 0.85f else 0.7f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false)
-                        )
-                        if (showAlbum && song.album.isNotBlank()) {
-                            Text(
-                                text = " • ${song.album}",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontSize = 13.sp,
-                                color = contentColor.copy(alpha = if (isHighlighted) 0.65f else 0.45f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
+                    Text(
+                        text = song.displayArtist,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = 13.5.sp,
+                        color = contentColor.copy(alpha = if (isHighlighted) 0.85f else 0.7f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
                 if (showDuration && song.duration > 0) {

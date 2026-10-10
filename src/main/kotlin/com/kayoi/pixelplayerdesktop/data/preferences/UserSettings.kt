@@ -18,5 +18,8 @@ data class UserSettings(
     val artistDelimiters: List<String> = listOf("/", ";", ",", "+", "&"),
     val wordDelimiters: List<String> = listOf("featuring", "feat.", "feat", "ft.", "ft", "vs.", "vs", "versus", "with", "prod.", "prod"),
     val extractArtistFromTitle: Boolean = true,
-    val artistSettingsRescanRequired: Boolean = false
+    val artistSettingsRescanRequired: Boolean = false,
+    val isAlbumsListView: Boolean = false,
+    val isArtistsListView: Boolean = false,
+    val isFoldersPlaylistView: Boolean = false
 )

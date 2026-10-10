@@ -197,6 +197,13 @@ fun SongOptionsDropdownMenu(
 
             customItems?.invoke(this)
 
+            if (onRemoveFromPlaylist != null || onRemoveFromQueue != null || onDelete != null) {
+                HorizontalDivider(
+                    color = colors.outlineVariant.copy(alpha = 0.35f),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                )
+            }
+
             if (onRemoveFromPlaylist != null) {
                 DropdownMenuItem(
                     text = {

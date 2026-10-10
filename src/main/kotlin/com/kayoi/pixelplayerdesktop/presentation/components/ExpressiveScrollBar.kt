@@ -1,6 +1,5 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -76,7 +75,6 @@ fun ExpressiveScrollBar(
     var dragProgress by remember { mutableFloatStateOf(-1f) }
     var pendingScrollIndex by remember { mutableIntStateOf(-1) }
     var retainedDragLabel by remember { mutableStateOf<String?>(null) }
-    val animatedScrollProgress = remember { Animatable(0f) }
 
     val primaryColor = thumbColor ?: MaterialTheme.colorScheme.primary
     val surfaceVariantColor = trackColor ?: MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f)
@@ -107,20 +105,13 @@ fun ExpressiveScrollBar(
         val constraintsMaxHeight = maxHeight
         val indicatorRightCornerRadiusPx = with(density) { indicatorRightCornerRadius.toPx() }
 
-        val totalItemsCount by remember {
+        val totalItemsCount by remember(listState, gridState) {
             derivedStateOf {
                 listState?.layoutInfo?.totalItemsCount ?: gridState?.layoutInfo?.totalItemsCount ?: 0
             }
         }
 
-        val visibleItemsCount by remember {
-            derivedStateOf {
-                listState?.layoutInfo?.visibleItemsInfo?.size ?: gridState?.layoutInfo?.visibleItemsInfo?.size ?: 0
-            }
-        }
-
-        // Fast real-time scroll progress calculation without allocations
-        val realScrollProgress by remember {
+        val realScrollProgress by remember(listState, gridState) {
             derivedStateOf {
                 if (listState != null) {
                     val layoutInfo = listState.layoutInfo
@@ -152,15 +143,8 @@ fun ExpressiveScrollBar(
             }
         }
 
-        // Sync animated progress when not dragging
-        LaunchedEffect(realScrollProgress, isDragging) {
-            if (!isDragging) {
-                animatedScrollProgress.snapTo(realScrollProgress)
-            }
-        }
-
         // Scroll list when dragging
-        LaunchedEffect(Unit) {
+        LaunchedEffect(listState, gridState) {
             snapshotFlow { pendingScrollIndex }
                 .distinctUntilChanged()
                 .collectLatest { index ->
@@ -222,9 +206,15 @@ fun ExpressiveScrollBar(
 
         val indicatorPath = remember { Path() }
 
-        val canScrollForward by remember { derivedStateOf { listState?.canScrollForward ?: gridState?.canScrollForward ?: false } }
-        val canScrollBackward by remember { derivedStateOf { listState?.canScrollBackward ?: gridState?.canScrollBackward ?: false } }
-        val isScrollBarVisible = (canScrollForward || canScrollBackward) && totalItemsCount > 1
+        val isScrollBarVisible by remember(listState, gridState) {
+            derivedStateOf {
+                val total = listState?.layoutInfo?.totalItemsCount ?: gridState?.layoutInfo?.totalItemsCount ?: 0
+                val visible = listState?.layoutInfo?.visibleItemsInfo?.size ?: gridState?.layoutInfo?.visibleItemsInfo?.size ?: 0
+                val canForward = listState?.canScrollForward ?: gridState?.canScrollForward ?: false
+                val canBackward = listState?.canScrollBackward ?: gridState?.canScrollBackward ?: false
+                (canForward || canBackward || total > visible) && total > 1
+            }
+        }
         val scrollBarAlpha by animateFloatAsState(
             targetValue = if (isScrollBarVisible) 1f else 0f,
             animationSpec = tween(durationMillis = 150),
@@ -258,7 +248,7 @@ fun ExpressiveScrollBar(
                             val handleHeightPx = minHeight.toPx()
                             val scrollableHeight = (availableHeight - handleHeightPx).coerceAtLeast(1f)
 
-                            val visualProgress = animatedScrollProgress.value
+                            val visualProgress = if (dragProgress >= 0f) dragProgress else realScrollProgress
                             val handleY = visualProgress * scrollableHeight
 
                             val isTouchOnHandle = offset.y >= handleY && offset.y <= (handleY + handleHeightPx)
@@ -300,7 +290,7 @@ fun ExpressiveScrollBar(
                 val handleHeightPx = minHeight.toPx()
                 val scrollableHeight = (availableHeight - handleHeightPx).coerceAtLeast(1f)
 
-                val displayProgress = if (isDragging && dragProgress >= 0f) dragProgress else animatedScrollProgress.value
+                val displayProgress = if (isDragging && dragProgress >= 0f) dragProgress else realScrollProgress
                 val handleY = (displayProgress * scrollableHeight).coerceIn(0f, scrollableHeight)
 
                 val trackStrokeWidth = thickness.toPx()
@@ -358,7 +348,7 @@ fun ExpressiveScrollBar(
                             val availableHeight = constraintsMaxHeight.toPx()
                             val handleHeightPx = minHeight.toPx()
                             val scrollableHeight = (availableHeight - handleHeightPx).coerceAtLeast(1f)
-                            val displayProgress = if (isDragging && dragProgress >= 0f) dragProgress else animatedScrollProgress.value
+                            val displayProgress = if (isDragging && dragProgress >= 0f) dragProgress else realScrollProgress
                             val handleY = displayProgress * scrollableHeight
 
                             val iconSizePx = 24.dp.toPx()
@@ -395,7 +385,7 @@ fun ExpressiveScrollBar(
                             val availableHeight = constraintsMaxHeight.toPx()
                             val handleHeightPx = minHeight.toPx()
                             val scrollableHeight = (availableHeight - handleHeightPx).coerceAtLeast(1f)
-                            val displayProgress = if (isDragging && dragProgress >= 0f) dragProgress else animatedScrollProgress.value
+                            val displayProgress = if (isDragging && dragProgress >= 0f) dragProgress else realScrollProgress
                             val handleY = displayProgress * scrollableHeight
                             val dragLabelSizePx = dragLabelSize.toPx()
                             val dragLabelGapPx = dragLabelGap.toPx()

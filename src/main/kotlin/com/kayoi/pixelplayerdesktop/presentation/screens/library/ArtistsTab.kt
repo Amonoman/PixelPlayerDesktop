@@ -50,7 +50,7 @@ fun ArtistsTab(
     val colors = MaterialTheme.colorScheme
     val currentArtistSortOption by viewModel.libraryStateHolder.artistSortOption.collectAsState()
     val fetchDeezerImages by viewModel.fetchDeezerArtistImages.collectAsState()
-    var isArtistsListView by remember { mutableStateOf(false) }
+    val isArtistsListView by viewModel.isArtistsListView.collectAsState()
     val artistsGridState = rememberLazyGridState()
     val artistsListState = rememberLazyListState()
     var lastHandledArtistSortKey by remember { mutableStateOf(currentArtistSortOption.storageKey) }
@@ -60,6 +60,12 @@ fun ArtistsTab(
         if (searchQuery.isBlank()) artists
         else artists.filter {
             it.name.contains(searchQuery, ignoreCase = true)
+        }
+    }
+
+    val artistArtworkMap = remember(songs, filteredArtists) {
+        filteredArtists.associate { artist ->
+            artist.name to songs.firstOrNull { it.artist.contains(artist.name, ignoreCase = true) }?.albumArtUriString
         }
     }
 
@@ -96,7 +102,7 @@ fun ArtistsTab(
             availableSortOptions = SortOption.ARTISTS,
             showViewModeToggle = true,
             isListView = isArtistsListView,
-            onToggleViewMode = { isArtistsListView = !isArtistsListView },
+            onToggleViewMode = { viewModel.setArtistsListView(!isArtistsListView) },
             onSortOptionSelect = { option -> viewModel.setArtistSortOption(option) },
             onShuffleClick = {
                 viewModel.shuffleRandomArtist(filteredArtists)
@@ -142,12 +148,9 @@ fun ArtistsTab(
                             key = { it.name },
                             contentType = { "artist_list_item" }
                         ) { artist ->
-                            val representativeArtwork = remember(artist.name, songs) {
-                                songs.firstOrNull { it.artist.contains(artist.name, ignoreCase = true) }?.albumArtUriString
-                            }
                             ArtistListItem(
                                 artist = artist,
-                                fallbackArtworkUri = representativeArtwork,
+                                fallbackArtworkUri = artistArtworkMap[artist.name],
                                 fetchDeezerImages = fetchDeezerImages,
                                 onClick = {
                                     val artistSongs = songs.filter { it.artist.contains(artist.name, ignoreCase = true) }
@@ -172,12 +175,9 @@ fun ArtistsTab(
                             key = { it.name },
                             contentType = { "artist_grid_item" }
                         ) { artist ->
-                            val representativeArtwork = remember(artist.name, songs) {
-                                songs.firstOrNull { it.artist.contains(artist.name, ignoreCase = true) }?.albumArtUriString
-                            }
                             ArtistGridItem(
                                 artist = artist,
-                                fallbackArtworkUri = representativeArtwork,
+                                fallbackArtworkUri = artistArtworkMap[artist.name],
                                 fetchDeezerImages = fetchDeezerImages,
                                 onClick = {
                                     val artistSongs = songs.filter { it.artist.contains(artist.name, ignoreCase = true) }

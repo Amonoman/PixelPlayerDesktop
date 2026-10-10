@@ -44,6 +44,8 @@ fun SongsTab(
     isPlaying: Boolean,
     searchQuery: String,
     viewModel: PlayerViewModel,
+    onAddToPlaylist: ((Song) -> Unit)? = null,
+    onDelete: ((Song) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -171,7 +173,9 @@ fun SongsTab(
                             isPlaying = isPlaying && isSelected,
                             onPlayNext = { viewModel.playSongNext(song) },
                             onAddToQueue = { viewModel.addSongToQueue(song) },
+                            onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
                             onToggleFavorite = { viewModel.toggleFavorite(song) },
+                            onDelete = if (onDelete != null) { { onDelete(song) } } else null,
                             onClick = { viewModel.playSongs(filteredSongs.drop(index), 0) }
                         )
                     }

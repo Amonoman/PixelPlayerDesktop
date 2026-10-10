@@ -83,6 +83,8 @@ fun PlaylistDetailScreen(
     playlistId: String,
     viewModel: PlayerViewModel,
     onBack: () -> Unit,
+    onAddToPlaylist: ((Song) -> Unit)? = null,
+    onDelete: ((Song) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -496,8 +498,10 @@ fun PlaylistDetailScreen(
                                 showMoreOptionsButton = !isRemoveModeEnabled && !isReorderModeEnabled,
                                 onPlayNext = { viewModel.playSongNext(song) },
                                 onAddToQueue = { viewModel.addSongToQueue(song) },
+                                onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
                                 onToggleFavorite = { viewModel.toggleFavorite(song) },
                                 onRemoveFromPlaylist = { viewModel.removeSongFromPlaylist(playlist.id, song.id) },
+                                onDelete = if (onDelete != null) { { onDelete(song) } } else null,
                                 onClick = {
                                     if (!isDragging) {
                                         viewModel.playSongs(plainSongs, index)

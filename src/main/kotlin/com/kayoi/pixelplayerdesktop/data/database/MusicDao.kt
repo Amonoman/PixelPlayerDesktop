@@ -5,10 +5,12 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import java.sql.ResultSet
 
 private val artistRefListSerializer = ListSerializer(ArtistRef.serializer())
+private val stringListSerializer = ListSerializer(String.serializer())
 
 class MusicDao(
     private val database: PixelPlayerDatabase,
@@ -265,6 +267,80 @@ class MusicDao(
                     conn.rollback()
                     throw e
                 }
+            }
+        }
+    }
+
+    suspend fun deleteSong(song: Song) = withContext(ioDispatcher) {
+        runCatching {
+            val file = java.io.File(song.path)
+            if (file.exists()) {
+                file.delete()
+            }
+        }
+        database.getConnection().use { conn ->
+            conn.autoCommit = false
+            try {
+                conn.prepareStatement("DELETE FROM songs WHERE id = ?").use { stmt ->
+                    stmt.setString(1, song.id)
+                    stmt.executeUpdate()
+                }
+                conn.prepareStatement("DELETE FROM song_artists WHERE song_id = ?").use { stmt ->
+                    stmt.setString(1, song.id)
+                    stmt.executeUpdate()
+                }
+                conn.prepareStatement("DELETE FROM favorites WHERE song_id = ?").use { stmt ->
+                    stmt.setString(1, song.id)
+                    stmt.executeUpdate()
+                }
+                conn.prepareStatement("DELETE FROM lyrics_cache WHERE song_id = ?").use { stmt ->
+                    stmt.setString(1, song.id)
+                    stmt.executeUpdate()
+                }
+                conn.prepareStatement("SELECT id, song_ids_json FROM playlists WHERE song_ids_json LIKE ?").use { stmt ->
+                    stmt.setString(1, "%${song.id}%")
+                    stmt.executeQuery().use { rs ->
+                        val updates = mutableListOf<Pair<String, String>>()
+                        while (rs.next()) {
+                            val plId = rs.getString("id")
+                            val raw = rs.getString("song_ids_json") ?: "[]"
+                            val ids = try {
+                                json.decodeFromString(stringListSerializer, raw)
+                            } catch (e: Exception) {
+                                emptyList()
+                            }
+                            if (ids.contains(song.id)) {
+                                val newIds = ids.filter { it != song.id }
+                                updates.add(plId to json.encodeToString(stringListSerializer, newIds))
+                            }
+                        }
+                        if (updates.isNotEmpty()) {
+                            conn.prepareStatement("UPDATE playlists SET song_ids_json = ? WHERE id = ?").use { updateStmt ->
+                                for ((plId, newJson) in updates) {
+                                    updateStmt.setString(1, newJson)
+                                    updateStmt.setString(2, plId)
+                                    updateStmt.addBatch()
+                                }
+                                updateStmt.executeBatch()
+                            }
+                        }
+                    }
+                }
+                conn.createStatement().use { stmt ->
+                    stmt.executeUpdate("""
+                        UPDATE artists 
+                        SET track_count = (SELECT COUNT(*) FROM song_artists WHERE song_artists.artist_id = artists.id)
+                    """.trimIndent())
+                    stmt.executeUpdate("DELETE FROM artists WHERE track_count = 0")
+                }
+                conn.commit()
+                database.notifyTableChanged("songs")
+                database.notifyTableChanged("artists")
+                database.notifyTableChanged("favorites")
+                database.notifyTableChanged("playlists")
+            } catch (e: Exception) {
+                conn.rollback()
+                throw e
             }
         }
     }

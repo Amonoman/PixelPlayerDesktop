@@ -62,16 +62,20 @@ fun FoldersTab(
     onSelectFolderDetail: (MusicFolder?) -> Unit,
     currentFolderTreePath: String?,
     onFolderTreePathChange: (String?) -> Unit,
-    isFoldersPlaylistView: Boolean,
-    onFoldersPlaylistViewChange: (Boolean) -> Unit,
     viewModel: PlayerViewModel,
+    onAddToPlaylist: ((Song) -> Unit)? = null,
+    onDelete: ((Song) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val isFoldersPlaylistView by viewModel.isFoldersPlaylistView.collectAsState()
+
     if (selectedFolderDetail != null) {
         FolderDetailScreen(
             folder = selectedFolderDetail,
             viewModel = viewModel,
-            onBack = { onSelectFolderDetail(null) }
+            onBack = { onSelectFolderDetail(null) },
+            onAddToPlaylist = onAddToPlaylist,
+            onDelete = onDelete
         )
     } else {
         val colors = MaterialTheme.colorScheme
@@ -174,7 +178,7 @@ fun FoldersTab(
                 availableSortOptions = SortOption.FOLDERS,
                 showViewModeToggle = true,
                 isListView = !isFoldersPlaylistView,
-                onToggleViewMode = { onFoldersPlaylistViewChange(!isFoldersPlaylistView) },
+                onToggleViewMode = { viewModel.setFoldersPlaylistView(!isFoldersPlaylistView) },
                 onSortOptionSelect = { option -> viewModel.setFolderSortOption(option) },
                 showShuffleButton = false,
                 customLeadingContent = if (!isFoldersPlaylistView && breadcrumbs.isNotEmpty()) {
@@ -321,7 +325,9 @@ fun FoldersTab(
                                         isFavorite = favoriteSongIds.contains(song.id),
                                         onPlayNext = { viewModel.playSongNext(song) },
                                         onAddToQueue = { viewModel.addSongToQueue(song) },
+                                        onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
                                         onToggleFavorite = { viewModel.toggleFavorite(song) },
+                                        onDelete = if (onDelete != null) { { onDelete(song) } } else null,
                                         onClick = { viewModel.playSongs(currentTreeSongs.drop(index), 0) }
                                     )
                                 }

@@ -16,6 +16,7 @@ interface MusicRepository {
     suspend fun getSongById(id: String): Song?
     suspend fun getSongsByIds(ids: List<String>): List<Song>
     suspend fun getSongByPath(path: String): Song?
+    suspend fun deleteSong(song: Song)
 
     fun getAllAlbumsFlow(sortOption: SortOption = SortOption.AlbumTitleAZ): Flow<List<Album>>
     suspend fun getAlbumById(id: Long): Album?

@@ -31,4 +31,7 @@ interface SettingsRepository {
     suspend fun resetWordDelimiters()
     suspend fun setExtractArtistFromTitle(enabled: Boolean)
     suspend fun clearArtistSettingsRescanRequired()
+    suspend fun setAlbumsListView(isListView: Boolean)
+    suspend fun setArtistsListView(isListView: Boolean)
+    suspend fun setFoldersPlaylistView(isPlaylistView: Boolean)
 }

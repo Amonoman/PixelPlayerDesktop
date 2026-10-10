@@ -79,12 +79,18 @@ class PlayerViewModel(
     val wordDelimiters = libraryStateHolder.wordDelimiters
     val extractArtistFromTitle = libraryStateHolder.extractArtistFromTitle
     val rescanRequired = libraryStateHolder.rescanRequired
+    val isAlbumsListView = libraryStateHolder.isAlbumsListView
+    val isArtistsListView = libraryStateHolder.isArtistsListView
+    val isFoldersPlaylistView = libraryStateHolder.isFoldersPlaylistView
 
     fun setSongSortOption(sort: SortOption) = libraryStateHolder.setSongSortOption(sort)
     fun setAlbumSortOption(sort: SortOption) = libraryStateHolder.setAlbumSortOption(sort)
     fun setArtistSortOption(sort: SortOption) = libraryStateHolder.setArtistSortOption(sort)
     fun setPlaylistSortOption(sort: SortOption) = libraryStateHolder.setPlaylistSortOption(sort)
     fun setFolderSortOption(sort: SortOption) = libraryStateHolder.setFolderSortOption(sort)
+    fun setAlbumsListView(isListView: Boolean) = libraryStateHolder.setAlbumsListView(isListView)
+    fun setArtistsListView(isListView: Boolean) = libraryStateHolder.setArtistsListView(isListView)
+    fun setFoldersPlaylistView(isPlaylistView: Boolean) = libraryStateHolder.setFoldersPlaylistView(isPlaylistView)
     fun setFetchDeezerArtistImages(enabled: Boolean) = libraryStateHolder.setFetchDeezerArtistImages(enabled)
     fun toggleFetchDeezerArtistImages() = libraryStateHolder.toggleFetchDeezerArtistImages()
     fun scanLibrary(directories: List<String>? = null, forceRescan: Boolean = false) = libraryStateHolder.scanLibrary(directories, forceRescan)
@@ -103,6 +109,10 @@ class PlayerViewModel(
     fun onSearchQueryChanged(query: String) = libraryStateHolder.onSearchQueryChanged(query)
     fun createPlaylist(name: String, songIds: List<String> = emptyList()) = libraryStateHolder.createPlaylist(name, songIds)
     fun deletePlaylist(id: String) = libraryStateHolder.deletePlaylist(id)
+    fun deleteSong(song: Song) {
+        playbackStateHolder.removeSongFromQueue(song.id)
+        libraryStateHolder.deleteSong(song)
+    }
     fun renamePlaylist(id: String, newName: String) = libraryStateHolder.renamePlaylist(id, newName)
     fun updatePlaylist(playlist: Playlist) = libraryStateHolder.updatePlaylist(playlist)
     fun addSongToPlaylist(playlistId: String, songId: String) = libraryStateHolder.addSongToPlaylist(playlistId, songId)

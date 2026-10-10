@@ -30,8 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import com.kayoi.pixelplayerdesktop.data.model.MusicFolder
+import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.presentation.components.AddToPlaylistDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.AppSidebar
 import com.kayoi.pixelplayerdesktop.presentation.components.AppTopBar
+import com.kayoi.pixelplayerdesktop.presentation.components.DeleteSongConfirmationDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.DismissUndoBar
 import com.kayoi.pixelplayerdesktop.presentation.components.MiniPlayerBar
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueSidePanel
@@ -80,7 +83,6 @@ fun MainAppScaffold(
     var selectedPlaylistId by remember { mutableStateOf<String?>(null) }
     var selectedFolderDetail by remember { mutableStateOf<MusicFolder?>(null) }
     var currentFolderTreePath by remember { mutableStateOf<String?>(null) }
-    var isFoldersPlaylistView by remember { mutableStateOf(false) }
 
     val songColorScheme = remember(currentSong?.albumArtUriString, isDarkTheme, isDynamicColor, paletteStyle, colorAccuracy) {
         if (isDynamicColor && currentSong?.albumArtUriString != null) {
@@ -117,6 +119,8 @@ fun MainAppScaffold(
 
     var isExpandedPlayerOpen by remember { mutableStateOf(false) }
     var initialExpandedTab by remember { mutableStateOf(ExpandedTab.LYRICS) }
+    var songToAddToPlaylist by remember { mutableStateOf<Song?>(null) }
+    var songToDelete by remember { mutableStateOf<Song?>(null) }
 
     val filteredSongs = remember(songs, favoriteSongs, currentDestination, searchQuery) {
         val base = when (currentDestination) {
@@ -214,6 +218,8 @@ fun MainAppScaffold(
                                     onNavigateToLibrary = { currentDestination = DesktopNavDestination.SONGS },
                                     onPlayNext = { song -> viewModel.playSongNext(song) },
                                     onAddToQueue = { song -> viewModel.addSongToQueue(song) },
+                                    onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                    onDelete = { song -> songToDelete = song },
                                     onToggleFavorite = { song -> viewModel.toggleFavorite(song) }
                                 )
                             }
@@ -224,7 +230,9 @@ fun MainAppScaffold(
                                     currentSong = currentSong,
                                     isPlaying = playerInfo.isPlaying,
                                     searchQuery = searchQuery,
-                                    viewModel = viewModel
+                                    viewModel = viewModel,
+                                    onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                    onDelete = { song -> songToDelete = song }
                                 )
                             }
 
@@ -254,7 +262,9 @@ fun MainAppScaffold(
                                     searchQuery = searchQuery,
                                     selectedPlaylistId = selectedPlaylistId,
                                     onSelectPlaylist = { selectedPlaylistId = it },
-                                    viewModel = viewModel
+                                    viewModel = viewModel,
+                                    onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                    onDelete = { song -> songToDelete = song }
                                 )
                             }
 
@@ -270,9 +280,9 @@ fun MainAppScaffold(
                                     onSelectFolderDetail = { selectedFolderDetail = it },
                                     currentFolderTreePath = currentFolderTreePath,
                                     onFolderTreePathChange = { currentFolderTreePath = it },
-                                    isFoldersPlaylistView = isFoldersPlaylistView,
-                                    onFoldersPlaylistViewChange = { isFoldersPlaylistView = it },
-                                    viewModel = viewModel
+                                    viewModel = viewModel,
+                                    onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                    onDelete = { song -> songToDelete = song }
                                 )
                             }
 
@@ -320,6 +330,12 @@ fun MainAppScaffold(
                             },
                             onPlayNext = { song ->
                                 viewModel.playSongNext(song)
+                            },
+                            onAddToPlaylist = { song ->
+                                songToAddToPlaylist = song
+                            },
+                            onDelete = { song ->
+                                songToDelete = song
                             },
                             onToggleFavorite = { song ->
                                 viewModel.toggleFavorite(song)
@@ -411,6 +427,30 @@ fun MainAppScaffold(
                 onMaximizeRestore = onMaximizeRestore,
                 onCloseWindow = onClose,
                 topBarWrapper = topBarWrapper
+            )
+        }
+
+        if (songToAddToPlaylist != null) {
+            AddToPlaylistDialog(
+                song = songToAddToPlaylist!!,
+                playlists = playlists,
+                onDismiss = { songToAddToPlaylist = null },
+                onPlaylistSelected = { playlist ->
+                    viewModel.addSongToPlaylist(playlist.id, songToAddToPlaylist!!.id)
+                },
+                onCreatePlaylist = { name ->
+                    viewModel.createPlaylist(name, listOf(songToAddToPlaylist!!.id))
+                }
+            )
+        }
+
+        if (songToDelete != null) {
+            DeleteSongConfirmationDialog(
+                song = songToDelete!!,
+                onDismiss = { songToDelete = null },
+                onConfirm = {
+                    viewModel.deleteSong(songToDelete!!)
+                }
             )
         }
     }

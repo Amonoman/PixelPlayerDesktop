@@ -72,6 +72,18 @@ class LibraryStateHolder(
         .map { it.extractArtistFromTitle }
         .stateIn(coroutineScope, SharingStarted.Eagerly, true)
 
+    val isAlbumsListView: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.isAlbumsListView }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
+
+    val isArtistsListView: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.isArtistsListView }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
+
+    val isFoldersPlaylistView: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.isFoldersPlaylistView }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
+
     val rescanRequired: StateFlow<Boolean> = settingsRepository.settingsFlow
         .map { it.artistSettingsRescanRequired }
         .stateIn(coroutineScope, SharingStarted.Eagerly, false)
@@ -124,6 +136,24 @@ class LibraryStateHolder(
 
     fun setFolderSortOption(sort: SortOption) {
         _folderSortOption.value = sort
+    }
+
+    fun setAlbumsListView(isListView: Boolean) {
+        coroutineScope.launch {
+            settingsRepository.setAlbumsListView(isListView)
+        }
+    }
+
+    fun setArtistsListView(isListView: Boolean) {
+        coroutineScope.launch {
+            settingsRepository.setArtistsListView(isListView)
+        }
+    }
+
+    fun setFoldersPlaylistView(isPlaylistView: Boolean) {
+        coroutineScope.launch {
+            settingsRepository.setFoldersPlaylistView(isPlaylistView)
+        }
     }
 
     fun setFetchDeezerArtistImages(enabled: Boolean) {
@@ -282,6 +312,12 @@ class LibraryStateHolder(
     fun deletePlaylist(id: String) {
         coroutineScope.launch {
             musicRepository.deletePlaylist(id)
+        }
+    }
+
+    fun deleteSong(song: Song) {
+        coroutineScope.launch {
+            musicRepository.deleteSong(song)
         }
     }
 

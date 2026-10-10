@@ -36,7 +36,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,7 +49,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.ColorSchemePair
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private val HomeRecentlyPlayedPillHeight = 68.dp
 private val HomeRecentlyPlayedPillSpacing = 12.dp
@@ -185,25 +190,42 @@ private fun RecentlyPlayedPill(
     val isDark = com.kayoi.pixelplayerdesktop.ui.theme.LocalPixelPlayerDarkTheme.current
     val colors = MaterialTheme.colorScheme
 
-    val albumColorScheme = remember(
+    var albumColorScheme by remember(
         song.albumArtUriString,
         DynamicColorProcessor.defaultPaletteStyle,
         DynamicColorProcessor.defaultColorAccuracyLevel
     ) {
-        DynamicColorProcessor.extractColorScheme(song.albumArtUriString)
+        mutableStateOf<ColorSchemePair?>(DynamicColorProcessor.getCachedColorScheme(song.albumArtUriString))
+    }
+
+    LaunchedEffect(
+        song.albumArtUriString,
+        DynamicColorProcessor.defaultPaletteStyle,
+        DynamicColorProcessor.defaultColorAccuracyLevel
+    ) {
+        if (albumColorScheme == null && !song.albumArtUriString.isNullOrBlank()) {
+            val extracted = withContext(Dispatchers.IO) {
+                DynamicColorProcessor.extractColorScheme(song.albumArtUriString)
+            }
+            if (extracted != null) {
+                albumColorScheme = extracted
+            }
+        }
     }
 
     val targetContainerColor = remember(albumColorScheme, isDark, colors) {
-        if (albumColorScheme != null) {
-            if (isDark) albumColorScheme.dark.primaryContainer else albumColorScheme.light.primaryContainer
+        val scheme = albumColorScheme
+        if (scheme != null) {
+            if (isDark) scheme.dark.primaryContainer else scheme.light.primaryContainer
         } else {
             colors.primaryContainer
         }
     }
 
     val targetTitleColor = remember(albumColorScheme, isDark, colors) {
-        if (albumColorScheme != null) {
-            if (isDark) albumColorScheme.dark.onPrimaryContainer else albumColorScheme.light.onPrimaryContainer
+        val scheme = albumColorScheme
+        if (scheme != null) {
+            if (isDark) scheme.dark.onPrimaryContainer else scheme.light.onPrimaryContainer
         } else {
             colors.onPrimaryContainer
         }

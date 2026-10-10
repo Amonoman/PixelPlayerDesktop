@@ -88,6 +88,7 @@ fun QueueSidePanel(
     onRemoveItem: ((Int) -> Unit)? = null,
     onPlayNext: ((Song) -> Unit)? = null,
     onAddToPlaylist: ((Song) -> Unit)? = null,
+    onDelete: ((Song) -> Unit)? = null,
     onToggleFavorite: ((Song) -> Unit)? = null,
     favoriteSongIds: Set<String> = emptySet(),
     modifier: Modifier = Modifier
@@ -410,7 +411,6 @@ fun QueueSidePanel(
                                     song = song,
                                     isCurrentSong = isSelected,
                                     isPlaying = isPlaying && isSelected,
-                                    showAlbum = false,
                                     showDuration = false,
                                     isDragging = isDragging,
                                     isDragHandleVisible = true,
@@ -434,6 +434,7 @@ fun QueueSidePanel(
                                     onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
                                     onToggleFavorite = if (onToggleFavorite != null) { { onToggleFavorite(song) } } else null,
                                     onRemoveFromQueue = if (onRemoveItem != null) { { onRemoveItem(index) } } else null,
+                                    onDelete = if (onDelete != null) { { onDelete(song) } } else null,
                                     onClick = { onSongClick(song, index) }
                                 )
                             }

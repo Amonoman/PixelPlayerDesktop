@@ -181,6 +181,18 @@ class SettingsRepositoryImpl(
         updateSettings { it.copy(artistSettingsRescanRequired = false) }
     }
 
+    override suspend fun setAlbumsListView(isListView: Boolean) {
+        updateSettings { it.copy(isAlbumsListView = isListView) }
+    }
+
+    override suspend fun setArtistsListView(isListView: Boolean) {
+        updateSettings { it.copy(isArtistsListView = isListView) }
+    }
+
+    override suspend fun setFoldersPlaylistView(isPlaylistView: Boolean) {
+        updateSettings { it.copy(isFoldersPlaylistView = isPlaylistView) }
+    }
+
     private fun loadSettingsFromDisk(): UserSettings {
         return try {
             if (settingsFile.exists()) {
