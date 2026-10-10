@@ -143,6 +143,36 @@ fun main() = application {
     ) {
         window.minimumSize = java.awt.Dimension(920, 620)
 
+        DisposableEffect(window) {
+            fun updateMaximizedBounds() {
+                val config = window.graphicsConfiguration ?: return
+                val insets = java.awt.Toolkit.getDefaultToolkit().getScreenInsets(config)
+                val bounds = config.bounds
+                window.maximizedBounds = java.awt.Rectangle(
+                    bounds.x + insets.left,
+                    bounds.y + insets.top,
+                    bounds.width - insets.left - insets.right,
+                    bounds.height - insets.top - insets.bottom
+                )
+            }
+
+            updateMaximizedBounds()
+
+            val listener = object : java.awt.event.ComponentAdapter() {
+                override fun componentMoved(e: java.awt.event.ComponentEvent?) {
+                    updateMaximizedBounds()
+                }
+                override fun componentResized(e: java.awt.event.ComponentEvent?) {
+                    updateMaximizedBounds()
+                }
+            }
+            window.addComponentListener(listener)
+
+            onDispose {
+                window.removeComponentListener(listener)
+            }
+        }
+
         PixelPlayerTheme(
             darkTheme = isDarkTheme,
             colorSchemeOverride = systemColorScheme

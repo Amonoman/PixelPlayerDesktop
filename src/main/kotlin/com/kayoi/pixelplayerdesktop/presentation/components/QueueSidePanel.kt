@@ -145,13 +145,13 @@ fun QueueSidePanel(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 14.dp, end = 6.dp, top = 6.dp, bottom = 8.dp)
+                .padding(top = 6.dp, bottom = 8.dp)
         ) {
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -317,12 +317,23 @@ fun QueueSidePanel(
                 }
             } else {
                 val isReordering = reorderableState.isAnyItemDragging
+                val canScroll by remember {
+                    derivedStateOf { listState.canScrollForward || listState.canScrollBackward }
+                }
+                val animatedEndPadding by animateDpAsState(
+                    targetValue = if (canScroll) 32.dp else 14.dp,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMediumLow
+                    ),
+                    label = "queueEndPadding"
+                )
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     LazyColumn(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(top = 4.dp, bottom = 16.dp, end = 22.dp),
+                        contentPadding = PaddingValues(start = 14.dp, end = animatedEndPadding, top = 4.dp, bottom = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(
@@ -399,8 +410,9 @@ fun QueueSidePanel(
                     ExpressiveScrollBar(
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
-                            .padding(end = 2.dp, top = 4.dp, bottom = 16.dp),
-                        listState = listState
+                            .padding(end = 14.dp, top = 4.dp, bottom = 16.dp),
+                        listState = listState,
+                        paddingEnd = 0.dp
                     )
                 }
             }

@@ -55,8 +55,7 @@ fun AppTopBar(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .height(64.dp),
-        contentAlignment = Alignment.Center
+            .height(64.dp)
     ) {
         val availableWidth = maxWidth
         val isNarrow = availableWidth < 780.dp
@@ -65,29 +64,18 @@ fun AppTopBar(
         val horizontalPadding = if (isNarrow) 12.dp else 20.dp
 
         val searchBarWidth = when {
-            isVeryNarrow -> (availableWidth - 280.dp).coerceIn(140.dp, 200.dp)
-            isNarrow -> (availableWidth - 360.dp).coerceIn(180.dp, 260.dp)
-            availableWidth < 1050.dp -> 300.dp
-            else -> 420.dp
+            availableWidth >= 1150.dp -> 460.dp
+            availableWidth >= 900.dp -> 380.dp
+            availableWidth >= 720.dp -> 300.dp
+            availableWidth >= 560.dp -> 240.dp
+            else -> (availableWidth - 220.dp).coerceIn(140.dp, 200.dp)
         }
 
-        val leftSlotMaxWidth = ((availableWidth - searchBarWidth) / 2 - horizontalPadding - 8.dp).coerceAtLeast(40.dp)
-
-        Row(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = horizontalPadding)
-                .widthIn(max = leftSlotMaxWidth),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = currentDestination.title,
-                style = if (isNarrow) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+        val placeholder = when {
+            searchBarWidth >= 420.dp -> "Search tracks, albums, artists... (Ctrl+K)"
+            searchBarWidth >= 320.dp -> "Search tracks, artists... (Ctrl+K)"
+            searchBarWidth >= 220.dp -> "Search... (Ctrl+K)"
+            else -> "Search..."
         }
 
         val searchBorderColor by animateColorAsState(
@@ -99,104 +87,121 @@ fun AppTopBar(
             animationSpec = tween(150)
         )
 
-        Surface(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .width(searchBarWidth)
-                .height(42.dp),
-            shape = RoundedCornerShape(21.dp),
-            color = searchBgColor,
-            border = BorderStroke(
-                width = if (isSearchFocused) 1.5.dp else 1.dp,
-                color = searchBorderColor
-            )
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Search,
-                    contentDescription = "Search",
-                    tint = if (isSearchFocused) colors.primary else colors.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp)
-                )
-
-                Spacer(modifier = Modifier.width(10.dp))
-
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    if (searchQuery.isEmpty()) {
-                        val placeholder = when {
-                            isVeryNarrow -> "Search..."
-                            isNarrow -> "Search... (Ctrl+K)"
-                            else -> "Search tracks, albums, artists... (Ctrl + K)"
-                        }
-                        Text(
-                            text = placeholder,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colors.onSurfaceVariant.copy(alpha = 0.6f),
-                            fontSize = 13.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
-                    BasicTextField(
-                        value = searchQuery,
-                        onValueChange = onSearchQueryChange,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(searchFocusRequester)
-                            .onFocusChanged { state ->
-                                isSearchFocused = state.isFocused
-                                onSearchFocusChange(state.isFocused)
-                            },
-                        singleLine = true,
-                        textStyle = MaterialTheme.typography.bodyMedium.copy(
-                            color = colors.onSurface,
-                            fontSize = 13.5.sp
-                        ),
-                        cursorBrush = SolidColor(colors.primary)
-                    )
-                }
-
-                AnimatedVisibility(
-                    visible = searchQuery.isNotEmpty(),
-                    enter = fadeIn(),
-                    exit = fadeOut()
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clip(CircleShape)
-                            .clickable { onSearchQueryChange("") },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = "Clear Search",
-                            tint = colors.onSurfaceVariant,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
-            }
-        }
+        val leftSlotMaxWidth = if (isNarrow) 120.dp else 220.dp
 
         Row(
             modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = horizontalPadding),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(if (isNarrow) 4.dp else 8.dp)
+                .fillMaxSize()
+                .padding(horizontal = horizontalPadding),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            AnimatedVisibility(
-                visible = showQueueToggle && queueCount > 0,
+            Row(
+                modifier = Modifier.widthIn(min = 40.dp, max = leftSlotMaxWidth),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = currentDestination.title,
+                    style = if (isNarrow) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Surface(
+                modifier = Modifier
+                    .width(searchBarWidth)
+                    .height(42.dp),
+                shape = RoundedCornerShape(21.dp),
+                color = searchBgColor,
+                border = BorderStroke(
+                    width = if (isSearchFocused) 1.5.dp else 1.dp,
+                    color = searchBorderColor
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = "Search",
+                        tint = if (isSearchFocused) colors.primary else colors.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        if (searchQuery.isEmpty()) {
+                            Text(
+                                text = placeholder,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colors.onSurfaceVariant.copy(alpha = 0.6f),
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        BasicTextField(
+                            value = searchQuery,
+                            onValueChange = onSearchQueryChange,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(searchFocusRequester)
+                                .onFocusChanged { state ->
+                                    isSearchFocused = state.isFocused
+                                    onSearchFocusChange(state.isFocused)
+                                },
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                color = colors.onSurface,
+                                fontSize = 13.5.sp
+                            ),
+                            cursorBrush = SolidColor(colors.primary)
+                        )
+                    }
+
+                    AnimatedVisibility(
+                        visible = searchQuery.isNotEmpty(),
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .clickable { onSearchQueryChange("") },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = "Clear Search",
+                                tint = colors.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(if (isNarrow) 4.dp else 8.dp)
+            ) {
+                AnimatedVisibility(
+                    visible = showQueueToggle && queueCount > 0,
                 enter = fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)) +
                         scaleIn(initialScale = 0.8f, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)) +
                         expandHorizontally(expandFrom = Alignment.End, animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium)),
@@ -313,6 +318,7 @@ fun AppTopBar(
             }
         }
     }
+}
 }
 
 @Composable

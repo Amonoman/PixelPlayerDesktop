@@ -222,8 +222,9 @@ fun ExpressiveScrollBar(
 
         val indicatorPath = remember { Path() }
 
-        // If total items is less than visible items, hide gracefully with alpha rather than unmounting
-        val isScrollBarVisible = totalItemsCount > visibleItemsCount && totalItemsCount > 1
+        val canScrollForward by remember { derivedStateOf { listState?.canScrollForward ?: gridState?.canScrollForward ?: false } }
+        val canScrollBackward by remember { derivedStateOf { listState?.canScrollBackward ?: gridState?.canScrollBackward ?: false } }
+        val isScrollBarVisible = (canScrollForward || canScrollBackward) && totalItemsCount > 1
         val scrollBarAlpha by animateFloatAsState(
             targetValue = if (isScrollBarVisible) 1f else 0f,
             animationSpec = tween(durationMillis = 150),
