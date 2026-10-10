@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import com.sun.jna.NativeLibrary
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory
 import uk.co.caprica.vlcj.player.base.MediaPlayer
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter
@@ -49,8 +50,54 @@ class VlcjAudioEngine(
         initVlcj()
     }
 
+    private fun setupNativeDiscovery() {
+        try {
+            val appResourceDir = System.getProperty("compose.application.resources.dir")?.let { File(it) }
+            val userDir = File(System.getProperty("user.dir", "."))
+            val codeSourceLocation = try {
+                VlcjAudioEngine::class.java.protectionDomain?.codeSource?.location?.toURI()?.let { File(it) }
+            } catch (_: Exception) {
+                null
+            }
+
+            val candidates = listOfNotNull(
+                File(userDir, "vlc"),
+                File(userDir, "app/vlc"),
+                File(userDir, "resources/vlc"),
+                File(userDir, "app/resources/vlc"),
+                appResourceDir?.resolve("vlc"),
+                appResourceDir,
+                codeSourceLocation?.parentFile?.resolve("vlc"),
+                codeSourceLocation?.parentFile?.parentFile?.resolve("vlc"),
+                codeSourceLocation?.parentFile?.parentFile?.resolve("resources/vlc"),
+                codeSourceLocation?.parentFile?.parentFile?.resolve("app/resources/vlc"),
+                File("vlc")
+            )
+
+            val vlcDir = candidates.firstOrNull { dir ->
+                dir.exists() && (File(dir, "libvlc.dll").exists() || File(dir, "libvlc.so").exists())
+            }
+
+            if (vlcDir != null) {
+                val path = vlcDir.absolutePath
+                NativeLibrary.addSearchPath("libvlc", path)
+                NativeLibrary.addSearchPath("libvlccore", path)
+                NativeLibrary.addSearchPath("vlc", path)
+                NativeLibrary.addSearchPath("vlccore", path)
+                System.setProperty("jna.library.path", path)
+
+                val plugins = File(vlcDir, "plugins")
+                if (plugins.exists()) {
+                    System.setProperty("VLC_PLUGIN_PATH", plugins.absolutePath)
+                }
+            }
+        } catch (_: Exception) {
+        }
+    }
+
     private fun initVlcj() {
         try {
+            setupNativeDiscovery()
             val f = MediaPlayerFactory(
                 "--no-video",
                 "--no-video-title-show",

@@ -84,13 +84,16 @@ jobs:
         run: |
           tar -czf build/compose/binaries/main/pixelplayer-linux-portable.tar.gz -C build/compose/binaries/main/app pixelplayer
 
+      - name: Stage Linux Artifacts
+        run: |
+          mkdir -p dist-linux
+          find build/compose/binaries/main -type f \( -name "*.deb" -o -name "*.tar.gz" \) -exec cp {} dist-linux/ \;
+
       - name: Upload Linux Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-dist
-          path: |
-            build/compose/binaries/main/deb/*.deb
-            build/compose/binaries/main/pixelplayer-linux-portable.tar.gz
+          path: dist-linux/*
 
   build-windows:
     name: Build Windows Packages
@@ -112,22 +115,49 @@ jobs:
         with:
           validate-wrappers: false
 
+      - name: Download and Bundle LibVLC (Windows)
+        shell: pwsh
+        run: |
+          $vlcUrl = "https://download.videolan.org/pub/videolan/vlc/3.0.21/win64/vlc-3.0.21-win64.7z"
+          Write-Host "Downloading LibVLC Windows x64..."
+          Invoke-WebRequest -Uri $vlcUrl -OutFile "vlc-win64.7z"
+          7z x vlc-win64.7z -y
+          $targetDir = "src/main/resources-packaged/windows/vlc"
+          New-Item -ItemType Directory -Force -Path $targetDir
+          Copy-Item "vlc-3.0.21/libvlc.dll" "$targetDir/"
+          Copy-Item "vlc-3.0.21/libvlccore.dll" "$targetDir/"
+          Copy-Item -Recurse "vlc-3.0.21/plugins" "$targetDir/plugins"
+          Write-Host "LibVLC bundled successfully into $targetDir"
+
       - name: Build Windows Distribution
         run: .\gradlew.bat packageMsi packageExe createDistributable "-PAPP_VERSION_NAME=${{ needs.build-linux.outputs.version }}" --no-daemon
+
+      - name: Inject Bundled LibVLC into Portable Distribution
+        shell: pwsh
+        run: |
+          $portableVlcDir = "build/compose/binaries/main/app/pixelplayer/vlc"
+          New-Item -ItemType Directory -Force -Path $portableVlcDir
+          Copy-Item -Recurse -Force "src/main/resources-packaged/windows/vlc/*" $portableVlcDir/
+          Write-Host "LibVLC successfully injected into portable binary folder"
 
       - name: Archive Portable Windows Binary
         shell: pwsh
         run: |
-          Compress-Archive -Path "build\compose\binaries\main\app\pixelplayer" -DestinationPath "build\compose\binaries\main\pixelplayer-windows-portable.zip"
+          Compress-Archive -Path "build\compose\binaries\main\app\pixelplayer\*" -DestinationPath "build\compose\binaries\main\pixelplayer-windows-portable.zip"
+
+      - name: Stage Windows Artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "dist-windows"
+          Copy-Item "build/compose/binaries/main/msi/*.msi" "dist-windows/"
+          Copy-Item "build/compose/binaries/main/exe/*.exe" "dist-windows/"
+          Copy-Item "build/compose/binaries/main/pixelplayer-windows-portable.zip" "dist-windows/"
 
       - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-dist
-          path: |
-            build/compose/binaries/main/msi/*.msi
-            build/compose/binaries/main/exe/*.exe
-            build/compose/binaries/main/pixelplayer-windows-portable.zip
+          path: dist-windows/*
 
   publish-release:
     name: Publish GitHub Release
@@ -139,13 +169,16 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: linux-dist
-          path: dist/linux
+          path: release-assets
 
       - name: Download Windows Artifacts
         uses: actions/download-artifact@v4
         with:
           name: windows-dist
-          path: dist/windows
+          path: release-assets
+
+      - name: Display Release Files
+        run: ls -la release-assets
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -155,9 +188,4 @@ jobs:
           prerelease: ${{ needs.build-linux.outputs.is_prerelease == 'true' }}
           draft: false
           generate_release_notes: true
-          files: |
-            dist/linux/*.deb
-            dist/linux/*.tar.gz
-            dist/windows/*.msi
-            dist/windows/*.exe
-            dist/windows/*.zip
+          files: release-assets/*

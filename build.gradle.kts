@@ -83,6 +83,7 @@ compose.desktop {
 
         nativeDistributions {
             modules("java.sql", "java.naming", "java.desktop", "jdk.unsupported")
+            appResourcesRootDir.set(project.layout.projectDirectory.dir("src/main/resources-packaged"))
 
             targetFormats(
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb,

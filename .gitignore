@@ -15,3 +15,7 @@ out/
 .DS_Store
 Thumbs.db
 hs_err_pid*
+
+# Bundled native binaries
+src/main/resources-packaged/
+vlc/
