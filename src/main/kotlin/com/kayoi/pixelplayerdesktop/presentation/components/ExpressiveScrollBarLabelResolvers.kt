@@ -2,6 +2,7 @@ package com.kayoi.pixelplayerdesktop.presentation.components
 
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Artist
+import com.kayoi.pixelplayerdesktop.data.model.MusicFolder
 import com.kayoi.pixelplayerdesktop.data.model.Playlist
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
@@ -45,7 +46,7 @@ internal fun playlistFastScrollLabel(playlist: Playlist?, sortOption: SortOption
         else -> extractFastScrollGlyph(playlist?.name)
     }
 
-internal fun folderFastScrollLabel(folder: com.kayoi.pixelplayerdesktop.data.model.MusicFolder?, sortOption: SortOption?): String? =
+internal fun folderFastScrollLabel(folder: MusicFolder?, sortOption: SortOption?): String? =
     when (sortOption) {
         SortOption.FolderNameAZ,
         SortOption.FolderNameZA -> extractFastScrollGlyph(folder?.name)

@@ -4,7 +4,6 @@ import com.kayoi.pixelplayerdesktop.data.model.Song
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.util.Collections
 
 /**
  * Manages playback queue order, track indexing, and shuffle/repeat states.
@@ -49,7 +48,7 @@ class QueueManager(
         if (shuffle) {
             val shuffled = songs.toMutableList()
             shuffled.removeAt(clampedIndex)
-            Collections.shuffle(shuffled)
+            shuffled.shuffle()
             shuffled.add(0, targetSong)
             _queue.value = shuffled
             _currentIndex.value = 0

@@ -2,6 +2,7 @@ package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
@@ -127,8 +128,8 @@ fun FolderPlaylistItem(
                 if (onPlayClick != null && folder.totalSongCount > 0) {
                     androidx.compose.animation.AnimatedVisibility(
                         visible = isHovered,
-                        enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(150)),
-                        exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(150))
+                        enter = fadeIn(animationSpec = tween(150)),
+                        exit = fadeOut(animationSpec = tween(150))
                     ) {
                         FilledTonalIconButton(
                             onClick = onPlayClick,

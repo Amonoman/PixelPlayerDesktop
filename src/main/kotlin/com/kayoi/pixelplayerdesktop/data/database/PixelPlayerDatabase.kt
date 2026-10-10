@@ -52,6 +52,7 @@ class PixelPlayerDatabase(
                             title TEXT NOT NULL,
                             artist TEXT NOT NULL,
                             artist_id INTEGER NOT NULL DEFAULT 0,
+                            artists_json TEXT,
                             album TEXT NOT NULL,
                             album_id INTEGER NOT NULL DEFAULT 0,
                             album_artist TEXT,
@@ -74,6 +75,29 @@ class PixelPlayerDatabase(
                             jellyfin_id TEXT,
                             play_count INTEGER NOT NULL DEFAULT 0,
                             last_played_timestamp INTEGER NOT NULL DEFAULT 0
+                        );
+                        """.trimIndent()
+                    )
+
+                    stmt.execute(
+                        """
+                        CREATE TABLE IF NOT EXISTS artists (
+                            id INTEGER PRIMARY KEY,
+                            name TEXT NOT NULL UNIQUE,
+                            track_count INTEGER NOT NULL DEFAULT 0,
+                            image_url TEXT,
+                            custom_image_uri TEXT
+                        );
+                        """.trimIndent()
+                    )
+
+                    stmt.execute(
+                        """
+                        CREATE TABLE IF NOT EXISTS song_artists (
+                            song_id TEXT NOT NULL,
+                            artist_id INTEGER NOT NULL,
+                            is_primary INTEGER NOT NULL DEFAULT 0,
+                            PRIMARY KEY (song_id, artist_id)
                         );
                         """.trimIndent()
                     )
@@ -121,22 +145,15 @@ class PixelPlayerDatabase(
                         """.trimIndent()
                     )
 
-                    stmt.execute(
-                        """
-                        CREATE TABLE IF NOT EXISTS search_history (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            query TEXT NOT NULL UNIQUE,
-                            timestamp INTEGER NOT NULL
-                        );
-                        """.trimIndent()
-                    )
-
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_songs_title ON songs(title COLLATE NOCASE);")
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_songs_artist ON songs(artist COLLATE NOCASE);")
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_songs_album ON songs(album COLLATE NOCASE);")
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_songs_genre ON songs(genre COLLATE NOCASE);")
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_songs_date_added ON songs(date_added);")
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_songs_last_played ON songs(last_played_timestamp);")
+                    stmt.execute("CREATE INDEX IF NOT EXISTS idx_song_artists_artist ON song_artists(artist_id);")
+                    stmt.execute("CREATE INDEX IF NOT EXISTS idx_song_artists_song ON song_artists(song_id);")
+                    stmt.execute("CREATE INDEX IF NOT EXISTS idx_artists_name ON artists(name COLLATE NOCASE);")
                 }
                 conn.commit()
             } catch (e: SQLException) {

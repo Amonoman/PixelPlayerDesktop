@@ -6,8 +6,10 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -21,21 +23,18 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.AlertDialog
@@ -45,6 +44,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -75,10 +75,6 @@ import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.EnhancedSon
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
-
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.rememberScrollState
 
 private data class PlaylistSongUiItem(val stableKey: String, val song: Song)
 
@@ -596,7 +592,7 @@ private fun formatDurationHuman(durationMs: Long): String {
 
 @Composable
 private fun PlaylistHeaderActions(
-    localSongs: List<com.kayoi.pixelplayerdesktop.data.model.Song>,
+    localSongs: List<Song>,
     isRemoveModeEnabled: Boolean,
     onToggleRemoveMode: () -> Unit,
     isReorderModeEnabled: Boolean,

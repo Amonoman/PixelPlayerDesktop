@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -33,9 +32,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Artist
-import com.kayoi.pixelplayerdesktop.data.repository.ArtistImageService
+import com.kayoi.pixelplayerdesktop.utils.ArtistImageService
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
 import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
+import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 
 @Composable
 fun ArtistGridItem(
@@ -86,7 +86,7 @@ fun ArtistGridItem(
             Box(
                 modifier = Modifier
                     .size(92.dp)
-                    .clip(com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache.ExpressiveAvatar)
+                    .clip(ShapeCache.ExpressiveAvatar)
                     .background(colors.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
@@ -94,7 +94,7 @@ fun ArtistGridItem(
                 if (!imageUri.isNullOrBlank()) {
                     AsyncArtworkImage(
                         artworkUri = imageUri,
-                        shape = com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache.ExpressiveAvatar,
+                        shape = ShapeCache.ExpressiveAvatar,
                         placeholderIcon = PixelPlayerIcons.Artist,
                         placeholderIconSize = 40.dp,
                         containerColor = colors.primaryContainer,

@@ -3,15 +3,17 @@ package com.kayoi.pixelplayerdesktop.data.database
 import com.kayoi.pixelplayerdesktop.data.model.*
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
-import java.sql.PreparedStatement
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 import java.sql.ResultSet
+
+private val artistRefListSerializer = ListSerializer(ArtistRef.serializer())
 
 class MusicDao(
     private val database: PixelPlayerDatabase,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val json: Json = Json { ignoreUnknownKeys = true }
 ) {
 
     suspend fun getAllSongs(sortOption: SortOption = SortOption.SongTitleAZ): List<Song> = withContext(ioDispatcher) {
@@ -35,7 +37,7 @@ class MusicDao(
                 stmt.executeQuery().use { rs ->
                     val songs = mutableListOf<Song>()
                     while (rs.next()) {
-                        songs.add(rs.toSong())
+                        songs.add(rs.toSong(json))
                     }
                     songs
                 }
@@ -49,7 +51,7 @@ class MusicDao(
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, id)
                 stmt.executeQuery().use { rs ->
-                    if (rs.next()) rs.toSong() else null
+                    if (rs.next()) rs.toSong(json) else null
                 }
             }
         }
@@ -61,7 +63,7 @@ class MusicDao(
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, path)
                 stmt.executeQuery().use { rs ->
-                    if (rs.next()) rs.toSong() else null
+                    if (rs.next()) rs.toSong(json) else null
                 }
             }
         }
@@ -79,7 +81,7 @@ class MusicDao(
                 val resultMap = mutableMapOf<String, Song>()
                 stmt.executeQuery().use { rs ->
                     while (rs.next()) {
-                        val song = rs.toSong()
+                        val song = rs.toSong(json)
                         resultMap[song.id] = song
                     }
                 }
@@ -96,14 +98,15 @@ class MusicDao(
             try {
                 val sql = """
                     INSERT INTO songs (
-                        id, title, artist, artist_id, album, album_id, album_artist,
+                        id, title, artist, artist_id, artists_json, album, album_id, album_artist,
                         path, content_uri_string, album_art_uri_string, duration, genre,
                         lyrics, is_favorite, track_number, disc_number, year, date_added,
                         date_modified, mime_type, bitrate, sample_rate, navidrome_id, jellyfin_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(path) DO UPDATE SET
                         title = excluded.title,
                         artist = excluded.artist,
+                        artists_json = excluded.artists_json,
                         album = excluded.album,
                         album_artist = excluded.album_artist,
                         album_art_uri_string = excluded.album_art_uri_string,
@@ -125,32 +128,92 @@ class MusicDao(
                         stmt.setString(2, song.title)
                         stmt.setString(3, song.artist)
                         stmt.setLong(4, song.artistId)
-                        stmt.setString(5, song.album)
-                        stmt.setLong(6, song.albumId)
-                        stmt.setString(7, song.albumArtist)
-                        stmt.setString(8, song.path)
-                        stmt.setString(9, song.contentUriString)
-                        stmt.setString(10, song.albumArtUriString)
-                        stmt.setLong(11, song.duration)
-                        stmt.setString(12, song.genre)
-                        stmt.setString(13, song.lyrics)
-                        stmt.setInt(14, if (song.isFavorite) 1 else 0)
-                        stmt.setInt(15, song.trackNumber)
-                        if (song.discNumber != null) stmt.setInt(16, song.discNumber) else stmt.setNull(16, java.sql.Types.INTEGER)
-                        stmt.setInt(17, song.year)
-                        stmt.setLong(18, song.dateAdded)
-                        stmt.setLong(19, song.dateModified)
-                        stmt.setString(20, song.mimeType)
-                        if (song.bitrate != null) stmt.setInt(21, song.bitrate) else stmt.setNull(21, java.sql.Types.INTEGER)
-                        if (song.sampleRate != null) stmt.setInt(22, song.sampleRate) else stmt.setNull(22, java.sql.Types.INTEGER)
-                        stmt.setString(23, song.navidromeId)
-                        stmt.setString(24, song.jellyfinId)
+                        val artistsJson = json.encodeToString(
+                            artistRefListSerializer,
+                            song.artists
+                        )
+                        stmt.setString(5, artistsJson)
+                        stmt.setString(6, song.album)
+                        stmt.setLong(7, song.albumId)
+                        stmt.setString(8, song.albumArtist)
+                        stmt.setString(9, song.path)
+                        stmt.setString(10, song.contentUriString)
+                        stmt.setString(11, song.albumArtUriString)
+                        stmt.setLong(12, song.duration)
+                        stmt.setString(13, song.genre)
+                        stmt.setString(14, song.lyrics)
+                        stmt.setInt(15, if (song.isFavorite) 1 else 0)
+                        stmt.setInt(16, song.trackNumber)
+                        if (song.discNumber != null) stmt.setInt(17, song.discNumber) else stmt.setNull(17, java.sql.Types.INTEGER)
+                        stmt.setInt(18, song.year)
+                        stmt.setLong(19, song.dateAdded)
+                        stmt.setLong(20, song.dateModified)
+                        stmt.setString(21, song.mimeType)
+                        if (song.bitrate != null) stmt.setInt(22, song.bitrate) else stmt.setNull(22, java.sql.Types.INTEGER)
+                        if (song.sampleRate != null) stmt.setInt(23, song.sampleRate) else stmt.setNull(23, java.sql.Types.INTEGER)
+                        stmt.setString(24, song.navidromeId)
+                        stmt.setString(25, song.jellyfinId)
                         stmt.addBatch()
                     }
                     stmt.executeBatch()
                 }
+
+                val deleteSongArtistsSql = "DELETE FROM song_artists WHERE song_id = ?"
+                val insertArtistSql = "INSERT OR IGNORE INTO artists (id, name, track_count) VALUES (?, ?, 0)"
+                val insertSongArtistSql = "INSERT OR REPLACE INTO song_artists (song_id, artist_id, is_primary) VALUES (?, ?, ?)"
+
+                conn.prepareStatement(deleteSongArtistsSql).use { deleteStmt ->
+                    for (song in songs) {
+                        deleteStmt.setString(1, song.id)
+                        deleteStmt.addBatch()
+                    }
+                    deleteStmt.executeBatch()
+                }
+
+                conn.prepareStatement(insertArtistSql).use { artistStmt ->
+                    for (song in songs) {
+                        val allArtists = if (song.artists.isNotEmpty()) {
+                            song.artists
+                        } else {
+                            listOf(com.kayoi.pixelplayerdesktop.data.model.ArtistRef(id = song.artistId, name = song.artist, isPrimary = true))
+                        }
+                        for (ref in allArtists) {
+                            artistStmt.setLong(1, ref.id)
+                            artistStmt.setString(2, ref.name)
+                            artistStmt.addBatch()
+                        }
+                    }
+                    artistStmt.executeBatch()
+                }
+
+                conn.prepareStatement(insertSongArtistSql).use { songArtistStmt ->
+                    for (song in songs) {
+                        val allArtists = if (song.artists.isNotEmpty()) {
+                            song.artists
+                        } else {
+                            listOf(com.kayoi.pixelplayerdesktop.data.model.ArtistRef(id = song.artistId, name = song.artist, isPrimary = true))
+                        }
+                        for (ref in allArtists) {
+                            songArtistStmt.setString(1, song.id)
+                            songArtistStmt.setLong(2, ref.id)
+                            songArtistStmt.setInt(3, if (ref.isPrimary) 1 else 0)
+                            songArtistStmt.addBatch()
+                        }
+                    }
+                    songArtistStmt.executeBatch()
+                }
+
+                conn.createStatement().use { stmt ->
+                    stmt.executeUpdate("""
+                        UPDATE artists 
+                        SET track_count = (SELECT COUNT(*) FROM song_artists WHERE song_artists.artist_id = artists.id)
+                    """.trimIndent())
+                    stmt.executeUpdate("DELETE FROM artists WHERE track_count = 0")
+                }
+
                 conn.commit()
                 database.notifyTableChanged("songs")
+                database.notifyTableChanged("artists")
             } catch (e: Exception) {
                 conn.rollback()
                 throw e
@@ -161,8 +224,13 @@ class MusicDao(
     suspend fun deleteSongsNotInPaths(existingPaths: Set<String>) = withContext(ioDispatcher) {
         if (existingPaths.isEmpty()) {
             database.getConnection().use { conn ->
-                conn.createStatement().use { it.executeUpdate("DELETE FROM songs") }
+                conn.createStatement().use { stmt ->
+                    stmt.executeUpdate("DELETE FROM song_artists")
+                    stmt.executeUpdate("DELETE FROM artists")
+                    stmt.executeUpdate("DELETE FROM songs")
+                }
                 database.notifyTableChanged("songs")
+                database.notifyTableChanged("artists")
             }
             return@withContext
         }
@@ -186,8 +254,13 @@ class MusicDao(
                         }
                         stmt.executeBatch()
                     }
+                    conn.createStatement().use { stmt ->
+                        stmt.executeUpdate("DELETE FROM song_artists WHERE song_id NOT IN (SELECT id FROM songs)")
+                        stmt.executeUpdate("DELETE FROM artists WHERE id NOT IN (SELECT DISTINCT artist_id FROM song_artists)")
+                    }
                     conn.commit()
                     database.notifyTableChanged("songs")
+                    database.notifyTableChanged("artists")
                 } catch (e: Exception) {
                     conn.rollback()
                     throw e
@@ -250,6 +323,44 @@ class MusicDao(
         }
     }
 
+    suspend fun getAlbumById(albumId: Long): Album? = withContext(ioDispatcher) {
+        database.getConnection().use { conn ->
+            val sql = """
+                SELECT
+                    album_id,
+                    album,
+                    artist,
+                    album_artist,
+                    MAX(year) as max_year,
+                    MAX(date_added) as max_date_added,
+                    MAX(album_art_uri_string) as album_art_uri_string,
+                    COUNT(*) as song_count
+                FROM songs
+                WHERE album_id = ?
+                GROUP BY album, artist
+                LIMIT 1
+            """.trimIndent()
+
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setLong(1, albumId)
+                stmt.executeQuery().use { rs ->
+                    if (rs.next()) {
+                        Album(
+                            id = rs.getLong("album_id"),
+                            title = rs.getString("album"),
+                            artist = rs.getString("artist"),
+                            albumArtist = rs.getString("album_artist"),
+                            year = rs.getInt("max_year"),
+                            dateAdded = rs.getLong("max_date_added"),
+                            albumArtUriString = rs.getString("album_art_uri_string"),
+                            songCount = rs.getInt("song_count")
+                        )
+                    } else null
+                }
+            }
+        }
+    }
+
     suspend fun getSongsByAlbum(albumId: Long): List<Song> = withContext(ioDispatcher) {
         database.getConnection().use { conn ->
             val sql = "SELECT * FROM songs WHERE album_id = ? ORDER BY disc_number ASC, track_number ASC, title COLLATE NOCASE ASC"
@@ -258,7 +369,7 @@ class MusicDao(
                 stmt.executeQuery().use { rs ->
                     val songs = mutableListOf<Song>()
                     while (rs.next()) {
-                        songs.add(rs.toSong())
+                        songs.add(rs.toSong(json))
                     }
                     songs
                 }
@@ -268,15 +379,50 @@ class MusicDao(
 
     suspend fun getAllArtists(sortOption: SortOption = SortOption.ArtistNameAZ): List<Artist> = withContext(ioDispatcher) {
         val orderByClause = when (sortOption) {
-            SortOption.ArtistNameAZ -> "artist COLLATE NOCASE ASC"
-            SortOption.ArtistNameZA -> "artist COLLATE NOCASE DESC"
-            SortOption.ArtistNumSongsDesc -> "song_count DESC"
-            SortOption.ArtistNumSongsAsc -> "song_count ASC"
-            else -> "artist COLLATE NOCASE ASC"
+            SortOption.ArtistNameAZ -> "a.name COLLATE NOCASE ASC"
+            SortOption.ArtistNameZA -> "a.name COLLATE NOCASE DESC"
+            SortOption.ArtistNumSongsDesc -> "song_count DESC, a.name COLLATE NOCASE ASC"
+            SortOption.ArtistNumSongsAsc -> "song_count ASC, a.name COLLATE NOCASE ASC"
+            else -> "a.name COLLATE NOCASE ASC"
         }
 
         database.getConnection().use { conn ->
             val sql = """
+                SELECT
+                    a.id as artist_id,
+                    a.name as artist,
+                    COUNT(sa.song_id) as song_count,
+                    a.image_url,
+                    a.custom_image_uri
+                FROM artists a
+                JOIN song_artists sa ON a.id = sa.artist_id
+                GROUP BY a.id, a.name
+                HAVING song_count > 0
+                ORDER BY $orderByClause
+            """.trimIndent()
+
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.executeQuery().use { rs ->
+                    val artists = mutableListOf<Artist>()
+                    while (rs.next()) {
+                        artists.add(
+                            Artist(
+                                id = rs.getLong("artist_id"),
+                                name = rs.getString("artist"),
+                                songCount = rs.getInt("song_count"),
+                                imageUrl = rs.getString("image_url"),
+                                customImageUri = rs.getString("custom_image_uri")
+                            )
+                        )
+                    }
+                    if (artists.isNotEmpty()) {
+                        return@withContext artists
+                    }
+                }
+            }
+
+            // Fallback to songs table if artists table hasn't been populated yet
+            val fallbackSql = """
                 SELECT
                     artist_id,
                     artist,
@@ -284,10 +430,10 @@ class MusicDao(
                 FROM songs
                 WHERE artist != ''
                 GROUP BY artist
-                ORDER BY $orderByClause
+                ORDER BY artist COLLATE NOCASE ASC
             """.trimIndent()
 
-            conn.prepareStatement(sql).use { stmt ->
+            conn.prepareStatement(fallbackSql).use { stmt ->
                 stmt.executeQuery().use { rs ->
                     val artists = mutableListOf<Artist>()
                     while (rs.next()) {
@@ -305,15 +451,94 @@ class MusicDao(
         }
     }
 
+    suspend fun getArtistById(artistId: Long): Artist? = withContext(ioDispatcher) {
+        database.getConnection().use { conn ->
+            val sql = """
+                SELECT
+                    a.id as artist_id,
+                    a.name as artist,
+                    COUNT(sa.song_id) as song_count,
+                    a.image_url,
+                    a.custom_image_uri
+                FROM artists a
+                JOIN song_artists sa ON a.id = sa.artist_id
+                WHERE a.id = ?
+                GROUP BY a.id, a.name
+                LIMIT 1
+            """.trimIndent()
+
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setLong(1, artistId)
+                stmt.executeQuery().use { rs ->
+                    if (rs.next()) {
+                        return@withContext Artist(
+                            id = rs.getLong("artist_id"),
+                            name = rs.getString("artist"),
+                            songCount = rs.getInt("song_count"),
+                            imageUrl = rs.getString("image_url"),
+                            customImageUri = rs.getString("custom_image_uri")
+                        )
+                    }
+                }
+            }
+
+            // Fallback to songs table
+            val fallbackSql = """
+                SELECT
+                    artist_id,
+                    artist,
+                    COUNT(*) as song_count
+                FROM songs
+                WHERE artist_id = ?
+                GROUP BY artist
+                LIMIT 1
+            """.trimIndent()
+
+            conn.prepareStatement(fallbackSql).use { stmt ->
+                stmt.setLong(1, artistId)
+                stmt.executeQuery().use { rs ->
+                    if (rs.next()) {
+                        Artist(
+                            id = rs.getLong("artist_id"),
+                            name = rs.getString("artist"),
+                            songCount = rs.getInt("song_count")
+                        )
+                    } else null
+                }
+            }
+        }
+    }
+
     suspend fun getSongsByArtist(artistId: Long): List<Song> = withContext(ioDispatcher) {
         database.getConnection().use { conn ->
-            val sql = "SELECT * FROM songs WHERE artist_id = ? ORDER BY year DESC, album COLLATE NOCASE ASC, track_number ASC"
+            val sql = """
+                SELECT s.* FROM songs s
+                JOIN song_artists sa ON s.id = sa.song_id
+                WHERE sa.artist_id = ?
+                ORDER BY s.year DESC, s.album COLLATE NOCASE ASC, s.track_number ASC
+            """.trimIndent()
+
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setLong(1, artistId)
                 stmt.executeQuery().use { rs ->
                     val songs = mutableListOf<Song>()
                     while (rs.next()) {
-                        songs.add(rs.toSong())
+                        songs.add(rs.toSong(json))
+                    }
+                    if (songs.isNotEmpty()) {
+                        return@withContext songs
+                    }
+                }
+            }
+
+            // Fallback for primary artistId
+            val fallbackSql = "SELECT * FROM songs WHERE artist_id = ? ORDER BY year DESC, album COLLATE NOCASE ASC, track_number ASC"
+            conn.prepareStatement(fallbackSql).use { stmt ->
+                stmt.setLong(1, artistId)
+                stmt.executeQuery().use { rs ->
+                    val songs = mutableListOf<Song>()
+                    while (rs.next()) {
+                        songs.add(rs.toSong(json))
                     }
                     songs
                 }
@@ -351,7 +576,7 @@ class MusicDao(
                 stmt.executeQuery().use { rs ->
                     val songs = mutableListOf<Song>()
                     while (rs.next()) {
-                        songs.add(rs.toSong())
+                        songs.add(rs.toSong(json))
                     }
                     songs
                 }
@@ -379,7 +604,7 @@ class MusicDao(
                 stmt.executeQuery().use { rs ->
                     val songs = mutableListOf<Song>()
                     while (rs.next()) {
-                        songs.add(rs.toSong())
+                        songs.add(rs.toSong(json))
                     }
                     songs
                 }
@@ -401,7 +626,7 @@ class MusicDao(
                     stmt.setString(3, q)
                     stmt.executeQuery().use { rs ->
                         while (rs.next()) {
-                            results.add(SearchResultItem.SongItem(rs.toSong()))
+                            results.add(SearchResultItem.SongItem(rs.toSong(json)))
                         }
                     }
                 }
@@ -436,7 +661,14 @@ class MusicDao(
             }
 
             if (filter == SearchFilterType.ALL || filter == SearchFilterType.ARTISTS) {
-                val artistSql = "SELECT artist_id, artist, COUNT(*) as song_count FROM songs WHERE artist LIKE ? GROUP BY artist LIMIT 20"
+                val artistSql = """
+                    SELECT a.id as artist_id, a.name as artist, COUNT(sa.song_id) as song_count, a.image_url, a.custom_image_uri
+                    FROM artists a
+                    JOIN song_artists sa ON a.id = sa.artist_id
+                    WHERE a.name LIKE ?
+                    GROUP BY a.id, a.name
+                    LIMIT 20
+                """.trimIndent()
                 conn.prepareStatement(artistSql).use { stmt ->
                     stmt.setString(1, q)
                     stmt.executeQuery().use { rs ->
@@ -446,7 +678,9 @@ class MusicDao(
                                     Artist(
                                         id = rs.getLong("artist_id"),
                                         name = rs.getString("artist"),
-                                        songCount = rs.getInt("song_count")
+                                        songCount = rs.getInt("song_count"),
+                                        imageUrl = rs.getString("image_url"),
+                                        customImageUri = rs.getString("custom_image_uri")
                                     )
                                 )
                             )
@@ -459,13 +693,25 @@ class MusicDao(
     }
 }
 
-private fun ResultSet.toSong(): Song {
+private fun ResultSet.toSong(json: Json): Song {
     val discNumber = getInt("disc_number")
     val wasNullDisc = wasNull()
     val bitrate = getInt("bitrate")
     val wasNullBitrate = wasNull()
     val sampleRate = getInt("sample_rate")
     val wasNullSampleRate = wasNull()
+
+    val artistsJson = runCatching { getString("artists_json") }.getOrNull()
+    val artists = if (!artistsJson.isNullOrBlank()) {
+        runCatching {
+            json.decodeFromString(
+                artistRefListSerializer,
+                artistsJson
+            )
+        }.getOrDefault(emptyList())
+    } else {
+        emptyList()
+    }
 
     return Song(
         id = getString("id"),
@@ -491,6 +737,7 @@ private fun ResultSet.toSong(): Song {
         bitrate = if (wasNullBitrate) null else bitrate,
         sampleRate = if (wasNullSampleRate) null else sampleRate,
         navidromeId = getString("navidrome_id"),
-        jellyfinId = getString("jellyfin_id")
+        jellyfinId = getString("jellyfin_id"),
+        artists = artists
     )
 }

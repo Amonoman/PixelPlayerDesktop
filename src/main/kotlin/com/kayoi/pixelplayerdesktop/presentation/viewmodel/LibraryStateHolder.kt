@@ -1,25 +1,37 @@
 package com.kayoi.pixelplayerdesktop.presentation.viewmodel
 
-import com.kayoi.pixelplayerdesktop.data.model.*
+import com.kayoi.pixelplayerdesktop.data.model.Album
+import com.kayoi.pixelplayerdesktop.data.model.Artist
+import com.kayoi.pixelplayerdesktop.data.model.Playlist
+import com.kayoi.pixelplayerdesktop.data.model.SearchResultItem
+import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.data.model.SortOption
 import com.kayoi.pixelplayerdesktop.data.scanner.DesktopMusicScanner
 import com.kayoi.pixelplayerdesktop.data.scanner.ScanProgress
 import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
+import com.kayoi.pixelplayerdesktop.utils.DEFAULT_ARTIST_DELIMITERS
+import com.kayoi.pixelplayerdesktop.utils.DEFAULT_WORD_DELIMITERS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class LibraryStateHolder(
     private val musicRepository: MusicRepository,
     private val settingsRepository: SettingsRepository,
     private val scanner: DesktopMusicScanner,
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) {
-
-    private val _selectedTab = MutableStateFlow(LibraryTabId.SONGS)
-    val selectedTab: StateFlow<LibraryTabId> = _selectedTab.asStateFlow()
 
     private val _songSortOption = MutableStateFlow<SortOption>(SortOption.SongTitleAZ)
     val songSortOption: StateFlow<SortOption> = _songSortOption.asStateFlow()
@@ -43,6 +55,26 @@ class LibraryStateHolder(
     val musicDirectories: StateFlow<List<String>> = settingsRepository.settingsFlow
         .map { it.musicDirectories }
         .stateIn(coroutineScope, SharingStarted.Eagerly, emptyList())
+
+    val excludedDirectories: StateFlow<List<String>> = settingsRepository.settingsFlow
+        .map { it.excludedDirectories }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, emptyList())
+
+    val artistDelimiters: StateFlow<List<String>> = settingsRepository.settingsFlow
+        .map { it.artistDelimiters }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, DEFAULT_ARTIST_DELIMITERS)
+
+    val wordDelimiters: StateFlow<List<String>> = settingsRepository.settingsFlow
+        .map { it.wordDelimiters }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, DEFAULT_WORD_DELIMITERS)
+
+    val extractArtistFromTitle: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.extractArtistFromTitle }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, true)
+
+    val rescanRequired: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.artistSettingsRescanRequired }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
 
     val songs: StateFlow<List<Song>> = _songSortOption.flatMapLatest { sort ->
         musicRepository.getAllSongsFlow(sort)
@@ -74,10 +106,6 @@ class LibraryStateHolder(
     private val _searchResults = MutableStateFlow<List<SearchResultItem>>(emptyList())
     val searchResults: StateFlow<List<SearchResultItem>> = _searchResults.asStateFlow()
 
-    fun selectTab(tab: LibraryTabId) {
-        _selectedTab.value = tab
-    }
-
     fun setSongSortOption(sort: SortOption) {
         _songSortOption.value = sort
     }
@@ -108,10 +136,128 @@ class LibraryStateHolder(
         setFetchDeezerArtistImages(!fetchDeezerArtistImages.value)
     }
 
+    fun addMusicDirectory(path: String) {
+        coroutineScope.launch {
+            settingsRepository.addMusicDirectory(path)
+            val settings = settingsRepository.getSettings()
+            scanner.scanDirectories(
+                directories = settings.musicDirectories,
+                excludedDirectories = settings.excludedDirectories,
+                artistDelimiters = settings.artistDelimiters,
+                wordDelimiters = settings.wordDelimiters,
+                extractArtistFromTitle = settings.extractArtistFromTitle,
+                pruneMissing = true,
+                forceRescan = false
+            )
+        }
+    }
+
+    fun removeMusicDirectory(path: String) {
+        coroutineScope.launch {
+            settingsRepository.removeMusicDirectory(path)
+            val settings = settingsRepository.getSettings()
+            scanner.scanDirectories(
+                directories = settings.musicDirectories,
+                excludedDirectories = settings.excludedDirectories,
+                artistDelimiters = settings.artistDelimiters,
+                wordDelimiters = settings.wordDelimiters,
+                extractArtistFromTitle = settings.extractArtistFromTitle,
+                pruneMissing = true,
+                forceRescan = true
+            )
+        }
+    }
+
+    fun addExcludedDirectory(path: String) {
+        coroutineScope.launch {
+            settingsRepository.addExcludedDirectory(path)
+            val settings = settingsRepository.getSettings()
+            scanner.scanDirectories(
+                directories = settings.musicDirectories,
+                excludedDirectories = settings.excludedDirectories,
+                artistDelimiters = settings.artistDelimiters,
+                wordDelimiters = settings.wordDelimiters,
+                extractArtistFromTitle = settings.extractArtistFromTitle,
+                pruneMissing = true,
+                forceRescan = true
+            )
+        }
+    }
+
+    fun removeExcludedDirectory(path: String) {
+        coroutineScope.launch {
+            settingsRepository.removeExcludedDirectory(path)
+            val settings = settingsRepository.getSettings()
+            scanner.scanDirectories(
+                directories = settings.musicDirectories,
+                excludedDirectories = settings.excludedDirectories,
+                artistDelimiters = settings.artistDelimiters,
+                wordDelimiters = settings.wordDelimiters,
+                extractArtistFromTitle = settings.extractArtistFromTitle,
+                pruneMissing = true,
+                forceRescan = false
+            )
+        }
+    }
+
     fun scanLibrary(directories: List<String>? = null, forceRescan: Boolean = false) {
         coroutineScope.launch {
-            val dirs = directories ?: settingsRepository.getSettings().musicDirectories
-            scanner.scanDirectories(dirs, forceRescan = forceRescan)
+            val settings = settingsRepository.getSettings()
+            val dirs = directories ?: settings.musicDirectories
+            scanner.scanDirectories(
+                directories = dirs,
+                excludedDirectories = settings.excludedDirectories,
+                artistDelimiters = settings.artistDelimiters,
+                wordDelimiters = settings.wordDelimiters,
+                extractArtistFromTitle = settings.extractArtistFromTitle,
+                pruneMissing = true,
+                forceRescan = forceRescan
+            )
+            if (forceRescan) {
+                settingsRepository.clearArtistSettingsRescanRequired()
+            }
+        }
+    }
+
+    fun addArtistDelimiter(delimiter: String) {
+        coroutineScope.launch {
+            settingsRepository.addArtistDelimiter(delimiter)
+        }
+    }
+
+    fun removeArtistDelimiter(delimiter: String) {
+        coroutineScope.launch {
+            settingsRepository.removeArtistDelimiter(delimiter)
+        }
+    }
+
+    fun resetArtistDelimiters() {
+        coroutineScope.launch {
+            settingsRepository.resetArtistDelimiters()
+        }
+    }
+
+    fun addWordDelimiter(delimiter: String) {
+        coroutineScope.launch {
+            settingsRepository.addWordDelimiter(delimiter)
+        }
+    }
+
+    fun removeWordDelimiter(delimiter: String) {
+        coroutineScope.launch {
+            settingsRepository.removeWordDelimiter(delimiter)
+        }
+    }
+
+    fun resetWordDelimiters() {
+        coroutineScope.launch {
+            settingsRepository.resetWordDelimiters()
+        }
+    }
+
+    fun setExtractArtistFromTitle(enabled: Boolean) {
+        coroutineScope.launch {
+            settingsRepository.setExtractArtistFromTitle(enabled)
         }
     }
 
@@ -121,7 +267,6 @@ class LibraryStateHolder(
             if (query.isNotBlank()) {
                 val results = musicRepository.search(query)
                 _searchResults.value = results
-                musicRepository.addSearchHistory(query)
             } else {
                 _searchResults.value = emptyList()
             }

@@ -1,6 +1,5 @@
-package com.kayoi.pixelplayerdesktop.data.repository
+package com.kayoi.pixelplayerdesktop.utils
 
-import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json

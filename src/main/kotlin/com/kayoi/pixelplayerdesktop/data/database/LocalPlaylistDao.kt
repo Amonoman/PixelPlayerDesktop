@@ -5,8 +5,12 @@ import com.kayoi.pixelplayerdesktop.data.model.SortOption
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import java.sql.ResultSet
+
+private val stringListSerializer = ListSerializer(String.serializer())
 
 class LocalPlaylistDao(
     private val database: PixelPlayerDatabase,
@@ -76,7 +80,7 @@ class LocalPlaylistDao(
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, playlist.id)
                 stmt.setString(2, playlist.name)
-                stmt.setString(3, json.encodeToString(playlist.songIds))
+                stmt.setString(3, json.encodeToString(stringListSerializer, playlist.songIds))
                 stmt.setLong(4, playlist.createdAt)
                 stmt.setLong(5, playlist.lastModified)
                 stmt.setInt(6, if (playlist.isQueueGenerated) 1 else 0)
@@ -110,7 +114,7 @@ class LocalPlaylistDao(
 private fun ResultSet.toPlaylist(json: Json): Playlist {
     val songIdsRaw = getString("song_ids_json") ?: "[]"
     val songIds = try {
-        json.decodeFromString<List<String>>(songIdsRaw)
+        json.decodeFromString(stringListSerializer, songIdsRaw)
     } catch (e: Exception) {
         emptyList()
     }

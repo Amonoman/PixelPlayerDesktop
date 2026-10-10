@@ -44,12 +44,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp as lerpColor
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.lerp as lerpDp
 import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
 
 @Immutable
 private data class EnhancedSongAnimationTarget(
@@ -219,7 +219,7 @@ fun EnhancedSongListItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (showAlbumArt) {
-                    com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage(
+                    AsyncArtworkImage(
                         artworkUri = song.albumArtUriString,
                         modifier = Modifier.size(albumArtSize),
                         shape = albumShape,

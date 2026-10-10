@@ -1,14 +1,23 @@
 package com.kayoi.pixelplayerdesktop.data.repository
 
-import com.kayoi.pixelplayerdesktop.data.database.*
-import com.kayoi.pixelplayerdesktop.data.model.*
+import com.kayoi.pixelplayerdesktop.data.database.FavoritesDao
+import com.kayoi.pixelplayerdesktop.data.database.LocalPlaylistDao
+import com.kayoi.pixelplayerdesktop.data.database.MusicDao
+import com.kayoi.pixelplayerdesktop.data.database.PixelPlayerDatabase
+import com.kayoi.pixelplayerdesktop.data.model.Album
+import com.kayoi.pixelplayerdesktop.data.model.Artist
+import com.kayoi.pixelplayerdesktop.data.model.Genre
+import com.kayoi.pixelplayerdesktop.data.model.Playlist
+import com.kayoi.pixelplayerdesktop.data.model.SearchFilterType
+import com.kayoi.pixelplayerdesktop.data.model.SearchResultItem
+import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.data.model.SortOption
 import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.withContext
 import java.util.UUID
 
 class MusicRepositoryImpl(
@@ -16,7 +25,6 @@ class MusicRepositoryImpl(
     private val musicDao: MusicDao,
     private val favoritesDao: FavoritesDao,
     private val playlistDao: LocalPlaylistDao,
-    private val searchHistoryDao: SearchHistoryDao,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : MusicRepository {
 
@@ -55,7 +63,7 @@ class MusicRepositoryImpl(
     }.flowOn(ioDispatcher)
 
     override suspend fun getAlbumById(id: Long): Album? {
-        return musicDao.getAllAlbums().find { it.id == id }
+        return musicDao.getAlbumById(id)
     }
 
     override suspend fun getSongsByAlbum(albumId: Long): List<Song> {
@@ -72,7 +80,7 @@ class MusicRepositoryImpl(
     }.flowOn(ioDispatcher)
 
     override suspend fun getArtistById(id: Long): Artist? {
-        return musicDao.getAllArtists().find { it.id == id }
+        return musicDao.getArtistById(id)
     }
 
     override suspend fun getSongsByArtist(artistId: Long): List<Song> {
@@ -202,26 +210,5 @@ class MusicRepositoryImpl(
 
     override suspend fun search(query: String, filter: SearchFilterType): List<SearchResultItem> {
         return musicDao.search(query, filter)
-    }
-
-    override fun getSearchHistoryFlow(): Flow<List<SearchHistoryItem>> = flow {
-        emit(searchHistoryDao.getRecentSearches())
-        database.tableInvalidationFlow.collect { table ->
-            if (table == "search_history") {
-                emit(searchHistoryDao.getRecentSearches())
-            }
-        }
-    }.flowOn(ioDispatcher)
-
-    override suspend fun addSearchHistory(query: String) {
-        searchHistoryDao.insertSearch(query)
-    }
-
-    override suspend fun clearSearchHistory() {
-        searchHistoryDao.clearHistory()
-    }
-
-    override suspend fun deleteSearchHistoryItem(id: Long) {
-        searchHistoryDao.deleteSearch(id)
     }
 }

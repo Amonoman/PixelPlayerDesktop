@@ -1,6 +1,13 @@
 package com.kayoi.pixelplayerdesktop.domain.repository
 
-import com.kayoi.pixelplayerdesktop.data.model.*
+import com.kayoi.pixelplayerdesktop.data.model.Album
+import com.kayoi.pixelplayerdesktop.data.model.Artist
+import com.kayoi.pixelplayerdesktop.data.model.Genre
+import com.kayoi.pixelplayerdesktop.data.model.Playlist
+import com.kayoi.pixelplayerdesktop.data.model.SearchFilterType
+import com.kayoi.pixelplayerdesktop.data.model.SearchResultItem
+import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.data.model.SortOption
 import kotlinx.coroutines.flow.Flow
 
 interface MusicRepository {
@@ -40,8 +47,4 @@ interface MusicRepository {
     suspend fun recordSongPlayed(songId: String)
 
     suspend fun search(query: String, filter: SearchFilterType = SearchFilterType.ALL): List<SearchResultItem>
-    fun getSearchHistoryFlow(): Flow<List<SearchHistoryItem>>
-    suspend fun addSearchHistory(query: String)
-    suspend fun clearSearchHistory()
-    suspend fun deleteSearchHistoryItem(id: Long)
 }

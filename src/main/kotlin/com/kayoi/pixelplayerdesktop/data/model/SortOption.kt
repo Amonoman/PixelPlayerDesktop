@@ -3,330 +3,48 @@ package com.kayoi.pixelplayerdesktop.data.model
 import androidx.compose.runtime.Immutable
 
 @Immutable
-enum class SortDirection {
-    Ascending,
-    Descending
-}
-
-@Immutable
 sealed class SortOption(
     val storageKey: String,
-    val displayName: String,
-    val methodLabel: String = displayName,
-    val methodKey: String = storageKey,
-    val direction: SortDirection? = null
+    val displayName: String
 ) {
     data object SongDefaultOrder : SortOption("song_default_order", "Default Order")
-    data object SongTitleAZ : SortOption(
-        storageKey = "song_title_az",
-        displayName = "Title (A-Z)",
-        methodLabel = "Title",
-        methodKey = "song_title",
-        direction = SortDirection.Ascending
-    )
-    data object SongTitleZA : SortOption(
-        storageKey = "song_title_za",
-        displayName = "Title (Z-A)",
-        methodLabel = "Title",
-        methodKey = "song_title",
-        direction = SortDirection.Descending
-    )
-    data object SongArtist : SortOption(
-        storageKey = "song_artist",
-        displayName = "Artist",
-        methodLabel = "Artist",
-        methodKey = "song_artist",
-        direction = SortDirection.Ascending
-    )
-    data object SongArtistDesc : SortOption(
-        storageKey = "song_artist_desc",
-        displayName = "Artist (Z-A)",
-        methodLabel = "Artist",
-        methodKey = "song_artist",
-        direction = SortDirection.Descending
-    )
-    data object SongAlbum : SortOption(
-        storageKey = "song_album",
-        displayName = "Album",
-        methodLabel = "Album",
-        methodKey = "song_album",
-        direction = SortDirection.Ascending
-    )
-    data object SongAlbumDesc : SortOption(
-        storageKey = "song_album_desc",
-        displayName = "Album (Z-A)",
-        methodLabel = "Album",
-        methodKey = "song_album",
-        direction = SortDirection.Descending
-    )
-    data object SongDateAdded : SortOption(
-        storageKey = "song_date_added",
-        displayName = "Date Added",
-        methodLabel = "Date Added",
-        methodKey = "song_date_added",
-        direction = SortDirection.Descending
-    )
-    data object SongDateAddedAsc : SortOption(
-        storageKey = "song_date_added_asc",
-        displayName = "Date Added (Oldest First)",
-        methodLabel = "Date Added",
-        methodKey = "song_date_added",
-        direction = SortDirection.Ascending
-    )
-    data object SongDuration : SortOption(
-        storageKey = "song_duration",
-        displayName = "Duration",
-        methodLabel = "Duration",
-        methodKey = "song_duration",
-        direction = SortDirection.Descending
-    )
-    data object SongDurationAsc : SortOption(
-        storageKey = "song_duration_asc",
-        displayName = "Duration (Shortest First)",
-        methodLabel = "Duration",
-        methodKey = "song_duration",
-        direction = SortDirection.Ascending
-    )
+    data object SongTitleAZ : SortOption("song_title_az", "Title (A-Z)")
+    data object SongTitleZA : SortOption("song_title_za", "Title (Z-A)")
+    data object SongArtist : SortOption("song_artist", "Artist")
+    data object SongArtistDesc : SortOption("song_artist_desc", "Artist (Z-A)")
+    data object SongAlbum : SortOption("song_album", "Album")
+    data object SongAlbumDesc : SortOption("song_album_desc", "Album (Z-A)")
+    data object SongDateAdded : SortOption("song_date_added", "Date Added")
+    data object SongDateAddedAsc : SortOption("song_date_added_asc", "Date Added (Oldest First)")
+    data object SongDuration : SortOption("song_duration", "Duration")
+    data object SongDurationAsc : SortOption("song_duration_asc", "Duration (Shortest First)")
 
-    data object AlbumTitleAZ : SortOption(
-        storageKey = "album_title_az",
-        displayName = "Title (A-Z)",
-        methodLabel = "Title",
-        methodKey = "album_title",
-        direction = SortDirection.Ascending
-    )
-    data object AlbumTitleZA : SortOption(
-        storageKey = "album_title_za",
-        displayName = "Title (Z-A)",
-        methodLabel = "Title",
-        methodKey = "album_title",
-        direction = SortDirection.Descending
-    )
-    data object AlbumArtist : SortOption(
-        storageKey = "album_artist",
-        displayName = "Artist",
-        methodLabel = "Artist",
-        methodKey = "album_artist",
-        direction = SortDirection.Ascending
-    )
-    data object AlbumArtistDesc : SortOption(
-        storageKey = "album_artist_desc",
-        displayName = "Artist (Z-A)",
-        methodLabel = "Artist",
-        methodKey = "album_artist",
-        direction = SortDirection.Descending
-    )
-    data object AlbumReleaseYear : SortOption(
-        storageKey = "album_release_year",
-        displayName = "Release Year",
-        methodLabel = "Release Year",
-        methodKey = "album_release_year",
-        direction = SortDirection.Descending
-    )
-    data object AlbumReleaseYearAsc : SortOption(
-        storageKey = "album_release_year_asc",
-        displayName = "Release Year (Oldest First)",
-        methodLabel = "Release Year",
-        methodKey = "album_release_year",
-        direction = SortDirection.Ascending
-    )
-    data object AlbumDateAdded : SortOption(
-        storageKey = "album_date_added",
-        displayName = "Date Added",
-        methodLabel = "Date Added",
-        methodKey = "album_date_added",
-        direction = SortDirection.Descending
-    )
-    data object AlbumSizeAsc : SortOption(
-        storageKey = "album_size_asc",
-        displayName = "Fewest Songs",
-        methodLabel = "Song Count",
-        methodKey = "album_size",
-        direction = SortDirection.Ascending
-    )
-    data object AlbumSizeDesc : SortOption(
-        storageKey = "album_size_desc",
-        displayName = "Most Songs",
-        methodLabel = "Song Count",
-        methodKey = "album_size",
-        direction = SortDirection.Descending
-    )
+    data object AlbumTitleAZ : SortOption("album_title_az", "Title (A-Z)")
+    data object AlbumTitleZA : SortOption("album_title_za", "Title (Z-A)")
+    data object AlbumArtist : SortOption("album_artist", "Artist")
+    data object AlbumArtistDesc : SortOption("album_artist_desc", "Artist (Z-A)")
+    data object AlbumReleaseYear : SortOption("album_release_year", "Release Year")
+    data object AlbumReleaseYearAsc : SortOption("album_release_year_asc", "Release Year (Oldest First)")
+    data object AlbumDateAdded : SortOption("album_date_added", "Date Added")
+    data object AlbumSizeAsc : SortOption("album_size_asc", "Fewest Songs")
+    data object AlbumSizeDesc : SortOption("album_size_desc", "Most Songs")
 
-    data object ArtistNameAZ : SortOption(
-        storageKey = "artist_name_az",
-        displayName = "Name (A-Z)",
-        methodLabel = "Name",
-        methodKey = "artist_name",
-        direction = SortDirection.Ascending
-    )
-    data object ArtistNameZA : SortOption(
-        storageKey = "artist_name_za",
-        displayName = "Name (Z-A)",
-        methodLabel = "Name",
-        methodKey = "artist_name",
-        direction = SortDirection.Descending
-    )
-    data object ArtistNumSongsDesc : SortOption(
-        storageKey = "artist_num_songs_desc",
-        displayName = "Number of Songs (Most)",
-        methodLabel = "Number of Songs",
-        methodKey = "artist_num_songs",
-        direction = SortDirection.Descending
-    )
-    data object ArtistNumSongsAsc : SortOption(
-        storageKey = "artist_num_songs_asc",
-        displayName = "Number of Songs (Fewest)",
-        methodLabel = "Number of Songs",
-        methodKey = "artist_num_songs",
-        direction = SortDirection.Ascending
-    )
+    data object ArtistNameAZ : SortOption("artist_name_az", "Name (A-Z)")
+    data object ArtistNameZA : SortOption("artist_name_za", "Name (Z-A)")
+    data object ArtistNumSongsDesc : SortOption("artist_num_songs_desc", "Number of Songs (Most)")
+    data object ArtistNumSongsAsc : SortOption("artist_num_songs_asc", "Number of Songs (Fewest)")
 
-    data object PlaylistNameAZ : SortOption(
-        storageKey = "playlist_name_az",
-        displayName = "Name (A-Z)",
-        methodLabel = "Name",
-        methodKey = "playlist_name",
-        direction = SortDirection.Ascending
-    )
-    data object PlaylistNameZA : SortOption(
-        storageKey = "playlist_name_za",
-        displayName = "Name (Z-A)",
-        methodLabel = "Name",
-        methodKey = "playlist_name",
-        direction = SortDirection.Descending
-    )
-    data object PlaylistDateCreated : SortOption(
-        storageKey = "playlist_date_created",
-        displayName = "Date Created",
-        methodLabel = "Date Created",
-        methodKey = "playlist_date_created",
-        direction = SortDirection.Descending
-    )
-    data object PlaylistDateCreatedAsc : SortOption(
-        storageKey = "playlist_date_created_asc",
-        displayName = "Date Created (Oldest First)",
-        methodLabel = "Date Created",
-        methodKey = "playlist_date_created",
-        direction = SortDirection.Ascending
-    )
+    data object PlaylistNameAZ : SortOption("playlist_name_az", "Name (A-Z)")
+    data object PlaylistNameZA : SortOption("playlist_name_za", "Name (Z-A)")
+    data object PlaylistDateCreated : SortOption("playlist_date_created", "Date Created")
+    data object PlaylistDateCreatedAsc : SortOption("playlist_date_created_asc", "Date Created (Oldest First)")
 
-    data object LikedSongTitleAZ : SortOption(
-        storageKey = "liked_title_az",
-        displayName = "Title (A-Z)",
-        methodLabel = "Title",
-        methodKey = "liked_title",
-        direction = SortDirection.Ascending
-    )
-    data object LikedSongTitleZA : SortOption(
-        storageKey = "liked_title_za",
-        displayName = "Title (Z-A)",
-        methodLabel = "Title",
-        methodKey = "liked_title",
-        direction = SortDirection.Descending
-    )
-    data object LikedSongArtist : SortOption(
-        storageKey = "liked_artist",
-        displayName = "Artist",
-        methodLabel = "Artist",
-        methodKey = "liked_artist",
-        direction = SortDirection.Ascending
-    )
-    data object LikedSongArtistDesc : SortOption(
-        storageKey = "liked_artist_desc",
-        displayName = "Artist (Z-A)",
-        methodLabel = "Artist",
-        methodKey = "liked_artist",
-        direction = SortDirection.Descending
-    )
-    data object LikedSongAlbum : SortOption(
-        storageKey = "liked_album",
-        displayName = "Album",
-        methodLabel = "Album",
-        methodKey = "liked_album",
-        direction = SortDirection.Ascending
-    )
-    data object LikedSongAlbumDesc : SortOption(
-        storageKey = "liked_album_desc",
-        displayName = "Album (Z-A)",
-        methodLabel = "Album",
-        methodKey = "liked_album",
-        direction = SortDirection.Descending
-    )
-    data object LikedSongDateLiked : SortOption(
-        storageKey = "liked_date_liked",
-        displayName = "Date Liked",
-        methodLabel = "Date Liked",
-        methodKey = "liked_date_liked",
-        direction = SortDirection.Descending
-    )
-    data object LikedSongDateLikedAsc : SortOption(
-        storageKey = "liked_date_liked_asc",
-        displayName = "Date Liked (Oldest First)",
-        methodLabel = "Date Liked",
-        methodKey = "liked_date_liked",
-        direction = SortDirection.Ascending
-    )
-
-    data object FolderNameAZ : SortOption(
-        storageKey = "folder_name_az",
-        displayName = "Name (A-Z)",
-        methodLabel = "Name",
-        methodKey = "folder_name",
-        direction = SortDirection.Ascending
-    )
-    data object FolderNameZA : SortOption(
-        storageKey = "folder_name_za",
-        displayName = "Name (Z-A)",
-        methodLabel = "Name",
-        methodKey = "folder_name",
-        direction = SortDirection.Descending
-    )
-    data object FolderSongCountAsc : SortOption(
-        storageKey = "folder_song_count_asc",
-        displayName = "Fewest Songs",
-        methodLabel = "Song Count",
-        methodKey = "folder_song_count",
-        direction = SortDirection.Ascending
-    )
-    data object FolderSongCountDesc : SortOption(
-        storageKey = "folder_song_count_desc",
-        displayName = "Most Songs",
-        methodLabel = "Song Count",
-        methodKey = "folder_song_count",
-        direction = SortDirection.Descending
-    )
-    data object FolderSubdirCountAsc : SortOption(
-        storageKey = "folder_subdir_count_asc",
-        displayName = "Fewest Subfolders",
-        methodLabel = "Subfolder Count",
-        methodKey = "folder_subdir_count",
-        direction = SortDirection.Ascending
-    )
-    data object FolderSubdirCountDesc : SortOption(
-        storageKey = "folder_subdir_count_desc",
-        displayName = "Most Subfolders",
-        methodLabel = "Subfolder Count",
-        methodKey = "folder_subdir_count",
-        direction = SortDirection.Descending
-    )
-
-    fun methodOption(): SortOption = defaultOptionByMethodKey[methodKey] ?: this
-
-    fun resolveForDirection(targetDirection: SortDirection?): SortOption {
-        if (targetDirection == null) {
-            return methodOption()
-        }
-        return optionByMethodAndDirection[methodKey to targetDirection] ?: methodOption()
-    }
-
-    fun flipDirection(): SortOption {
-        val currentDirection = direction ?: return this
-        val targetDirection = when (currentDirection) {
-            SortDirection.Ascending -> SortDirection.Descending
-            SortDirection.Descending -> SortDirection.Ascending
-        }
-        return resolveForDirection(targetDirection)
-    }
+    data object FolderNameAZ : SortOption("folder_name_az", "Name (A-Z)")
+    data object FolderNameZA : SortOption("folder_name_za", "Name (Z-A)")
+    data object FolderSongCountAsc : SortOption("folder_song_count_asc", "Fewest Songs")
+    data object FolderSongCountDesc : SortOption("folder_song_count_desc", "Most Songs")
+    data object FolderSubdirCountAsc : SortOption("folder_subdir_count_asc", "Fewest Subfolders")
+    data object FolderSubdirCountDesc : SortOption("folder_subdir_count_desc", "Most Subfolders")
 
     companion object {
         val SONGS: List<SortOption> by lazy {
@@ -386,55 +104,6 @@ sealed class SortOption(
                 FolderSubdirCountAsc,
                 FolderSubdirCountDesc
             )
-        }
-
-        val LIKED: List<SortOption> by lazy {
-            listOf(
-                LikedSongTitleAZ,
-                LikedSongTitleZA,
-                LikedSongArtist,
-                LikedSongArtistDesc,
-                LikedSongAlbum,
-                LikedSongAlbumDesc,
-                LikedSongDateLiked,
-                LikedSongDateLikedAsc
-            )
-        }
-
-        private val ALL: List<SortOption> by lazy {
-            SONGS + ALBUMS + ARTISTS + PLAYLISTS + FOLDERS + LIKED
-        }
-
-        private val defaultOptionByMethodKey: Map<String, SortOption> by lazy {
-            ALL.groupBy { it.methodKey }
-                .mapValues { (_, options) -> options.first() }
-        }
-
-        private val optionByMethodAndDirection: Map<Pair<String, SortDirection>, SortOption> by lazy {
-            ALL.asSequence()
-                .filter { it.direction != null }
-                .associateBy { it.methodKey to requireNotNull(it.direction) }
-        }
-
-        fun fromStorageKey(
-            rawValue: String?,
-            allowed: Collection<SortOption>,
-            fallback: SortOption
-        ): SortOption {
-            if (rawValue.isNullOrBlank()) {
-                return fallback
-            }
-
-            val sanitized = allowed.filterIsInstance<SortOption>()
-            if (sanitized.isEmpty()) {
-                return fallback
-            }
-
-            sanitized.firstOrNull { option -> option.storageKey == rawValue }?.let { matched ->
-                return matched
-            }
-
-            return sanitized.firstOrNull { option -> option.displayName == rawValue } ?: fallback
         }
     }
 }

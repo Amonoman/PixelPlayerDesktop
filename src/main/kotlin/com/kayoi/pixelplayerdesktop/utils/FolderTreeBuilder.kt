@@ -1,4 +1,4 @@
-package com.kayoi.pixelplayerdesktop.data.repository
+package com.kayoi.pixelplayerdesktop.utils
 
 import com.kayoi.pixelplayerdesktop.data.model.MusicFolder
 import com.kayoi.pixelplayerdesktop.data.model.Song
@@ -59,15 +59,8 @@ object FolderTreeBuilder {
             }
         }
 
-        return roots.flatMap { rootPath ->
-            val rootTemp = folderMap[rootPath] ?: return@flatMap emptyList()
-            if (rootTemp.subFolderPaths.isNotEmpty()) {
-                rootTemp.subFolderPaths.mapNotNull { buildImmutableFolder(it, folderMap) }
-            } else if (rootTemp.songs.isNotEmpty()) {
-                listOfNotNull(buildImmutableFolder(rootPath, folderMap))
-            } else {
-                emptyList()
-            }
+        return roots.mapNotNull { rootPath ->
+            buildImmutableFolder(rootPath, folderMap)
         }.filter { it.totalSongCount > 0 }.sortedBy { it.name.lowercase() }
     }
 

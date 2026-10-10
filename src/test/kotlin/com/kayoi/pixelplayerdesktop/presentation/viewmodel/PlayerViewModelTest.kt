@@ -5,12 +5,11 @@ import com.kayoi.pixelplayerdesktop.data.database.LocalPlaylistDao
 import com.kayoi.pixelplayerdesktop.data.database.LyricsDao
 import com.kayoi.pixelplayerdesktop.data.database.MusicDao
 import com.kayoi.pixelplayerdesktop.data.database.PixelPlayerDatabase
-import com.kayoi.pixelplayerdesktop.data.database.SearchHistoryDao
 import com.kayoi.pixelplayerdesktop.data.player.QueueManager
 import com.kayoi.pixelplayerdesktop.data.player.VlcjAudioEngine
-import com.kayoi.pixelplayerdesktop.data.preferences.SettingsRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.repository.LyricsRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.repository.MusicRepositoryImpl
+import com.kayoi.pixelplayerdesktop.data.repository.SettingsRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.scanner.DesktopMusicScanner
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import kotlinx.coroutines.Dispatchers
@@ -37,10 +36,9 @@ class PlayerViewModelTest {
         val musicDao = MusicDao(db, ioDispatcher = testDispatcher)
         val favDao = FavoritesDao(db, ioDispatcher = testDispatcher)
         val playlistDao = LocalPlaylistDao(db, ioDispatcher = testDispatcher)
-        val searchDao = SearchHistoryDao(db, ioDispatcher = testDispatcher)
         val lyricsDao = LyricsDao(db, ioDispatcher = testDispatcher)
 
-        val musicRepo = MusicRepositoryImpl(db, musicDao, favDao, playlistDao, searchDao, ioDispatcher = testDispatcher)
+        val musicRepo = MusicRepositoryImpl(db, musicDao, favDao, playlistDao, ioDispatcher = testDispatcher)
         val lyricsRepo = LyricsRepositoryImpl(lyricsDao, ioDispatcher = testDispatcher)
         val settingsRepo = SettingsRepositoryImpl(settingsFile = tempSettings, ioDispatcher = testDispatcher)
         val scanner = DesktopMusicScanner(musicDao, ioDispatcher = testDispatcher)

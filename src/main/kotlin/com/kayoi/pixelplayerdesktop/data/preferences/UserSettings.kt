@@ -13,15 +13,10 @@ data class UserSettings(
     val isMuted: Boolean = false,
     val isShuffleEnabled: Boolean = false,
     val repeatMode: Int = 0, // 0: OFF, 1: ALL, 2: ONE
-    val lastPlayedSongId: String? = null,
-    val lastPlaybackPositionMs: Long = 0L,
-    val crossfadeDurationMs: Int = 0,
-    val isGaplessPlaybackEnabled: Boolean = true,
-    val isReplayGainEnabled: Boolean = false,
-    val playbackSpeed: Float = 1.0f,
-    val songSortOption: String = "song_title_az",
-    val albumSortOption: String = "album_title_az",
-    val artistSortOption: String = "artist_name_az",
-    val playlistSortOption: String = "playlist_name_az",
-    val fetchDeezerArtistImages: Boolean = true
+    val fetchDeezerArtistImages: Boolean = true,
+    val excludedDirectories: List<String> = emptyList(),
+    val artistDelimiters: List<String> = listOf("/", ";", ",", "+", "&"),
+    val wordDelimiters: List<String> = listOf("featuring", "feat.", "feat", "ft.", "ft", "vs.", "vs", "versus", "with", "prod.", "prod"),
+    val extractArtistFromTitle: Boolean = true,
+    val artistSettingsRescanRequired: Boolean = false
 )

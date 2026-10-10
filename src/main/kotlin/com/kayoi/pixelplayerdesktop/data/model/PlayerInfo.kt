@@ -8,25 +8,7 @@ import kotlinx.serialization.Serializable
 data class QueueItem(
     val id: Long,
     val albumArtUri: String? = null
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as QueueItem
-
-        if (id != other.id) return false
-        if (albumArtUri != other.albumArtUri) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = id.hashCode()
-        result = 31 * result + (albumArtUri?.hashCode() ?: 0)
-        return result
-    }
-}
+)
 
 @Immutable
 @Serializable

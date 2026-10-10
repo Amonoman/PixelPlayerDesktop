@@ -11,6 +11,8 @@ import org.jaudiotagger.audio.AudioFileIO
 import org.jaudiotagger.tag.FieldKey
 import java.io.File
 
+private val timestampRegex = Regex("""\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)""")
+
 /**
  * Implementation of [LyricsRepository] handling LRC file parsing, ID3/Vorbis embedded lyrics, and local database caching.
  */
@@ -70,8 +72,6 @@ class LyricsRepositoryImpl(
         val lines = content.lines()
         val syncedLines = mutableListOf<SyncedLine>()
         val plainLines = mutableListOf<String>()
-
-        val timestampRegex = Regex("""\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)""")
 
         for (line in lines) {
             val match = timestampRegex.matchEntire(line.trim())

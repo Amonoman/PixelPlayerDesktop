@@ -1,8 +1,12 @@
 package com.kayoi.pixelplayerdesktop.data.scanner
 
 import com.kayoi.pixelplayerdesktop.data.database.MusicDao
+import com.kayoi.pixelplayerdesktop.data.model.ArtistRef
 import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.utils.DEFAULT_ARTIST_DELIMITERS
+import com.kayoi.pixelplayerdesktop.utils.DEFAULT_WORD_DELIMITERS
 import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
+import com.kayoi.pixelplayerdesktop.utils.collectArtistNames
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,17 +62,37 @@ class DesktopMusicScanner(
 
     suspend fun scanDirectories(
         directories: List<String>,
+        excludedDirectories: List<String> = emptyList(),
+        artistDelimiters: List<String> = DEFAULT_ARTIST_DELIMITERS,
+        wordDelimiters: List<String> = DEFAULT_WORD_DELIMITERS,
+        extractArtistFromTitle: Boolean = true,
         pruneMissing: Boolean = true,
         forceRescan: Boolean = false
     ): ScanProgress = withContext(ioDispatcher) {
         val startTime = System.currentTimeMillis()
         try {
+            val normalizedExcluded = excludedDirectories.map { File(it).absolutePath }
+
             // 1. Discover all audio files across directories
             val discoveredFiles = mutableListOf<File>()
             for (dirPath in directories) {
                 val dir = File(dirPath)
                 if (dir.exists() && dir.isDirectory) {
+                    val rootDirAbs = dir.absolutePath
+                    val isRootExcluded = normalizedExcluded.any { excluded ->
+                        rootDirAbs == excluded || rootDirAbs.startsWith(if (excluded.endsWith(File.separator)) excluded else excluded + File.separator)
+                    }
+                    if (isRootExcluded) continue
+
                     Files.walkFileTree(dir.toPath(), object : SimpleFileVisitor<Path>() {
+                        override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
+                            val currentDirAbs = dir.toFile().absolutePath
+                            val isExcluded = normalizedExcluded.any { excluded ->
+                                currentDirAbs == excluded || currentDirAbs.startsWith(if (excluded.endsWith(File.separator)) excluded else excluded + File.separator)
+                            }
+                            return if (isExcluded) FileVisitResult.SKIP_SUBTREE else FileVisitResult.CONTINUE
+                        }
+
                         override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
                             val f = file.toFile()
                             val ext = f.extension.lowercase()
@@ -113,7 +137,7 @@ class DesktopMusicScanner(
                 }
 
                 // Extract tags
-                val song = extractSongMetadata(file, existing?.id)
+                val song = extractSongMetadata(file, existing?.id, artistDelimiters, wordDelimiters, extractArtistFromTitle)
                 if (song != null) {
                     songsToUpsert.add(song)
                 }
@@ -144,16 +168,28 @@ class DesktopMusicScanner(
         }
     }
 
-    private fun extractSongMetadata(file: File, existingId: String? = null): Song? {
+    private fun extractSongMetadata(
+        file: File,
+        existingId: String? = null,
+        artistDelimiters: List<String> = DEFAULT_ARTIST_DELIMITERS,
+        wordDelimiters: List<String> = DEFAULT_WORD_DELIMITERS,
+        extractArtistFromTitle: Boolean = true
+    ): Song? {
         val ext = file.extension.lowercase()
         return if (ext == "opus") {
-            extractOpusMetadata(file, existingId)
+            extractOpusMetadata(file, existingId, artistDelimiters, wordDelimiters, extractArtistFromTitle)
         } else {
-            extractGeneralMetadata(file, existingId)
+            extractGeneralMetadata(file, existingId, artistDelimiters, wordDelimiters, extractArtistFromTitle)
         }
     }
 
-    private fun extractOpusMetadata(file: File, existingId: String?): Song? {
+    private fun extractOpusMetadata(
+        file: File,
+        existingId: String?,
+        artistDelimiters: List<String>,
+        wordDelimiters: List<String>,
+        extractArtistFromTitle: Boolean
+    ): Song? {
         return try {
             var opusFile: OpusFile? = null
             try {
@@ -165,9 +201,26 @@ class DesktopMusicScanner(
                     ?: getVorbisComment(tags, "title")?.trim()?.ifBlank { null }
                     ?: file.nameWithoutExtension
 
-                val artist = tags?.artist?.trim()?.ifBlank { null }
+                val rawArtist = tags?.artist?.trim()?.ifBlank { null }
                     ?: getVorbisComment(tags, "artist")?.trim()?.ifBlank { null }
                     ?: "Unknown Artist"
+
+                val parsedArtists = collectArtistNames(
+                    rawArtistName = rawArtist,
+                    title = title,
+                    artistDelimiters = artistDelimiters,
+                    wordDelimiters = wordDelimiters,
+                    extractFromTitle = extractArtistFromTitle
+                )
+                val artist = parsedArtists.firstOrNull()?.ifBlank { null } ?: rawArtist
+
+                val artistRefs = parsedArtists.mapIndexed { index, name ->
+                    ArtistRef(
+                        id = kotlin.math.abs(name.trim().lowercase().hashCode().toLong()),
+                        name = name.trim(),
+                        isPrimary = (index == 0)
+                    )
+                }
 
                 val album = tags?.album?.trim()?.ifBlank { null }
                     ?: getVorbisComment(tags, "album")?.trim()?.ifBlank { null }
@@ -226,7 +279,8 @@ class DesktopMusicScanner(
                     dateModified = file.lastModified(),
                     mimeType = "audio/opus",
                     bitrate = null,
-                    sampleRate = sampleRate
+                    sampleRate = sampleRate,
+                    artists = artistRefs
                 )
             } finally {
                 opusFile?.close()
@@ -236,14 +290,38 @@ class DesktopMusicScanner(
         }
     }
 
-    private fun extractGeneralMetadata(file: File, existingId: String?): Song? {
+    private fun extractGeneralMetadata(
+        file: File,
+        existingId: String?,
+        artistDelimiters: List<String>,
+        wordDelimiters: List<String>,
+        extractArtistFromTitle: Boolean
+    ): Song? {
         return try {
             val audioFile = AudioFileIO.read(file)
             val tag = audioFile.tag
             val header = audioFile.audioHeader
 
             val title = tag?.getFirst(FieldKey.TITLE)?.trim()?.ifBlank { null } ?: file.nameWithoutExtension
-            val artist = tag?.getFirst(FieldKey.ARTIST)?.trim()?.ifBlank { null } ?: "Unknown Artist"
+            val rawArtist = tag?.getFirst(FieldKey.ARTIST)?.trim()?.ifBlank { null } ?: "Unknown Artist"
+
+            val parsedArtists = collectArtistNames(
+                rawArtistName = rawArtist,
+                title = title,
+                artistDelimiters = artistDelimiters,
+                wordDelimiters = wordDelimiters,
+                extractFromTitle = extractArtistFromTitle
+            )
+            val artist = parsedArtists.firstOrNull()?.ifBlank { null } ?: rawArtist
+
+            val artistRefs = parsedArtists.mapIndexed { index, name ->
+                ArtistRef(
+                    id = kotlin.math.abs(name.trim().lowercase().hashCode().toLong()),
+                    name = name.trim(),
+                    isPrimary = (index == 0)
+                )
+            }
+
             val album = tag?.getFirst(FieldKey.ALBUM)?.trim()?.ifBlank { null } ?: "Unknown Album"
             val albumArtist = tag?.getFirst(FieldKey.ALBUM_ARTIST)?.trim()?.ifBlank { null }
             val genre = tag?.getFirst(FieldKey.GENRE)?.trim()?.ifBlank { null }
@@ -285,7 +363,8 @@ class DesktopMusicScanner(
                 dateModified = file.lastModified(),
                 mimeType = "audio/${file.extension.lowercase()}",
                 bitrate = bitrate,
-                sampleRate = sampleRate
+                sampleRate = sampleRate,
+                artists = artistRefs
             )
         } catch (e: Exception) {
             fallbackSong(file, existingId)

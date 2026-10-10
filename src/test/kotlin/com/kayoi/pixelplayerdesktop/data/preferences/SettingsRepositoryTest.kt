@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.data.preferences
 
+import com.kayoi.pixelplayerdesktop.data.repository.SettingsRepositoryImpl
 import kotlinx.coroutines.test.runTest
 import java.io.File
 import kotlin.test.Test

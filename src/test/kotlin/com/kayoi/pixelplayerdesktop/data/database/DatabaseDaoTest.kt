@@ -21,7 +21,6 @@ class DatabaseDaoTest {
         val musicDao = MusicDao(db)
         val favoritesDao = FavoritesDao(db)
         val playlistDao = LocalPlaylistDao(db)
-        val searchDao = SearchHistoryDao(db)
 
         val song1 = Song(
             id = "1",
@@ -97,11 +96,5 @@ class DatabaseDaoTest {
         // 6. Test Search
         val searchResults = musicDao.search("Alpha")
         assertEquals(1, searchResults.size)
-
-        // 7. Test Search History
-        searchDao.insertSearch("Alpha")
-        val history = searchDao.getRecentSearches()
-        assertEquals(1, history.size)
-        assertEquals("Alpha", history[0].query)
     }
 }

@@ -1,5 +1,12 @@
 package com.kayoi.pixelplayerdesktop.presentation.viewmodel
 
+import com.kayoi.pixelplayerdesktop.data.model.Album
+import com.kayoi.pixelplayerdesktop.data.model.Artist
+import com.kayoi.pixelplayerdesktop.data.model.Playlist
+import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.data.model.SortOption
+import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
+
 class PlayerViewModel(
     val playbackStateHolder: PlaybackStateHolder,
     val libraryStateHolder: LibraryStateHolder,
@@ -11,9 +18,9 @@ class PlayerViewModel(
     val queue = playbackStateHolder.queue
     val playbackState = playbackStateHolder.playbackState
 
-    fun playSong(song: com.kayoi.pixelplayerdesktop.data.model.Song) = playbackStateHolder.playSong(song)
-    fun playSongs(songs: List<com.kayoi.pixelplayerdesktop.data.model.Song>, startIndex: Int = 0) = playbackStateHolder.playSongs(songs, startIndex)
-    fun shuffleSongs(songs: List<com.kayoi.pixelplayerdesktop.data.model.Song>) = playbackStateHolder.shuffleSongs(songs)
+    fun playSong(song: Song) = playbackStateHolder.playSong(song)
+    fun playSongs(songs: List<Song>, startIndex: Int = 0) = playbackStateHolder.playSongs(songs, startIndex)
+    fun shuffleSongs(songs: List<Song>) = playbackStateHolder.shuffleSongs(songs)
     fun togglePlayPause() = playbackStateHolder.togglePlayPause()
     fun playNext() = playbackStateHolder.playNext()
     fun playPrevious() = playbackStateHolder.playPrevious()
@@ -30,10 +37,10 @@ class PlayerViewModel(
     fun moveQueueItem(fromIndex: Int, toIndex: Int) = playbackStateHolder.moveQueueItem(fromIndex, toIndex)
     fun clearQueue() = playbackStateHolder.clearQueue()
     fun playSongAtIndex(index: Int) = playbackStateHolder.playSongAtIndex(index)
-    fun addSongToQueue(song: com.kayoi.pixelplayerdesktop.data.model.Song) = playbackStateHolder.addSongToQueue(song)
-    fun playSongNext(song: com.kayoi.pixelplayerdesktop.data.model.Song) = playbackStateHolder.playSongNext(song)
+    fun addSongToQueue(song: Song) = playbackStateHolder.addSongToQueue(song)
+    fun playSongNext(song: Song) = playbackStateHolder.playSongNext(song)
 
-    fun shuffleRandomAlbum(availableAlbums: List<com.kayoi.pixelplayerdesktop.data.model.Album>? = null) {
+    fun shuffleRandomAlbum(availableAlbums: List<Album>? = null) {
         val targetList = availableAlbums ?: albums.value
         if (targetList.isNotEmpty()) {
             val randomAlbum = targetList.random()
@@ -44,7 +51,7 @@ class PlayerViewModel(
         }
     }
 
-    fun shuffleRandomArtist(availableArtists: List<com.kayoi.pixelplayerdesktop.data.model.Artist>? = null) {
+    fun shuffleRandomArtist(availableArtists: List<Artist>? = null) {
         val targetList = availableArtists ?: artists.value
         if (targetList.isNotEmpty()) {
             val randomArtist = targetList.random()
@@ -55,7 +62,6 @@ class PlayerViewModel(
         }
     }
 
-    val selectedTab = libraryStateHolder.selectedTab
     val songs = libraryStateHolder.songs
     val albums = libraryStateHolder.albums
     val artists = libraryStateHolder.artists
@@ -67,28 +73,43 @@ class PlayerViewModel(
     val searchResults = libraryStateHolder.searchResults
     val fetchDeezerArtistImages = libraryStateHolder.fetchDeezerArtistImages
     val musicDirectories = libraryStateHolder.musicDirectories
+    val excludedDirectories = libraryStateHolder.excludedDirectories
     val folderSortOption = libraryStateHolder.folderSortOption
+    val artistDelimiters = libraryStateHolder.artistDelimiters
+    val wordDelimiters = libraryStateHolder.wordDelimiters
+    val extractArtistFromTitle = libraryStateHolder.extractArtistFromTitle
+    val rescanRequired = libraryStateHolder.rescanRequired
 
-    fun selectTab(tab: com.kayoi.pixelplayerdesktop.data.model.LibraryTabId) = libraryStateHolder.selectTab(tab)
-    fun setSongSortOption(sort: com.kayoi.pixelplayerdesktop.data.model.SortOption) = libraryStateHolder.setSongSortOption(sort)
-    fun setAlbumSortOption(sort: com.kayoi.pixelplayerdesktop.data.model.SortOption) = libraryStateHolder.setAlbumSortOption(sort)
-    fun setArtistSortOption(sort: com.kayoi.pixelplayerdesktop.data.model.SortOption) = libraryStateHolder.setArtistSortOption(sort)
-    fun setPlaylistSortOption(sort: com.kayoi.pixelplayerdesktop.data.model.SortOption) = libraryStateHolder.setPlaylistSortOption(sort)
-    fun setFolderSortOption(sort: com.kayoi.pixelplayerdesktop.data.model.SortOption) = libraryStateHolder.setFolderSortOption(sort)
+    fun setSongSortOption(sort: SortOption) = libraryStateHolder.setSongSortOption(sort)
+    fun setAlbumSortOption(sort: SortOption) = libraryStateHolder.setAlbumSortOption(sort)
+    fun setArtistSortOption(sort: SortOption) = libraryStateHolder.setArtistSortOption(sort)
+    fun setPlaylistSortOption(sort: SortOption) = libraryStateHolder.setPlaylistSortOption(sort)
+    fun setFolderSortOption(sort: SortOption) = libraryStateHolder.setFolderSortOption(sort)
     fun setFetchDeezerArtistImages(enabled: Boolean) = libraryStateHolder.setFetchDeezerArtistImages(enabled)
     fun toggleFetchDeezerArtistImages() = libraryStateHolder.toggleFetchDeezerArtistImages()
     fun scanLibrary(directories: List<String>? = null, forceRescan: Boolean = false) = libraryStateHolder.scanLibrary(directories, forceRescan)
     fun rescanLibrary() = libraryStateHolder.scanLibrary(forceRescan = true)
+    fun addMusicDirectory(path: String) = libraryStateHolder.addMusicDirectory(path)
+    fun removeMusicDirectory(path: String) = libraryStateHolder.removeMusicDirectory(path)
+    fun addExcludedDirectory(path: String) = libraryStateHolder.addExcludedDirectory(path)
+    fun removeExcludedDirectory(path: String) = libraryStateHolder.removeExcludedDirectory(path)
+    fun addArtistDelimiter(delimiter: String) = libraryStateHolder.addArtistDelimiter(delimiter)
+    fun removeArtistDelimiter(delimiter: String) = libraryStateHolder.removeArtistDelimiter(delimiter)
+    fun resetArtistDelimiters() = libraryStateHolder.resetArtistDelimiters()
+    fun addWordDelimiter(delimiter: String) = libraryStateHolder.addWordDelimiter(delimiter)
+    fun removeWordDelimiter(delimiter: String) = libraryStateHolder.removeWordDelimiter(delimiter)
+    fun resetWordDelimiters() = libraryStateHolder.resetWordDelimiters()
+    fun setExtractArtistFromTitle(enabled: Boolean) = libraryStateHolder.setExtractArtistFromTitle(enabled)
     fun onSearchQueryChanged(query: String) = libraryStateHolder.onSearchQueryChanged(query)
     fun createPlaylist(name: String, songIds: List<String> = emptyList()) = libraryStateHolder.createPlaylist(name, songIds)
     fun deletePlaylist(id: String) = libraryStateHolder.deletePlaylist(id)
     fun renamePlaylist(id: String, newName: String) = libraryStateHolder.renamePlaylist(id, newName)
-    fun updatePlaylist(playlist: com.kayoi.pixelplayerdesktop.data.model.Playlist) = libraryStateHolder.updatePlaylist(playlist)
+    fun updatePlaylist(playlist: Playlist) = libraryStateHolder.updatePlaylist(playlist)
     fun addSongToPlaylist(playlistId: String, songId: String) = libraryStateHolder.addSongToPlaylist(playlistId, songId)
     fun addSongsToPlaylist(playlistId: String, songIds: List<String>) = libraryStateHolder.addSongsToPlaylist(playlistId, songIds)
     fun removeSongFromPlaylist(playlistId: String, songId: String) = libraryStateHolder.removeSongFromPlaylist(playlistId, songId)
     fun reorderPlaylistSongs(playlistId: String, songIds: List<String>) = libraryStateHolder.reorderPlaylistSongs(playlistId, songIds)
-    fun toggleFavorite(song: com.kayoi.pixelplayerdesktop.data.model.Song) = playbackStateHolder.toggleFavorite(song)
+    fun toggleFavorite(song: Song) = playbackStateHolder.toggleFavorite(song)
 
     val isDarkMode = themeStateHolder.isDarkMode
     val isDynamicColorEnabled = themeStateHolder.isDynamicColorEnabled
@@ -96,6 +117,6 @@ class PlayerViewModel(
     val albumArtColorAccuracy = themeStateHolder.albumArtColorAccuracy
     fun toggleDarkMode() = themeStateHolder.toggleDarkMode()
     fun toggleDynamicColor() = themeStateHolder.toggleDynamicColor()
-    fun setAlbumArtPaletteStyle(style: com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle) = themeStateHolder.setAlbumArtPaletteStyle(style)
+    fun setAlbumArtPaletteStyle(style: AlbumArtPaletteStyle) = themeStateHolder.setAlbumArtPaletteStyle(style)
     fun setAlbumArtColorAccuracy(accuracy: Int) = themeStateHolder.setAlbumArtColorAccuracy(accuracy)
 }

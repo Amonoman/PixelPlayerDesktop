@@ -1,5 +1,8 @@
-package com.kayoi.pixelplayerdesktop.data.preferences
+package com.kayoi.pixelplayerdesktop.data.repository
 
+import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtColorAccuracy
+import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
+import com.kayoi.pixelplayerdesktop.data.preferences.UserSettings
 import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
 import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
 import kotlinx.coroutines.CoroutineDispatcher
@@ -62,6 +65,22 @@ class SettingsRepositoryImpl(
         }
     }
 
+    override suspend fun addExcludedDirectory(path: String) {
+        updateSettings { settings ->
+            if (settings.excludedDirectories.contains(path)) {
+                settings
+            } else {
+                settings.copy(excludedDirectories = settings.excludedDirectories + path)
+            }
+        }
+    }
+
+    override suspend fun removeExcludedDirectory(path: String) {
+        updateSettings { settings ->
+            settings.copy(excludedDirectories = settings.excludedDirectories.filter { it != path })
+        }
+    }
+
     override suspend fun setDynamicColoringEnabled(enabled: Boolean) {
         updateSettings { it.copy(isDynamicColorEnabled = enabled) }
     }
@@ -98,16 +117,80 @@ class SettingsRepositoryImpl(
         updateSettings { it.copy(fetchDeezerArtistImages = enabled) }
     }
 
+    override suspend fun setArtistDelimiters(delimiters: List<String>) {
+        updateSettings { it.copy(artistDelimiters = delimiters.distinct(), artistSettingsRescanRequired = true) }
+    }
+
+    override suspend fun addArtistDelimiter(delimiter: String) {
+        val trimmed = delimiter.trim()
+        if (trimmed.isEmpty()) return
+        updateSettings { settings ->
+            if (settings.artistDelimiters.contains(trimmed)) {
+                settings
+            } else {
+                settings.copy(artistDelimiters = settings.artistDelimiters + trimmed, artistSettingsRescanRequired = true)
+            }
+        }
+    }
+
+    override suspend fun removeArtistDelimiter(delimiter: String) {
+        updateSettings { settings ->
+            if (settings.artistDelimiters.size <= 1) {
+                settings
+            } else {
+                settings.copy(artistDelimiters = settings.artistDelimiters.filter { it != delimiter }, artistSettingsRescanRequired = true)
+            }
+        }
+    }
+
+    override suspend fun resetArtistDelimiters() {
+        updateSettings { it.copy(artistDelimiters = com.kayoi.pixelplayerdesktop.utils.DEFAULT_ARTIST_DELIMITERS, artistSettingsRescanRequired = true) }
+    }
+
+    override suspend fun setWordDelimiters(delimiters: List<String>) {
+        updateSettings { it.copy(wordDelimiters = delimiters.distinct(), artistSettingsRescanRequired = true) }
+    }
+
+    override suspend fun addWordDelimiter(delimiter: String) {
+        val trimmed = delimiter.trim()
+        if (trimmed.isEmpty()) return
+        updateSettings { settings ->
+            if (settings.wordDelimiters.any { it.equals(trimmed, ignoreCase = true) }) {
+                settings
+            } else {
+                settings.copy(wordDelimiters = settings.wordDelimiters + trimmed, artistSettingsRescanRequired = true)
+            }
+        }
+    }
+
+    override suspend fun removeWordDelimiter(delimiter: String) {
+        updateSettings { settings ->
+            settings.copy(wordDelimiters = settings.wordDelimiters.filter { !it.equals(delimiter, ignoreCase = true) }, artistSettingsRescanRequired = true)
+        }
+    }
+
+    override suspend fun resetWordDelimiters() {
+        updateSettings { it.copy(wordDelimiters = com.kayoi.pixelplayerdesktop.utils.DEFAULT_WORD_DELIMITERS, artistSettingsRescanRequired = true) }
+    }
+
+    override suspend fun setExtractArtistFromTitle(enabled: Boolean) {
+        updateSettings { it.copy(extractArtistFromTitle = enabled, artistSettingsRescanRequired = true) }
+    }
+
+    override suspend fun clearArtistSettingsRescanRequired() {
+        updateSettings { it.copy(artistSettingsRescanRequired = false) }
+    }
+
     private fun loadSettingsFromDisk(): UserSettings {
         return try {
             if (settingsFile.exists()) {
                 val content = settingsFile.readText(Charsets.UTF_8)
-                json.decodeFromString<UserSettings>(content)
+                json.decodeFromString(UserSettings.serializer(), content)
             } else {
                 val defaultSettings = UserSettings(
                     musicDirectories = DesktopPathProvider.defaultMusicDirectories
                 )
-                saveSettingsToDisk(defaultSettings)
+                saveSettingsToDiskSync(defaultSettings)
                 defaultSettings
             }
         } catch (e: Exception) {
@@ -115,7 +198,11 @@ class SettingsRepositoryImpl(
         }
     }
 
-    private fun saveSettingsToDisk(settings: UserSettings) {
+    private suspend fun saveSettingsToDisk(settings: UserSettings) = withContext(ioDispatcher) {
+        saveSettingsToDiskSync(settings)
+    }
+
+    private fun saveSettingsToDiskSync(settings: UserSettings) {
         try {
             val parent = settingsFile.parentFile
             if (parent != null && !parent.exists()) {

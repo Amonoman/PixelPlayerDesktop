@@ -2,7 +2,7 @@ package com.kayoi.pixelplayerdesktop.domain
 
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import java.util.Calendar
-import java.util.Random
+import kotlin.random.Random
 
 /**
  * Manages generation of personalized dynamic playlists based on user preferences and calendar date.

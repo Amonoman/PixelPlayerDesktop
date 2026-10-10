@@ -1,11 +1,15 @@
 package com.kayoi.pixelplayerdesktop.di
 
-import com.kayoi.pixelplayerdesktop.data.database.*
+import com.kayoi.pixelplayerdesktop.data.database.FavoritesDao
+import com.kayoi.pixelplayerdesktop.data.database.LocalPlaylistDao
+import com.kayoi.pixelplayerdesktop.data.database.LyricsDao
+import com.kayoi.pixelplayerdesktop.data.database.MusicDao
+import com.kayoi.pixelplayerdesktop.data.database.PixelPlayerDatabase
 import com.kayoi.pixelplayerdesktop.data.player.QueueManager
 import com.kayoi.pixelplayerdesktop.data.player.VlcjAudioEngine
-import com.kayoi.pixelplayerdesktop.data.preferences.SettingsRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.repository.LyricsRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.repository.MusicRepositoryImpl
+import com.kayoi.pixelplayerdesktop.data.repository.SettingsRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.scanner.DesktopMusicScanner
 import com.kayoi.pixelplayerdesktop.domain.player.AudioEngine
 import com.kayoi.pixelplayerdesktop.domain.repository.LyricsRepository
@@ -46,7 +50,6 @@ val databaseModule: Module = module {
     single { LocalPlaylistDao(database = get(), ioDispatcher = get(), json = get()) }
     single { FavoritesDao(database = get(), ioDispatcher = get()) }
     single { LyricsDao(database = get(), ioDispatcher = get(), json = get()) }
-    single { SearchHistoryDao(database = get(), ioDispatcher = get()) }
 }
 
 val repositoryModule: Module = module {
@@ -56,7 +59,6 @@ val repositoryModule: Module = module {
             musicDao = get(),
             favoritesDao = get(),
             playlistDao = get(),
-            searchHistoryDao = get(),
             ioDispatcher = get()
         )
     }
