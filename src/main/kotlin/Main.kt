@@ -152,7 +152,7 @@ fun main() = application {
             }
         }
     ) {
-        window.minimumSize = java.awt.Dimension(920, 620)
+        window.minimumSize = java.awt.Dimension(760, 560)
 
         DisposableEffect(window) {
             fun updateMaximizedBounds() {

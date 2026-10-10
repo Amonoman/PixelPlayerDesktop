@@ -41,11 +41,13 @@ import com.kayoi.pixelplayerdesktop.presentation.components.DismissUndoBar
 import com.kayoi.pixelplayerdesktop.presentation.components.MiniPlayerBar
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueSidePanel
 import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavDestination
+import com.kayoi.pixelplayerdesktop.presentation.screens.LibrarySubDetail
 import com.kayoi.pixelplayerdesktop.presentation.screens.library.AlbumsTab
 import com.kayoi.pixelplayerdesktop.presentation.screens.library.ArtistsTab
 import com.kayoi.pixelplayerdesktop.presentation.screens.library.FoldersTab
 import com.kayoi.pixelplayerdesktop.presentation.screens.library.PlaylistsTab
 import com.kayoi.pixelplayerdesktop.presentation.screens.library.SongsTab
+import com.kayoi.pixelplayerdesktop.presentation.screens.settings.SettingsSection
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.PixelPlayerTheme
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
@@ -87,6 +89,8 @@ fun MainAppScaffold(
     var selectedArtist by remember { mutableStateOf<Artist?>(null) }
     var selectedFolderDetail by remember { mutableStateOf<MusicFolder?>(null) }
     var currentFolderTreePath by remember { mutableStateOf<String?>(null) }
+    var settingsInitialSection by remember { mutableStateOf<SettingsSection?>(null) }
+    var settingsInitialSubDetail by remember { mutableStateOf(LibrarySubDetail.NONE) }
 
     val songColorScheme = remember(currentSong?.albumArtUriString, isDarkTheme, isDynamicColor, paletteStyle, colorAccuracy) {
         if (isDynamicColor && currentSong?.albumArtUriString != null) {
@@ -150,7 +154,7 @@ fun MainAppScaffold(
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val isQueueVisible = isQueueSidePanelOpen && (currentSong != null || queue.isNotEmpty())
-        val isSidebarCompact = (maxWidth < 1120.dp && isQueueVisible) || (maxWidth < 880.dp)
+        val isSidebarCompact = (maxWidth < 960.dp && isQueueVisible) || (maxWidth < 740.dp)
 
         Row(modifier = Modifier.fillMaxSize()) {
             AppSidebar(
@@ -170,6 +174,10 @@ fun MainAppScaffold(
                     if (destination != DesktopNavDestination.FOLDERS) {
                         selectedFolderDetail = null
                         currentFolderTreePath = null
+                    }
+                    if (destination != DesktopNavDestination.SETTINGS) {
+                        settingsInitialSection = null
+                        settingsInitialSubDetail = LibrarySubDetail.NONE
                     }
                 },
                 isCompact = isSidebarCompact
@@ -226,6 +234,12 @@ fun MainAppScaffold(
                                     },
                                     onShuffleAll = { viewModel.playSongs(songs.shuffled()) },
                                     onNavigateToLibrary = { currentDestination = DesktopNavDestination.SONGS },
+                                    onNavigateToFolders = {
+                                        settingsInitialSection = SettingsSection.LIBRARY
+                                        settingsInitialSubDetail = LibrarySubDetail.FOLDERS
+                                        currentDestination = DesktopNavDestination.SETTINGS
+                                    },
+                                    onRescanLibrary = { viewModel.rescanLibrary() },
                                     onPlayNext = { song -> viewModel.playSongNext(song) },
                                     onAddToQueue = { song -> viewModel.addSongToQueue(song) },
                                     onAddToPlaylist = { song -> songToAddToPlaylist = song },
@@ -311,7 +325,9 @@ fun MainAppScaffold(
                                     isDynamicColor = isDynamicColor,
                                     onToggleDarkTheme = { viewModel.toggleDarkMode() },
                                     onToggleDynamicColor = { viewModel.toggleDynamicColor() },
-                                    onRescanLibrary = { viewModel.rescanLibrary() }
+                                    onRescanLibrary = { viewModel.rescanLibrary() },
+                                    initialSection = settingsInitialSection,
+                                    initialSubDetail = settingsInitialSubDetail
                                 )
                             }
                         }

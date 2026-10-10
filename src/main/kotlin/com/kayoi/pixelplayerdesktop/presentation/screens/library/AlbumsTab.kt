@@ -170,7 +170,7 @@ fun AlbumsTab(
                 } else {
                     LazyVerticalGrid(
                         state = albumsGridState,
-                        columns = GridCells.Adaptive(minSize = 180.dp),
+                        columns = GridCells.Adaptive(minSize = 150.dp),
                         contentPadding = PaddingValues(start = 24.dp, end = 28.dp, top = 4.dp, bottom = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp),

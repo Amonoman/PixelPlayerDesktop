@@ -35,10 +35,12 @@ fun SettingsScreen(
     onToggleDarkTheme: () -> Unit,
     onToggleDynamicColor: () -> Unit,
     onRescanLibrary: () -> Unit,
+    initialSection: SettingsSection? = null,
+    initialSubDetail: LibrarySubDetail = LibrarySubDetail.NONE,
     modifier: Modifier = Modifier
 ) {
-    var activeSection by remember { mutableStateOf<SettingsSection?>(null) }
-    var activeSubDetail by remember { mutableStateOf(LibrarySubDetail.NONE) }
+    var activeSection by remember(initialSection) { mutableStateOf<SettingsSection?>(initialSection) }
+    var activeSubDetail by remember(initialSubDetail) { mutableStateOf(initialSubDetail) }
 
     AnimatedContent(
         targetState = Pair(activeSection, activeSubDetail),

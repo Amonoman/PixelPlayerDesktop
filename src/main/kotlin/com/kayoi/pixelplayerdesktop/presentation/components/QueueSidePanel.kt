@@ -167,7 +167,7 @@ fun QueueSidePanel(
     Row(
         modifier = modifier
             .fillMaxHeight()
-            .width(420.dp)
+            .width(320.dp)
     ) {
 
         VerticalDivider(

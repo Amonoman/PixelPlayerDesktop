@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -109,71 +110,83 @@ private fun DailyMixHeader(
     thumbnails: List<Song>,
     onHeaderClick: () -> Unit
 ) {
-    val titleStyle = rememberDailyMixTitleStyle()
     val colors = MaterialTheme.colorScheme
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
-            .height(112.dp)
-            .background(
-                brush = Brush.horizontalGradient(
-                    colors = listOf(
-                        colors.primary,
-                        colors.tertiary
-                    )
-                )
-            )
-            .clickable(onClick = onHeaderClick),
-        contentAlignment = Alignment.CenterStart
+            .clickable(onClick = onHeaderClick)
     ) {
-        Row(
+        val isCompact = maxWidth < 640.dp
+        val titleStyle = rememberDailyMixTitleStyle(isCompact)
+        val headerHeight = if (isCompact) 96.dp else 112.dp
+        val horizontalPaddingStart = if (isCompact) 18.dp else 26.dp
+        val horizontalPaddingEnd = if (isCompact) 16.dp else 24.dp
+
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 26.dp, end = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "DAILY MIX",
-                    style = titleStyle,
-                    color = colors.onPrimary
-                )
-                Text(
-                    text = "Based on History",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 17.sp,
-                    color = colors.onPrimary.copy(alpha = 0.90f),
-                    modifier = Modifier.padding(start = 1.dp, top = 3.dp)
-                )
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy((-24).dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                thumbnails.forEachIndexed { index, song ->
-                    val shape = threeShapeSwitch(index, thirdShapeCornerRadius = 22.dp)
-                    val sizeModifier = when (index) {
-                        0 -> Modifier.size(76.dp).padding(top = 4.dp)
-                        1 -> Modifier.size(66.dp).padding(bottom = 4.dp)
-                        else -> Modifier.size(72.dp)
-                    }
-
-                    Box(
-                        modifier = sizeModifier
-                            .clip(shape)
-                            .border(3.dp, colors.surface, shape)
-                    ) {
-                        AsyncArtworkImage(
-                            artworkUri = song.albumArtUriString,
-                            modifier = Modifier.fillMaxSize(),
-                            placeholderIcon = Icons.Rounded.MusicNote,
-                            placeholderIconSize = 32.dp,
-                            contentDescription = song.title
+                .height(headerHeight)
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            colors.primary,
+                            colors.tertiary
                         )
+                    )
+                ),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = horizontalPaddingStart, end = horizontalPaddingEnd),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "DAILY MIX",
+                        style = titleStyle,
+                        color = colors.onPrimary,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = "Based on History",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = if (isCompact) 14.5.sp else 17.sp,
+                        color = colors.onPrimary.copy(alpha = 0.90f),
+                        modifier = Modifier.padding(start = 1.dp, top = if (isCompact) 1.dp else 3.dp),
+                        maxLines = 1
+                    )
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(if (isCompact) (-18).dp else (-24).dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    thumbnails.forEachIndexed { index, song ->
+                        val shape = threeShapeSwitch(index, thirdShapeCornerRadius = if (isCompact) 18.dp else 22.dp)
+                        val sizeModifier = when (index) {
+                            0 -> if (isCompact) Modifier.size(60.dp).padding(top = 3.dp) else Modifier.size(76.dp).padding(top = 4.dp)
+                            1 -> if (isCompact) Modifier.size(52.dp).padding(bottom = 3.dp) else Modifier.size(66.dp).padding(bottom = 4.dp)
+                            else -> if (isCompact) Modifier.size(56.dp) else Modifier.size(72.dp)
+                        }
+
+                        Box(
+                            modifier = sizeModifier
+                                .clip(shape)
+                                .border(if (isCompact) 2.5.dp else 3.dp, colors.surface, shape)
+                        ) {
+                            AsyncArtworkImage(
+                                artworkUri = song.albumArtUriString,
+                                modifier = Modifier.fillMaxSize(),
+                                placeholderIcon = Icons.Rounded.MusicNote,
+                                placeholderIconSize = if (isCompact) 26.dp else 32.dp,
+                                contentDescription = song.title
+                            )
+                        }
                     }
                 }
             }
@@ -281,8 +294,10 @@ private fun ViewAllDailyMixButton(
 
 @OptIn(ExperimentalTextApi::class)
 @Composable
-private fun rememberDailyMixTitleStyle(): TextStyle {
-    return remember {
+private fun rememberDailyMixTitleStyle(isCompact: Boolean = false): TextStyle {
+    return remember(isCompact) {
+        val fontSize = if (isCompact) 22.sp else 28.sp
+        val lineHeight = if (isCompact) 24.sp else 30.sp
         TextStyle(
             fontFamily = FontFamily(
                 Font(
@@ -300,8 +315,8 @@ private fun rememberDailyMixTitleStyle(): TextStyle {
                 )
             ),
             fontWeight = FontWeight(630),
-            fontSize = 28.sp,
-            lineHeight = 30.sp,
+            fontSize = fontSize,
+            lineHeight = lineHeight,
             letterSpacing = (-0.35).sp
         )
     }

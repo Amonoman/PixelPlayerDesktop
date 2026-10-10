@@ -307,7 +307,7 @@ fun ExpandedPlayerScreen(
 
                             Surface(
                                 modifier = Modifier
-                                    .width(460.dp)
+                                    .width(340.dp)
                                     .fillMaxHeight(),
                                 color = colors.surfaceContainerLow,
                                 shape = RoundedCornerShape(24.dp)

@@ -58,7 +58,7 @@ fun AppSidebar(
 ) {
     val colors = MaterialTheme.colorScheme
     val animatedWidth by animateDpAsState(
-        targetValue = if (isCompact) 74.dp else 244.dp,
+        targetValue = if (isCompact) 72.dp else 200.dp,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
             stiffness = Spring.StiffnessMediumLow
