@@ -99,7 +99,7 @@ fun SongsTab(
     Column(modifier = modifier.fillMaxSize()) {
         LibraryActionRow(
             itemCount = filteredSongs.size,
-            itemCountLabel = "tracks",
+            itemCountLabel = "songs",
             currentSortOption = currentSongSortOption,
             showLocateButton = showLocateButton,
             onLocateClick = {
@@ -141,7 +141,7 @@ fun SongsTab(
                         modifier = Modifier.size(54.dp)
                     )
                     Text(
-                        text = if (searchQuery.isNotBlank()) "No tracks matching \"$searchQuery\"" else "No tracks in library",
+                        text = if (searchQuery.isNotBlank()) "No songs matching \"$searchQuery\"" else "No songs in library",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = colors.onSurfaceVariant

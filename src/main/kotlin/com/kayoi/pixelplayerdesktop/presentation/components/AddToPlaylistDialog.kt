@@ -262,9 +262,9 @@ fun AddToPlaylistDialog(
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis
                                         )
-                                        val trackCount = playlist.songIds.size
+                                        val songCount = playlist.songIds.size
                                         Text(
-                                            text = "$trackCount ${if (trackCount == 1) "track" else "tracks"}",
+                                            text = "$songCount ${if (songCount == 1) "song" else "songs"}",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = colors.onSurfaceVariant
                                         )

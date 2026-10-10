@@ -216,7 +216,7 @@ fun QueueSidePanel(
                             color = colors.onSurface
                         )
                         Text(
-                            text = "${queue.size} tracks",
+                            text = "${queue.size} ${if (queue.size == 1) "song" else "songs"}",
                             style = MaterialTheme.typography.labelSmall,
                             color = colors.onSurfaceVariant.copy(alpha = 0.7f)
                         )
@@ -473,7 +473,7 @@ fun QueueSidePanel(
             },
             text = {
                 Text(
-                    text = "Are you sure you want to clear all ${queue.size} tracks from the queue?",
+                    text = "Are you sure you want to clear all ${queue.size} songs from the queue?",
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant
                 )

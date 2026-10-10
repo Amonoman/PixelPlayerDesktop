@@ -192,7 +192,7 @@ fun SettingsCategoryDetail(
                                             color = colors.onSurface
                                         )
                                         Text(
-                                            text = "Scan configured music directories for new audio tracks and metadata",
+                                            text = "Scan configured music directories for new songs and metadata",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = colors.onSurfaceVariant
                                         )

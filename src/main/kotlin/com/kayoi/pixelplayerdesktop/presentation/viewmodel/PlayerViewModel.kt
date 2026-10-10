@@ -55,7 +55,11 @@ class PlayerViewModel(
         val targetList = availableArtists ?: artists.value
         if (targetList.isNotEmpty()) {
             val randomArtist = targetList.random()
-            val artistSongs = songs.value.filter { it.artist.contains(randomArtist.name, ignoreCase = true) }
+            val artistSongs = songs.value.filter { song ->
+                song.artistId == randomArtist.id ||
+                song.artists.any { it.id == randomArtist.id || it.name.equals(randomArtist.name, ignoreCase = true) } ||
+                song.artist.contains(randomArtist.name, ignoreCase = true)
+            }
             if (artistSongs.isNotEmpty()) {
                 playbackStateHolder.shuffleSongs(artistSongs)
             }

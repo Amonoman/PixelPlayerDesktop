@@ -246,7 +246,7 @@ fun PlaylistDetailScreen(
 
                         Spacer(modifier = Modifier.height(6.dp))
 
-                        val countText = if (plainSongs.size == 1) "1 track" else "${plainSongs.size} tracks"
+                        val countText = if (plainSongs.size == 1) "1 song" else "${plainSongs.size} songs"
                         val durationText = formatDurationHuman(totalDurationMs)
                         Text(
                             text = if (durationText.isNotBlank()) "$countText • $durationText" else countText,
@@ -274,7 +274,7 @@ fun PlaylistDetailScreen(
                         },
                         onPlay = { viewModel.playSongs(plainSongs, 0) },
                         onShuffle = { viewModel.shuffleSongs(plainSongs) },
-                        onAddTracks = { showAddSongsDialog = true },
+                        onAddSongs = { showAddSongsDialog = true },
                         onRename = { showRenameDialog = true },
                         onDelete = { showDeleteConfirmDialog = true },
                         isCompact = false
@@ -346,7 +346,7 @@ fun PlaylistDetailScreen(
 
                             Spacer(modifier = Modifier.height(2.dp))
 
-                            val countText = if (plainSongs.size == 1) "1 track" else "${plainSongs.size} tracks"
+                            val countText = if (plainSongs.size == 1) "1 song" else "${plainSongs.size} songs"
                             val durationText = formatDurationHuman(totalDurationMs)
                             Text(
                                 text = if (durationText.isNotBlank()) "$countText • $durationText" else countText,
@@ -373,7 +373,7 @@ fun PlaylistDetailScreen(
                         },
                         onPlay = { viewModel.playSongs(plainSongs, 0) },
                         onShuffle = { viewModel.shuffleSongs(plainSongs) },
-                        onAddTracks = { showAddSongsDialog = true },
+                        onAddSongs = { showAddSongsDialog = true },
                         onRename = { showRenameDialog = true },
                         onDelete = { showDeleteConfirmDialog = true },
                         isCompact = isCompact
@@ -420,7 +420,7 @@ fun PlaylistDetailScreen(
                         ) {
                             Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Add Tracks", fontWeight = FontWeight.Bold)
+                            Text("Add Songs", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -603,7 +603,7 @@ private fun PlaylistHeaderActions(
     onToggleReorderMode: () -> Unit,
     onPlay: () -> Unit,
     onShuffle: () -> Unit,
-    onAddTracks: () -> Unit,
+    onAddSongs: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
     isCompact: Boolean = false,
@@ -654,7 +654,7 @@ private fun PlaylistHeaderActions(
         }
 
         FilledTonalButton(
-            onClick = onAddTracks,
+            onClick = onAddSongs,
             shape = RoundedCornerShape(24.dp),
             colors = ButtonDefaults.filledTonalButtonColors(
                 containerColor = colors.secondaryContainer,
@@ -668,7 +668,7 @@ private fun PlaylistHeaderActions(
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(6.dp))
-            Text("Add Tracks", fontWeight = FontWeight.SemiBold)
+            Text("Add Songs", fontWeight = FontWeight.SemiBold)
         }
 
         if (localSongs.isNotEmpty()) {

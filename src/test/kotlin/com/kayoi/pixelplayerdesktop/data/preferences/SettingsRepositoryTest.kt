@@ -23,6 +23,7 @@ class SettingsRepositoryTest {
         // Update settings
         repository.setDynamicColoringEnabled(false)
         repository.setVolume(0.75f)
+        repository.addMusicDirectory("/test/music")
         repository.setAlbumsListView(true)
         repository.setArtistsListView(true)
         repository.setFoldersPlaylistView(true)

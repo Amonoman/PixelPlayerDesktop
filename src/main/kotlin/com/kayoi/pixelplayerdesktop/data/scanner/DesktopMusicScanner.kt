@@ -243,9 +243,11 @@ class DesktopMusicScanner(
                 val discNumber = getVorbisComment(tags, "discnumber")?.toIntOrNull()
                     ?: getVorbisComment(tags, "disc")?.toIntOrNull()
 
-                val year = tags?.date?.take(4)?.toIntOrNull()
-                    ?: getVorbisComment(tags, "date")?.take(4)?.toIntOrNull()
-                    ?: getVorbisComment(tags, "year")?.take(4)?.toIntOrNull()
+                val year = parseYear(tags?.date)
+                    ?: parseYear(getVorbisComment(tags, "date"))
+                    ?: parseYear(getVorbisComment(tags, "year"))
+                    ?: parseYear(getVorbisComment(tags, "originaldate"))
+                    ?: parseYear(getVorbisComment(tags, "original_date"))
                     ?: 0
 
                 val durationMs = getOpusDurationMs(file)
@@ -290,6 +292,12 @@ class DesktopMusicScanner(
         }
     }
 
+    private fun parseYear(raw: String?): Int? {
+        if (raw.isNullOrBlank()) return null
+        val match = Regex("""\b(19\d{2}|20\d{2})\b""").find(raw) ?: Regex("""\d{4}""").find(raw)
+        return match?.value?.toIntOrNull() ?: raw.trim().take(4).toIntOrNull()
+    }
+
     private fun extractGeneralMetadata(
         file: File,
         existingId: String?,
@@ -327,9 +335,11 @@ class DesktopMusicScanner(
             val genre = tag?.getFirst(FieldKey.GENRE)?.trim()?.ifBlank { null }
             val lyrics = tag?.getFirst(FieldKey.LYRICS)?.trim()?.ifBlank { null }
 
-            val year = tag?.getFirst(FieldKey.YEAR)?.toIntOrNull() ?: 0
-            val trackNumber = tag?.getFirst(FieldKey.TRACK)?.toIntOrNull() ?: 0
-            val discNumber = tag?.getFirst(FieldKey.DISC_NO)?.toIntOrNull()
+            val year = parseYear(tag?.getFirst(FieldKey.YEAR))
+                ?: parseYear(tag?.getFirst(FieldKey.ORIGINAL_YEAR))
+                ?: 0
+            val trackNumber = tag?.getFirst(FieldKey.TRACK)?.substringBefore('/')?.trim()?.toIntOrNull() ?: 0
+            val discNumber = tag?.getFirst(FieldKey.DISC_NO)?.substringBefore('/')?.trim()?.toIntOrNull()
 
             val durationMs = (header?.trackLength?.toLong() ?: 0L) * 1000L
             val bitrate = header?.bitRateAsNumber?.toInt()

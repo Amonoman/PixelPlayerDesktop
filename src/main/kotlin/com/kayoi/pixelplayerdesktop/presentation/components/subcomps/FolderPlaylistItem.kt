@@ -106,7 +106,7 @@ fun FolderPlaylistItem(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "${folder.totalSongCount} ${if (folder.totalSongCount == 1) "track" else "tracks"}",
+                    text = "${folder.totalSongCount} ${if (folder.totalSongCount == 1) "song" else "songs"}",
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.onSurfaceVariant,
                     maxLines = 1,

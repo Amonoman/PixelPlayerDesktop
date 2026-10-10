@@ -41,17 +41,16 @@ object ArtistImageService {
      */
     suspend fun getArtistImageUrl(
         artistName: String,
-        fallbackArtworkUri: String? = null,
         fetchEnabled: Boolean = true
     ): String? = withContext(Dispatchers.IO) {
-        if (artistName.isBlank()) return@withContext fallbackArtworkUri
+        if (artistName.isBlank()) return@withContext null
 
         val normalized = artistName.trim().lowercase()
 
         // 1. Check in-memory LRU cache
         if (memoryCache.containsKey(normalized)) {
             val cached = memoryCache[normalized]
-            return@withContext cached ?: fallbackArtworkUri
+            return@withContext cached
         }
 
         // 2. Check local persistent disk cache
@@ -63,7 +62,7 @@ object ArtistImageService {
         }
 
         if (!fetchEnabled || failedArtists.contains(normalized)) {
-            return@withContext fallbackArtworkUri
+            return@withContext null
         }
 
         // 3. Query remote API for artist image
@@ -105,10 +104,10 @@ object ArtistImageService {
             }
             failedArtists.add(normalized)
             memoryCache[normalized] = null
-            fallbackArtworkUri
+            null
         } catch (_: Exception) {
             failedArtists.add(normalized)
-            fallbackArtworkUri
+            null
         }
     }
 

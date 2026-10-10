@@ -104,7 +104,7 @@ fun AddSongsToPlaylistDialog(
                 ) {
                     Column {
                         Text(
-                            text = "Add Tracks to Playlist",
+                            text = "Add Songs to Playlist",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
@@ -176,7 +176,7 @@ fun AddSongsToPlaylistDialog(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = if (searchQuery.isNotBlank()) "No matching tracks found" else "All library tracks are already in this playlist",
+                                text = if (searchQuery.isNotBlank()) "No matching songs found" else "All library songs are already in this playlist",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = colors.onSurfaceVariant
                             )
@@ -289,7 +289,7 @@ fun AddSongsToPlaylistDialog(
                             contentColor = colors.onPrimary
                         )
                     ) {
-                        Text("Add ${selectedSongIds.size} tracks", fontWeight = FontWeight.Bold)
+                        Text("Add ${selectedSongIds.size} ${if (selectedSongIds.size == 1) "song" else "songs"}", fontWeight = FontWeight.Bold)
                     }
                 }
             }

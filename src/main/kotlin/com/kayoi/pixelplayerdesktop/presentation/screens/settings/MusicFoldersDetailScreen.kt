@@ -359,7 +359,7 @@ fun MusicFoldersDetailScreen(
                                         color = colors.onSurface
                                     )
                                     Text(
-                                        text = "Choose a local folder to scan audio tracks and folder tree",
+                                        text = "Choose a local folder to scan songs and folder tree",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = colors.onSurfaceVariant
                                     )

@@ -57,7 +57,7 @@ private val innerCorner = 8.dp
 fun LibraryActionRow(
     modifier: Modifier = Modifier,
     itemCount: Int,
-    itemCountLabel: String = "tracks",
+    itemCountLabel: String = "songs",
     currentSortOption: SortOption,
     availableSortOptions: List<SortOption> = SortOption.SONGS,
     showLocateButton: Boolean = false,

@@ -41,7 +41,6 @@ import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 fun ArtistGridItem(
     artist: Artist,
     modifier: Modifier = Modifier,
-    fallbackArtworkUri: String? = null,
     fetchDeezerImages: Boolean = true,
     onClick: () -> Unit
 ) {
@@ -49,14 +48,13 @@ fun ArtistGridItem(
     val cardShape = RoundedCornerShape(20.dp)
 
     var resolvedImageUrl by remember(artist.name, artist.effectiveImageUrl) {
-        mutableStateOf(artist.effectiveImageUrl ?: fallbackArtworkUri)
+        mutableStateOf(artist.effectiveImageUrl)
     }
 
     LaunchedEffect(artist.name, fetchDeezerImages) {
         if (resolvedImageUrl.isNullOrBlank() && artist.name.isNotBlank()) {
             val fetched = ArtistImageService.getArtistImageUrl(
                 artistName = artist.name,
-                fallbackArtworkUri = fallbackArtworkUri,
                 fetchEnabled = fetchDeezerImages
             )
             if (!fetched.isNullOrBlank()) {
@@ -127,7 +125,7 @@ fun ArtistGridItem(
 
             Spacer(modifier = Modifier.height(2.dp))
 
-            val songCountText = if (artist.songCount == 1) "1 track" else "${artist.songCount} tracks"
+            val songCountText = if (artist.songCount == 1) "1 song" else "${artist.songCount} songs"
             Text(
                 text = songCountText,
                 style = MaterialTheme.typography.bodySmall,

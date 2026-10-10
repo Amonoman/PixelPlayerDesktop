@@ -29,6 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
+import com.kayoi.pixelplayerdesktop.data.model.Album
+import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.MusicFolder
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.components.AddToPlaylistDialog
@@ -81,6 +83,8 @@ fun MainAppScaffold(
     val colorAccuracy by viewModel.albumArtColorAccuracy.collectAsState()
 
     var selectedPlaylistId by remember { mutableStateOf<String?>(null) }
+    var selectedAlbum by remember { mutableStateOf<Album?>(null) }
+    var selectedArtist by remember { mutableStateOf<Artist?>(null) }
     var selectedFolderDetail by remember { mutableStateOf<MusicFolder?>(null) }
     var currentFolderTreePath by remember { mutableStateOf<String?>(null) }
 
@@ -156,6 +160,12 @@ fun MainAppScaffold(
                     previousDestinationBeforeSearch = null
                     if (destination != DesktopNavDestination.PLAYLISTS) {
                         selectedPlaylistId = null
+                    }
+                    if (destination != DesktopNavDestination.ALBUMS) {
+                        selectedAlbum = null
+                    }
+                    if (destination != DesktopNavDestination.ARTISTS) {
+                        selectedArtist = null
                     }
                     if (destination != DesktopNavDestination.FOLDERS) {
                         selectedFolderDetail = null
@@ -242,7 +252,11 @@ fun MainAppScaffold(
                                     songs = songs,
                                     isDarkTheme = isDarkTheme,
                                     searchQuery = searchQuery,
-                                    viewModel = viewModel
+                                    selectedAlbum = selectedAlbum,
+                                    onSelectAlbum = { selectedAlbum = it },
+                                    viewModel = viewModel,
+                                    onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                    onDelete = { song -> songToDelete = song }
                                 )
                             }
 
@@ -251,7 +265,11 @@ fun MainAppScaffold(
                                     artists = artists,
                                     songs = songs,
                                     searchQuery = searchQuery,
-                                    viewModel = viewModel
+                                    selectedArtist = selectedArtist,
+                                    onSelectArtist = { selectedArtist = it },
+                                    viewModel = viewModel,
+                                    onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                    onDelete = { song -> songToDelete = song }
                                 )
                             }
 
@@ -293,7 +311,7 @@ fun MainAppScaffold(
                                     isDynamicColor = isDynamicColor,
                                     onToggleDarkTheme = { viewModel.toggleDarkMode() },
                                     onToggleDynamicColor = { viewModel.toggleDynamicColor() },
-                                    onRescanLibrary = { viewModel.scanLibrary() }
+                                    onRescanLibrary = { viewModel.rescanLibrary() }
                                 )
                             }
                         }

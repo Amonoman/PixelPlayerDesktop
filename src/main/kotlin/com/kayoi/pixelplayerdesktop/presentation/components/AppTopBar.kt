@@ -119,8 +119,8 @@ fun AppTopBar(
         }
 
         val placeholder = when {
-            searchBarWidth >= 420.dp -> "Search tracks, albums, artists... (Ctrl+K)"
-            searchBarWidth >= 320.dp -> "Search tracks, artists... (Ctrl+K)"
+            searchBarWidth >= 420.dp -> "Search songs, albums, artists... (Ctrl+K)"
+            searchBarWidth >= 320.dp -> "Search songs, artists... (Ctrl+K)"
             searchBarWidth >= 220.dp -> "Search... (Ctrl+K)"
             else -> "Search..."
         }

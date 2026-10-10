@@ -183,8 +183,9 @@ fun FolderDetailScreen(
 
                         Spacer(modifier = Modifier.height(6.dp))
 
+                        val countText = if (folderSongs.size == 1) "1 song" else "${folderSongs.size} songs"
                         Text(
-                            text = "${folderSongs.size} tracks • ${formatTotalDuration(folderSongs)}",
+                            text = "$countText • ${formatTotalDuration(folderSongs)}",
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
                             color = colors.onSurfaceVariant
@@ -300,8 +301,9 @@ fun FolderDetailScreen(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
+                            val countText = if (folderSongs.size == 1) "1 song" else "${folderSongs.size} songs"
                             Text(
-                                text = "${folderSongs.size} tracks • ${formatTotalDuration(folderSongs)}",
+                                text = "$countText • ${formatTotalDuration(folderSongs)}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onSurfaceVariant
                             )

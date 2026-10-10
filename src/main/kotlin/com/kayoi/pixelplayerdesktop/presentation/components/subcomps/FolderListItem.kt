@@ -111,7 +111,7 @@ fun FolderListItem(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 val subtitle = buildString {
-                    append("${folder.totalSongCount} ${if (folder.totalSongCount == 1) "track" else "tracks"}")
+                    append("${folder.totalSongCount} ${if (folder.totalSongCount == 1) "song" else "songs"}")
                     if (folder.subFolders.isNotEmpty()) {
                         append(" • ${folder.subFolders.size} ${if (folder.subFolders.size == 1) "subfolder" else "subfolders"}")
                     }

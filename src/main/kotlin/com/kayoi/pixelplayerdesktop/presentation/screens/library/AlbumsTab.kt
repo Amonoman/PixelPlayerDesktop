@@ -38,6 +38,7 @@ import com.kayoi.pixelplayerdesktop.presentation.components.albumFastScrollLabel
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AlbumGridItem
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AlbumListItem
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryActionRow
+import com.kayoi.pixelplayerdesktop.presentation.screens.AlbumDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 
 @Composable
@@ -46,16 +47,31 @@ fun AlbumsTab(
     songs: List<Song>,
     isDarkTheme: Boolean,
     searchQuery: String,
+    selectedAlbum: Album? = null,
+    onSelectAlbum: (Album?) -> Unit = {},
     viewModel: PlayerViewModel,
+    onAddToPlaylist: ((Song) -> Unit)? = null,
+    onDelete: ((Song) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    val colors = MaterialTheme.colorScheme
-    val currentAlbumSortOption by viewModel.libraryStateHolder.albumSortOption.collectAsState()
-    val isAlbumsListView by viewModel.isAlbumsListView.collectAsState()
-    val albumsGridState = rememberLazyGridState()
-    val albumsListState = rememberLazyListState()
-    var lastHandledAlbumSortKey by remember { mutableStateOf(currentAlbumSortOption.storageKey) }
-    var pendingAlbumSortScrollReset by remember { mutableStateOf(false) }
+    if (selectedAlbum != null) {
+        AlbumDetailScreen(
+            album = selectedAlbum,
+            songs = songs,
+            viewModel = viewModel,
+            onBack = { onSelectAlbum(null) },
+            onAddToPlaylist = onAddToPlaylist,
+            onDelete = onDelete,
+            modifier = modifier
+        )
+    } else {
+        val colors = MaterialTheme.colorScheme
+        val currentAlbumSortOption by viewModel.libraryStateHolder.albumSortOption.collectAsState()
+        val isAlbumsListView by viewModel.isAlbumsListView.collectAsState()
+        val albumsGridState = rememberLazyGridState()
+        val albumsListState = rememberLazyListState()
+        var lastHandledAlbumSortKey by remember { mutableStateOf(currentAlbumSortOption.storageKey) }
+        var pendingAlbumSortScrollReset by remember { mutableStateOf(false) }
 
     val filteredAlbums = remember(albums, searchQuery) {
         if (searchQuery.isBlank()) albums
@@ -147,12 +163,7 @@ fun AlbumsTab(
                             AlbumListItem(
                                 album = album,
                                 isDarkTheme = isDarkTheme,
-                                onClick = {
-                                    val albumSongs = songs.filter { it.album == album.title }
-                                    if (albumSongs.isNotEmpty()) {
-                                        viewModel.playSongs(albumSongs)
-                                    }
-                                }
+                                onClick = { onSelectAlbum(album) }
                             )
                         }
                     }
@@ -173,12 +184,7 @@ fun AlbumsTab(
                             AlbumGridItem(
                                 album = album,
                                 isDarkTheme = isDarkTheme,
-                                onClick = {
-                                    val albumSongs = songs.filter { it.album == album.title }
-                                    if (albumSongs.isNotEmpty()) {
-                                        viewModel.playSongs(albumSongs)
-                                    }
-                                }
+                                onClick = { onSelectAlbum(album) }
                             )
                         }
                     }
@@ -194,5 +200,6 @@ fun AlbumsTab(
                 )
             }
         }
+    }
     }
 }

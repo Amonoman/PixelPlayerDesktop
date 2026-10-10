@@ -113,7 +113,7 @@ fun PlaylistListItem(
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(3.dp))
-                val songCountText = if (playlist.songIds.size == 1) "1 track" else "${playlist.songIds.size} tracks"
+                val songCountText = if (playlist.songIds.size == 1) "1 song" else "${playlist.songIds.size} songs"
                 Text(
                     text = songCountText,
                     style = MaterialTheme.typography.bodySmall,
