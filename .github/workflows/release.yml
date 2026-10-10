@@ -132,14 +132,6 @@ jobs:
       - name: Build Windows Distribution
         run: .\gradlew.bat packageMsi packageExe createDistributable "-PAPP_VERSION_NAME=${{ needs.build-linux.outputs.version }}" --no-daemon
 
-      - name: Inject Bundled LibVLC into Portable Distribution
-        shell: pwsh
-        run: |
-          $portableVlcDir = "build/compose/binaries/main/app/pixelplayer/vlc"
-          New-Item -ItemType Directory -Force -Path $portableVlcDir
-          Copy-Item -Recurse -Force "src/main/resources-packaged/windows/vlc/*" $portableVlcDir/
-          Write-Host "LibVLC successfully injected into portable binary folder"
-
       - name: Archive Portable Windows Binary
         shell: pwsh
         run: |
