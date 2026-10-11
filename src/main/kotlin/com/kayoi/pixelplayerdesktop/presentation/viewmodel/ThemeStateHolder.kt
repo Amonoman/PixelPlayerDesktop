@@ -48,6 +48,18 @@ class ThemeStateHolder(
         .map { AlbumArtColorAccuracy.clamp(it.albumArtColorAccuracy) }
         .stateIn(coroutineScope, SharingStarted.Eagerly, AlbumArtColorAccuracy.DEFAULT)
 
+    val showPlayerFileInfo: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.showPlayerFileInfo }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, true)
+
+    val navBarCompactMode: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.navBarCompactMode }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
+
+    val defaultTab: StateFlow<String> = settingsRepository.settingsFlow
+        .map { it.defaultTab }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, "HOME")
+
     fun setDarkMode(dark: Boolean) {
         coroutineScope.launch {
             settingsRepository.setDarkMode(dark)
@@ -81,6 +93,32 @@ class ThemeStateHolder(
             DynamicColorProcessor.defaultColorAccuracyLevel = accuracy
             DynamicColorProcessor.clearCache()
             settingsRepository.setAlbumArtColorAccuracy(accuracy)
+        }
+    }
+
+    fun setShowPlayerFileInfo(show: Boolean) {
+        coroutineScope.launch {
+            settingsRepository.setShowPlayerFileInfo(show)
+        }
+    }
+
+    fun toggleShowPlayerFileInfo() {
+        setShowPlayerFileInfo(!showPlayerFileInfo.value)
+    }
+
+    fun setNavBarCompactMode(enabled: Boolean) {
+        coroutineScope.launch {
+            settingsRepository.setNavBarCompactMode(enabled)
+        }
+    }
+
+    fun toggleNavBarCompactMode() {
+        setNavBarCompactMode(!navBarCompactMode.value)
+    }
+
+    fun setDefaultTab(tab: String) {
+        coroutineScope.launch {
+            settingsRepository.setDefaultTab(tab)
         }
     }
 }

@@ -149,8 +149,16 @@ class PlayerViewModel(
     val isDynamicColorEnabled = themeStateHolder.isDynamicColorEnabled
     val albumArtPaletteStyle = themeStateHolder.albumArtPaletteStyle
     val albumArtColorAccuracy = themeStateHolder.albumArtColorAccuracy
+    val showPlayerFileInfo = themeStateHolder.showPlayerFileInfo
+    val navBarCompactMode = themeStateHolder.navBarCompactMode
+    val defaultTab = themeStateHolder.defaultTab
     fun toggleDarkMode() = themeStateHolder.toggleDarkMode()
     fun toggleDynamicColor() = themeStateHolder.toggleDynamicColor()
     fun setAlbumArtPaletteStyle(style: AlbumArtPaletteStyle) = themeStateHolder.setAlbumArtPaletteStyle(style)
     fun setAlbumArtColorAccuracy(accuracy: Int) = themeStateHolder.setAlbumArtColorAccuracy(accuracy)
+    fun setShowPlayerFileInfo(show: Boolean) = themeStateHolder.setShowPlayerFileInfo(show)
+    fun toggleShowPlayerFileInfo() = themeStateHolder.toggleShowPlayerFileInfo()
+    fun setNavBarCompactMode(enabled: Boolean) = themeStateHolder.setNavBarCompactMode(enabled)
+    fun toggleNavBarCompactMode() = themeStateHolder.toggleNavBarCompactMode()
+    fun setDefaultTab(tab: String) = themeStateHolder.setDefaultTab(tab)
 }

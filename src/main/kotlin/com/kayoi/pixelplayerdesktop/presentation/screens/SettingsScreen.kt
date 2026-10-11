@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.ArtistSettingsDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.DuplicatesDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.MusicFoldersDetailScreen
+import com.kayoi.pixelplayerdesktop.presentation.screens.settings.PaletteStyleDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.SettingsCategoryDetail
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.SettingsOverviewMenu
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.SettingsSection
@@ -26,7 +27,8 @@ enum class LibrarySubDetail {
     NONE,
     FOLDERS,
     ARTISTS,
-    DUPLICATES
+    DUPLICATES,
+    PALETTE_STYLE
 }
 
 @Composable
@@ -98,6 +100,13 @@ fun SettingsScreen(
                     onBack = { activeSubDetail = LibrarySubDetail.NONE }
                 )
             }
+            section == SettingsSection.APPEARANCE && subDetail == LibrarySubDetail.PALETTE_STYLE -> {
+                PaletteStyleDetailScreen(
+                    viewModel = viewModel,
+                    isDarkTheme = isDarkTheme,
+                    onBack = { activeSubDetail = LibrarySubDetail.NONE }
+                )
+            }
             else -> {
                 SettingsCategoryDetail(
                     section = section,
@@ -110,6 +119,7 @@ fun SettingsScreen(
                     onOpenFoldersDetail = { activeSubDetail = LibrarySubDetail.FOLDERS },
                     onOpenArtistsDetail = { activeSubDetail = LibrarySubDetail.ARTISTS },
                     onOpenDuplicatesDetail = { activeSubDetail = LibrarySubDetail.DUPLICATES },
+                    onOpenPaletteStyleDetail = { activeSubDetail = LibrarySubDetail.PALETTE_STYLE },
                     onBack = { activeSection = null }
                 )
             }

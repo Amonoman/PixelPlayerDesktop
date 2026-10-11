@@ -84,6 +84,8 @@ fun MainAppScaffold(
     val isDynamicColor by viewModel.isDynamicColorEnabled.collectAsState()
     val paletteStyle by viewModel.albumArtPaletteStyle.collectAsState()
     val colorAccuracy by viewModel.albumArtColorAccuracy.collectAsState()
+    val navBarCompactMode by viewModel.navBarCompactMode.collectAsState()
+    val defaultTabKey by viewModel.defaultTab.collectAsState()
 
     var selectedPlaylistId by remember { mutableStateOf<String?>(null) }
     var selectedAlbum by remember { mutableStateOf<Album?>(null) }
@@ -104,7 +106,10 @@ fun MainAppScaffold(
         } else null
     }
 
-    var currentDestination by remember { mutableStateOf(DesktopNavDestination.HOME) }
+    val initialDestination = remember {
+        DesktopNavDestination.entries.firstOrNull { it.name == viewModel.defaultTab.value } ?: DesktopNavDestination.HOME
+    }
+    var currentDestination by remember { mutableStateOf(initialDestination) }
     var searchQuery by remember { mutableStateOf("") }
     var previousDestinationBeforeSearch by remember { mutableStateOf<DesktopNavDestination?>(null) }
 
@@ -155,7 +160,7 @@ fun MainAppScaffold(
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val isQueueVisible = isQueueSidePanelOpen && (currentSong != null || queue.isNotEmpty())
-        val isSidebarCompact = (maxWidth < 960.dp && isQueueVisible) || (maxWidth < 740.dp)
+        val isSidebarCompact = navBarCompactMode || (maxWidth < 960.dp && isQueueVisible) || (maxWidth < 740.dp)
 
         Row(modifier = Modifier.fillMaxSize()) {
             AppSidebar(

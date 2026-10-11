@@ -214,6 +214,18 @@ class SettingsRepositoryImpl(
         updateSettings { it.copy(lyricsSourcePreference = preference.storageKey) }
     }
 
+    override suspend fun setShowPlayerFileInfo(show: Boolean) {
+        updateSettings { it.copy(showPlayerFileInfo = show) }
+    }
+
+    override suspend fun setNavBarCompactMode(enabled: Boolean) {
+        updateSettings { it.copy(navBarCompactMode = enabled) }
+    }
+
+    override suspend fun setDefaultTab(tab: String) {
+        updateSettings { it.copy(defaultTab = tab) }
+    }
+
     private fun loadSettingsFromDisk(): UserSettings {
         return try {
             if (settingsFile.exists()) {

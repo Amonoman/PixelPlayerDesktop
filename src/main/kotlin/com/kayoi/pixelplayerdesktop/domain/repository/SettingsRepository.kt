@@ -40,4 +40,7 @@ interface SettingsRepository {
     suspend fun setAlbumArtCacheLimitMb(limitMb: Int)
     suspend fun setAutoScanLrcFiles(enabled: Boolean)
     suspend fun setLyricsSourcePreference(preference: LyricsSourcePreference)
+    suspend fun setShowPlayerFileInfo(show: Boolean)
+    suspend fun setNavBarCompactMode(enabled: Boolean)
+    suspend fun setDefaultTab(tab: String)
 }

@@ -90,6 +90,7 @@ fun ExpandedPlayerScreen(
     val isDynamicColor by viewModel.isDynamicColorEnabled.collectAsState()
     val paletteStyle by viewModel.albumArtPaletteStyle.collectAsState()
     val colorAccuracy by viewModel.albumArtColorAccuracy.collectAsState()
+    val showPlayerFileInfo by viewModel.showPlayerFileInfo.collectAsState()
     var showLyricsSearchDialog by remember { mutableStateOf(false) }
 
     val songColorScheme = remember(currentSong?.albumArtUriString, isDarkTheme, isDynamicColor, paletteStyle, colorAccuracy) {
@@ -223,11 +224,7 @@ fun ExpandedPlayerScreen(
 
                 BoxWithConstraints(modifier = Modifier.fillMaxSize().weight(1f)) {
                     val screenWidth = maxWidth
-                    val queueWidth = when {
-                        screenWidth < 780.dp -> 290.dp
-                        screenWidth < 960.dp -> 320.dp
-                        else -> 360.dp
-                    }
+                    val queueWidth = if (screenWidth < 960.dp) 320.dp else 360.dp
                     val paneGap = if (screenWidth < 900.dp) 12.dp else 20.dp
                     val heroRadius = if (screenWidth < 900.dp) 22.dp else 28.dp
                     val lyricsPaddingH = if (screenWidth < 900.dp) 16.dp else 22.dp
@@ -274,6 +271,7 @@ fun ExpandedPlayerScreen(
                                     onToggleFavorite = { viewModel.toggleFavoriteCurrentSong() },
                                     onVolumeChange = { viewModel.setVolume(it) },
                                     onToggleMute = { viewModel.toggleMute() },
+                                    showPlayerFileInfo = showPlayerFileInfo,
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }

@@ -35,13 +35,18 @@ import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material.icons.rounded.AttachFile
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Brush
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Tab
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.ViewWeek
+import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavDestination
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -93,6 +98,7 @@ fun SettingsCategoryDetail(
     onOpenFoldersDetail: () -> Unit,
     onOpenArtistsDetail: () -> Unit,
     onOpenDuplicatesDetail: () -> Unit,
+    onOpenPaletteStyleDetail: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -599,7 +605,7 @@ fun SettingsCategoryDetail(
 
             SettingsSection.APPEARANCE -> {
                 item {
-                    SettingsSubsection(title = "THEME") {
+                    SettingsSubsection(title = "GLOBAL THEME") {
                         ExpressiveSwitchRow(
                             title = "Dark Theme",
                             subtitle = "Switch between Material You Dark and Light theme",
@@ -608,204 +614,160 @@ fun SettingsCategoryDetail(
                             leadingIcon = {
                                 Icon(if (isDarkTheme) Icons.Rounded.DarkMode else Icons.Rounded.LightMode, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
-                            shape = getGroupShape(0, 2)
+                            shape = getGroupShape(0, 1)
                         )
+                    }
+                }
 
+                item {
+                    val currentPaletteStyle by viewModel.albumArtPaletteStyle.collectAsState()
+                    val showPlayerFileInfo by viewModel.showPlayerFileInfo.collectAsState()
+
+                    SettingsSubsection(title = "NOW PLAYING") {
                         ExpressiveSwitchRow(
-                            title = "Dynamic Artwork Theme",
+                            title = "Dynamic Color Theme",
                             subtitle = "Tint interface colors dynamically based on active album artwork",
                             checked = isDynamicColor,
                             onCheckedChange = { onToggleDynamicColor() },
                             leadingIcon = {
                                 Icon(Icons.Rounded.AutoAwesome, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
-                            shape = getGroupShape(1, 2)
+                            shape = if (isDynamicColor) getGroupShape(0, 3) else getGroupShape(0, 2)
+                        )
+
+                        AnimatedVisibility(
+                            visible = isDynamicColor,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
+                        ) {
+                            ExpressiveSettingsRow(
+                                title = "Album Art Palette Style",
+                                subtitle = "Current: ${currentPaletteStyle.label}. Open live preview and choose style.",
+                                leadingIcon = {
+                                    Icon(Icons.Rounded.Palette, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                },
+                                trailingIcon = {
+                                    Icon(Icons.Rounded.ChevronRight, null, tint = colors.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(22.dp))
+                                },
+                                shape = getGroupShape(1, 3),
+                                onClick = onOpenPaletteStyleDetail
+                            )
+                        }
+
+                        ExpressiveSwitchRow(
+                            title = "Show Player File Info",
+                            subtitle = "Show codec, bitrate, and sample rate in the player progress section",
+                            checked = showPlayerFileInfo,
+                            onCheckedChange = { viewModel.setShowPlayerFileInfo(it) },
+                            leadingIcon = {
+                                Icon(Icons.Rounded.AttachFile, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                            },
+                            shape = if (isDynamicColor) getGroupShape(2, 3) else getGroupShape(1, 2)
                         )
                     }
                 }
 
                 item {
-                    AnimatedVisibility(
-                        visible = isDynamicColor,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut()
-                    ) {
-                        val currentPaletteStyle by viewModel.albumArtPaletteStyle.collectAsState()
-                        val currentColorAccuracy by viewModel.albumArtColorAccuracy.collectAsState()
+                    val navBarCompactMode by viewModel.navBarCompactMode.collectAsState()
+                    val defaultTabKey by viewModel.defaultTab.collectAsState()
+                    var showDefaultTabDialog by remember { mutableStateOf(false) }
 
-                        SettingsSubsection(title = "ARTWORK COLOR TUNING") {
-                            Surface(
-                                shape = getGroupShape(0, 2),
-                                color = colors.surfaceContainer,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
+                    val availableTabs = remember {
+                        DesktopNavDestination.entries.filter { it != DesktopNavDestination.SETTINGS }
+                    }
+                    val currentSelectedTab = remember(defaultTabKey) {
+                        availableTabs.firstOrNull { it.name == defaultTabKey } ?: DesktopNavDestination.HOME
+                    }
+
+                    if (showDefaultTabDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showDefaultTabDialog = false },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Tab,
+                                    contentDescription = null,
+                                    tint = colors.primary
+                                )
+                            },
+                            title = {
+                                Text(
+                                    text = "Default Tab",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            },
+                            text = {
                                 Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(18.dp),
-                                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(14.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(38.dp)
-                                                .clip(RoundedCornerShape(12.dp))
-                                                .background(colors.primaryContainer),
-                                            contentAlignment = Alignment.Center
+                                    availableTabs.forEach { destination ->
+                                        val isSelected = destination == currentSelectedTab
+                                        Surface(
+                                            onClick = {
+                                                viewModel.setDefaultTab(destination.name)
+                                                showDefaultTabDialog = false
+                                            },
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = if (isSelected) colors.primaryContainer else colors.surfaceContainerHighest,
+                                            modifier = Modifier.fillMaxWidth()
                                         ) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.Brush,
-                                                contentDescription = null,
-                                                tint = colors.onPrimaryContainer,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = "Palette Style",
-                                                style = MaterialTheme.typography.titleMedium,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = colors.onSurface
-                                            )
-                                            Text(
-                                                text = "Material 3 color generation scheme for album covers",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = colors.onSurfaceVariant
-                                            )
-                                        }
-                                    }
-
-                                    @OptIn(ExperimentalLayoutApi::class)
-                                    FlowRow(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        AlbumArtPaletteStyle.entries.forEach { style ->
-                                            val isSelected = style == currentPaletteStyle
-                                            val animatedContainerColor by animateColorAsState(
-                                                targetValue = if (isSelected) colors.primary else colors.surfaceContainerHighest,
-                                                label = "btnContainer"
-                                            )
-                                            val animatedContentColor by animateColorAsState(
-                                                targetValue = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
-                                                label = "btnContent"
-                                            )
-
-                                            Surface(
-                                                shape = RoundedCornerShape(12.dp),
-                                                color = animatedContainerColor,
+                                            Row(
                                                 modifier = Modifier
-                                                    .height(40.dp)
-                                                    .clip(RoundedCornerShape(12.dp))
-                                                    .clickable { viewModel.setAlbumArtPaletteStyle(style) }
-                                            ) {
-                                                Box(
-                                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Text(
-                                                        text = style.label,
-                                                        style = MaterialTheme.typography.labelMedium,
-                                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                        color = animatedContentColor,
-                                                        maxLines = 1
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            Surface(
-                                shape = getGroupShape(1, 2),
-                                color = colors.surfaceContainer,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(18.dp),
-                                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.weight(1f).padding(end = 10.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(14.dp)
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(38.dp)
-                                                    .clip(RoundedCornerShape(12.dp))
-                                                    .background(colors.secondaryContainer),
-                                                contentAlignment = Alignment.Center
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 Icon(
-                                                    imageVector = Icons.Rounded.Tune,
+                                                    imageVector = destination.icon,
                                                     contentDescription = null,
-                                                    tint = colors.onSecondaryContainer,
+                                                    tint = if (isSelected) colors.onPrimaryContainer else colors.onSurfaceVariant,
                                                     modifier = Modifier.size(20.dp)
                                                 )
-                                            }
-
-                                            Column(modifier = Modifier.weight(1f)) {
+                                                Spacer(modifier = Modifier.width(12.dp))
                                                 Text(
-                                                    text = "Color Extraction Accuracy",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    color = colors.onSurface,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                                Text(
-                                                    text = if (currentColorAccuracy == 0) "Standard (Fast & Balanced)" else "Fidelity Level $currentColorAccuracy",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = colors.onSurfaceVariant,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
+                                                    text = destination.title,
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                    color = if (isSelected) colors.onPrimaryContainer else colors.onSurface
                                                 )
                                             }
-                                        }
-
-                                        Surface(
-                                            shape = RoundedCornerShape(10.dp),
-                                            color = colors.primaryContainer
-                                        ) {
-                                            Text(
-                                                text = "$currentColorAccuracy / ${AlbumArtColorAccuracy.MAX}",
-                                                style = MaterialTheme.typography.labelMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                color = colors.onPrimaryContainer,
-                                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                                            )
                                         }
                                     }
-
-                                    Slider(
-                                        value = currentColorAccuracy.toFloat(),
-                                        onValueChange = { viewModel.setAlbumArtColorAccuracy(it.roundToInt()) },
-                                        valueRange = AlbumArtColorAccuracy.MIN.toFloat()..AlbumArtColorAccuracy.MAX.toFloat(),
-                                        steps = AlbumArtColorAccuracy.STEPS,
-                                        colors = SliderDefaults.colors(
-                                            thumbColor = colors.primary,
-                                            activeTrackColor = colors.primary,
-                                            inactiveTrackColor = colors.surfaceContainerHighest
-                                        ),
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
+                                }
+                            },
+                            confirmButton = {
+                                TextButton(onClick = { showDefaultTabDialog = false }) {
+                                    Text("Close")
                                 }
                             }
-                        }
+                        )
+                    }
+
+                    SettingsSubsection(title = "NAVIGATION BAR") {
+                        ExpressiveSwitchRow(
+                            title = "Compact Mode",
+                            subtitle = "Show only icons and reduce navigation bar width",
+                            checked = navBarCompactMode,
+                            onCheckedChange = { viewModel.setNavBarCompactMode(it) },
+                            leadingIcon = {
+                                Icon(Icons.Rounded.ViewWeek, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                            },
+                            shape = getGroupShape(0, 2)
+                        )
+
+                        ExpressiveSettingsRow(
+                            title = "Default Tab",
+                            subtitle = "Choose the default launch destination (Current: ${currentSelectedTab.title})",
+                            leadingIcon = {
+                                Icon(Icons.Rounded.Tab, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                            },
+                            trailingIcon = {
+                                Icon(Icons.Rounded.ChevronRight, null, tint = colors.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(22.dp))
+                            },
+                            shape = getGroupShape(1, 2),
+                            onClick = { showDefaultTabDialog = true }
+                        )
                     }
                 }
             }

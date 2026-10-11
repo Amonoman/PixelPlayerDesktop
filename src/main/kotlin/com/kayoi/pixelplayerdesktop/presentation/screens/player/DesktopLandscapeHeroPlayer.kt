@@ -110,6 +110,7 @@ fun DesktopLandscapeHeroPlayer(
     onToggleFavorite: () -> Unit,
     onVolumeChange: (Float) -> Unit,
     onToggleMute: () -> Unit,
+    showPlayerFileInfo: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -186,7 +187,7 @@ fun DesktopLandscapeHeroPlayer(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 val metaLabel = formatAudioMetaLabel(song)
-                                if (metaLabel.isNotBlank()) {
+                                if (showPlayerFileInfo && metaLabel.isNotBlank()) {
                                     Surface(
                                         shape = RoundedCornerShape(999.dp),
                                         color = colors.onPrimaryContainer.copy(alpha = 0.15f),
@@ -436,7 +437,7 @@ fun DesktopLandscapeHeroPlayer(
                             }
 
                             val metaLabel = formatAudioMetaLabel(song)
-                            if (metaLabel.isNotBlank()) {
+                            if (showPlayerFileInfo && metaLabel.isNotBlank()) {
                                 Surface(
                                     shape = RoundedCornerShape(999.dp),
                                     color = colors.onPrimaryContainer.copy(alpha = 0.15f),
