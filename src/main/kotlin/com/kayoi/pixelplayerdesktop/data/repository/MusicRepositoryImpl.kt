@@ -28,17 +28,17 @@ class MusicRepositoryImpl(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : MusicRepository {
 
-    override fun getAllSongsFlow(sortOption: SortOption): Flow<List<Song>> = flow {
-        emit(musicDao.getAllSongs(sortOption))
+    override fun getAllSongsFlow(sortOption: SortOption, minDurationMs: Long): Flow<List<Song>> = flow {
+        emit(musicDao.getAllSongs(sortOption, minDurationMs))
         database.tableInvalidationFlow.collect { table ->
             if (table == "songs" || table == "favorites") {
-                emit(musicDao.getAllSongs(sortOption))
+                emit(musicDao.getAllSongs(sortOption, minDurationMs))
             }
         }
     }.flowOn(ioDispatcher)
 
-    override suspend fun getAllSongs(sortOption: SortOption): List<Song> {
-        return musicDao.getAllSongs(sortOption)
+    override suspend fun getAllSongs(sortOption: SortOption, minDurationMs: Long): List<Song> {
+        return musicDao.getAllSongs(sortOption, minDurationMs)
     }
 
     override suspend fun getSongById(id: String): Song? {
@@ -57,14 +57,22 @@ class MusicRepositoryImpl(
         musicDao.deleteSong(song)
     }
 
-    override fun getAllAlbumsFlow(sortOption: SortOption): Flow<List<Album>> = flow {
-        emit(musicDao.getAllAlbums(sortOption))
+    override suspend fun clearLibrary() {
+        musicDao.clearLibrary()
+    }
+
+    override fun getAllAlbumsFlow(sortOption: SortOption, minTracks: Int): Flow<List<Album>> = flow {
+        emit(musicDao.getAllAlbums(sortOption, minTracks))
         database.tableInvalidationFlow.collect { table ->
             if (table == "songs") {
-                emit(musicDao.getAllAlbums(sortOption))
+                emit(musicDao.getAllAlbums(sortOption, minTracks))
             }
         }
     }.flowOn(ioDispatcher)
+
+    override suspend fun getAllAlbums(sortOption: SortOption, minTracks: Int): List<Album> {
+        return musicDao.getAllAlbums(sortOption, minTracks)
+    }
 
     override suspend fun getAlbumById(id: Long): Album? {
         return musicDao.getAlbumById(id)
@@ -212,7 +220,12 @@ class MusicRepositoryImpl(
         musicDao.recordSongPlayed(songId)
     }
 
-    override suspend fun search(query: String, filter: SearchFilterType): List<SearchResultItem> {
-        return musicDao.search(query, filter)
+    override suspend fun search(
+        query: String,
+        filter: SearchFilterType,
+        minDurationMs: Long,
+        minTracks: Int
+    ): List<SearchResultItem> {
+        return musicDao.search(query, filter, minDurationMs, minTracks)
     }
 }

@@ -67,7 +67,7 @@ import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.ColorSchemePair
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
-import com.kayoi.pixelplayerdesktop.utils.ArtistImageService
+import com.kayoi.pixelplayerdesktop.data.network.deezer.DeezerClient
 import com.kayoi.pixelplayerdesktop.utils.shapes.RoundedStarShape
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -108,7 +108,7 @@ fun ArtistDetailScreen(
 
     LaunchedEffect(artist.name, fetchDeezerImages) {
         if (resolvedImageUrl.isNullOrBlank() && artist.name.isNotBlank()) {
-            val fetched = ArtistImageService.getArtistImageUrl(
+            val fetched = DeezerClient.getArtistImageUrl(
                 artistName = artist.name,
                 fetchEnabled = fetchDeezerImages
             )

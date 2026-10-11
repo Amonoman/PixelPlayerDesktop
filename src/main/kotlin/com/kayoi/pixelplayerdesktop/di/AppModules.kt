@@ -7,6 +7,7 @@ import com.kayoi.pixelplayerdesktop.data.database.MusicDao
 import com.kayoi.pixelplayerdesktop.data.database.PixelPlayerDatabase
 import com.kayoi.pixelplayerdesktop.data.player.QueueManager
 import com.kayoi.pixelplayerdesktop.data.player.VlcjAudioEngine
+import com.kayoi.pixelplayerdesktop.data.network.lyrics.LrcLibClient
 import com.kayoi.pixelplayerdesktop.data.repository.LyricsRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.repository.MusicRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.repository.SettingsRepositoryImpl
@@ -62,8 +63,16 @@ val repositoryModule: Module = module {
             ioDispatcher = get()
         )
     }
-    single<LyricsRepository> { LyricsRepositoryImpl(lyricsDao = get(), ioDispatcher = get()) }
-    single { DesktopMusicScanner(musicDao = get(), ioDispatcher = get()) }
+    single { LrcLibClient(ioDispatcher = get()) }
+    single<LyricsRepository> {
+        LyricsRepositoryImpl(
+            lyricsDao = get(),
+            lrcLibClient = get(),
+            settingsRepository = get(),
+            ioDispatcher = get()
+        )
+    }
+    single { DesktopMusicScanner(musicDao = get(), lyricsDao = get(), ioDispatcher = get()) }
 }
 
 val playerModule: Module = module {
@@ -86,6 +95,7 @@ val stateModule: Module = module {
         LibraryStateHolder(
             musicRepository = get(),
             settingsRepository = get(),
+            lyricsRepository = get(),
             scanner = get(),
             coroutineScope = get()
         )

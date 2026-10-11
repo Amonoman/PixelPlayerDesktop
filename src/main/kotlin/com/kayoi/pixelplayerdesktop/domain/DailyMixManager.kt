@@ -60,7 +60,7 @@ class DailyMixManager {
      */
     fun generateDailyMix(
         allSongs: List<Song>,
-        limit: Int = 12
+        limit: Int = 30
     ): List<Song> {
         if (allSongs.isEmpty()) return emptyList()
 

@@ -31,4 +31,26 @@ object DirectoryPicker {
             }
         }
     }
+
+    fun chooseLrcFile(
+        title: String = "Select .lrc Lyric File",
+        onSelected: (File) -> Unit
+    ) {
+        SwingUtilities.invokeLater {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+            } catch (_: Exception) {}
+
+            val chooser = JFileChooser().apply {
+                dialogTitle = title
+                fileSelectionMode = JFileChooser.FILES_ONLY
+                fileFilter = javax.swing.filechooser.FileNameExtensionFilter("LRC Lyric Files (*.lrc)", "lrc")
+            }
+
+            val result = chooser.showOpenDialog(null)
+            if (result == JFileChooser.APPROVE_OPTION && chooser.selectedFile != null) {
+                onSelected(chooser.selectedFile)
+            }
+        }
+    }
 }

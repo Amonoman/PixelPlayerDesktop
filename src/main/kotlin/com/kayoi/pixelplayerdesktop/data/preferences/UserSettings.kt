@@ -21,5 +21,10 @@ data class UserSettings(
     val artistSettingsRescanRequired: Boolean = false,
     val isAlbumsListView: Boolean = false,
     val isArtistsListView: Boolean = false,
-    val isFoldersPlaylistView: Boolean = false
+    val isFoldersPlaylistView: Boolean = false,
+    val minSongDurationMs: Int = 10000,
+    val minTracksPerAlbum: Int = 1,
+    val albumArtCacheLimitMb: Int = 200,
+    val autoScanLrcFiles: Boolean = false,
+    val lyricsSourcePreference: String = "embedded_first"
 )

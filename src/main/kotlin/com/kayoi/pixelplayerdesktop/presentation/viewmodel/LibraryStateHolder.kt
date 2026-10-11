@@ -2,14 +2,17 @@ package com.kayoi.pixelplayerdesktop.presentation.viewmodel
 
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Artist
+import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
 import com.kayoi.pixelplayerdesktop.data.model.Playlist
 import com.kayoi.pixelplayerdesktop.data.model.SearchResultItem
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
 import com.kayoi.pixelplayerdesktop.data.scanner.DesktopMusicScanner
 import com.kayoi.pixelplayerdesktop.data.scanner.ScanProgress
+import com.kayoi.pixelplayerdesktop.domain.repository.LyricsRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
+import com.kayoi.pixelplayerdesktop.utils.AlbumArtCacheManager
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_ARTIST_DELIMITERS
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_WORD_DELIMITERS
 import kotlinx.coroutines.CoroutineScope
@@ -20,6 +23,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -30,6 +34,7 @@ class LibraryStateHolder(
     private val musicRepository: MusicRepository,
     private val settingsRepository: SettingsRepository,
     private val scanner: DesktopMusicScanner,
+    private val lyricsRepository: LyricsRepository? = null,
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) {
 
@@ -51,6 +56,14 @@ class LibraryStateHolder(
     val fetchDeezerArtistImages: StateFlow<Boolean> = settingsRepository.settingsFlow
         .map { it.fetchDeezerArtistImages }
         .stateIn(coroutineScope, SharingStarted.Eagerly, true)
+
+    val autoScanLrcFiles: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.autoScanLrcFiles }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
+
+    val lyricsSourcePreference: StateFlow<LyricsSourcePreference> = settingsRepository.settingsFlow
+        .map { LyricsSourcePreference.fromStorageKey(it.lyricsSourcePreference) }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, LyricsSourcePreference.EMBEDDED_FIRST)
 
     val musicDirectories: StateFlow<List<String>> = settingsRepository.settingsFlow
         .map { it.musicDirectories }
@@ -88,12 +101,34 @@ class LibraryStateHolder(
         .map { it.artistSettingsRescanRequired }
         .stateIn(coroutineScope, SharingStarted.Eagerly, false)
 
-    val songs: StateFlow<List<Song>> = _songSortOption.flatMapLatest { sort ->
-        musicRepository.getAllSongsFlow(sort)
+    val minSongDurationMs: StateFlow<Int> = settingsRepository.settingsFlow
+        .map { it.minSongDurationMs }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, 10000)
+
+    val minTracksPerAlbum: StateFlow<Int> = settingsRepository.settingsFlow
+        .map { it.minTracksPerAlbum }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, 1)
+
+    val albumArtCacheLimitMb: StateFlow<Int> = settingsRepository.settingsFlow
+        .map { it.albumArtCacheLimitMb }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, 200)
+
+    val songs: StateFlow<List<Song>> = combine(
+        _songSortOption,
+        minSongDurationMs
+    ) { sort, minDur ->
+        sort to minDur
+    }.flatMapLatest { (sort, minDur) ->
+        musicRepository.getAllSongsFlow(sort, minDur.toLong())
     }.stateIn(coroutineScope, SharingStarted.Lazily, emptyList())
 
-    val albums: StateFlow<List<Album>> = _albumSortOption.flatMapLatest { sort ->
-        musicRepository.getAllAlbumsFlow(sort)
+    val albums: StateFlow<List<Album>> = combine(
+        _albumSortOption,
+        minTracksPerAlbum
+    ) { sort, minTracks ->
+        sort to minTracks
+    }.flatMapLatest { (sort, minTracks) ->
+        musicRepository.getAllAlbumsFlow(sort, minTracks)
     }.stateIn(coroutineScope, SharingStarted.Lazily, emptyList())
 
     val artists: StateFlow<List<Artist>> = _artistSortOption.flatMapLatest { sort ->
@@ -240,12 +275,70 @@ class LibraryStateHolder(
                 artistDelimiters = settings.artistDelimiters,
                 wordDelimiters = settings.wordDelimiters,
                 extractArtistFromTitle = settings.extractArtistFromTitle,
+                autoScanLrcFiles = settings.autoScanLrcFiles,
                 pruneMissing = true,
                 forceRescan = forceRescan
             )
             if (forceRescan) {
                 settingsRepository.clearArtistSettingsRescanRequired()
             }
+            AlbumArtCacheManager.cleanCacheIfNeeded(settings.albumArtCacheLimitMb.toLong())
+        }
+    }
+
+    fun rebuildDatabase() {
+        coroutineScope.launch {
+            musicRepository.clearLibrary()
+            val settings = settingsRepository.getSettings()
+            scanner.scanDirectories(
+                directories = settings.musicDirectories,
+                excludedDirectories = settings.excludedDirectories,
+                artistDelimiters = settings.artistDelimiters,
+                wordDelimiters = settings.wordDelimiters,
+                extractArtistFromTitle = settings.extractArtistFromTitle,
+                autoScanLrcFiles = settings.autoScanLrcFiles,
+                pruneMissing = false,
+                forceRescan = true
+            )
+            settingsRepository.clearArtistSettingsRescanRequired()
+            AlbumArtCacheManager.cleanCacheIfNeeded(settings.albumArtCacheLimitMb.toLong(), force = true)
+        }
+    }
+
+    fun setAutoScanLrcFiles(enabled: Boolean) {
+        coroutineScope.launch {
+            settingsRepository.setAutoScanLrcFiles(enabled)
+        }
+    }
+
+    fun setLyricsSourcePreference(preference: LyricsSourcePreference) {
+        coroutineScope.launch {
+            settingsRepository.setLyricsSourcePreference(preference)
+        }
+    }
+
+    fun resetAllLyrics() {
+        coroutineScope.launch {
+            lyricsRepository?.resetAllLyrics()
+        }
+    }
+
+    fun setMinSongDuration(durationMs: Int) {
+        coroutineScope.launch {
+            settingsRepository.setMinSongDuration(durationMs)
+        }
+    }
+
+    fun setMinTracksPerAlbum(minTracks: Int) {
+        coroutineScope.launch {
+            settingsRepository.setMinTracksPerAlbum(minTracks)
+        }
+    }
+
+    fun setAlbumArtCacheLimitMb(limitMb: Int) {
+        coroutineScope.launch {
+            settingsRepository.setAlbumArtCacheLimitMb(limitMb)
+            AlbumArtCacheManager.cleanCacheIfNeeded(limitMb.toLong(), force = true)
         }
     }
 
@@ -295,7 +388,11 @@ class LibraryStateHolder(
         _searchQuery.value = query
         coroutineScope.launch {
             if (query.isNotBlank()) {
-                val results = musicRepository.search(query)
+                val results = musicRepository.search(
+                    query = query,
+                    minDurationMs = minSongDurationMs.value.toLong(),
+                    minTracks = minTracksPerAlbum.value
+                )
                 _searchResults.value = results
             } else {
                 _searchResults.value = emptyList()

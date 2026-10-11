@@ -1,5 +1,6 @@
-package com.kayoi.pixelplayerdesktop.utils
+package com.kayoi.pixelplayerdesktop.data.network.deezer
 
+import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -14,11 +15,7 @@ import java.security.MessageDigest
 import java.util.Collections
 import java.util.LinkedHashMap
 
-/**
- * Service for fetching and caching high-resolution artist portraits from online providers (Deezer API).
- * Implements a dual-tier cache (LRU memory cache + persistent file storage).
- */
-object ArtistImageService {
+object DeezerClient {
 
     private val json = Json { ignoreUnknownKeys = true }
     private val memoryCache = Collections.synchronizedMap(
@@ -37,9 +34,6 @@ object ArtistImageService {
 
     private val failedArtists = Collections.synchronizedSet(mutableSetOf<String>())
 
-    /**
-     * Resolves the artist portrait URI by checking memory cache, disk cache, and remote search endpoints sequentially.
-     */
     suspend fun getArtistImageUrl(
         artistName: String,
         fetchEnabled: Boolean = true
@@ -48,13 +42,10 @@ object ArtistImageService {
 
         val normalized = artistName.trim().lowercase()
 
-        // 1. Check in-memory LRU cache
         if (memoryCache.containsKey(normalized)) {
-            val cached = memoryCache[normalized]
-            return@withContext cached
+            return@withContext memoryCache[normalized]
         }
 
-        // 2. Check local persistent disk cache
         val diskFile = getCacheFile(normalized)
         if (diskFile.exists() && diskFile.length() > 0) {
             val path = diskFile.absolutePath
@@ -66,7 +57,6 @@ object ArtistImageService {
             return@withContext null
         }
 
-        // 3. Query remote API for artist image
         try {
             val encodedName = URLEncoder.encode(artistName.trim(), "UTF-8")
             val urlString = "https://api.deezer.com/search/artist?q=$encodedName&limit=5"

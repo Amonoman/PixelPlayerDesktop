@@ -6,6 +6,7 @@ import com.kayoi.pixelplayerdesktop.data.model.Playlist
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
+import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
 
 class PlayerViewModel(
     val playbackStateHolder: PlaybackStateHolder,
@@ -17,6 +18,12 @@ class PlayerViewModel(
     val currentSong = playbackStateHolder.currentSong
     val queue = playbackStateHolder.queue
     val playbackState = playbackStateHolder.playbackState
+    val lyricsSearchUiState = playbackStateHolder.lyricsSearchUiState
+
+    fun searchLyrics(query: String) = playbackStateHolder.searchLyrics(query)
+    fun applyLyrics(lyrics: com.kayoi.pixelplayerdesktop.data.model.Lyrics) = playbackStateHolder.applyLyrics(lyrics)
+    fun importLyricsFromFile(file: java.io.File) = playbackStateHolder.importLyricsFromFile(file)
+    fun resetLyricsSearchState() = playbackStateHolder.resetLyricsSearchState()
 
     fun playSong(song: Song) = playbackStateHolder.playSong(song)
     fun playSongs(songs: List<Song>, startIndex: Int = 0) = playbackStateHolder.playSongs(songs, startIndex)
@@ -86,6 +93,18 @@ class PlayerViewModel(
     val isAlbumsListView = libraryStateHolder.isAlbumsListView
     val isArtistsListView = libraryStateHolder.isArtistsListView
     val isFoldersPlaylistView = libraryStateHolder.isFoldersPlaylistView
+    val minSongDurationMs = libraryStateHolder.minSongDurationMs
+    val minTracksPerAlbum = libraryStateHolder.minTracksPerAlbum
+    val albumArtCacheLimitMb = libraryStateHolder.albumArtCacheLimitMb
+    val autoScanLrcFiles = libraryStateHolder.autoScanLrcFiles
+    val lyricsSourcePreference = libraryStateHolder.lyricsSourcePreference
+
+    fun setMinSongDuration(durationMs: Int) = libraryStateHolder.setMinSongDuration(durationMs)
+    fun setMinTracksPerAlbum(minTracks: Int) = libraryStateHolder.setMinTracksPerAlbum(minTracks)
+    fun setAlbumArtCacheLimitMb(limitMb: Int) = libraryStateHolder.setAlbumArtCacheLimitMb(limitMb)
+    fun setAutoScanLrcFiles(enabled: Boolean) = libraryStateHolder.setAutoScanLrcFiles(enabled)
+    fun setLyricsSourcePreference(preference: LyricsSourcePreference) = libraryStateHolder.setLyricsSourcePreference(preference)
+    fun resetAllLyrics() = libraryStateHolder.resetAllLyrics()
 
     fun setSongSortOption(sort: SortOption) = libraryStateHolder.setSongSortOption(sort)
     fun setAlbumSortOption(sort: SortOption) = libraryStateHolder.setAlbumSortOption(sort)
@@ -99,6 +118,7 @@ class PlayerViewModel(
     fun toggleFetchDeezerArtistImages() = libraryStateHolder.toggleFetchDeezerArtistImages()
     fun scanLibrary(directories: List<String>? = null, forceRescan: Boolean = false) = libraryStateHolder.scanLibrary(directories, forceRescan)
     fun rescanLibrary() = libraryStateHolder.scanLibrary(forceRescan = true)
+    fun rebuildDatabase() = libraryStateHolder.rebuildDatabase()
     fun addMusicDirectory(path: String) = libraryStateHolder.addMusicDirectory(path)
     fun removeMusicDirectory(path: String) = libraryStateHolder.removeMusicDirectory(path)
     fun addExcludedDirectory(path: String) = libraryStateHolder.addExcludedDirectory(path)

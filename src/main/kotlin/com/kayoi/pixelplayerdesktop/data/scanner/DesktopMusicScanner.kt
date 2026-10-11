@@ -1,11 +1,13 @@
 package com.kayoi.pixelplayerdesktop.data.scanner
 
+import com.kayoi.pixelplayerdesktop.data.database.LyricsDao
 import com.kayoi.pixelplayerdesktop.data.database.MusicDao
 import com.kayoi.pixelplayerdesktop.data.model.ArtistRef
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_ARTIST_DELIMITERS
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_WORD_DELIMITERS
 import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
+import com.kayoi.pixelplayerdesktop.utils.LrcParser
 import com.kayoi.pixelplayerdesktop.utils.collectArtistNames
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +44,7 @@ sealed interface ScanProgress {
  */
 class DesktopMusicScanner(
     private val musicDao: MusicDao,
+    private val lyricsDao: LyricsDao? = null,
     private val artworkCacheDir: File = DesktopPathProvider.artworkCacheDir,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
@@ -66,6 +69,7 @@ class DesktopMusicScanner(
         artistDelimiters: List<String> = DEFAULT_ARTIST_DELIMITERS,
         wordDelimiters: List<String> = DEFAULT_WORD_DELIMITERS,
         extractArtistFromTitle: Boolean = true,
+        autoScanLrcFiles: Boolean = false,
         pruneMissing: Boolean = true,
         forceRescan: Boolean = false
     ): ScanProgress = withContext(ioDispatcher) {
@@ -140,6 +144,9 @@ class DesktopMusicScanner(
                 val song = extractSongMetadata(file, existing?.id, artistDelimiters, wordDelimiters, extractArtistFromTitle)
                 if (song != null) {
                     songsToUpsert.add(song)
+                    if (autoScanLrcFiles && lyricsDao != null) {
+                        scanAndCacheLrcFile(file, song.id)
+                    }
                 }
             }
 
@@ -556,5 +563,16 @@ class DesktopMusicScanner(
             dateModified = file.lastModified(),
             mimeType = "audio/${file.extension.lowercase()}"
         )
+    }
+
+    private suspend fun scanAndCacheLrcFile(audioFile: File, songId: String) {
+        val lrcFile = File(audioFile.parentFile, "${audioFile.nameWithoutExtension}.lrc")
+        if (lrcFile.exists() && lrcFile.isFile) {
+            runCatching {
+                val lrcText = lrcFile.readText(Charsets.UTF_8)
+                val parsed = LrcParser.parse(lrcText)
+                lyricsDao?.insertOrUpdateLyrics(songId, parsed)
+            }
+        }
     }
 }

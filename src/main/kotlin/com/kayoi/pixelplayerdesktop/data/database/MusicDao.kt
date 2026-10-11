@@ -18,7 +18,10 @@ class MusicDao(
     private val json: Json = Json { ignoreUnknownKeys = true }
 ) {
 
-    suspend fun getAllSongs(sortOption: SortOption = SortOption.SongTitleAZ): List<Song> = withContext(ioDispatcher) {
+    suspend fun getAllSongs(
+        sortOption: SortOption = SortOption.SongTitleAZ,
+        minDurationMs: Long = 0L
+    ): List<Song> = withContext(ioDispatcher) {
         val orderByClause = when (sortOption) {
             SortOption.SongTitleAZ -> "title COLLATE NOCASE ASC"
             SortOption.SongTitleZA -> "title COLLATE NOCASE DESC"
@@ -34,8 +37,15 @@ class MusicDao(
         }
 
         database.getConnection().use { conn ->
-            val sql = "SELECT * FROM songs ORDER BY $orderByClause"
+            val sql = if (minDurationMs > 0L) {
+                "SELECT * FROM songs WHERE duration >= ? ORDER BY $orderByClause"
+            } else {
+                "SELECT * FROM songs ORDER BY $orderByClause"
+            }
             conn.prepareStatement(sql).use { stmt ->
+                if (minDurationMs > 0L) {
+                    stmt.setLong(1, minDurationMs)
+                }
                 stmt.executeQuery().use { rs ->
                     val songs = mutableListOf<Song>()
                     while (rs.next()) {
@@ -345,7 +355,10 @@ class MusicDao(
         }
     }
 
-    suspend fun getAllAlbums(sortOption: SortOption = SortOption.AlbumTitleAZ): List<Album> = withContext(ioDispatcher) {
+    suspend fun getAllAlbums(
+        sortOption: SortOption = SortOption.AlbumTitleAZ,
+        minTracks: Int = 1
+    ): List<Album> = withContext(ioDispatcher) {
         val orderByClause = when (sortOption) {
             SortOption.AlbumTitleAZ -> "album COLLATE NOCASE ASC"
             SortOption.AlbumTitleZA -> "album COLLATE NOCASE DESC"
@@ -373,10 +386,12 @@ class MusicDao(
                 FROM songs
                 WHERE album != ''
                 GROUP BY album, artist
+                HAVING COUNT(*) >= ?
                 ORDER BY $orderByClause
             """.trimIndent()
 
             conn.prepareStatement(sql).use { stmt ->
+                stmt.setInt(1, minTracks)
                 stmt.executeQuery().use { rs ->
                     val albums = mutableListOf<Album>()
                     while (rs.next()) {
@@ -688,18 +703,30 @@ class MusicDao(
         }
     }
 
-    suspend fun search(query: String, filter: SearchFilterType = SearchFilterType.ALL): List<SearchResultItem> = withContext(ioDispatcher) {
+    suspend fun search(
+        query: String,
+        filter: SearchFilterType = SearchFilterType.ALL,
+        minDurationMs: Long = 0L,
+        minTracks: Int = 1
+    ): List<SearchResultItem> = withContext(ioDispatcher) {
         if (query.isBlank()) return@withContext emptyList()
         val q = "%$query%"
         val results = mutableListOf<SearchResultItem>()
 
         database.getConnection().use { conn ->
             if (filter == SearchFilterType.ALL || filter == SearchFilterType.SONGS) {
-                val songSql = "SELECT * FROM songs WHERE title LIKE ? OR artist LIKE ? OR album LIKE ? LIMIT 50"
+                val songSql = if (minDurationMs > 0L) {
+                    "SELECT * FROM songs WHERE (title LIKE ? OR artist LIKE ? OR album LIKE ?) AND duration >= ? LIMIT 50"
+                } else {
+                    "SELECT * FROM songs WHERE (title LIKE ? OR artist LIKE ? OR album LIKE ?) LIMIT 50"
+                }
                 conn.prepareStatement(songSql).use { stmt ->
                     stmt.setString(1, q)
                     stmt.setString(2, q)
                     stmt.setString(3, q)
+                    if (minDurationMs > 0L) {
+                        stmt.setLong(4, minDurationMs)
+                    }
                     stmt.executeQuery().use { rs ->
                         while (rs.next()) {
                             results.add(SearchResultItem.SongItem(rs.toSong(json)))
@@ -711,10 +738,11 @@ class MusicDao(
             if (filter == SearchFilterType.ALL || filter == SearchFilterType.ALBUMS) {
                 val albumSql = """
                     SELECT album_id, album, artist, album_artist, MAX(year) as max_year, MAX(date_added) as max_date_added, album_art_uri_string, COUNT(*) as song_count
-                    FROM songs WHERE album LIKE ? GROUP BY album, artist LIMIT 20
+                    FROM songs WHERE album LIKE ? GROUP BY album, artist HAVING COUNT(*) >= ? LIMIT 20
                 """.trimIndent()
                 conn.prepareStatement(albumSql).use { stmt ->
                     stmt.setString(1, q)
+                    stmt.setInt(2, minTracks)
                     stmt.executeQuery().use { rs ->
                         while (rs.next()) {
                             results.add(
@@ -766,6 +794,24 @@ class MusicDao(
             }
         }
         results
+    }
+
+    suspend fun clearLibrary() = withContext(ioDispatcher) {
+        database.getConnection().use { conn ->
+            conn.autoCommit = false
+            try {
+                conn.createStatement().use { stmt ->
+                    stmt.execute("DELETE FROM song_artists")
+                    stmt.execute("DELETE FROM artists")
+                    stmt.execute("DELETE FROM songs")
+                }
+                conn.commit()
+            } catch (e: Exception) {
+                conn.rollback()
+                throw e
+            }
+        }
+        database.notifyTableChanged("songs")
     }
 }
 

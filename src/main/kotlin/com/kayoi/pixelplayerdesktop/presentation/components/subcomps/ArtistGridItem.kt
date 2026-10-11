@@ -32,7 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Artist
-import com.kayoi.pixelplayerdesktop.utils.ArtistImageService
+import com.kayoi.pixelplayerdesktop.data.network.deezer.DeezerClient
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
 import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
@@ -53,7 +53,7 @@ fun ArtistGridItem(
 
     LaunchedEffect(artist.name, fetchDeezerImages) {
         if (resolvedImageUrl.isNullOrBlank() && artist.name.isNotBlank()) {
-            val fetched = ArtistImageService.getArtistImageUrl(
+            val fetched = DeezerClient.getArtistImageUrl(
                 artistName = artist.name,
                 fetchEnabled = fetchDeezerImages
             )

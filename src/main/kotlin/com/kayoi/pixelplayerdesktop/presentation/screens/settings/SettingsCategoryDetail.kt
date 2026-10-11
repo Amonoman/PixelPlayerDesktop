@@ -6,6 +6,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +29,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.outlined.ClearAll
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Sync
@@ -38,30 +42,40 @@ import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtColorAccuracy
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
+import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
+import com.kayoi.pixelplayerdesktop.data.scanner.ScanProgress
 import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveSwitchRow
 import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
@@ -78,6 +92,7 @@ fun SettingsCategoryDetail(
     onRescanLibrary: () -> Unit,
     onOpenFoldersDetail: () -> Unit,
     onOpenArtistsDetail: () -> Unit,
+    onOpenDuplicatesDetail: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -151,133 +166,270 @@ fun SettingsCategoryDetail(
                 }
 
                 item {
+                    val minSongDuration by viewModel.minSongDurationMs.collectAsState()
+                    val minTracksPerAlbum by viewModel.minTracksPerAlbum.collectAsState()
+                    val albumArtCacheLimitMb by viewModel.albumArtCacheLimitMb.collectAsState()
+
+                    var minSongDurationDraft by remember(minSongDuration) {
+                        mutableStateOf(minSongDuration.toFloat())
+                    }
+                    var minTracksPerAlbumDraft by remember(minTracksPerAlbum) {
+                        mutableStateOf(minTracksPerAlbum.toFloat())
+                    }
+                    var albumArtCacheLimitDraft by remember(albumArtCacheLimitMb) {
+                        mutableStateOf(albumArtCacheLimitMb.toFloat())
+                    }
+
+                    SettingsSubsection(title = "FILTERING") {
+                        ExpressiveSliderSettingsRow(
+                            title = "Minimum Song Duration",
+                            value = minSongDurationDraft,
+                            valueRange = 0f..120000f,
+                            steps = 23,
+                            onValueChange = { minSongDurationDraft = it },
+                            onValueChangeFinished = {
+                                val selected = minSongDurationDraft.roundToInt()
+                                if (selected != minSongDuration) {
+                                    viewModel.setMinSongDuration(selected)
+                                }
+                            },
+                            valueText = { value -> "${(value / 1000).toInt()}s" },
+                            shape = getGroupShape(0, 3)
+                        )
+
+                        ExpressiveSliderSettingsRow(
+                            title = "Minimum Tracks per Album",
+                            value = minTracksPerAlbumDraft,
+                            valueRange = 1f..5f,
+                            steps = 3,
+                            onValueChange = { minTracksPerAlbumDraft = it },
+                            onValueChangeFinished = {
+                                val selected = minTracksPerAlbumDraft.roundToInt()
+                                if (selected != minTracksPerAlbum) {
+                                    viewModel.setMinTracksPerAlbum(selected)
+                                }
+                            },
+                            valueText = { value -> "${value.roundToInt()}" },
+                            shape = getGroupShape(1, 3)
+                        )
+
+                        ExpressiveSliderSettingsRow(
+                            title = "Album Art Cache Limit",
+                            value = albumArtCacheLimitDraft,
+                            valueRange = 50f..1500f,
+                            steps = 28,
+                            onValueChange = { albumArtCacheLimitDraft = it },
+                            onValueChangeFinished = {
+                                val selected = albumArtCacheLimitDraft.roundToInt()
+                                if (selected != albumArtCacheLimitMb) {
+                                    viewModel.setAlbumArtCacheLimitMb(selected)
+                                }
+                            },
+                            valueText = { value -> "${value.roundToInt()} MB" },
+                            shape = getGroupShape(2, 3)
+                        )
+                    }
+                }
+
+                item {
+                    val scanProgress by viewModel.scanProgress.collectAsState()
+                    val isScanning = scanProgress is ScanProgress.Scanning
+                    val autoScanLrcFiles by viewModel.autoScanLrcFiles.collectAsState()
+                    var showRebuildDialog by remember { mutableStateOf(false) }
+
+                    if (showRebuildDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showRebuildDialog = false },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.DeleteForever,
+                                    contentDescription = null,
+                                    tint = colors.error
+                                )
+                            },
+                            title = {
+                                Text(
+                                    text = "Rebuild Database?",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            },
+                            text = {
+                                Text(
+                                    text = "This will delete all songs and artists from your local database and perform a clean rescan. Playlists and favorites will be preserved. Are you sure?",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = colors.onSurfaceVariant
+                                )
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        showRebuildDialog = false
+                                        viewModel.rebuildDatabase()
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = colors.error,
+                                        contentColor = colors.onError
+                                    )
+                                ) {
+                                    Text("Rebuild")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showRebuildDialog = false }) {
+                                    Text("Cancel")
+                                }
+                            }
+                        )
+                    }
+
                     SettingsSubsection(title = "SYNC & SCANNING") {
                         Surface(
-                            shape = getGroupShape(0, 1),
+                            shape = getGroupShape(0, 3),
                             color = colors.surfaceContainer,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                                val isCompact = maxWidth < 460.dp
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(Icons.Outlined.Sync, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
 
-                                if (isCompact) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(40.dp)
-                                                    .clip(RoundedCornerShape(12.dp))
-                                                    .background(colors.secondaryContainer),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Outlined.Sync,
-                                                    contentDescription = null,
-                                                    tint = colors.onSecondaryContainer,
-                                                    modifier = Modifier.size(22.dp)
-                                                )
-                                            }
-
-                                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                                Text(
-                                                    text = "Rescan Media Library",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    color = colors.onSurface
-                                                )
-                                                Text(
-                                                    text = "Scan configured music directories for new songs and metadata",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = colors.onSurfaceVariant
-                                                )
-                                            }
-                                        }
-
-                                        Button(
-                                            onClick = onRescanLibrary,
-                                            shape = RoundedCornerShape(14.dp),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = colors.primary,
-                                                contentColor = colors.onPrimary
-                                            ),
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(42.dp)
-                                        ) {
-                                            Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text("Rescan")
-                                        }
+                                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                        Text(
+                                            text = "Refresh Library",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = colors.onSurface
+                                        )
+                                        Text(
+                                            text = "Scan entire library for new and modified files.",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = colors.onSurfaceVariant
+                                        )
                                     }
-                                } else {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.weight(1f).padding(end = 12.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                }
+
+                                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                                    val isStacked = maxWidth < 400.dp
+
+                                    if (isStacked) {
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(40.dp)
-                                                    .clip(RoundedCornerShape(12.dp))
-                                                    .background(colors.secondaryContainer),
-                                                contentAlignment = Alignment.Center
+                                            FilledTonalButton(
+                                                onClick = onRescanLibrary,
+                                                enabled = !isScanning,
+                                                shape = RoundedCornerShape(14.dp),
+                                                modifier = Modifier.fillMaxWidth().height(42.dp)
                                             ) {
-                                                Icon(
-                                                    imageVector = Icons.Outlined.Sync,
-                                                    contentDescription = null,
-                                                    tint = colors.onSecondaryContainer,
-                                                    modifier = Modifier.size(22.dp)
-                                                )
+                                                Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text("Full Rescan", textAlign = TextAlign.Center)
                                             }
 
-                                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                                Text(
-                                                    text = "Rescan Media Library",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    color = colors.onSurface
-                                                )
-                                                Text(
-                                                    text = "Scan configured music directories for new songs and metadata",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = colors.onSurfaceVariant
-                                                )
+                                            OutlinedButton(
+                                                onClick = { showRebuildDialog = true },
+                                                enabled = !isScanning,
+                                                shape = RoundedCornerShape(14.dp),
+                                                colors = ButtonDefaults.outlinedButtonColors(
+                                                    contentColor = colors.error
+                                                ),
+                                                border = BorderStroke(1.dp, colors.error.copy(alpha = 0.5f)),
+                                                modifier = Modifier.fillMaxWidth().height(42.dp)
+                                            ) {
+                                                Icon(Icons.Outlined.DeleteForever, contentDescription = null, modifier = Modifier.size(18.dp))
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text("Rebuild Database", textAlign = TextAlign.Center)
                                             }
                                         }
-
-                                        Button(
-                                            onClick = onRescanLibrary,
-                                            shape = RoundedCornerShape(14.dp),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = colors.primary,
-                                                contentColor = colors.onPrimary
-                                            ),
-                                            modifier = Modifier.height(42.dp)
+                                    } else {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                                         ) {
-                                            Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text("Rescan")
+                                            FilledTonalButton(
+                                                onClick = onRescanLibrary,
+                                                enabled = !isScanning,
+                                                shape = RoundedCornerShape(14.dp),
+                                                modifier = Modifier.weight(1f).height(42.dp)
+                                            ) {
+                                                Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text("Full Rescan", textAlign = TextAlign.Center)
+                                            }
+
+                                            OutlinedButton(
+                                                onClick = { showRebuildDialog = true },
+                                                enabled = !isScanning,
+                                                shape = RoundedCornerShape(14.dp),
+                                                colors = ButtonDefaults.outlinedButtonColors(
+                                                    contentColor = colors.error
+                                                ),
+                                                border = BorderStroke(1.dp, colors.error.copy(alpha = 0.5f)),
+                                                modifier = Modifier.weight(1f).height(42.dp)
+                                            ) {
+                                                Icon(Icons.Outlined.DeleteForever, contentDescription = null, modifier = Modifier.size(18.dp))
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text("Rebuild Database", textAlign = TextAlign.Center)
+                                            }
                                         }
                                     }
                                 }
+
+                                if (isScanning) {
+                                    val progress = scanProgress as ScanProgress.Scanning
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    if (progress.totalDiscovered > 0) {
+                                        LinearProgressIndicator(
+                                            progress = { progress.scannedCount.toFloat() / progress.totalDiscovered.coerceAtLeast(1) },
+                                            modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp))
+                                        )
+                                    } else {
+                                        LinearProgressIndicator(
+                                            modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp))
+                                        )
+                                    }
+                                    Text(
+                                        text = "Scanning ${progress.scannedCount} of ${progress.totalDiscovered} songs…",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = colors.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
+
+                        ExpressiveSwitchRow(
+                            title = "Auto-scan .lrc files",
+                            subtitle = "Automatically scan and assign .lrc files in the same folder during library sync.",
+                            checked = autoScanLrcFiles,
+                            onCheckedChange = { viewModel.setAutoScanLrcFiles(it) },
+                            leadingIcon = {
+                                Icon(Icons.Outlined.Folder, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                            },
+                            shape = getGroupShape(1, 3)
+                        )
+
+                        ExpressiveSettingsRow(
+                            title = "Find duplicate songs",
+                            subtitle = "Scan your library for songs that appear more than once.",
+                            leadingIcon = {
+                                Icon(Icons.Outlined.ContentCopy, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                            },
+                            trailingIcon = {
+                                Icon(Icons.Rounded.ChevronRight, null, tint = colors.onSurfaceVariant, modifier = Modifier.size(22.dp))
+                            },
+                            shape = getGroupShape(2, 3),
+                            onClick = onOpenDuplicatesDetail
+                        )
                     }
                 }
 
@@ -294,6 +446,152 @@ fun SettingsCategoryDetail(
                                 Icon(Icons.Outlined.Person, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             shape = getGroupShape(0, 1)
+                        )
+                    }
+                }
+
+                item {
+                    val currentLyricsPriority by viewModel.lyricsSourcePreference.collectAsState()
+                    var showResetLyricsDialog by remember { mutableStateOf(false) }
+
+                    if (showResetLyricsDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showResetLyricsDialog = false },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.ClearAll,
+                                    contentDescription = null,
+                                    tint = colors.error
+                                )
+                            },
+                            title = {
+                                Text(
+                                    text = "Reset imported lyrics?",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            },
+                            text = {
+                                Text(
+                                    text = "This will remove all cached lyrics from the local database. Songs will re-fetch lyrics according to your source priority.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = colors.onSurfaceVariant
+                                )
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        showResetLyricsDialog = false
+                                        viewModel.resetAllLyrics()
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = colors.error,
+                                        contentColor = colors.onError
+                                    )
+                                ) {
+                                    Text("Reset")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showResetLyricsDialog = false }) {
+                                    Text("Cancel")
+                                }
+                            }
+                        )
+                    }
+
+                    SettingsSubsection(title = "LYRICS MANAGEMENT") {
+                        Surface(
+                            shape = getGroupShape(0, 2),
+                            color = colors.surfaceContainer,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(
+                                        imageVector = PixelPlayerIcons.Lyrics,
+                                        contentDescription = null,
+                                        tint = colors.secondary,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+
+                                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                        Text(
+                                            text = "Lyrics Source Priority",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = colors.onSurface
+                                        )
+                                        Text(
+                                            text = "Choose which lyrics source to prioritize when searching",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = colors.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                FlowRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    LyricsSourcePreference.entries.forEach { preference ->
+                                        val isSelected = preference == currentLyricsPriority
+                                        val animatedContainerColor by animateColorAsState(
+                                            targetValue = if (isSelected) colors.primary else colors.surfaceContainerHighest,
+                                            label = "lyricsPriorityContainer"
+                                        )
+                                        val animatedContentColor by animateColorAsState(
+                                            targetValue = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
+                                            label = "lyricsPriorityContent"
+                                        )
+
+                                        Surface(
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = animatedContainerColor,
+                                            modifier = Modifier
+                                                .height(40.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .clickable { viewModel.setLyricsSourcePreference(preference) }
+                                        ) {
+                                            Box(
+                                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = preference.label,
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                    color = animatedContentColor,
+                                                    maxLines = 1
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        ExpressiveSettingsRow(
+                            title = "Reset Imported Lyrics",
+                            subtitle = "Remove all imported lyrics from the database",
+                            leadingIcon = {
+                                Icon(Icons.Outlined.ClearAll, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                            },
+                            trailingIcon = {
+                                Icon(Icons.Rounded.ChevronRight, null, tint = colors.onSurfaceVariant, modifier = Modifier.size(22.dp))
+                            },
+                            shape = getGroupShape(1, 2),
+                            onClick = { showResetLyricsDialog = true }
                         )
                     }
                 }

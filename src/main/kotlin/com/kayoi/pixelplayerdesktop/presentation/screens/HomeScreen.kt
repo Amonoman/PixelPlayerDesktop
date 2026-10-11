@@ -62,9 +62,11 @@ import com.kayoi.pixelplayerdesktop.utils.shapes.RoundedStarShape
 fun HomeScreen(
     songs: List<Song>,
     favoriteSongs: List<Song>,
+    recentlyPlayedSongs: List<Song> = emptyList(),
     currentSong: Song?,
     isPlaying: Boolean,
     onSongSelect: (Song) -> Unit,
+    onPlaySongs: ((List<Song>, Int) -> Unit)? = null,
     onShuffleAll: () -> Unit,
     onNavigateToLibrary: () -> Unit,
     onNavigateToFolders: () -> Unit = {},
@@ -79,6 +81,15 @@ fun HomeScreen(
     val colors = MaterialTheme.colorScheme
     val dailyMixManager = remember { DailyMixManager() }
 
+    val playSongInContext: (List<Song>, Song) -> Unit = { list, song ->
+        if (onPlaySongs != null) {
+            val idx = list.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
+            onPlaySongs(list, idx)
+        } else {
+            onSongSelect(song)
+        }
+    }
+
     val favoriteIds = remember(favoriteSongs) {
         favoriteSongs.map { it.id }.toSet()
     }
@@ -89,11 +100,7 @@ fun HomeScreen(
     }
 
     val dailyMixSongs = remember(songs) {
-        dailyMixManager.generateDailyMix(songs, limit = 8)
-    }
-
-    val recentlyPlayedSongs = remember(songs) {
-        songs.take(12)
+        dailyMixManager.generateDailyMix(songs, limit = 30)
     }
 
     if (songs.isEmpty()) {
@@ -160,7 +167,13 @@ fun HomeScreen(
                                         .padding(bottom = 2.dp)
                                         .size(92.dp)
                                         .clip(CircleShape)
-                                        .clickable(onClick = onShuffleAll),
+                                        .clickable(onClick = {
+                                            if (onPlaySongs != null) {
+                                                onPlaySongs(yourMixSongs.shuffled(), 0)
+                                            } else {
+                                                onShuffleAll()
+                                            }
+                                        }),
                                     shape = CircleShape,
                                     color = colors.tertiaryContainer,
                                     contentColor = colors.onTertiaryContainer,
@@ -190,7 +203,7 @@ fun HomeScreen(
                                     modifier = Modifier.width(300.dp).height(210.dp),
                                     height = 210.dp,
                                     pattern = CollagePattern.COSMIC_SWIRL,
-                                    onSongClick = onSongSelect
+                                    onSongClick = { song -> playSongInContext(yourMixSongs, song) }
                                 )
                             }
                         }
@@ -231,7 +244,13 @@ fun HomeScreen(
                                         .padding(bottom = 4.dp)
                                         .size(116.dp)
                                         .clip(CircleShape)
-                                        .clickable(onClick = onShuffleAll),
+                                        .clickable(onClick = {
+                                            if (onPlaySongs != null) {
+                                                onPlaySongs(yourMixSongs.shuffled(), 0)
+                                            } else {
+                                                onShuffleAll()
+                                            }
+                                        }),
                                     shape = CircleShape,
                                     color = colors.tertiaryContainer,
                                     contentColor = colors.onTertiaryContainer,
@@ -261,7 +280,7 @@ fun HomeScreen(
                                     modifier = Modifier.fillMaxSize(),
                                     height = 300.dp,
                                     pattern = CollagePattern.COSMIC_SWIRL,
-                                    onSongClick = onSongSelect
+                                    onSongClick = { song -> playSongInContext(yourMixSongs, song) }
                                 )
                             }
                         }
@@ -276,9 +295,15 @@ fun HomeScreen(
                     songs = dailyMixSongs,
                     currentSong = currentSong,
                     isPlaying = isPlaying,
-                    onSongClick = onSongSelect,
+                    onSongClick = { song -> playSongInContext(dailyMixSongs, song) },
                     onPlayMix = {
-                        if (dailyMixSongs.isNotEmpty()) onSongSelect(dailyMixSongs.first())
+                        if (dailyMixSongs.isNotEmpty()) {
+                            if (onPlaySongs != null) {
+                                onPlaySongs(dailyMixSongs, 0)
+                            } else {
+                                onSongSelect(dailyMixSongs.first())
+                            }
+                        }
                     },
                     onSeeAllClick = onNavigateToLibrary,
                     onPlayNext = onPlayNext,
@@ -296,7 +321,7 @@ fun HomeScreen(
                     songs = recentlyPlayedSongs,
                     currentSong = currentSong,
                     isPlaying = isPlaying,
-                    onSongClick = onSongSelect,
+                    onSongClick = { song -> playSongInContext(recentlyPlayedSongs, song) },
                     onSeeAllClick = onNavigateToLibrary
                 )
             }

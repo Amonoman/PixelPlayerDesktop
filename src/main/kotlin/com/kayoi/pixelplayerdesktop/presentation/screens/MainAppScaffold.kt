@@ -74,6 +74,7 @@ fun MainAppScaffold(
     val artists by viewModel.artists.collectAsState()
     val playlists by viewModel.playlists.collectAsState()
     val favoriteSongs by viewModel.favoriteSongs.collectAsState()
+    val recentlyPlayedSongs by viewModel.recentlyPlayedSongs.collectAsState()
     val musicDirectories by viewModel.musicDirectories.collectAsState()
 
     val playerInfo by viewModel.playerInfo.collectAsState()
@@ -222,6 +223,7 @@ fun MainAppScaffold(
                                 HomeScreen(
                                     songs = songs,
                                     favoriteSongs = favoriteSongs,
+                                    recentlyPlayedSongs = recentlyPlayedSongs,
                                     currentSong = currentSong,
                                     isPlaying = playerInfo.isPlaying,
                                     onSongSelect = { song ->
@@ -231,6 +233,9 @@ fun MainAppScaffold(
                                         } else {
                                             viewModel.playSong(song)
                                         }
+                                    },
+                                    onPlaySongs = { songList, startIndex ->
+                                        viewModel.playSongs(songList, startIndex)
                                     },
                                     onShuffleAll = { viewModel.playSongs(songs.shuffled()) },
                                     onNavigateToLibrary = { currentDestination = DesktopNavDestination.SONGS },

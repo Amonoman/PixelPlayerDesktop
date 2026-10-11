@@ -26,8 +26,10 @@ import androidx.compose.material.icons.rounded.CropSquare
 import androidx.compose.material.icons.rounded.FullscreenExit
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,7 +37,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kayoi.pixelplayerdesktop.presentation.components.LyricsSearchDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueSidePanel
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
 import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
@@ -85,6 +90,7 @@ fun ExpandedPlayerScreen(
     val isDynamicColor by viewModel.isDynamicColorEnabled.collectAsState()
     val paletteStyle by viewModel.albumArtPaletteStyle.collectAsState()
     val colorAccuracy by viewModel.albumArtColorAccuracy.collectAsState()
+    var showLyricsSearchDialog by remember { mutableStateOf(false) }
 
     val songColorScheme = remember(currentSong?.albumArtUriString, isDarkTheme, isDynamicColor, paletteStyle, colorAccuracy) {
         if (isDynamicColor && currentSong?.albumArtUriString != null) {
@@ -288,22 +294,41 @@ fun ExpandedPlayerScreen(
                                                 vertical = lyricsPaddingV
                                             ),
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                        horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Icon(
-                                            imageVector = PixelPlayerIcons.Lyrics,
-                                            contentDescription = null,
-                                            tint = colors.primary,
-                                            modifier = Modifier.size(22.dp)
-                                        )
-                                        Text(
-                                            text = "Lyrics",
-                                            style = MaterialTheme.typography.titleMedium.copy(
-                                                fontSize = 17.sp,
-                                                fontWeight = FontWeight.Bold
-                                            ),
-                                            color = colors.onSurface
-                                        )
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = PixelPlayerIcons.Lyrics,
+                                                contentDescription = null,
+                                                tint = colors.primary,
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                            Text(
+                                                text = "Lyrics",
+                                                style = MaterialTheme.typography.titleMedium.copy(
+                                                    fontSize = 17.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                ),
+                                                color = colors.onSurface
+                                            )
+                                        }
+
+                                        AppTooltip("Search / Change Lyrics") {
+                                            IconButton(
+                                                onClick = { showLyricsSearchDialog = true },
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Search,
+                                                    contentDescription = "Search Lyrics",
+                                                    tint = colors.onSurfaceVariant,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+                                        }
                                     }
 
                                     HorizontalDivider(
@@ -314,7 +339,8 @@ fun ExpandedPlayerScreen(
                                     SyncedLyricsView(
                                         lyrics = playerInfo.lyrics,
                                         currentPositionMs = playerInfo.currentPositionMs,
-                                        onSeekToMs = { viewModel.seekTo(it) }
+                                        onSeekToMs = { viewModel.seekTo(it) },
+                                        onSearchLyrics = { showLyricsSearchDialog = true }
                                     )
                                 }
                             }
@@ -364,6 +390,27 @@ fun ExpandedPlayerScreen(
                     }
                 }
             }
+        }
+
+        if (showLyricsSearchDialog) {
+            val lyricsSearchUiState by viewModel.lyricsSearchUiState.collectAsState()
+            LyricsSearchDialog(
+                currentSong = currentSong,
+                uiState = lyricsSearchUiState,
+                onSearch = { viewModel.searchLyrics(it) },
+                onSelectLyrics = {
+                    viewModel.applyLyrics(it)
+                    showLyricsSearchDialog = false
+                },
+                onImportFile = {
+                    viewModel.importLyricsFromFile(it)
+                    showLyricsSearchDialog = false
+                },
+                onDismiss = {
+                    showLyricsSearchDialog = false
+                    viewModel.resetLyricsSearchState()
+                }
+            )
         }
     }
 }

@@ -11,14 +11,16 @@ import com.kayoi.pixelplayerdesktop.data.model.SortOption
 import kotlinx.coroutines.flow.Flow
 
 interface MusicRepository {
-    fun getAllSongsFlow(sortOption: SortOption = SortOption.SongTitleAZ): Flow<List<Song>>
-    suspend fun getAllSongs(sortOption: SortOption = SortOption.SongTitleAZ): List<Song>
+    fun getAllSongsFlow(sortOption: SortOption = SortOption.SongTitleAZ, minDurationMs: Long = 0L): Flow<List<Song>>
+    suspend fun getAllSongs(sortOption: SortOption = SortOption.SongTitleAZ, minDurationMs: Long = 0L): List<Song>
     suspend fun getSongById(id: String): Song?
     suspend fun getSongsByIds(ids: List<String>): List<Song>
     suspend fun getSongByPath(path: String): Song?
     suspend fun deleteSong(song: Song)
+    suspend fun clearLibrary()
 
-    fun getAllAlbumsFlow(sortOption: SortOption = SortOption.AlbumTitleAZ): Flow<List<Album>>
+    fun getAllAlbumsFlow(sortOption: SortOption = SortOption.AlbumTitleAZ, minTracks: Int = 1): Flow<List<Album>>
+    suspend fun getAllAlbums(sortOption: SortOption = SortOption.AlbumTitleAZ, minTracks: Int = 1): List<Album>
     suspend fun getAlbumById(id: Long): Album?
     suspend fun getSongsByAlbum(albumId: Long): List<Song>
 
@@ -47,5 +49,10 @@ interface MusicRepository {
     fun getRecentlyPlayedSongsFlow(limit: Int = 50): Flow<List<Song>>
     suspend fun recordSongPlayed(songId: String)
 
-    suspend fun search(query: String, filter: SearchFilterType = SearchFilterType.ALL): List<SearchResultItem>
+    suspend fun search(
+        query: String,
+        filter: SearchFilterType = SearchFilterType.ALL,
+        minDurationMs: Long = 0L,
+        minTracks: Int = 1
+    ): List<SearchResultItem>
 }

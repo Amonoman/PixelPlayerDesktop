@@ -39,8 +39,8 @@ class PlayerViewModelTest {
         val lyricsDao = LyricsDao(db, ioDispatcher = testDispatcher)
 
         val musicRepo = MusicRepositoryImpl(db, musicDao, favDao, playlistDao, ioDispatcher = testDispatcher)
-        val lyricsRepo = LyricsRepositoryImpl(lyricsDao, ioDispatcher = testDispatcher)
         val settingsRepo = SettingsRepositoryImpl(settingsFile = tempSettings, ioDispatcher = testDispatcher)
+        val lyricsRepo = LyricsRepositoryImpl(lyricsDao, settingsRepository = settingsRepo, ioDispatcher = testDispatcher)
         val scanner = DesktopMusicScanner(musicDao, ioDispatcher = testDispatcher)
 
         val audioEngine = VlcjAudioEngine(coroutineScope = backgroundScope)

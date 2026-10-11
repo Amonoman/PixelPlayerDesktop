@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.presentation.viewmodel
 
+import com.kayoi.pixelplayerdesktop.data.model.Lyrics
 import com.kayoi.pixelplayerdesktop.data.model.PlayerInfo
 import com.kayoi.pixelplayerdesktop.data.model.QueueItem
 import com.kayoi.pixelplayerdesktop.data.model.Song
@@ -9,6 +10,7 @@ import com.kayoi.pixelplayerdesktop.domain.player.PlaybackState
 import com.kayoi.pixelplayerdesktop.domain.repository.LyricsRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
+import com.kayoi.pixelplayerdesktop.utils.LrcParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 
 class PlaybackStateHolder(
     private val audioEngine: AudioEngine,
@@ -29,6 +32,51 @@ class PlaybackStateHolder(
 
     private val _playerInfo = MutableStateFlow(PlayerInfo())
     val playerInfo: StateFlow<PlayerInfo> = _playerInfo.asStateFlow()
+
+    private val _lyricsSearchUiState = MutableStateFlow<LyricsSearchUiState>(LyricsSearchUiState.Idle)
+    val lyricsSearchUiState: StateFlow<LyricsSearchUiState> = _lyricsSearchUiState.asStateFlow()
+
+    fun resetLyricsSearchState() {
+        _lyricsSearchUiState.value = LyricsSearchUiState.Idle
+    }
+
+    fun searchLyrics(query: String) {
+        if (query.isBlank()) return
+        coroutineScope.launch {
+            _lyricsSearchUiState.value = LyricsSearchUiState.Loading
+            try {
+                val results = lyricsRepository.searchOnlineLyrics(query)
+                if (results.isEmpty()) {
+                    _lyricsSearchUiState.value = LyricsSearchUiState.NotFound(query)
+                } else {
+                    _lyricsSearchUiState.value = LyricsSearchUiState.PickResult(query, results)
+                }
+            } catch (e: Exception) {
+                _lyricsSearchUiState.value = LyricsSearchUiState.Error(e.message ?: "Failed to search lyrics")
+            }
+        }
+    }
+
+    fun applyLyrics(lyrics: Lyrics) {
+        val currentSong = queueManager.currentSong.value ?: return
+        coroutineScope.launch {
+            lyricsRepository.saveLyrics(currentSong.id, lyrics)
+            _playerInfo.update { it.copy(lyrics = lyrics) }
+            _lyricsSearchUiState.value = LyricsSearchUiState.Idle
+        }
+    }
+
+    fun importLyricsFromFile(file: File) {
+        val currentSong = queueManager.currentSong.value ?: return
+        if (!file.exists() || !file.isFile) return
+        coroutineScope.launch {
+            val content = runCatching { file.readText(Charsets.UTF_8) }.getOrNull() ?: return@launch
+            val parsed = LrcParser.parse(content).copy(areFromRemote = false)
+            lyricsRepository.saveLyrics(currentSong.id, parsed)
+            _playerInfo.update { it.copy(lyrics = parsed) }
+            _lyricsSearchUiState.value = LyricsSearchUiState.Idle
+        }
+    }
 
     init {
 

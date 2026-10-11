@@ -1,6 +1,7 @@
 package com.kayoi.pixelplayerdesktop.domain.repository
 
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
+import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
 import com.kayoi.pixelplayerdesktop.data.preferences.UserSettings
 import kotlinx.coroutines.flow.StateFlow
 
@@ -34,4 +35,9 @@ interface SettingsRepository {
     suspend fun setAlbumsListView(isListView: Boolean)
     suspend fun setArtistsListView(isListView: Boolean)
     suspend fun setFoldersPlaylistView(isPlaylistView: Boolean)
+    suspend fun setMinSongDuration(durationMs: Int)
+    suspend fun setMinTracksPerAlbum(minTracks: Int)
+    suspend fun setAlbumArtCacheLimitMb(limitMb: Int)
+    suspend fun setAutoScanLrcFiles(enabled: Boolean)
+    suspend fun setLyricsSourcePreference(preference: LyricsSourcePreference)
 }

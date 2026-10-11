@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.ArtistSettingsDetailScreen
+import com.kayoi.pixelplayerdesktop.presentation.screens.settings.DuplicatesDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.MusicFoldersDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.SettingsCategoryDetail
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.SettingsOverviewMenu
@@ -24,7 +25,8 @@ import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 enum class LibrarySubDetail {
     NONE,
     FOLDERS,
-    ARTISTS
+    ARTISTS,
+    DUPLICATES
 }
 
 @Composable
@@ -90,6 +92,12 @@ fun SettingsScreen(
                     onRescanLibrary = onRescanLibrary
                 )
             }
+            section == SettingsSection.LIBRARY && subDetail == LibrarySubDetail.DUPLICATES -> {
+                DuplicatesDetailScreen(
+                    viewModel = viewModel,
+                    onBack = { activeSubDetail = LibrarySubDetail.NONE }
+                )
+            }
             else -> {
                 SettingsCategoryDetail(
                     section = section,
@@ -101,6 +109,7 @@ fun SettingsScreen(
                     onRescanLibrary = onRescanLibrary,
                     onOpenFoldersDetail = { activeSubDetail = LibrarySubDetail.FOLDERS },
                     onOpenArtistsDetail = { activeSubDetail = LibrarySubDetail.ARTISTS },
+                    onOpenDuplicatesDetail = { activeSubDetail = LibrarySubDetail.DUPLICATES },
                     onBack = { activeSection = null }
                 )
             }

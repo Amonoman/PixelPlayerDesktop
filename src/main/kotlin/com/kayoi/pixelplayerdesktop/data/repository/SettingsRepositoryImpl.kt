@@ -2,6 +2,7 @@ package com.kayoi.pixelplayerdesktop.data.repository
 
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtColorAccuracy
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
+import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
 import com.kayoi.pixelplayerdesktop.data.preferences.UserSettings
 import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
 import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
@@ -191,6 +192,26 @@ class SettingsRepositoryImpl(
 
     override suspend fun setFoldersPlaylistView(isPlaylistView: Boolean) {
         updateSettings { it.copy(isFoldersPlaylistView = isPlaylistView) }
+    }
+
+    override suspend fun setMinSongDuration(durationMs: Int) {
+        updateSettings { it.copy(minSongDurationMs = durationMs.coerceIn(0, 120000)) }
+    }
+
+    override suspend fun setMinTracksPerAlbum(minTracks: Int) {
+        updateSettings { it.copy(minTracksPerAlbum = minTracks.coerceIn(1, 5)) }
+    }
+
+    override suspend fun setAlbumArtCacheLimitMb(limitMb: Int) {
+        updateSettings { it.copy(albumArtCacheLimitMb = limitMb.coerceIn(50, 1500)) }
+    }
+
+    override suspend fun setAutoScanLrcFiles(enabled: Boolean) {
+        updateSettings { it.copy(autoScanLrcFiles = enabled) }
+    }
+
+    override suspend fun setLyricsSourcePreference(preference: LyricsSourcePreference) {
+        updateSettings { it.copy(lyricsSourcePreference = preference.storageKey) }
     }
 
     private fun loadSettingsFromDisk(): UserSettings {

@@ -64,4 +64,13 @@ class LyricsDao(
             database.notifyTableChanged("lyrics_cache")
         }
     }
+
+    suspend fun deleteAllLyrics() = withContext(ioDispatcher) {
+        database.getConnection().use { conn ->
+            conn.createStatement().use { stmt ->
+                stmt.executeUpdate("DELETE FROM lyrics_cache")
+            }
+            database.notifyTableChanged("lyrics_cache")
+        }
+    }
 }
