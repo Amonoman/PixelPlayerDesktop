@@ -212,64 +212,14 @@ fun LibraryActionRow(
                     enter = slideInHorizontally(initialOffsetX = { it / 2 }) + fadeIn(),
                     exit = slideOutHorizontally(targetOffsetX = { it / 2 }) + fadeOut()
                 ) {
-                    FilledTonalIconButton(
-                        onClick = onLocateClick,
-                        shape = RoundedCornerShape(
-                            topStart = outerCorner,
-                            bottomStart = outerCorner,
-                            topEnd = innerCorner,
-                            bottomEnd = innerCorner
-                        ),
-                        colors = IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor = colors.secondaryContainer,
-                            contentColor = colors.onSecondaryContainer
-                        ),
-                        modifier = Modifier.size(genHeight)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.MyLocation,
-                            contentDescription = "Locate currently playing track",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(gapBetweenLocateAndNext))
-
-                if (showViewModeToggle) {
-                    FilledTonalIconButton(
-                        onClick = onToggleViewMode,
-                        shape = RoundedCornerShape(
-                            topStart = viewModeStartCorner,
-                            bottomStart = viewModeStartCorner,
-                            topEnd = innerCorner,
-                            bottomEnd = innerCorner
-                        ),
-                        colors = IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor = colors.secondaryContainer,
-                            contentColor = colors.onSecondaryContainer
-                        ),
-                        modifier = Modifier.size(genHeight)
-                    ) {
-                        Icon(
-                            imageVector = if (isListView) Icons.Rounded.GridView else Icons.AutoMirrored.Rounded.ViewList,
-                            contentDescription = if (isListView) "Switch to Grid view" else "Switch to List view",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(gapBetweenViewModeAndSort))
-                }
-
-                Box {
-                    if (isCompact) {
+                    AppTooltip("Locate playing song") {
                         FilledTonalIconButton(
-                            onClick = { isSortMenuExpanded = true },
+                            onClick = onLocateClick,
                             shape = RoundedCornerShape(
-                                topStart = sortStartCorner,
-                                bottomStart = sortStartCorner,
-                                topEnd = outerCorner,
-                                bottomEnd = outerCorner
+                                topStart = outerCorner,
+                                bottomStart = outerCorner,
+                                topEnd = innerCorner,
+                                bottomEnd = innerCorner
                             ),
                             colors = IconButtonDefaults.filledTonalIconButtonColors(
                                 containerColor = colors.secondaryContainer,
@@ -278,10 +228,67 @@ fun LibraryActionRow(
                             modifier = Modifier.size(genHeight)
                         ) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.Sort,
-                                contentDescription = "Sort options (${currentSortOption.displayName})",
+                                imageVector = Icons.Rounded.MyLocation,
+                                contentDescription = "Locate currently playing song",
                                 modifier = Modifier.size(20.dp)
                             )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(gapBetweenLocateAndNext))
+
+                if (showViewModeToggle) {
+                    val viewModeTooltip = if (isListView) "Switch to Grid view" else "Switch to List view"
+                    AppTooltip(viewModeTooltip) {
+                        FilledTonalIconButton(
+                            onClick = onToggleViewMode,
+                            shape = RoundedCornerShape(
+                                topStart = viewModeStartCorner,
+                                bottomStart = viewModeStartCorner,
+                                topEnd = innerCorner,
+                                bottomEnd = innerCorner
+                            ),
+                            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                containerColor = colors.secondaryContainer,
+                                contentColor = colors.onSecondaryContainer
+                            ),
+                            modifier = Modifier.size(genHeight)
+                        ) {
+                            Icon(
+                                imageVector = if (isListView) Icons.Rounded.GridView else Icons.AutoMirrored.Rounded.ViewList,
+                                contentDescription = if (isListView) "Switch to Grid view" else "Switch to List view",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(gapBetweenViewModeAndSort))
+                }
+
+                Box {
+                    if (isCompact) {
+                        AppTooltip("Sort: ${currentSortOption.displayName}") {
+                            FilledTonalIconButton(
+                                onClick = { isSortMenuExpanded = true },
+                                shape = RoundedCornerShape(
+                                    topStart = sortStartCorner,
+                                    bottomStart = sortStartCorner,
+                                    topEnd = outerCorner,
+                                    bottomEnd = outerCorner
+                                ),
+                                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                    containerColor = colors.secondaryContainer,
+                                    contentColor = colors.onSecondaryContainer
+                                ),
+                                modifier = Modifier.size(genHeight)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.Sort,
+                                    contentDescription = "Sort options (${currentSortOption.displayName})",
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     } else {
                         FilledTonalButton(

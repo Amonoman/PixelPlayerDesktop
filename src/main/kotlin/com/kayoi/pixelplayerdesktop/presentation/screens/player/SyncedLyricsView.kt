@@ -61,7 +61,7 @@ fun SyncedLyricsView(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "No lyrics found for this track",
+                    text = "No lyrics found for this song",
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant.copy(alpha = 0.6f)
                 )

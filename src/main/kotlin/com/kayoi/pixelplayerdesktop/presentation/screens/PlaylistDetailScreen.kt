@@ -485,7 +485,7 @@ fun PlaylistDetailScreen(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Rounded.DragIndicator,
-                                            contentDescription = "Reorder track",
+                                            contentDescription = "Reorder song",
                                             tint = if (isSelected || isDragging) colors.onPrimaryContainer.copy(alpha = 0.85f) else colors.onSurfaceVariant.copy(alpha = 0.45f),
                                             modifier = Modifier.size(20.dp)
                                         )

@@ -238,7 +238,7 @@ fun HeroTrackControlSection(
             ) {
                 Icon(
                     imageVector = Icons.Rounded.SkipPrevious,
-                    contentDescription = "Previous Track",
+                    contentDescription = "Previous Song",
                     tint = colors.onSurface,
                     modifier = Modifier.size(30.dp)
                 )
@@ -278,7 +278,7 @@ fun HeroTrackControlSection(
             ) {
                 Icon(
                     imageVector = Icons.Rounded.SkipNext,
-                    contentDescription = "Next Track",
+                    contentDescription = "Next Song",
                     tint = colors.onSurface,
                     modifier = Modifier.size(30.dp)
                 )

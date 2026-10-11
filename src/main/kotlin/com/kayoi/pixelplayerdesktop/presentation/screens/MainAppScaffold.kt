@@ -408,10 +408,6 @@ fun MainAppScaffold(
                             onVolumeChange = { viewModel.setVolume(it) },
                             onToggleMute = { viewModel.toggleMute() },
                             onExpandClick = { isExpandedPlayerOpen = true },
-                            onLyricsClick = {
-                                initialExpandedTab = ExpandedTab.LYRICS
-                                isExpandedPlayerOpen = true
-                            },
                             onQueueClick = onToggleQueueSidePanel,
                             onCloseClick = {
                                 viewModel.stopPlayback()

@@ -8,6 +8,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -96,81 +97,91 @@ fun RecentlyPlayedSection(
     val sectionHeight = HomeRecentlyPlayedPillHeight * HomeRecentlyPlayedPillsPerColumn +
             HomeRecentlyPlayedPillSpacing * (HomeRecentlyPlayedPillsPerColumn - 1)
 
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+    BoxWithConstraints(
+        modifier = modifier.fillMaxWidth()
     ) {
+        val isCompact = maxWidth < 640.dp
+        val titleFontSize = if (isCompact) 22.sp else 26.sp
+        val buttonHeight = if (isCompact) 38.dp else 44.dp
+        val buttonWidth = if (isCompact) 60.dp else 72.dp
+        val iconSize = if (isCompact) 20.dp else 22.dp
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text(
-                text = "Recently Played",
-                style = MaterialTheme.typography.titleLarge,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = colors.onSurface
-            )
 
-            FilledIconButton(
+            Row(
                 modifier = Modifier
-                    .height(44.dp)
-                    .width(72.dp),
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = colors.surfaceContainerHigh,
-                    contentColor = colors.onSurface
-                ),
-                onClick = onSeeAllClick
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                    contentDescription = "See all recently played",
-                    modifier = Modifier.size(22.dp)
+                Text(
+                    text = "Recently Played",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontSize = titleFontSize,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.onSurface
                 )
-            }
-        }
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(sectionHeight)
-                .horizontalScroll(state = sharedScrollState)
-        ) {
-            Column(
+                FilledIconButton(
+                    modifier = Modifier
+                        .height(buttonHeight)
+                        .width(buttonWidth),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = colors.surfaceContainerHigh,
+                        contentColor = colors.onSurface
+                    ),
+                    onClick = onSeeAllClick
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                        contentDescription = "See all recently played",
+                        modifier = Modifier.size(iconSize)
+                    )
+                }
+            }
+
+            Box(
                 modifier = Modifier
-                    .width(maxRowContentWidth)
-                    .height(sectionHeight),
-                verticalArrangement = Arrangement.spacedBy(HomeRecentlyPlayedPillSpacing),
-                horizontalAlignment = Alignment.Start
+                    .fillMaxWidth()
+                    .height(sectionHeight)
+                    .horizontalScroll(state = sharedScrollState)
             ) {
-                songRows.forEach { row ->
-                    if (row.pills.isEmpty()) {
-                        Spacer(modifier = Modifier.height(HomeRecentlyPlayedPillHeight))
-                    } else {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(HomeRecentlyPlayedPillHeight),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(HomeRecentlyPlayedPillSpacing)
-                        ) {
-                            row.pills.forEach { cell ->
-                                key(cell.song.id) {
-                                    RecentlyPlayedPill(
-                                        song = cell.song,
-                                        isCurrentSong = currentSong?.id == cell.song.id,
-                                        modifier = Modifier.width(cell.width),
-                                        onClick = { onSongClick(cell.song) }
-                                    )
+                Column(
+                    modifier = Modifier
+                        .width(maxRowContentWidth)
+                        .height(sectionHeight),
+                    verticalArrangement = Arrangement.spacedBy(HomeRecentlyPlayedPillSpacing),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    songRows.forEach { row ->
+                        if (row.pills.isEmpty()) {
+                            Spacer(modifier = Modifier.height(HomeRecentlyPlayedPillHeight))
+                        } else {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(HomeRecentlyPlayedPillHeight),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(HomeRecentlyPlayedPillSpacing)
+                            ) {
+                                row.pills.forEach { cell ->
+                                    key(cell.song.id) {
+                                        RecentlyPlayedPill(
+                                            song = cell.song,
+                                            isCurrentSong = currentSong?.id == cell.song.id,
+                                            modifier = Modifier.width(cell.width),
+                                            onClick = { onSongClick(cell.song) }
+                                        )
+                                    }
                                 }
-                            }
-                            val trailingGap = (maxRowContentWidth - row.contentWidth).coerceAtLeast(0.dp)
-                            if (trailingGap > 0.dp) {
-                                Spacer(modifier = Modifier.width(trailingGap))
+                                val trailingGap = (maxRowContentWidth - row.contentWidth).coerceAtLeast(0.dp)
+                                if (trailingGap > 0.dp) {
+                                    Spacer(modifier = Modifier.width(trailingGap))
+                                }
                             }
                         }
                     }

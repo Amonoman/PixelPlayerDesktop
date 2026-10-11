@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.EnhancedSongListItem
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
@@ -233,91 +234,104 @@ fun QueueSidePanel(
                         enter = fadeIn() + scaleIn(),
                         exit = fadeOut() + scaleOut()
                     ) {
-                        FilledTonalIconButton(
-                            onClick = {
-                                if (currentSongIndex >= 0) {
-                                    coroutineScope.launch {
-                                        val firstVisible = listState.firstVisibleItemIndex
-                                        val distance = kotlin.math.abs(currentSongIndex - firstVisible)
-                                        if (distance > 15) {
-                                            val preScrollIndex = if (currentSongIndex > firstVisible) {
-                                                (currentSongIndex - 8).coerceAtLeast(0)
-                                            } else {
-                                                (currentSongIndex + 8).coerceAtMost(queue.size - 1)
+                        AppTooltip("Locate playing song") {
+                            FilledTonalIconButton(
+                                onClick = {
+                                    if (currentSongIndex >= 0) {
+                                        coroutineScope.launch {
+                                            val firstVisible = listState.firstVisibleItemIndex
+                                            val distance = kotlin.math.abs(currentSongIndex - firstVisible)
+                                            if (distance > 15) {
+                                                val preScrollIndex = if (currentSongIndex > firstVisible) {
+                                                    (currentSongIndex - 8).coerceAtLeast(0)
+                                                } else {
+                                                    (currentSongIndex + 8).coerceAtMost(queue.size - 1)
+                                                }
+                                                listState.scrollToItem(preScrollIndex)
                                             }
-                                            listState.scrollToItem(preScrollIndex)
+                                            listState.animateScrollToItem(currentSongIndex)
                                         }
-                                        listState.animateScrollToItem(currentSongIndex)
                                     }
-                                }
-                            },
-                            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                containerColor = colors.surfaceContainerHighest.copy(alpha = 0.6f),
-                                contentColor = colors.primary
-                            ),
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.MyLocation,
-                                contentDescription = "Locate playing song",
-                                modifier = Modifier.size(18.dp)
-                            )
+                                },
+                                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                    containerColor = colors.surfaceContainerHighest.copy(alpha = 0.6f),
+                                    contentColor = colors.primary
+                                ),
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.MyLocation,
+                                    contentDescription = "Locate playing song",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         }
                     }
 
                     val shuffleContainerColor = if (isShuffleOn) colors.primary else colors.surfaceContainerHighest.copy(alpha = 0.6f)
                     val shuffleContentColor = if (isShuffleOn) colors.onPrimary else colors.onSurfaceVariant
 
-                    FilledIconButton(
-                        onClick = onToggleShuffle,
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = shuffleContainerColor,
-                            contentColor = shuffleContentColor
-                        ),
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Shuffle,
-                            contentDescription = "Toggle Shuffle",
-                            modifier = Modifier.size(18.dp)
-                        )
+                    AppTooltip(if (isShuffleOn) "Shuffle: On" else "Shuffle: Off") {
+                        FilledIconButton(
+                            onClick = onToggleShuffle,
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = shuffleContainerColor,
+                                contentColor = shuffleContentColor
+                            ),
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Shuffle,
+                                contentDescription = "Toggle Shuffle",
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
 
                     val repeatContainerColor = if (repeatMode > 0) colors.primary else colors.surfaceContainerHighest.copy(alpha = 0.6f)
                     val repeatContentColor = if (repeatMode > 0) colors.onPrimary else colors.onSurfaceVariant
                     val repeatIcon = if (repeatMode == 2) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat
-
-                    FilledIconButton(
-                        onClick = onCycleRepeat,
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = repeatContainerColor,
-                            contentColor = repeatContentColor
-                        ),
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = repeatIcon,
-                            contentDescription = "Repeat Mode",
-                            modifier = Modifier.size(18.dp)
-                        )
+                    val repeatLabel = when (repeatMode) {
+                        1 -> "Repeat: All"
+                        2 -> "Repeat: One"
+                        else -> "Repeat: Off"
                     }
 
-                    FilledIconButton(
-                        onClick = { showClearDialog = true },
-                        enabled = queue.isNotEmpty(),
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = colors.surfaceContainerHighest.copy(alpha = 0.6f),
-                            contentColor = colors.onSurfaceVariant,
-                            disabledContainerColor = colors.surfaceContainerHighest.copy(alpha = 0.25f),
-                            disabledContentColor = colors.onSurfaceVariant.copy(alpha = 0.38f)
-                        ),
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.DeleteSweep,
-                            contentDescription = "Clear Queue",
-                            modifier = Modifier.size(18.dp)
-                        )
+                    AppTooltip(repeatLabel) {
+                        FilledIconButton(
+                            onClick = onCycleRepeat,
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = repeatContainerColor,
+                                contentColor = repeatContentColor
+                            ),
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = repeatIcon,
+                                contentDescription = "Repeat Mode",
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    AppTooltip("Clear Queue") {
+                        FilledIconButton(
+                            onClick = { showClearDialog = true },
+                            enabled = queue.isNotEmpty(),
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = colors.surfaceContainerHighest.copy(alpha = 0.6f),
+                                contentColor = colors.onSurfaceVariant,
+                                disabledContainerColor = colors.surfaceContainerHighest.copy(alpha = 0.25f),
+                                disabledContentColor = colors.onSurfaceVariant.copy(alpha = 0.38f)
+                            ),
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.DeleteSweep,
+                                contentDescription = "Clear Queue",
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -423,7 +437,7 @@ fun QueueSidePanel(
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Rounded.DragIndicator,
-                                                contentDescription = "Reorder track",
+                                                contentDescription = "Reorder song",
                                                 tint = if (isSelected || isDragging) colors.onPrimaryContainer.copy(alpha = 0.85f) else colors.onSurfaceVariant.copy(alpha = 0.45f),
                                                 modifier = Modifier.size(20.dp)
                                             )

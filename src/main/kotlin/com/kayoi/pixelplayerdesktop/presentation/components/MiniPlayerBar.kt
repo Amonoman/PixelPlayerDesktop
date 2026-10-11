@@ -67,7 +67,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Song
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
+import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
 import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 
 private fun formatTime(millis: Long): String {
@@ -100,7 +100,6 @@ fun MiniPlayerBar(
     onVolumeChange: (Float) -> Unit = {},
     onToggleMute: () -> Unit = {},
     onQueueClick: () -> Unit = {},
-    onLyricsClick: () -> Unit = {},
     onExpandClick: () -> Unit = {},
     onCloseClick: () -> Unit = {},
     onClick: () -> Unit = {}
@@ -132,12 +131,15 @@ fun MiniPlayerBar(
                 .padding(horizontal = 12.dp, vertical = 6.dp)
         ) {
             val isNarrow = maxWidth < 580.dp
-            val isWide = maxWidth >= 820.dp
+            val isMedium = maxWidth < 850.dp
+            val isWide = maxWidth >= 850.dp
             val centerMaxWidth = when {
-                maxWidth >= 1100.dp -> 480.dp
-                maxWidth >= 820.dp -> 380.dp
-                else -> 280.dp
+                maxWidth >= 1100.dp -> 460.dp
+                maxWidth >= 850.dp -> 340.dp
+                maxWidth >= 700.dp -> 240.dp
+                else -> 190.dp
             }
+            val centerMinWidth = if (isMedium) 160.dp else 220.dp
 
             if (isNarrow) {
 
@@ -185,16 +187,18 @@ fun MiniPlayerBar(
 
                         Spacer(modifier = Modifier.width(6.dp))
 
-                        IconButton(
-                            onClick = onToggleFavorite,
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                                contentDescription = "Favorite",
-                                tint = if (isFavorite) colors.primary else colors.onPrimaryContainer.copy(alpha = 0.6f),
-                                modifier = Modifier.size(20.dp)
-                            )
+                        AppTooltip(if (isFavorite) "Remove from favorites" else "Add to favorites") {
+                            IconButton(
+                                onClick = onToggleFavorite,
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                                    contentDescription = "Favorite",
+                                    tint = if (isFavorite) colors.primary else colors.onPrimaryContainer.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
 
@@ -202,158 +206,10 @@ fun MiniPlayerBar(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        FilledIconButton(
-                            onClick = onPreviousClick,
-                            modifier = Modifier.size(38.dp),
-                            shape = CircleShape,
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = colors.onPrimary,
-                                contentColor = colors.primary
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.SkipPrevious,
-                                contentDescription = "Previous",
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        FilledIconButton(
-                            onClick = onPlayPauseClick,
-                            modifier = Modifier.size(38.dp),
-                            shape = RoundedCornerShape(playPauseCorner),
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = colors.primary,
-                                contentColor = colors.onPrimary
-                            )
-                        ) {
-                            Icon(
-                                imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                                contentDescription = if (isPlaying) "Pause" else "Play",
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        FilledIconButton(
-                            onClick = onNextClick,
-                            modifier = Modifier.size(38.dp),
-                            shape = CircleShape,
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = colors.onPrimary,
-                                contentColor = colors.primary
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.SkipNext,
-                                contentDescription = "Next",
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        IconButton(
-                            onClick = onCloseClick,
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = "Stop & Close",
-                                tint = colors.onPrimaryContainer.copy(alpha = 0.65f),
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-                }
-            } else {
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    Row(
-                        modifier = Modifier.weight(1f).padding(end = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        AsyncArtworkImage(
-                            artworkUri = currentSong.albumArtUriString,
-                            modifier = Modifier.size(60.dp),
-                            shape = CircleShape,
-                            placeholderIcon = Icons.Rounded.MusicNote,
-                            placeholderIconSize = 30.dp,
-                            containerColor = colors.surfaceVariant,
-                            contentColor = colors.onSurfaceVariant,
-                            contentDescription = "${currentSong.title} cover"
-                        )
-
-                        Spacer(modifier = Modifier.width(14.dp))
-
-                        Column(modifier = Modifier.weight(1f, fill = false)) {
-                            Text(
-                                text = currentSong.title,
-                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp),
-                                fontWeight = FontWeight.Bold,
-                                color = colors.onPrimaryContainer,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = currentSong.displayArtist,
-                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.5.sp),
-                                color = colors.onPrimaryContainer.copy(alpha = 0.75f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(6.dp))
-
-                        IconButton(
-                            onClick = onToggleFavorite,
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                                contentDescription = "Favorite",
-                                tint = if (isFavorite) colors.primary else colors.onPrimaryContainer.copy(alpha = 0.6f),
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    }
-
-                    Column(
-                        modifier = Modifier
-                            .widthIn(min = 240.dp, max = centerMaxWidth)
-                            .padding(horizontal = 8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            if (isWide) {
-                                FilledIconButton(
-                                    onClick = onToggleShuffle,
-                                    modifier = Modifier.size(36.dp),
-                                    shape = CircleShape,
-                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = if (isShuffle) colors.primary else Color.Transparent,
-                                        contentColor = if (isShuffle) colors.onPrimary else colors.onPrimaryContainer.copy(alpha = 0.6f)
-                                    )
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Shuffle,
-                                        contentDescription = "Shuffle",
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
-
+                        AppTooltip("Previous") {
                             FilledIconButton(
                                 onClick = onPreviousClick,
-                                modifier = Modifier.size(40.dp),
+                                modifier = Modifier.size(38.dp),
                                 shape = CircleShape,
                                 colors = IconButtonDefaults.filledIconButtonColors(
                                     containerColor = colors.onPrimary,
@@ -363,13 +219,15 @@ fun MiniPlayerBar(
                                 Icon(
                                     imageVector = Icons.Rounded.SkipPrevious,
                                     contentDescription = "Previous",
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
+                        }
 
+                        AppTooltip(if (isPlaying) "Pause" else "Play") {
                             FilledIconButton(
                                 onClick = onPlayPauseClick,
-                                modifier = Modifier.size(40.dp),
+                                modifier = Modifier.size(38.dp),
                                 shape = RoundedCornerShape(playPauseCorner),
                                 colors = IconButtonDefaults.filledIconButtonColors(
                                     containerColor = colors.primary,
@@ -379,13 +237,15 @@ fun MiniPlayerBar(
                                 Icon(
                                     imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                                     contentDescription = if (isPlaying) "Pause" else "Play",
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
+                        }
 
+                        AppTooltip("Next") {
                             FilledIconButton(
                                 onClick = onNextClick,
-                                modifier = Modifier.size(40.dp),
+                                modifier = Modifier.size(38.dp),
                                 shape = CircleShape,
                                 colors = IconButtonDefaults.filledIconButtonColors(
                                     containerColor = colors.onPrimary,
@@ -395,26 +255,202 @@ fun MiniPlayerBar(
                                 Icon(
                                     imageVector = Icons.Rounded.SkipNext,
                                     contentDescription = "Next",
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
+                            }
+                        }
+
+                        AppTooltip("Stop & Close") {
+                            IconButton(
+                                onClick = onCloseClick,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = "Stop & Close",
+                                    tint = colors.onPrimaryContainer.copy(alpha = 0.65f),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val leftWeight = if (isMedium) 1.35f else 1f
+                    val artworkSize = if (isMedium) 50.dp else 60.dp
+                    val artworkSpacing = if (isMedium) 10.dp else 14.dp
+                    val actionButtonSize = if (isMedium) 34.dp else 38.dp
+                    val actionIconSize = if (isMedium) 19.dp else 22.dp
+
+                    Row(
+                        modifier = Modifier
+                            .weight(leftWeight)
+                            .padding(end = if (isMedium) 4.dp else 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        AsyncArtworkImage(
+                            artworkUri = currentSong.albumArtUriString,
+                            modifier = Modifier.size(artworkSize),
+                            shape = CircleShape,
+                            placeholderIcon = Icons.Rounded.MusicNote,
+                            placeholderIconSize = if (isMedium) 24.dp else 30.dp,
+                            containerColor = colors.surfaceVariant,
+                            contentColor = colors.onSurfaceVariant,
+                            contentDescription = "${currentSong.title} cover"
+                        )
+
+                        Spacer(modifier = Modifier.width(artworkSpacing))
+
+                        Column(modifier = Modifier.weight(1f, fill = false)) {
+                            Text(
+                                text = currentSong.title,
+                                style = MaterialTheme.typography.titleMedium.copy(fontSize = if (isMedium) 15.sp else 16.sp),
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onPrimaryContainer,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = currentSong.displayArtist,
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = if (isMedium) 12.5.sp else 13.5.sp),
+                                color = colors.onPrimaryContainer.copy(alpha = 0.75f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(4.dp))
+
+                        AppTooltip(if (isFavorite) "Remove from favorites" else "Add to favorites") {
+                            IconButton(
+                                onClick = onToggleFavorite,
+                                modifier = Modifier.size(actionButtonSize)
+                            ) {
+                                Icon(
+                                    imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                                    contentDescription = "Favorite",
+                                    tint = if (isFavorite) colors.primary else colors.onPrimaryContainer.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(actionIconSize)
+                                )
+                            }
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .widthIn(min = centerMinWidth, max = centerMaxWidth)
+                            .padding(horizontal = if (isMedium) 4.dp else 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(if (isMedium) 4.dp else 8.dp)
+                        ) {
+                            if (isWide) {
+                                AppTooltip(if (isShuffle) "Shuffle: On" else "Shuffle: Off") {
+                                    FilledIconButton(
+                                        onClick = onToggleShuffle,
+                                        modifier = Modifier.size(36.dp),
+                                        shape = CircleShape,
+                                        colors = IconButtonDefaults.filledIconButtonColors(
+                                            containerColor = if (isShuffle) colors.primary else Color.Transparent,
+                                            contentColor = if (isShuffle) colors.onPrimary else colors.onPrimaryContainer.copy(alpha = 0.6f)
+                                        )
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Shuffle,
+                                            contentDescription = "Shuffle",
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            AppTooltip("Previous") {
+                                FilledIconButton(
+                                    onClick = onPreviousClick,
+                                    modifier = Modifier.size(if (isMedium) 36.dp else 40.dp),
+                                    shape = CircleShape,
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = colors.onPrimary,
+                                        contentColor = colors.primary
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.SkipPrevious,
+                                        contentDescription = "Previous",
+                                        modifier = Modifier.size(if (isMedium) 20.dp else 24.dp)
+                                    )
+                                }
+                            }
+
+                            AppTooltip(if (isPlaying) "Pause" else "Play") {
+                                FilledIconButton(
+                                    onClick = onPlayPauseClick,
+                                    modifier = Modifier.size(if (isMedium) 36.dp else 40.dp),
+                                    shape = RoundedCornerShape(playPauseCorner),
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = colors.primary,
+                                        contentColor = colors.onPrimary
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                                        contentDescription = if (isPlaying) "Pause" else "Play",
+                                        modifier = Modifier.size(if (isMedium) 20.dp else 24.dp)
+                                    )
+                                }
+                            }
+
+                            AppTooltip("Next") {
+                                FilledIconButton(
+                                    onClick = onNextClick,
+                                    modifier = Modifier.size(if (isMedium) 36.dp else 40.dp),
+                                    shape = CircleShape,
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = colors.onPrimary,
+                                        contentColor = colors.primary
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.SkipNext,
+                                        contentDescription = "Next",
+                                        modifier = Modifier.size(if (isMedium) 20.dp else 24.dp)
+                                    )
+                                }
                             }
 
                             if (isWide) {
-                                FilledIconButton(
-                                    onClick = onCycleRepeat,
-                                    modifier = Modifier.size(36.dp),
-                                    shape = CircleShape,
-                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = if (repeatMode > 0) colors.primary else Color.Transparent,
-                                        contentColor = if (repeatMode > 0) colors.onPrimary else colors.onPrimaryContainer.copy(alpha = 0.6f)
-                                    )
-                                ) {
-                                    val repIcon = if (repeatMode == 2) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat
-                                    Icon(
-                                        imageVector = repIcon,
-                                        contentDescription = "Repeat",
-                                        modifier = Modifier.size(20.dp)
-                                    )
+                                val repeatLabel = when (repeatMode) {
+                                    1 -> "Repeat: All"
+                                    2 -> "Repeat: One"
+                                    else -> "Repeat: Off"
+                                }
+                                AppTooltip(repeatLabel) {
+                                    FilledIconButton(
+                                        onClick = onCycleRepeat,
+                                        modifier = Modifier.size(36.dp),
+                                        shape = CircleShape,
+                                        colors = IconButtonDefaults.filledIconButtonColors(
+                                            containerColor = if (repeatMode > 0) colors.primary else Color.Transparent,
+                                            contentColor = if (repeatMode > 0) colors.onPrimary else colors.onPrimaryContainer.copy(alpha = 0.6f)
+                                        )
+                                    ) {
+                                        val repIcon = if (repeatMode == 2) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat
+                                        Icon(
+                                            imageVector = repIcon,
+                                            contentDescription = "Repeat",
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -431,7 +467,7 @@ fun MiniPlayerBar(
                                 color = colors.onPrimaryContainer.copy(alpha = 0.75f)
                             )
 
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(if (isMedium) 4.dp else 8.dp))
 
                             WavySliderExpressive(
                                 value = progress,
@@ -443,7 +479,7 @@ fun MiniPlayerBar(
                                 modifier = Modifier.weight(1f)
                             )
 
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(if (isMedium) 4.dp else 8.dp))
 
                             val effectiveDuration = if (totalDurationMs > 0) totalDurationMs else currentSong.duration
                             Text(
@@ -457,51 +493,43 @@ fun MiniPlayerBar(
                     Row(
                         modifier = Modifier
                             .weight(1f)
-                            .padding(start = 8.dp),
+                            .padding(start = if (isMedium) 4.dp else 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.End
                     ) {
-                        IconButton(
-                            onClick = onQueueClick,
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
-                                contentDescription = "Queue",
-                                tint = colors.onPrimaryContainer.copy(alpha = 0.75f),
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        IconButton(
-                            onClick = onLyricsClick,
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            Icon(
-                                imageVector = PixelPlayerIcons.Lyrics,
-                                contentDescription = "Lyrics",
-                                tint = colors.onPrimaryContainer.copy(alpha = 0.75f),
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(4.dp))
-
-                        IconButton(
-                            onClick = onToggleMute,
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            val volIcon = when {
-                                isMuted || volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
-                                volume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
-                                else -> Icons.AutoMirrored.Rounded.VolumeUp
+                        AppTooltip("Queue") {
+                            IconButton(
+                                onClick = onQueueClick,
+                                modifier = Modifier.size(actionButtonSize)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                                    contentDescription = "Queue",
+                                    tint = colors.onPrimaryContainer.copy(alpha = 0.75f),
+                                    modifier = Modifier.size(actionIconSize)
+                                )
                             }
-                            Icon(
-                                imageVector = volIcon,
-                                contentDescription = "Volume",
-                                tint = if (isMuted) colors.error else colors.onPrimaryContainer.copy(alpha = 0.75f),
-                                modifier = Modifier.size(22.dp)
-                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(2.dp))
+
+                        AppTooltip(if (isMuted) "Unmute" else "Mute") {
+                            IconButton(
+                                onClick = onToggleMute,
+                                modifier = Modifier.size(actionButtonSize)
+                            ) {
+                                val volIcon = when {
+                                    isMuted || volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
+                                    volume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
+                                    else -> Icons.AutoMirrored.Rounded.VolumeUp
+                                }
+                                Icon(
+                                    imageVector = volIcon,
+                                    contentDescription = "Volume",
+                                    tint = if (isMuted) colors.error else colors.onPrimaryContainer.copy(alpha = 0.75f),
+                                    modifier = Modifier.size(actionIconSize)
+                                )
+                            }
                         }
 
                         if (isWide) {
@@ -531,28 +559,32 @@ fun MiniPlayerBar(
                             Spacer(modifier = Modifier.width(4.dp))
                         }
 
-                        IconButton(
-                            onClick = onExpandClick,
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Fullscreen,
-                                contentDescription = "Expand Player",
-                                tint = colors.onPrimaryContainer.copy(alpha = 0.75f),
-                                modifier = Modifier.size(22.dp)
-                            )
+                        AppTooltip("Expand Player") {
+                            IconButton(
+                                onClick = onExpandClick,
+                                modifier = Modifier.size(actionButtonSize)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Fullscreen,
+                                    contentDescription = "Expand Player",
+                                    tint = colors.onPrimaryContainer.copy(alpha = 0.75f),
+                                    modifier = Modifier.size(actionIconSize)
+                                )
+                            }
                         }
 
-                        IconButton(
-                            onClick = onCloseClick,
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = "Stop & Close",
-                                tint = colors.onPrimaryContainer.copy(alpha = 0.75f),
-                                modifier = Modifier.size(20.dp)
-                            )
+                        AppTooltip("Stop & Close") {
+                            IconButton(
+                                onClick = onCloseClick,
+                                modifier = Modifier.size(actionButtonSize)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = "Stop & Close",
+                                    tint = colors.onPrimaryContainer.copy(alpha = 0.75f),
+                                    modifier = Modifier.size(if (isMedium) 18.dp else 20.dp)
+                                )
+                            }
                         }
                     }
                 }

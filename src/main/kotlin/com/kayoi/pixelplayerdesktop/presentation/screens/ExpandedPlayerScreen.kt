@@ -35,9 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,12 +47,13 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueSidePanel
+import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
 import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.presentation.screens.player.DesktopLandscapeHeroPlayer
-import com.kayoi.pixelplayerdesktop.presentation.screens.player.HeroTrackControlSection
 import com.kayoi.pixelplayerdesktop.presentation.screens.player.SyncedLyricsView
 import com.kayoi.pixelplayerdesktop.presentation.screens.player.WindowControlButton
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
@@ -98,10 +97,9 @@ fun ExpandedPlayerScreen(
         } else null
     }
 
-    val activeTab by remember(initialTab) { mutableStateOf(initialTab) }
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(activeTab, currentSong?.id, queue.size) {
+    LaunchedEffect(currentSong?.id, queue.size) {
         focusRequester.requestFocus()
     }
 
@@ -152,20 +150,26 @@ fun ExpandedPlayerScreen(
                         .padding(bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .background(colors.surfaceContainerHighest)
-                            .clickable(onClick = onClose),
-                        contentAlignment = Alignment.Center
+                    AppTooltip(
+                        text = "Collapse Player (Esc)",
+                        alignment = Alignment.BottomCenter,
+                        offset = DpOffset(0.dp, 6.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.KeyboardArrowDown,
-                            contentDescription = "Collapse Player (Esc)",
-                            tint = colors.onSurface,
-                            modifier = Modifier.size(26.dp)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(CircleShape)
+                                .background(colors.surfaceContainerHighest)
+                                .clickable(onClick = onClose),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.KeyboardArrowDown,
+                                contentDescription = "Collapse Player (Esc)",
+                                tint = colors.onSurface,
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.width(14.dp))
@@ -212,171 +216,149 @@ fun ExpandedPlayerScreen(
                 }
 
                 BoxWithConstraints(modifier = Modifier.fillMaxSize().weight(1f)) {
-                    val isWideScreen = maxWidth >= 860.dp
+                    val screenWidth = maxWidth
+                    val queueWidth = when {
+                        screenWidth < 780.dp -> 290.dp
+                        screenWidth < 960.dp -> 320.dp
+                        else -> 360.dp
+                    }
+                    val paneGap = if (screenWidth < 900.dp) 12.dp else 20.dp
+                    val heroRadius = if (screenWidth < 900.dp) 22.dp else 28.dp
+                    val lyricsPaddingH = if (screenWidth < 900.dp) 16.dp else 22.dp
+                    val lyricsPaddingV = if (screenWidth < 900.dp) 10.dp else 14.dp
 
-                    if (isWideScreen) {
-                        Row(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalArrangement = Arrangement.spacedBy(20.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.spacedBy(paneGap),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            verticalArrangement = Arrangement.spacedBy(paneGap)
                         ) {
-                            Column(
+                            Surface(
+                                shape = RoundedCornerShape(heroRadius),
+                                color = colors.primaryContainer,
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight(),
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    .fillMaxWidth()
+                                    .wrapContentHeight()
                             ) {
-                                Surface(
-                                    shape = RoundedCornerShape(28.dp),
-                                    color = colors.primaryContainer,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .wrapContentHeight()
-                                ) {
-                                    DesktopLandscapeHeroPlayer(
-                                        song = currentSong!!,
-                                        isPlaying = playerInfo.isPlaying,
-                                        currentPositionMs = playerInfo.currentPositionMs,
-                                        totalDurationMs = playerInfo.totalDurationMs,
-                                        progress = progressFraction,
-                                        isShuffle = playerInfo.isShuffleEnabled,
-                                        repeatMode = playerInfo.repeatMode,
-                                        isFavorite = playerInfo.isFavorite,
-                                        volume = playerInfo.volume,
-                                        isMuted = playerInfo.isMuted,
-                                        onPlayPause = { viewModel.togglePlayPause() },
-                                        onPrev = { viewModel.playPrevious() },
-                                        onNext = { viewModel.playNext() },
-                                        onSeek = { fraction ->
-                                            val targetMs = (fraction * playerInfo.totalDurationMs).toLong()
-                                            viewModel.seekTo(targetMs)
-                                        },
-                                        onToggleShuffle = { viewModel.toggleShuffle() },
-                                        onCycleRepeat = { viewModel.cycleRepeatMode() },
-                                        onToggleFavorite = { viewModel.toggleFavoriteCurrentSong() },
-                                        onVolumeChange = { viewModel.setVolume(it) },
-                                        onToggleMute = { viewModel.toggleMute() },
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-
-                                Surface(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .weight(1f),
-                                    color = colors.surfaceContainerLow,
-                                    shape = RoundedCornerShape(24.dp)
-                                ) {
-                                    Column(modifier = Modifier.fillMaxSize()) {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(horizontal = 22.dp, vertical = 14.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = PixelPlayerIcons.Lyrics,
-                                                contentDescription = null,
-                                                tint = colors.primary,
-                                                modifier = Modifier.size(22.dp)
-                                            )
-                                            Text(
-                                                text = "Lyrics",
-                                                style = MaterialTheme.typography.titleMedium.copy(
-                                                    fontSize = 17.sp,
-                                                    fontWeight = FontWeight.Bold
-                                                ),
-                                                color = colors.onSurface
-                                            )
-                                        }
-
-                                        HorizontalDivider(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            color = colors.outlineVariant.copy(alpha = 0.25f)
-                                        )
-
-                                        SyncedLyricsView(
-                                            lyrics = playerInfo.lyrics,
-                                            currentPositionMs = playerInfo.currentPositionMs,
-                                            onSeekToMs = { viewModel.seekTo(it) }
-                                        )
-                                    }
-                                }
+                                DesktopLandscapeHeroPlayer(
+                                    song = currentSong!!,
+                                    isPlaying = playerInfo.isPlaying,
+                                    currentPositionMs = playerInfo.currentPositionMs,
+                                    totalDurationMs = playerInfo.totalDurationMs,
+                                    progress = progressFraction,
+                                    isShuffle = playerInfo.isShuffleEnabled,
+                                    repeatMode = playerInfo.repeatMode,
+                                    isFavorite = playerInfo.isFavorite,
+                                    volume = playerInfo.volume,
+                                    isMuted = playerInfo.isMuted,
+                                    onPlayPause = { viewModel.togglePlayPause() },
+                                    onPrev = { viewModel.playPrevious() },
+                                    onNext = { viewModel.playNext() },
+                                    onSeek = { fraction ->
+                                        val targetMs = (fraction * playerInfo.totalDurationMs).toLong()
+                                        viewModel.seekTo(targetMs)
+                                    },
+                                    onToggleShuffle = { viewModel.toggleShuffle() },
+                                    onCycleRepeat = { viewModel.cycleRepeatMode() },
+                                    onToggleFavorite = { viewModel.toggleFavoriteCurrentSong() },
+                                    onVolumeChange = { viewModel.setVolume(it) },
+                                    onToggleMute = { viewModel.toggleMute() },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
                             }
 
                             Surface(
                                 modifier = Modifier
-                                    .width(340.dp)
-                                    .fillMaxHeight(),
+                                    .fillMaxWidth()
+                                    .weight(1f),
                                 color = colors.surfaceContainerLow,
                                 shape = RoundedCornerShape(24.dp)
                             ) {
-                                QueueSidePanel(
-                                    queue = queue,
-                                    currentSong = currentSong,
-                                    isPlaying = playerInfo.isPlaying,
-                                    isShuffleOn = playerInfo.isShuffleEnabled,
-                                    repeatMode = playerInfo.repeatMode,
-                                    onSongClick = { _, index ->
-                                        viewModel.playSongAtIndex(index)
-                                    },
-                                    onToggleShuffle = {
-                                        viewModel.toggleShuffle()
-                                    },
-                                    onCycleRepeat = {
-                                        viewModel.cycleRepeatMode()
-                                    },
-                                    onClearQueue = {
-                                        viewModel.clearQueue()
-                                    },
-                                    onMoveItem = { from, to ->
-                                        viewModel.moveQueueItem(from, to)
-                                    },
-                                    onRemoveItem = { index ->
-                                        viewModel.removeFromQueue(index)
-                                    },
-                                    onPlayNext = { song ->
-                                        viewModel.playSongNext(song)
-                                    },
-                                    onToggleFavorite = { song ->
-                                        viewModel.toggleFavorite(song)
-                                    },
-                                    favoriteSongIds = remember(favoriteSongs) { favoriteSongs.map { it.id }.toSet() },
-                                    modifier = Modifier.fillMaxSize()
-                                )
+                                Column(modifier = Modifier.fillMaxSize()) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(
+                                                horizontal = lyricsPaddingH,
+                                                vertical = lyricsPaddingV
+                                            ),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = PixelPlayerIcons.Lyrics,
+                                            contentDescription = null,
+                                            tint = colors.primary,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                        Text(
+                                            text = "Lyrics",
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                fontSize = 17.sp,
+                                                fontWeight = FontWeight.Bold
+                                            ),
+                                            color = colors.onSurface
+                                        )
+                                    }
+
+                                    HorizontalDivider(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        color = colors.outlineVariant.copy(alpha = 0.25f)
+                                    )
+
+                                    SyncedLyricsView(
+                                        lyrics = playerInfo.lyrics,
+                                        currentPositionMs = playerInfo.currentPositionMs,
+                                        onSeekToMs = { viewModel.seekTo(it) }
+                                    )
+                                }
                             }
                         }
-                    } else {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.SpaceBetween
+
+                        Surface(
+                            modifier = Modifier
+                                .width(queueWidth)
+                                .fillMaxHeight(),
+                            color = colors.surfaceContainerLow,
+                            shape = RoundedCornerShape(24.dp)
                         ) {
-                            HeroTrackControlSection(
-                                song = currentSong!!,
+                            QueueSidePanel(
+                                queue = queue,
+                                currentSong = currentSong,
                                 isPlaying = playerInfo.isPlaying,
-                                currentPositionMs = playerInfo.currentPositionMs,
-                                totalDurationMs = playerInfo.totalDurationMs,
-                                progress = progressFraction,
-                                isShuffle = playerInfo.isShuffleEnabled,
+                                isShuffleOn = playerInfo.isShuffleEnabled,
                                 repeatMode = playerInfo.repeatMode,
-                                isFavorite = playerInfo.isFavorite,
-                                volume = playerInfo.volume,
-                                isMuted = playerInfo.isMuted,
-                                onPlayPause = { viewModel.togglePlayPause() },
-                                onPrev = { viewModel.playPrevious() },
-                                onNext = { viewModel.playNext() },
-                                onSeek = { fraction ->
-                                    val targetMs = (fraction * playerInfo.totalDurationMs).toLong()
-                                    viewModel.seekTo(targetMs)
+                                onSongClick = { _, index ->
+                                    viewModel.playSongAtIndex(index)
                                 },
-                                onToggleShuffle = { viewModel.toggleShuffle() },
-                                onCycleRepeat = { viewModel.cycleRepeatMode() },
-                                onToggleFavorite = { viewModel.toggleFavoriteCurrentSong() },
-                                onVolumeChange = { viewModel.setVolume(it) },
-                                onToggleMute = { viewModel.toggleMute() },
-                                isCompact = true
+                                onToggleShuffle = {
+                                    viewModel.toggleShuffle()
+                                },
+                                onCycleRepeat = {
+                                    viewModel.cycleRepeatMode()
+                                },
+                                onClearQueue = {
+                                    viewModel.clearQueue()
+                                },
+                                onMoveItem = { from, to ->
+                                    viewModel.moveQueueItem(from, to)
+                                },
+                                onRemoveItem = { index ->
+                                    viewModel.removeFromQueue(index)
+                                },
+                                onPlayNext = { song ->
+                                    viewModel.playSongNext(song)
+                                },
+                                onToggleFavorite = { song ->
+                                    viewModel.toggleFavorite(song)
+                                },
+                                favoriteSongIds = remember(favoriteSongs) { favoriteSongs.map { it.id }.toSet() },
+                                modifier = Modifier.fillMaxSize()
                             )
                         }
                     }

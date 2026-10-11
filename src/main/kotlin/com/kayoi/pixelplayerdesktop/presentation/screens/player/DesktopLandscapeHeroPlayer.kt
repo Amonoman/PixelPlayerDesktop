@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
 import com.kayoi.pixelplayerdesktop.presentation.components.WavySliderExpressive
+import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
 import java.io.File
 
 internal fun formatTime(millis: Long): String {
@@ -120,7 +121,7 @@ fun DesktopLandscapeHeroPlayer(
         contentAlignment = Alignment.Center
     ) {
         val heroWidth = maxWidth
-        val isStackedMode = heroWidth < 660.dp
+        val isStackedMode = heroWidth < 460.dp
 
         if (isStackedMode) {
             Column(
@@ -136,15 +137,15 @@ fun DesktopLandscapeHeroPlayer(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(96.dp)
-                            .shadow(12.dp, shape = RoundedCornerShape(18.dp))
-                            .clip(RoundedCornerShape(18.dp))
+                            .size(72.dp)
+                            .shadow(10.dp, shape = RoundedCornerShape(16.dp))
+                            .clip(RoundedCornerShape(16.dp))
                     ) {
                         AsyncArtworkImage(
                             artworkUri = song.albumArtUriString,
                             modifier = Modifier.fillMaxSize(),
                             placeholderIcon = Icons.Rounded.MusicNote,
-                            placeholderIconSize = 48.dp,
+                            placeholderIconSize = 36.dp,
                             containerColor = colors.primaryContainer,
                             contentColor = colors.onPrimaryContainer,
                             contentDescription = "${song.title} artwork"
@@ -158,15 +159,15 @@ fun DesktopLandscapeHeroPlayer(
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.Top
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = song.title,
                                     style = MaterialTheme.typography.titleLarge.copy(
                                         fontWeight = FontWeight.ExtraBold,
-                                        fontSize = 20.sp,
-                                        lineHeight = 24.sp
+                                        fontSize = 19.sp,
+                                        lineHeight = 23.sp
                                     ),
                                     color = colors.onPrimaryContainer,
                                     maxLines = 1,
@@ -174,13 +175,9 @@ fun DesktopLandscapeHeroPlayer(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = if (song.album.isNotBlank() && song.album != song.title) {
-                                        "${song.displayArtist} • ${song.album}"
-                                    } else {
-                                        song.displayArtist
-                                    },
+                                    text = song.displayArtist,
                                     style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontSize = 13.5.sp,
+                                        fontSize = 13.sp,
                                         fontWeight = FontWeight.Medium
                                     ),
                                     color = colors.onPrimaryContainer.copy(alpha = 0.75f),
@@ -189,37 +186,41 @@ fun DesktopLandscapeHeroPlayer(
                                 )
                             }
 
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(2.dp)
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
-                                IconButton(
-                                    onClick = onToggleFavorite,
-                                    modifier = Modifier.size(38.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                                        contentDescription = "Favorite",
-                                        tint = if (isFavorite) colors.primary else colors.onPrimaryContainer.copy(alpha = 0.65f),
-                                        modifier = Modifier.size(22.dp)
-                                    )
+                                AppTooltip(if (isFavorite) "Remove from favorites" else "Add to favorites") {
+                                    IconButton(
+                                        onClick = onToggleFavorite,
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                                            contentDescription = "Favorite",
+                                            tint = if (isFavorite) colors.primary else colors.onPrimaryContainer.copy(alpha = 0.65f),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
                                 }
 
-                                IconButton(
-                                    onClick = onToggleMute,
-                                    modifier = Modifier.size(38.dp)
-                                ) {
-                                    val volIcon = when {
-                                        isMuted || volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
-                                        volume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
-                                        else -> Icons.AutoMirrored.Rounded.VolumeUp
+                                AppTooltip(if (isMuted) "Unmute" else "Mute") {
+                                    IconButton(
+                                        onClick = onToggleMute,
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        val volIcon = when {
+                                            isMuted || volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
+                                            volume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
+                                            else -> Icons.AutoMirrored.Rounded.VolumeUp
+                                        }
+                                        Icon(
+                                            imageVector = volIcon,
+                                            contentDescription = "Volume",
+                                            tint = if (isMuted) colors.error else colors.onPrimaryContainer.copy(alpha = 0.75f),
+                                            modifier = Modifier.size(19.dp)
+                                        )
                                     }
-                                    Icon(
-                                        imageVector = volIcon,
-                                        contentDescription = "Volume",
-                                        tint = if (isMuted) colors.error else colors.onPrimaryContainer.copy(alpha = 0.75f),
-                                        modifier = Modifier.size(20.dp)
-                                    )
                                 }
                             }
                         }
@@ -297,13 +298,27 @@ fun DesktopLandscapeHeroPlayer(
                 )
             }
         } else {
-            val artworkSize = if (heroWidth < 800.dp) 210.dp else 260.dp
-            val gap = if (heroWidth < 800.dp) 18.dp else 24.dp
+            val isCompactHero = heroWidth < 700.dp
+            val artworkSize = when {
+                heroWidth < 500.dp -> 105.dp
+                heroWidth < 650.dp -> 135.dp
+                heroWidth < 850.dp -> 175.dp
+                else -> 215.dp
+            }
+            val gap = if (isCompactHero) 12.dp else 20.dp
+            val titleFontSize = if (isCompactHero) 19.sp else 26.sp
+            val titleLineHeight = if (isCompactHero) 24.sp else 32.sp
+            val controlButtonHeight = if (isCompactHero) 48.dp else 56.dp
+            val shuffleRepeatSize = if (isCompactHero) 36.dp else 42.dp
+            val volumeBarHeight = if (isCompactHero) 140.dp else 180.dp
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 22.dp, vertical = 18.dp),
+                    .padding(
+                        horizontal = if (isCompactHero) 16.dp else 22.dp,
+                        vertical = if (isCompactHero) 14.dp else 18.dp
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Row(
@@ -316,14 +331,14 @@ fun DesktopLandscapeHeroPlayer(
                     Box(
                         modifier = Modifier
                             .size(artworkSize)
-                            .shadow(20.dp, shape = RoundedCornerShape(24.dp))
-                            .clip(RoundedCornerShape(24.dp))
+                            .shadow(16.dp, shape = RoundedCornerShape(20.dp))
+                            .clip(RoundedCornerShape(20.dp))
                     ) {
                         AsyncArtworkImage(
                             artworkUri = song.albumArtUriString,
                             modifier = Modifier.fillMaxSize(),
                             placeholderIcon = Icons.Rounded.MusicNote,
-                            placeholderIconSize = 72.dp,
+                            placeholderIconSize = if (isCompactHero) 40.dp else 56.dp,
                             containerColor = colors.primaryContainer,
                             contentColor = colors.onPrimaryContainer,
                             contentDescription = "${song.title} artwork"
@@ -340,15 +355,15 @@ fun DesktopLandscapeHeroPlayer(
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.Top
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = song.title,
                                     style = MaterialTheme.typography.headlineMedium.copy(
                                         fontWeight = FontWeight.ExtraBold,
-                                        fontSize = 26.sp,
-                                        lineHeight = 32.sp
+                                        fontSize = titleFontSize,
+                                        lineHeight = titleLineHeight
                                     ),
                                     color = colors.onPrimaryContainer,
                                     maxLines = 1,
@@ -356,13 +371,9 @@ fun DesktopLandscapeHeroPlayer(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = if (song.album.isNotBlank() && song.album != song.title) {
-                                        "${song.displayArtist} • ${song.album}"
-                                    } else {
-                                        song.displayArtist
-                                    },
+                                    text = song.displayArtist,
                                     style = MaterialTheme.typography.titleMedium.copy(
-                                        fontSize = 15.sp,
+                                        fontSize = if (isCompactHero) 13.5.sp else 15.sp,
                                         fontWeight = FontWeight.Medium
                                     ),
                                     color = colors.onPrimaryContainer.copy(alpha = 0.75f),
@@ -371,20 +382,22 @@ fun DesktopLandscapeHeroPlayer(
                                 )
                             }
 
-                            IconButton(
-                                onClick = onToggleFavorite,
-                                modifier = Modifier.size(42.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                                    contentDescription = "Favorite",
-                                    tint = if (isFavorite) colors.primary else colors.onPrimaryContainer.copy(alpha = 0.65f),
-                                    modifier = Modifier.size(26.dp)
-                                )
+                            AppTooltip(if (isFavorite) "Remove from favorites" else "Add to favorites") {
+                                IconButton(
+                                    onClick = onToggleFavorite,
+                                    modifier = Modifier.size(if (isCompactHero) 36.dp else 42.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                                        contentDescription = "Favorite",
+                                        tint = if (isFavorite) colors.primary else colors.onPrimaryContainer.copy(alpha = 0.65f),
+                                        modifier = Modifier.size(if (isCompactHero) 22.dp else 26.dp)
+                                    )
+                                }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(if (isCompactHero) 8.dp else 14.dp))
 
                         WavySliderExpressive(
                             value = progress,
@@ -396,7 +409,7 @@ fun DesktopLandscapeHeroPlayer(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        Spacer(modifier = Modifier.height(3.dp))
+                        Spacer(modifier = Modifier.height(2.dp))
 
                         Box(
                             modifier = Modifier.fillMaxWidth(),
@@ -409,7 +422,7 @@ fun DesktopLandscapeHeroPlayer(
                             ) {
                                 Text(
                                     text = formatTime(currentPositionMs),
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.5.sp),
                                     fontWeight = FontWeight.SemiBold,
                                     color = colors.onPrimaryContainer.copy(alpha = 0.85f)
                                 )
@@ -417,7 +430,7 @@ fun DesktopLandscapeHeroPlayer(
                                 val effectiveDuration = if (totalDurationMs > 0) totalDurationMs else song.duration
                                 Text(
                                     text = formatTime(effectiveDuration),
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.5.sp),
                                     fontWeight = FontWeight.SemiBold,
                                     color = colors.onPrimaryContainer.copy(alpha = 0.85f)
                                 )
@@ -433,18 +446,18 @@ fun DesktopLandscapeHeroPlayer(
                                     Text(
                                         text = metaLabel,
                                         style = MaterialTheme.typography.labelSmall.copy(
-                                            fontSize = 11.sp,
+                                            fontSize = 10.5.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             letterSpacing = 0.5.sp
                                         ),
                                         maxLines = 1,
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                                     )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(if (isCompactHero) 8.dp else 14.dp))
 
                         PlaybackControlsRow(
                             isPlaying = isPlaying,
@@ -455,8 +468,8 @@ fun DesktopLandscapeHeroPlayer(
                             onNext = onNext,
                             onToggleShuffle = onToggleShuffle,
                             onCycleRepeat = onCycleRepeat,
-                            buttonHeight = 56.dp,
-                            shuffleRepeatSize = 42.dp,
+                            buttonHeight = controlButtonHeight,
+                            shuffleRepeatSize = shuffleRepeatSize,
                             colors = colors
                         )
                     }
@@ -467,8 +480,8 @@ fun DesktopLandscapeHeroPlayer(
                         onVolumeChange = onVolumeChange,
                         onToggleMute = onToggleMute,
                         modifier = Modifier
-                            .padding(start = 4.dp)
-                            .height(180.dp)
+                            .padding(start = 2.dp)
+                            .height(volumeBarHeight)
                     )
                 }
             }
@@ -527,21 +540,23 @@ fun VerticalVolumeBar(
             )
         }
 
-        IconButton(
-            onClick = onToggleMute,
-            modifier = Modifier.size(36.dp)
-        ) {
-            val volIcon = when {
-                isMuted || displayVolume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
-                displayVolume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
-                else -> Icons.AutoMirrored.Rounded.VolumeUp
+        AppTooltip(if (isMuted) "Unmute" else "Mute") {
+            IconButton(
+                onClick = onToggleMute,
+                modifier = Modifier.size(36.dp)
+            ) {
+                val volIcon = when {
+                    isMuted || displayVolume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
+                    displayVolume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
+                    else -> Icons.AutoMirrored.Rounded.VolumeUp
+                }
+                Icon(
+                    imageVector = volIcon,
+                    contentDescription = "Volume",
+                    tint = if (isMuted) colors.error else colors.onPrimaryContainer.copy(alpha = 0.75f),
+                    modifier = Modifier.size(22.dp)
+                )
             }
-            Icon(
-                imageVector = volIcon,
-                contentDescription = "Volume",
-                tint = if (isMuted) colors.error else colors.onPrimaryContainer.copy(alpha = 0.75f),
-                modifier = Modifier.size(22.dp)
-            )
         }
     }
 }
@@ -602,19 +617,21 @@ fun PlaybackControlsRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        IconButton(
-            onClick = onToggleShuffle,
-            modifier = Modifier
-                .size(shuffleRepeatSize)
-                .clip(CircleShape)
-                .background(if (isShuffle) colors.primary else colors.onPrimary.copy(alpha = 0.45f))
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Shuffle,
-                contentDescription = "Shuffle",
-                tint = if (isShuffle) colors.onPrimary else colors.primary,
-                modifier = Modifier.size(if (shuffleRepeatSize < 40.dp) 18.dp else 20.dp)
-            )
+        AppTooltip(if (isShuffle) "Shuffle: On" else "Shuffle: Off") {
+            IconButton(
+                onClick = onToggleShuffle,
+                modifier = Modifier
+                    .size(shuffleRepeatSize)
+                    .clip(CircleShape)
+                    .background(if (isShuffle) colors.primary else colors.onPrimary.copy(alpha = 0.45f))
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Shuffle,
+                    contentDescription = "Shuffle",
+                    tint = if (isShuffle) colors.onPrimary else colors.primary,
+                    modifier = Modifier.size(if (shuffleRepeatSize < 40.dp) 18.dp else 20.dp)
+                )
+            }
         }
 
         Row(
@@ -624,81 +641,91 @@ fun PlaybackControlsRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .weight(prevWeight)
-                    .fillMaxHeight()
-                    .clip(CircleShape)
-                    .background(colors.onPrimary)
-                    .clickable {
-                        lastClickedButton = "PREVIOUS"
-                        onPrev()
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.SkipPrevious,
-                    contentDescription = "Previous Track",
-                    tint = colors.primary,
-                    modifier = Modifier.size(if (buttonHeight < 50.dp) 24.dp else 28.dp)
-                )
+            AppTooltip("Previous", modifier = Modifier.weight(prevWeight).fillMaxHeight()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape)
+                        .background(colors.onPrimary)
+                        .clickable {
+                            lastClickedButton = "PREVIOUS"
+                            onPrev()
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.SkipPrevious,
+                        contentDescription = "Previous Song",
+                        tint = colors.primary,
+                        modifier = Modifier.size(if (buttonHeight < 50.dp) 24.dp else 28.dp)
+                    )
+                }
             }
 
-            Box(
-                modifier = Modifier
-                    .weight(playWeight * 1.35f)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(playPauseCornerRadius))
-                    .background(colors.primary)
-                    .clickable {
-                        lastClickedButton = "PLAY_PAUSE"
-                        onPlayPause()
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                    contentDescription = if (isPlaying) "Pause" else "Play",
-                    tint = colors.onPrimary,
-                    modifier = Modifier.size(if (buttonHeight < 50.dp) 28.dp else 34.dp)
-                )
+            AppTooltip(if (isPlaying) "Pause" else "Play", modifier = Modifier.weight(playWeight * 1.35f).fillMaxHeight()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(playPauseCornerRadius))
+                        .background(colors.primary)
+                        .clickable {
+                            lastClickedButton = "PLAY_PAUSE"
+                            onPlayPause()
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                        contentDescription = if (isPlaying) "Pause" else "Play",
+                        tint = colors.onPrimary,
+                        modifier = Modifier.size(if (buttonHeight < 50.dp) 28.dp else 34.dp)
+                    )
+                }
             }
 
-            Box(
-                modifier = Modifier
-                    .weight(nextWeight)
-                    .fillMaxHeight()
-                    .clip(CircleShape)
-                    .background(colors.onPrimary)
-                    .clickable {
-                        lastClickedButton = "NEXT"
-                        onNext()
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.SkipNext,
-                    contentDescription = "Next Track",
-                    tint = colors.primary,
-                    modifier = Modifier.size(if (buttonHeight < 50.dp) 24.dp else 28.dp)
-                )
+            AppTooltip("Next", modifier = Modifier.weight(nextWeight).fillMaxHeight()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape)
+                        .background(colors.onPrimary)
+                        .clickable {
+                            lastClickedButton = "NEXT"
+                            onNext()
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.SkipNext,
+                        contentDescription = "Next Song",
+                        tint = colors.primary,
+                        modifier = Modifier.size(if (buttonHeight < 50.dp) 24.dp else 28.dp)
+                    )
+                }
             }
         }
 
         val repIcon = if (repeatMode == 2) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat
-        IconButton(
-            onClick = onCycleRepeat,
-            modifier = Modifier
-                .size(shuffleRepeatSize)
-                .clip(CircleShape)
-                .background(if (repeatMode > 0) colors.primary else colors.onPrimary.copy(alpha = 0.45f))
-        ) {
-            Icon(
-                imageVector = repIcon,
-                contentDescription = "Repeat",
-                tint = if (repeatMode > 0) colors.onPrimary else colors.primary,
-                modifier = Modifier.size(if (shuffleRepeatSize < 40.dp) 18.dp else 20.dp)
-            )
+        val repLabel = when (repeatMode) {
+            1 -> "Repeat: All"
+            2 -> "Repeat: One"
+            else -> "Repeat: Off"
+        }
+        AppTooltip(repLabel) {
+            IconButton(
+                onClick = onCycleRepeat,
+                modifier = Modifier
+                    .size(shuffleRepeatSize)
+                    .clip(CircleShape)
+                    .background(if (repeatMode > 0) colors.primary else colors.onPrimary.copy(alpha = 0.45f))
+            ) {
+                Icon(
+                    imageVector = repIcon,
+                    contentDescription = "Repeat",
+                    tint = if (repeatMode > 0) colors.onPrimary else colors.primary,
+                    modifier = Modifier.size(if (shuffleRepeatSize < 40.dp) 18.dp else 20.dp)
+                )
+            }
         }
     }
 }
