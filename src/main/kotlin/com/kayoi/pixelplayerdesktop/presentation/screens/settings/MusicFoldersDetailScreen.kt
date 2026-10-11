@@ -3,6 +3,7 @@ package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,13 +16,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CreateNewFolder
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.FolderOff
 import androidx.compose.material.icons.rounded.Home
@@ -30,17 +35,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveSwitch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -184,68 +190,57 @@ fun MusicFoldersDetailScreen(
         }
     }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 28.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.padding(bottom = 4.dp)
-            ) {
-                IconButton(
-                    onClick = {
-                        if (currentDirectory != null) {
-                            val parent = currentDirectory?.parentFile
-                            val isParentConfiguredRoot = parent != null && musicDirectories.any { File(it).absolutePath == parent.absolutePath }
-                            val isCurrentConfiguredRoot = musicDirectories.any { File(it).absolutePath == currentDirectory?.absolutePath }
-                            if (isCurrentConfiguredRoot) {
-                                currentDirectory = null
-                            } else if (parent != null && musicDirectories.any { currentDirectory?.absolutePath?.startsWith(File(it).absolutePath) == true }) {
-                                currentDirectory = parent
-                            } else {
-                                currentDirectory = null
-                            }
-                        } else {
-                            onBack()
-                        }
-                    },
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = colors.surfaceContainerHighest.copy(alpha = 0.5f),
-                        contentColor = colors.onSurface
-                    ),
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = "Back",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+    val listState = rememberLazyListState()
+    val isScrolled by remember {
+        derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 4 }
+    }
 
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        text = "Music Folders",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
-                    )
-                    Text(
-                        text = if (isAtRoot) {
-                            if (musicDirectories.isEmpty()) "No folders configured"
-                            else if (excludedDirectories.isEmpty()) "${musicDirectories.size} configured ${if (musicDirectories.size == 1) "folder" else "folders"}"
-                            else "${musicDirectories.size} configured • ${excludedDirectories.size} excluded"
+    LaunchedEffect(currentDirectory) {
+        listState.scrollToItem(0)
+    }
+
+    val folderSubtitle = if (isAtRoot) {
+        if (musicDirectories.isEmpty()) "No folders configured"
+        else if (excludedDirectories.isEmpty()) "${musicDirectories.size} configured ${if (musicDirectories.size == 1) "folder" else "folders"}"
+        else "${musicDirectories.size} configured • ${excludedDirectories.size} excluded"
+    } else {
+        currentDirectory?.name.orEmpty()
+    }
+
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val horizontalPadding = if (maxWidth < 540.dp) 16.dp else 28.dp
+
+        Column(modifier = Modifier.fillMaxSize()) {
+            SettingsStickyHeader(
+                title = "Music Folders",
+                subtitle = folderSubtitle,
+                onBack = {
+                    if (currentDirectory != null) {
+                        val parent = currentDirectory?.parentFile
+                        val isParentConfiguredRoot = parent != null && musicDirectories.any { File(it).absolutePath == parent.absolutePath }
+                        val isCurrentConfiguredRoot = musicDirectories.any { File(it).absolutePath == currentDirectory?.absolutePath }
+                        if (isCurrentConfiguredRoot) {
+                            currentDirectory = null
+                        } else if (parent != null && musicDirectories.any { currentDirectory?.absolutePath?.startsWith(File(it).absolutePath) == true }) {
+                            currentDirectory = parent
                         } else {
-                            currentDirectory?.name.orEmpty()
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.onSurfaceVariant
-                    )
-                }
-            }
-        }
+                            currentDirectory = null
+                        }
+                    } else {
+                        onBack()
+                    }
+                },
+                isScrolled = isScrolled,
+                horizontalPadding = horizontalPadding,
+                backContentDescription = "Back"
+            )
+
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 8.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
 
         if (!isAtRoot && breadcrumbs.isNotEmpty()) {
             item {
@@ -324,60 +319,126 @@ fun MusicFoldersDetailScreen(
                         color = colors.surfaceContainer,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                modifier = Modifier.weight(1f).padding(end = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                Box(
+                        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                            val isCompact = maxWidth < 460.dp
+
+                            if (isCompact) {
+                                Column(
                                     modifier = Modifier
-                                        .size(40.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(colors.primaryContainer),
-                                    contentAlignment = Alignment.Center
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(14.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.CreateNewFolder,
-                                        contentDescription = null,
-                                        tint = colors.onPrimaryContainer,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                }
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(colors.primaryContainer),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.CreateNewFolder,
+                                                contentDescription = null,
+                                                tint = colors.onPrimaryContainer,
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                        }
 
-                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                    Text(
-                                        text = "Add Music Folder",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = colors.onSurface
-                                    )
-                                    Text(
-                                        text = "Choose a local folder to scan songs and folder tree",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = colors.onSurfaceVariant
-                                    )
-                                }
-                            }
-
-                            FilledTonalButton(
-                                onClick = {
-                                    DirectoryPicker.chooseDirectory { selectedFolder ->
-                                        viewModel.addMusicDirectory(selectedFolder.absolutePath)
+                                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            Text(
+                                                text = "Add Music Folder",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = colors.onSurface
+                                            )
+                                            Text(
+                                                text = "Choose a local folder to scan songs and folder tree",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = colors.onSurfaceVariant
+                                            )
+                                        }
                                     }
-                                },
-                                shape = RoundedCornerShape(14.dp),
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
-                            ) {
-                                Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Add Folder", fontWeight = FontWeight.SemiBold)
+
+                                    FilledTonalButton(
+                                        onClick = {
+                                            DirectoryPicker.chooseDirectory { selectedFolder ->
+                                                viewModel.addMusicDirectory(selectedFolder.absolutePath)
+                                            }
+                                        },
+                                        shape = RoundedCornerShape(14.dp),
+                                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(42.dp)
+                                    ) {
+                                        Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Add Folder", fontWeight = FontWeight.SemiBold)
+                                    }
+                                }
+                            } else {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(
+                                        modifier = Modifier.weight(1f).padding(end = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(colors.primaryContainer),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.CreateNewFolder,
+                                                contentDescription = null,
+                                                tint = colors.onPrimaryContainer,
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                        }
+
+                                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            Text(
+                                                text = "Add Music Folder",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = colors.onSurface
+                                            )
+                                            Text(
+                                                text = "Choose a local folder to scan songs and folder tree",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = colors.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+
+                                    FilledTonalButton(
+                                        onClick = {
+                                            DirectoryPicker.chooseDirectory { selectedFolder ->
+                                                viewModel.addMusicDirectory(selectedFolder.absolutePath)
+                                            }
+                                        },
+                                        shape = RoundedCornerShape(14.dp),
+                                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                                        modifier = Modifier.height(42.dp)
+                                    ) {
+                                        Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Add Folder", fontWeight = FontWeight.SemiBold)
+                                    }
+                                }
                             }
                         }
                     }
@@ -437,6 +498,7 @@ fun MusicFoldersDetailScreen(
                         audioCount = audioCount,
                         isBlocked = isCurrentBlocked,
                         onNavigate = {},
+                        canNavigate = false,
                         onToggleAllowed = {
                             if (isCurrentBlocked) {
                                 val match = excludedDirectories.firstOrNull { File(it).absolutePath == currentDir.absolutePath }
@@ -492,7 +554,9 @@ fun MusicFoldersDetailScreen(
                 }
             }
         }
+        }
     }
+}
 }
 
 @Composable
@@ -503,30 +567,32 @@ fun FileExplorerDirectoryItem(
     onNavigate: () -> Unit,
     onToggleAllowed: () -> Unit,
     shape: Shape,
+    canNavigate: Boolean = true,
     onDelete: (() -> Unit)? = null
 ) {
     val colors = MaterialTheme.colorScheme
 
     val containerColor = if (isBlocked) {
-        colors.errorContainer
+        colors.errorContainer.copy(alpha = 0.22f)
     } else {
         colors.surfaceContainer
     }
 
     val contentColor = if (isBlocked) {
-        colors.onErrorContainer
+        colors.onSurface.copy(alpha = 0.75f)
     } else {
         colors.onSurface
     }
 
     val badgeColor = if (isBlocked) {
-        colors.onErrorContainer
+        colors.error
     } else {
         colors.secondary
     }
 
     Surface(
         onClick = onNavigate,
+        enabled = canNavigate,
         shape = shape,
         color = containerColor,
         modifier = Modifier.fillMaxWidth()
@@ -542,13 +608,13 @@ fun FileExplorerDirectoryItem(
                 modifier = Modifier
                     .size(42.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(if (isBlocked) colors.onErrorContainer.copy(alpha = 0.12f) else colors.primaryContainer),
+                    .background(if (isBlocked) colors.errorContainer.copy(alpha = 0.4f) else colors.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = if (isBlocked) Icons.Rounded.FolderOff else Icons.Rounded.Folder,
                     contentDescription = null,
-                    tint = if (isBlocked) colors.onErrorContainer else colors.primary,
+                    tint = if (isBlocked) colors.error else colors.primary,
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -568,66 +634,81 @@ fun FileExplorerDirectoryItem(
                 Text(
                     text = file.absolutePath,
                     style = MaterialTheme.typography.bodySmall,
-                    color = contentColor.copy(alpha = 0.7f),
+                    color = contentColor.copy(alpha = 0.65f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(2.dp))
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = badgeColor.copy(alpha = 0.12f)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text(
-                        text = when {
-                            audioCount == 0 -> "No songs"
-                            audioCount == 1 -> "1 song"
-                            audioCount > 99 -> "99+ songs"
-                            else -> "$audioCount songs"
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Medium,
-                        color = badgeColor,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = badgeColor.copy(alpha = 0.12f)
+                    ) {
+                        Text(
+                            text = when {
+                                audioCount == 0 -> "No songs"
+                                audioCount == 1 -> "1 song"
+                                audioCount > 99 -> "99+ songs"
+                                else -> "$audioCount songs"
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                            color = badgeColor,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+
+                    if (isBlocked) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = colors.errorContainer.copy(alpha = 0.5f)
+                        ) {
+                            Text(
+                                text = "Excluded",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.onErrorContainer,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
                 }
             }
 
-            Icon(
-                imageVector = Icons.Rounded.ChevronRight,
-                contentDescription = "Open folder",
-                tint = contentColor.copy(alpha = 0.6f),
-                modifier = Modifier.size(20.dp)
-            )
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text(
-                    text = if (isBlocked) "Excluded" else "Included",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (isBlocked) colors.onErrorContainer else colors.onSurfaceVariant
+                // Material 3 Expressive Switch for Include / Exclude
+                ExpressiveSwitch(
+                    checked = !isBlocked,
+                    onCheckedChange = { onToggleAllowed() }
                 )
-                RadioButton(
-                    selected = isBlocked,
-                    onClick = onToggleAllowed,
-                    colors = RadioButtonDefaults.colors(
-                        selectedColor = colors.onErrorContainer,
-                        unselectedColor = colors.onSurfaceVariant.copy(alpha = 0.6f)
-                    )
-                )
-            }
 
-            if (onDelete != null) {
-                IconButton(
-                    onClick = onDelete,
-                    modifier = Modifier.size(36.dp)
-                ) {
+                if (onDelete != null) {
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(36.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = colors.onSurfaceVariant.copy(alpha = 0.75f)
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Delete,
+                            contentDescription = "Remove directory",
+                            modifier = Modifier.size(19.dp)
+                        )
+                    }
+                }
+
+                if (canNavigate) {
                     Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = "Remove directory",
-                        tint = contentColor.copy(alpha = 0.7f),
+                        imageVector = Icons.Rounded.ChevronRight,
+                        contentDescription = "Open folder",
+                        tint = colors.onSurfaceVariant.copy(alpha = 0.45f),
                         modifier = Modifier.size(20.dp)
                     )
                 }

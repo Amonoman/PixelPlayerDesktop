@@ -184,6 +184,26 @@ fun DesktopLandscapeHeroPlayer(
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                val metaLabel = formatAudioMetaLabel(song)
+                                if (metaLabel.isNotBlank()) {
+                                    Surface(
+                                        shape = RoundedCornerShape(999.dp),
+                                        color = colors.onPrimaryContainer.copy(alpha = 0.15f),
+                                        contentColor = colors.onPrimaryContainer
+                                    ) {
+                                        Text(
+                                            text = metaLabel,
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontSize = 10.5.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                letterSpacing = 0.5.sp
+                                            ),
+                                            maxLines = 1,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
                             }
 
                             Column(
@@ -222,27 +242,6 @@ fun DesktopLandscapeHeroPlayer(
                                         )
                                     }
                                 }
-                            }
-                        }
-
-                        val metaLabel = formatAudioMetaLabel(song)
-                        if (metaLabel.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Surface(
-                                shape = RoundedCornerShape(999.dp),
-                                color = colors.onPrimaryContainer.copy(alpha = 0.15f),
-                                contentColor = colors.onPrimaryContainer
-                            ) {
-                                Text(
-                                    text = metaLabel,
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontSize = 10.5.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        letterSpacing = 0.5.sp
-                                    ),
-                                    maxLines = 1,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                                )
                             }
                         }
                     }

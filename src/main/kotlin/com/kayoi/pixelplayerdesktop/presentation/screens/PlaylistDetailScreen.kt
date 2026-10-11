@@ -195,7 +195,7 @@ fun PlaylistDetailScreen(
                         onClick = onBack,
                         shape = CircleShape,
                         colors = IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor = colors.surfaceContainerHigh,
+                            containerColor = colors.surfaceContainerLow,
                             contentColor = colors.onSurface
                         ),
                         modifier = Modifier.size(42.dp)
@@ -295,7 +295,7 @@ fun PlaylistDetailScreen(
                             onClick = onBack,
                             shape = CircleShape,
                             colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                containerColor = colors.surfaceContainerHigh,
+                                containerColor = colors.surfaceContainerLow,
                                 contentColor = colors.onSurface
                             ),
                             modifier = Modifier.size(if (isVeryCompact) 34.dp else 38.dp)

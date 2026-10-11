@@ -1,6 +1,7 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -43,6 +45,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,6 +57,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.scanner.ScanProgress
+import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveSwitchRow
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -75,40 +79,29 @@ fun ArtistSettingsDetailScreen(
     var newCharDelimiter by remember { mutableStateOf("") }
     var newWordDelimiter by remember { mutableStateOf("") }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 28.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.padding(bottom = 6.dp)
-            ) {
-                IconButton(
-                    onClick = onBack,
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = colors.surfaceContainerHighest.copy(alpha = 0.5f),
-                        contentColor = colors.onSurface
-                    ),
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = "Back to Music Management",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+    val listState = rememberLazyListState()
+    val isScrolled by remember {
+        derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 4 }
+    }
 
-                Text(
-                    text = "Artists",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.onSurface
-                )
-            }
-        }
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val horizontalPadding = if (maxWidth < 540.dp) 16.dp else 28.dp
+
+        Column(modifier = Modifier.fillMaxSize()) {
+            SettingsStickyHeader(
+                title = "Artists",
+                onBack = onBack,
+                isScrolled = isScrolled,
+                horizontalPadding = horizontalPadding,
+                backContentDescription = "Back to Music Management"
+            )
+
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 8.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
 
         item {
             androidx.compose.animation.AnimatedVisibility(
@@ -135,33 +128,73 @@ fun ArtistSettingsDetailScreen(
                         modifier = Modifier.padding(18.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Character Delimiters",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colors.onSurface
-                                )
-                                Text(
-                                    text = "Single symbols used to split multiple artists in song tags",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = colors.onSurfaceVariant
-                                )
-                            }
+                        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                            val isHeaderCompact = maxWidth < 420.dp
 
-                            FilledTonalButton(
-                                onClick = { viewModel.resetArtistDelimiters() },
-                                shape = RoundedCornerShape(12.dp),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Icon(Icons.Rounded.RestartAlt, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Reset", style = MaterialTheme.typography.labelMedium)
+                            if (isHeaderCompact) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Character Delimiters",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = colors.onSurface
+                                        )
+
+                                        FilledTonalButton(
+                                            onClick = { viewModel.resetArtistDelimiters() },
+                                            shape = RoundedCornerShape(12.dp),
+                                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                                        ) {
+                                            Icon(Icons.Rounded.RestartAlt, contentDescription = null, modifier = Modifier.size(15.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Reset", style = MaterialTheme.typography.labelSmall)
+                                        }
+                                    }
+
+                                    Text(
+                                        text = "Single symbols used to split multiple artists in song tags",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = colors.onSurfaceVariant
+                                    )
+                                }
+                            } else {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                        Text(
+                                            text = "Character Delimiters",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = colors.onSurface
+                                        )
+                                        Text(
+                                            text = "Single symbols used to split multiple artists in song tags",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = colors.onSurfaceVariant
+                                        )
+                                    }
+
+                                    FilledTonalButton(
+                                        onClick = { viewModel.resetArtistDelimiters() },
+                                        shape = RoundedCornerShape(12.dp),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                                    ) {
+                                        Icon(Icons.Rounded.RestartAlt, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Reset", style = MaterialTheme.typography.labelMedium)
+                                    }
+                                }
                             }
                         }
 
@@ -255,33 +288,73 @@ fun ArtistSettingsDetailScreen(
                         modifier = Modifier.padding(18.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Word Delimiters",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colors.onSurface
-                                )
-                                Text(
-                                    text = "Phrases separating featured or collaborating artists",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = colors.onSurfaceVariant
-                                )
-                            }
+                        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                            val isHeaderCompact = maxWidth < 420.dp
 
-                            FilledTonalButton(
-                                onClick = { viewModel.resetWordDelimiters() },
-                                shape = RoundedCornerShape(12.dp),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Icon(Icons.Rounded.RestartAlt, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Reset", style = MaterialTheme.typography.labelMedium)
+                            if (isHeaderCompact) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Word Delimiters",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = colors.onSurface
+                                        )
+
+                                        FilledTonalButton(
+                                            onClick = { viewModel.resetWordDelimiters() },
+                                            shape = RoundedCornerShape(12.dp),
+                                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                                        ) {
+                                            Icon(Icons.Rounded.RestartAlt, contentDescription = null, modifier = Modifier.size(15.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Reset", style = MaterialTheme.typography.labelSmall)
+                                        }
+                                    }
+
+                                    Text(
+                                        text = "Phrases separating featured or collaborating artists",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = colors.onSurfaceVariant
+                                    )
+                                }
+                            } else {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                        Text(
+                                            text = "Word Delimiters",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = colors.onSurface
+                                        )
+                                        Text(
+                                            text = "Phrases separating featured or collaborating artists",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = colors.onSurfaceVariant
+                                        )
+                                    }
+
+                                    FilledTonalButton(
+                                        onClick = { viewModel.resetWordDelimiters() },
+                                        shape = RoundedCornerShape(12.dp),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                                    ) {
+                                        Icon(Icons.Rounded.RestartAlt, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Reset", style = MaterialTheme.typography.labelMedium)
+                                    }
+                                }
                             }
                         }
 
@@ -417,26 +490,76 @@ fun ArtistSettingsDetailScreen(
                             "AC\\\\+DC; Queen" to "[\"AC+DC\", \"Queen\"]"
                         )
 
-                        samplePairs.forEach { (raw, parsed) ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "• $raw",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = colors.onSurface,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = null, tint = colors.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
-                                Text(
-                                    text = parsed,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = colors.primary,
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                            val isItemCompact = maxWidth < 480.dp
+
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                samplePairs.forEach { (raw, parsed) ->
+                                    if (isItemCompact) {
+                                        Surface(
+                                            shape = RoundedCornerShape(10.dp),
+                                            color = colors.surfaceContainerHighest.copy(alpha = 0.45f),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
+                                                Text(
+                                                    text = raw,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = colors.onSurface
+                                                )
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                                        contentDescription = null,
+                                                        tint = colors.primary,
+                                                        modifier = Modifier.size(13.dp)
+                                                    )
+                                                    Text(
+                                                        text = parsed,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = colors.primary,
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Text(
+                                                text = "• $raw",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Medium,
+                                                color = colors.onSurface,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                                contentDescription = null,
+                                                tint = colors.onSurfaceVariant.copy(alpha = 0.6f),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Text(
+                                                text = parsed,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = colors.primary,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -444,6 +567,8 @@ fun ArtistSettingsDetailScreen(
             }
         }
     }
+}
+}
 }
 
 @Composable
@@ -458,63 +583,134 @@ private fun RescanRequiredBanner(
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Warning,
-                contentDescription = null,
-                tint = colors.onTertiaryContainer,
-                modifier = Modifier.size(24.dp)
-            )
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val isCompact = maxWidth < 460.dp
 
-            Spacer(modifier = Modifier.width(12.dp))
+            if (isCompact) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Warning,
+                            contentDescription = null,
+                            tint = colors.onTertiaryContainer,
+                            modifier = Modifier.size(24.dp)
+                        )
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Library rescan required",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.onTertiaryContainer
-                )
-                Text(
-                    text = "Artist delimiter changes will apply after rescanning your media library",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.onTertiaryContainer.copy(alpha = 0.85f)
-                )
-            }
+                        Column {
+                            Text(
+                                text = "Library rescan required",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onTertiaryContainer
+                            )
+                            Text(
+                                text = "Artist delimiter changes will apply after rescanning your media library",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onTertiaryContainer.copy(alpha = 0.85f)
+                            )
+                        }
+                    }
 
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Button(
-                onClick = onRescanClick,
-                enabled = !isResyncing,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.tertiary,
-                    contentColor = colors.onTertiary
-                ),
-                shape = RoundedCornerShape(12.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                if (isResyncing) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        color = colors.onTertiary,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Rounded.Refresh,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    Button(
+                        onClick = onRescanClick,
+                        enabled = !isResyncing,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.tertiary,
+                            contentColor = colors.onTertiary
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.fillMaxWidth().height(40.dp)
+                    ) {
+                        if (isResyncing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = colors.onTertiary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Rounded.Refresh,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isResyncing) "Scanning..." else "Rescan",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (isResyncing) "Scanning..." else "Rescan",
-                    style = MaterialTheme.typography.labelMedium
-                )
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Warning,
+                        contentDescription = null,
+                        tint = colors.onTertiaryContainer,
+                        modifier = Modifier.size(24.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Library rescan required",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onTertiaryContainer
+                        )
+                        Text(
+                            text = "Artist delimiter changes will apply after rescanning your media library",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onTertiaryContainer.copy(alpha = 0.85f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Button(
+                        onClick = onRescanClick,
+                        enabled = !isResyncing,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.tertiary,
+                            contentColor = colors.onTertiary
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        if (isResyncing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = colors.onTertiary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Rounded.Refresh,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isResyncing) "Scanning..." else "Rescan",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                }
             }
         }
     }

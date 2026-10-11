@@ -257,7 +257,7 @@ fun ArtistDetailScreen(
                         onClick = onBack,
                         shape = CircleShape,
                         colors = IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor = colors.surfaceContainerHigh.copy(alpha = 0.85f),
+                            containerColor = colors.surfaceContainerLow,
                             contentColor = colors.onSurface
                         ),
                         modifier = Modifier

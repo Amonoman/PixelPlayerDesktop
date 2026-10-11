@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -48,7 +50,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtColorAccuracy
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
+import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveSwitchRow
 import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import kotlin.math.roundToInt
@@ -77,43 +82,30 @@ fun SettingsCategoryDetail(
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
+    val listState = rememberLazyListState()
+    val isScrolled by remember {
+        derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 4 }
+    }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 28.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.padding(bottom = 6.dp)
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val horizontalPadding = if (maxWidth < 540.dp) 16.dp else 28.dp
+
+        Column(modifier = Modifier.fillMaxSize()) {
+            SettingsStickyHeader(
+                title = section.title,
+                onBack = onBack,
+                isScrolled = isScrolled,
+                horizontalPadding = horizontalPadding,
+                backContentDescription = "Back to Settings"
+            )
+
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 8.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                IconButton(
-                    onClick = onBack,
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = colors.surfaceContainerHighest.copy(alpha = 0.5f),
-                        contentColor = colors.onSurface
-                    ),
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = "Back to Settings",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                Text(
-                    text = section.title,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.onSurface
-                )
-            }
-        }
-
-        when (section) {
+                when (section) {
             SettingsSection.LIBRARY -> {
                 item {
                     val musicDirectories by viewModel.musicDirectories.collectAsState()
@@ -165,52 +157,124 @@ fun SettingsCategoryDetail(
                             color = colors.surfaceContainer,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(
-                                    modifier = Modifier.weight(1f).padding(end = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Sync,
-                                        contentDescription = null,
-                                        tint = colors.secondary,
-                                        modifier = Modifier.size(22.dp)
-                                    )
+                            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                                val isCompact = maxWidth < 460.dp
 
-                                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                        Text(
-                                            text = "Rescan Media Library",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = colors.onSurface
-                                        )
-                                        Text(
-                                            text = "Scan configured music directories for new songs and metadata",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = colors.onSurfaceVariant
-                                        )
+                                if (isCompact) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(40.dp)
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .background(colors.secondaryContainer),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Outlined.Sync,
+                                                    contentDescription = null,
+                                                    tint = colors.onSecondaryContainer,
+                                                    modifier = Modifier.size(22.dp)
+                                                )
+                                            }
+
+                                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                Text(
+                                                    text = "Rescan Media Library",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = colors.onSurface
+                                                )
+                                                Text(
+                                                    text = "Scan configured music directories for new songs and metadata",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = colors.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+
+                                        Button(
+                                            onClick = onRescanLibrary,
+                                            shape = RoundedCornerShape(14.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = colors.primary,
+                                                contentColor = colors.onPrimary
+                                            ),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(42.dp)
+                                        ) {
+                                            Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text("Rescan")
+                                        }
                                     }
-                                }
+                                } else {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.weight(1f).padding(end = 12.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(40.dp)
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .background(colors.secondaryContainer),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Outlined.Sync,
+                                                    contentDescription = null,
+                                                    tint = colors.onSecondaryContainer,
+                                                    modifier = Modifier.size(22.dp)
+                                                )
+                                            }
 
-                                Button(
-                                    onClick = onRescanLibrary,
-                                    shape = RoundedCornerShape(14.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = colors.primary,
-                                        contentColor = colors.onPrimary
-                                    ),
-                                    modifier = Modifier.height(42.dp)
-                                ) {
-                                    Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Rescan")
+                                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                Text(
+                                                    text = "Rescan Media Library",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = colors.onSurface
+                                                )
+                                                Text(
+                                                    text = "Scan configured music directories for new songs and metadata",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = colors.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+
+                                        Button(
+                                            onClick = onRescanLibrary,
+                                            shape = RoundedCornerShape(14.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = colors.primary,
+                                                contentColor = colors.onPrimary
+                                            ),
+                                            modifier = Modifier.height(42.dp)
+                                        ) {
+                                            Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text("Rescan")
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -508,3 +572,7 @@ fun SettingsCategoryDetail(
         }
     }
 }
+}
+}
+
+
