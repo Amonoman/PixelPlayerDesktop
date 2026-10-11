@@ -10,6 +10,7 @@ import java.io.File
 import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URLEncoder
+import java.security.MessageDigest
 import java.util.Collections
 import java.util.LinkedHashMap
 
@@ -68,7 +69,7 @@ object ArtistImageService {
         // 3. Query remote API for artist image
         try {
             val encodedName = URLEncoder.encode(artistName.trim(), "UTF-8")
-            val urlString = "https://api.deezer.com/search/artist?q=$encodedName&limit=1"
+            val urlString = "https://api.deezer.com/search/artist?q=$encodedName&limit=5"
             val uri = URI(urlString)
             val connection = uri.toURL().openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
@@ -80,13 +81,32 @@ object ArtistImageService {
                 val responseText = connection.inputStream.bufferedReader().use { it.readText() }
                 val root = json.parseToJsonElement(responseText).jsonObject
                 val dataArray = root["data"]?.jsonArray
-                val firstArtist = dataArray?.firstOrNull()?.jsonObject
 
-                val pictureUrl = firstArtist?.get("picture_big")?.jsonPrimitive?.content
-                    ?: firstArtist?.get("picture_medium")?.jsonPrimitive?.content
-                    ?: firstArtist?.get("picture")?.jsonPrimitive?.content
+                val hasNonAscii = artistName.any { it.code > 127 }
+                val matchedArtist = if (hasNonAscii) {
+                    dataArray?.asSequence()
+                        ?.mapNotNull { it.jsonObject }
+                        ?.firstOrNull { artistObj ->
+                            val returnedName = artistObj["name"]?.jsonPrimitive?.content?.trim()
+                            returnedName?.equals(artistName.trim(), ignoreCase = true) == true
+                        } ?: dataArray?.firstOrNull()?.jsonObject
+                } else {
+                    dataArray?.asSequence()
+                        ?.mapNotNull { it.jsonObject }
+                        ?.firstOrNull { artistObj ->
+                            val returnedName = artistObj["name"]?.jsonPrimitive?.content?.trim()
+                            returnedName?.equals(artistName.trim(), ignoreCase = true) == true
+                        }
+                }
 
-                if (!pictureUrl.isNullOrBlank()) {
+                val pictureUrl = matchedArtist?.get("picture_big")?.jsonPrimitive?.content
+                    ?: matchedArtist?.get("picture_medium")?.jsonPrimitive?.content
+                    ?: matchedArtist?.get("picture")?.jsonPrimitive?.content
+
+                val isPlaceholder = pictureUrl?.contains("/artist//") == true ||
+                    pictureUrl?.contains("2a96cbd8b46e442fc41c2b86b821562f") == true
+
+                if (!pictureUrl.isNullOrBlank() && !isPlaceholder) {
                     val imgUri = URI(pictureUrl)
                     val imgConnection = imgUri.toURL().openConnection() as HttpURLConnection
                     imgConnection.connectTimeout = 8000
@@ -112,8 +132,10 @@ object ArtistImageService {
     }
 
     private fun getCacheFile(normalizedName: String): File {
-        val safeName = normalizedName.replace(Regex("[^a-zA-Z0-9_.-]"), "_")
-        return File(cacheDir, "artist_$safeName.jpg")
+        val hash = MessageDigest.getInstance("MD5")
+            .digest(normalizedName.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
+        return File(cacheDir, "artist_$hash.jpg")
     }
 
     fun clearCache() {

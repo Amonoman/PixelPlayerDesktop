@@ -105,7 +105,12 @@ class PlaybackStateHolder(
 
         coroutineScope.launch {
             audioEngine.completionEvents.collect {
-                playNext()
+                val next = queueManager.getNextSong()
+                if (next != null) {
+                    audioEngine.play(next.path)
+                } else {
+                    audioEngine.stop()
+                }
             }
         }
     }
@@ -144,7 +149,12 @@ class PlaybackStateHolder(
         if (next != null) {
             audioEngine.play(next.path)
         } else {
-            audioEngine.stop()
+            val current = queueManager.currentSong.value
+            if (current != null) {
+                audioEngine.play(current.path)
+            } else {
+                audioEngine.stop()
+            }
         }
     }
 

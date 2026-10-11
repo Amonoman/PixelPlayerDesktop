@@ -60,6 +60,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -165,10 +167,15 @@ fun QueueSidePanel(
         }
     }
 
+    val windowInfo = LocalWindowInfo.current
+    val density = LocalDensity.current
+    val screenWidth = with(density) { windowInfo.containerSize.width.toDp() }
+    val panelWidth = if (screenWidth < 960.dp) 320.dp else 360.dp
+
     Row(
         modifier = modifier
             .fillMaxHeight()
-            .width(320.dp)
+            .width(panelWidth)
     ) {
 
         VerticalDivider(
