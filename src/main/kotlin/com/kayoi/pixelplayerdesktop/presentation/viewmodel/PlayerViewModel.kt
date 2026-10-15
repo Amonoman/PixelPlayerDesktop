@@ -1,5 +1,12 @@
 package com.kayoi.pixelplayerdesktop.presentation.viewmodel
 
+import com.kayoi.pixelplayerdesktop.data.metadata.AudioMetadataDetails
+import com.kayoi.pixelplayerdesktop.data.metadata.BatchMetadataResult
+import com.kayoi.pixelplayerdesktop.data.metadata.BatchSongMetadataUpdate
+import com.kayoi.pixelplayerdesktop.data.metadata.EditableSongMetadata
+import com.kayoi.pixelplayerdesktop.data.metadata.MetadataEditResult
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineReleaseMetadata
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineTrackMetadata
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.Playlist
@@ -7,6 +14,7 @@ import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
 import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
+import java.io.File
 
 class PlayerViewModel(
     val playbackStateHolder: PlaybackStateHolder,
@@ -162,4 +170,47 @@ class PlayerViewModel(
     fun setNavBarCompactMode(enabled: Boolean) = themeStateHolder.setNavBarCompactMode(enabled)
     fun toggleNavBarCompactMode() = themeStateHolder.toggleNavBarCompactMode()
     fun setDefaultTab(tab: String) = themeStateHolder.setDefaultTab(tab)
+
+    suspend fun updateSongMetadata(
+        song: Song,
+        metadata: EditableSongMetadata
+    ): MetadataEditResult {
+        val result = libraryStateHolder.updateSongMetadata(song, metadata)
+        if (result.success && result.updatedSong != null) {
+            playbackStateHolder.onSongMetadataUpdated(result.updatedSong)
+        }
+        return result
+    }
+
+    suspend fun readSongMetadataDetails(file: File): Result<AudioMetadataDetails> {
+        return libraryStateHolder.readSongMetadataDetails(file)
+    }
+
+    suspend fun batchUpdateMetadata(
+        songs: List<Song>,
+        update: BatchSongMetadataUpdate,
+        onProgress: (completed: Int, total: Int) -> Unit = { _, _ -> }
+    ): BatchMetadataResult {
+        val result = libraryStateHolder.batchUpdateMetadata(songs, update, onProgress)
+        if (result.updatedSongs.isNotEmpty()) {
+            playbackStateHolder.onSongsMetadataUpdated(result.updatedSongs)
+        }
+        return result
+    }
+
+    suspend fun searchOnlineMetadata(title: String, artist: String): List<OnlineTrackMetadata> {
+        return libraryStateHolder.searchOnlineMetadata(title, artist)
+    }
+
+    suspend fun searchOnlineMetadataByQuery(query: String): List<OnlineTrackMetadata> {
+        return libraryStateHolder.searchOnlineMetadataByQuery(query)
+    }
+
+    suspend fun searchOnlineReleases(query: String): List<OnlineReleaseMetadata> {
+        return libraryStateHolder.searchOnlineReleases(query)
+    }
+
+    suspend fun fetchOnlineCoverArt(releaseId: String): ByteArray? {
+        return libraryStateHolder.fetchOnlineCoverArt(releaseId)
+    }
 }

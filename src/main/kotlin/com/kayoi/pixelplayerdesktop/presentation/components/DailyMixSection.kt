@@ -61,6 +61,7 @@ fun DailyMixSection(
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onToggleFavorite: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
+    onEditMetadata: ((Song) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     if (songs.isEmpty()) return
@@ -92,7 +93,8 @@ fun DailyMixSection(
                 onAddToQueue = onAddToQueue,
                 onAddToPlaylist = onAddToPlaylist,
                 onToggleFavorite = onToggleFavorite,
-                onDelete = onDelete
+                onDelete = onDelete,
+                onEditMetadata = onEditMetadata
             )
 
             ViewAllDailyMixButton(
@@ -217,7 +219,8 @@ private fun DailyMixSongList(
     onAddToQueue: ((Song) -> Unit)? = null,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onToggleFavorite: ((Song) -> Unit)? = null,
-    onDelete: ((Song) -> Unit)? = null
+    onDelete: ((Song) -> Unit)? = null,
+    onEditMetadata: ((Song) -> Unit)? = null
 ) {
     val colors = MaterialTheme.colorScheme
     val itemContainerColor = colors.surfaceContainerLow
@@ -242,6 +245,7 @@ private fun DailyMixSongList(
                 onAddToQueue = if (onAddToQueue != null) { { onAddToQueue(song) } } else null,
                 onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
                 onToggleFavorite = if (onToggleFavorite != null) { { onToggleFavorite(song) } } else null,
+                onEditMetadata = if (onEditMetadata != null) { { onEditMetadata(song) } } else null,
                 onDelete = if (onDelete != null) { { onDelete(song) } } else null,
                 onClick = { onSongClick(song) },
                 modifier = Modifier.fillMaxWidth()

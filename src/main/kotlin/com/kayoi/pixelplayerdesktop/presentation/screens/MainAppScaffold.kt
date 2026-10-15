@@ -38,8 +38,10 @@ import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.components.AddToPlaylistDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.AppSidebar
 import com.kayoi.pixelplayerdesktop.presentation.components.AppTopBar
+import com.kayoi.pixelplayerdesktop.presentation.components.BatchEditMetadataDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.DeleteSongConfirmationDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.DismissUndoBar
+import com.kayoi.pixelplayerdesktop.presentation.components.EditSongMetadataDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.MiniPlayerBar
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueSidePanel
 import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavDestination
@@ -157,6 +159,8 @@ fun MainAppScaffold(
     var initialExpandedTab by remember { mutableStateOf(ExpandedTab.LYRICS) }
     var songToAddToPlaylist by remember { mutableStateOf<Song?>(null) }
     var songToDelete by remember { mutableStateOf<Song?>(null) }
+    var songToEditMetadata by remember { mutableStateOf<Song?>(null) }
+    var batchSongsToEdit by remember { mutableStateOf<List<Song>?>(null) }
 
     val filteredSongs = remember(songs, favoriteSongs, currentDestination, searchQuery) {
         val base = when (currentDestination) {
@@ -270,7 +274,8 @@ fun MainAppScaffold(
                                     onAddToQueue = { song -> viewModel.addSongToQueue(song) },
                                     onAddToPlaylist = { song -> songToAddToPlaylist = song },
                                     onDelete = { song -> songToDelete = song },
-                                    onToggleFavorite = { song -> viewModel.toggleFavorite(song) }
+                                    onToggleFavorite = { song -> viewModel.toggleFavorite(song) },
+                                    onEditMetadata = { song -> songToEditMetadata = song }
                                 )
                             }
 
@@ -282,7 +287,8 @@ fun MainAppScaffold(
                                     searchQuery = searchQuery,
                                     viewModel = viewModel,
                                     onAddToPlaylist = { song -> songToAddToPlaylist = song },
-                                    onDelete = { song -> songToDelete = song }
+                                    onDelete = { song -> songToDelete = song },
+                                    onEditMetadata = { song -> songToEditMetadata = song }
                                 )
                             }
 
@@ -296,7 +302,9 @@ fun MainAppScaffold(
                                     onSelectAlbum = { selectedAlbum = it },
                                     viewModel = viewModel,
                                     onAddToPlaylist = { song -> songToAddToPlaylist = song },
-                                    onDelete = { song -> songToDelete = song }
+                                    onDelete = { song -> songToDelete = song },
+                                    onEditMetadata = { song -> songToEditMetadata = song },
+                                    onBatchEditMetadata = { batchSongs -> batchSongsToEdit = batchSongs }
                                 )
                             }
 
@@ -309,7 +317,8 @@ fun MainAppScaffold(
                                     onSelectArtist = { selectedArtist = it },
                                     viewModel = viewModel,
                                     onAddToPlaylist = { song -> songToAddToPlaylist = song },
-                                    onDelete = { song -> songToDelete = song }
+                                    onDelete = { song -> songToDelete = song },
+                                    onEditMetadata = { song -> songToEditMetadata = song }
                                 )
                             }
 
@@ -322,7 +331,8 @@ fun MainAppScaffold(
                                     onSelectPlaylist = { selectedPlaylistId = it },
                                     viewModel = viewModel,
                                     onAddToPlaylist = { song -> songToAddToPlaylist = song },
-                                    onDelete = { song -> songToDelete = song }
+                                    onDelete = { song -> songToDelete = song },
+                                    onEditMetadata = { song -> songToEditMetadata = song }
                                 )
                             }
 
@@ -340,7 +350,9 @@ fun MainAppScaffold(
                                     onFolderTreePathChange = { currentFolderTreePath = it },
                                     viewModel = viewModel,
                                     onAddToPlaylist = { song -> songToAddToPlaylist = song },
-                                    onDelete = { song -> songToDelete = song }
+                                    onDelete = { song -> songToDelete = song },
+                                    onEditMetadata = { song -> songToEditMetadata = song },
+                                    onBatchEditMetadata = { batchSongs -> batchSongsToEdit = batchSongs }
                                 )
                             }
 
@@ -399,6 +411,9 @@ fun MainAppScaffold(
                             },
                             onToggleFavorite = { song ->
                                 viewModel.toggleFavorite(song)
+                            },
+                            onEditMetadata = { song ->
+                                songToEditMetadata = song
                             },
                             favoriteSongIds = remember(favoriteSongs) { favoriteSongs.map { it.id }.toSet() }
                         )
@@ -481,6 +496,9 @@ fun MainAppScaffold(
                 onMinimize = onMinimize,
                 onMaximizeRestore = onMaximizeRestore,
                 onCloseWindow = onClose,
+                onEditMetadata = { song -> songToEditMetadata = song },
+                onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                onDelete = { song -> songToDelete = song },
                 topBarWrapper = topBarWrapper
             )
         }
@@ -506,6 +524,22 @@ fun MainAppScaffold(
                 onConfirm = {
                     viewModel.deleteSong(songToDelete!!)
                 }
+            )
+        }
+
+        if (songToEditMetadata != null) {
+            EditSongMetadataDialog(
+                song = songToEditMetadata!!,
+                viewModel = viewModel,
+                onDismiss = { songToEditMetadata = null }
+            )
+        }
+
+        if (batchSongsToEdit != null) {
+            BatchEditMetadataDialog(
+                songs = batchSongsToEdit!!,
+                viewModel = viewModel,
+                onDismiss = { batchSongsToEdit = null }
             )
         }
     }

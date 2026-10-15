@@ -80,6 +80,27 @@ class PlaybackStateHolder(
         }
     }
 
+    fun onSongMetadataUpdated(updatedSong: Song) {
+        queueManager.updateSong(updatedSong)
+        val current = queueManager.currentSong.value
+        if (current != null && current.id == updatedSong.id) {
+            _playerInfo.update {
+                it.copy(
+                    songTitle = updatedSong.title,
+                    artistName = updatedSong.displayArtist,
+                    albumArtUri = updatedSong.albumArtUriString,
+                    totalDurationMs = updatedSong.duration
+                )
+            }
+        }
+    }
+
+    fun onSongsMetadataUpdated(updatedSongs: List<Song>) {
+        for (song in updatedSongs) {
+            onSongMetadataUpdated(song)
+        }
+    }
+
     init {
 
         coroutineScope.launch {

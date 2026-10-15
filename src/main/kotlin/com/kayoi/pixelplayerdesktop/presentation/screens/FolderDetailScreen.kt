@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.AutoFixHigh
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
@@ -73,6 +74,8 @@ fun FolderDetailScreen(
     onBack: () -> Unit,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
+    onEditMetadata: ((Song) -> Unit)? = null,
+    onBatchEditMetadata: ((List<Song>) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -239,6 +242,22 @@ fun FolderDetailScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Shuffle", fontWeight = FontWeight.SemiBold)
                         }
+
+                        if (onBatchEditMetadata != null && folderSongs.isNotEmpty()) {
+                            FilledTonalButton(
+                                onClick = { onBatchEditMetadata(folderSongs) },
+                                shape = RoundedCornerShape(16.dp),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.AutoFixHigh,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Edit Tags", fontWeight = FontWeight.SemiBold)
+                            }
+                        }
                     }
                 }
             } else {
@@ -345,6 +364,20 @@ fun FolderDetailScreen(
                             Spacer(modifier = Modifier.width(6.dp))
                             Text("Shuffle", fontWeight = FontWeight.SemiBold)
                         }
+
+                        if (onBatchEditMetadata != null && folderSongs.isNotEmpty()) {
+                            FilledTonalIconButton(
+                                onClick = { onBatchEditMetadata(folderSongs) },
+                                shape = RoundedCornerShape(14.dp),
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.AutoFixHigh,
+                                    contentDescription = "Edit Tags",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -405,6 +438,7 @@ fun FolderDetailScreen(
                             onAddToQueue = { viewModel.addSongToQueue(song) },
                             onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
                             onToggleFavorite = { viewModel.toggleFavorite(song) },
+                            onEditMetadata = if (onEditMetadata != null) { { onEditMetadata(song) } } else null,
                             onDelete = if (onDelete != null) { { onDelete(song) } } else null,
                             onClick = { viewModel.playSongs(folderSongs.drop(index), 0) }
                         )

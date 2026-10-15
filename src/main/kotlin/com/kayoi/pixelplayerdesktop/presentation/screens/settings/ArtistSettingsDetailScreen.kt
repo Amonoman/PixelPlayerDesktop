@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.scanner.ScanProgress
 import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveSwitchRow
+import com.kayoi.pixelplayerdesktop.presentation.components.trackInputFocus
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -411,7 +412,7 @@ fun ArtistSettingsDetailScreen(
                                         }
                                     }
                                 ),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f).trackInputFocus()
                             )
 
                             Spacer(modifier = Modifier.width(10.dp))

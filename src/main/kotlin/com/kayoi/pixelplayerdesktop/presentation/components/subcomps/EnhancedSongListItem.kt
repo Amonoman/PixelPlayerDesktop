@@ -99,6 +99,7 @@ fun EnhancedSongListItem(
     onAddToPlaylist: (() -> Unit)? = null,
     isFavorite: Boolean? = null,
     onToggleFavorite: (() -> Unit)? = null,
+    onEditMetadata: (() -> Unit)? = null,
     onRemoveFromPlaylist: (() -> Unit)? = null,
     onRemoveFromQueue: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
@@ -112,7 +113,7 @@ fun EnhancedSongListItem(
 ) {
     var showInternalDropdown by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     val hasDropdownActions = onPlayNext != null || onAddToQueue != null || onAddToPlaylist != null ||
-        onToggleFavorite != null || onRemoveFromPlaylist != null || onRemoveFromQueue != null ||
+        onToggleFavorite != null || onEditMetadata != null || onRemoveFromPlaylist != null || onRemoveFromQueue != null ||
         onDelete != null || customDropdownItems != null
 
     val highlightProgress by androidx.compose.animation.core.animateFloatAsState(
@@ -316,6 +317,7 @@ fun EnhancedSongListItem(
                         onAddToPlaylist = onAddToPlaylist,
                         isFavorite = isFavorite,
                         onToggleFavorite = onToggleFavorite,
+                        onEditMetadata = onEditMetadata,
                         onRemoveFromPlaylist = onRemoveFromPlaylist,
                         onRemoveFromQueue = onRemoveFromQueue,
                         onDelete = onDelete,

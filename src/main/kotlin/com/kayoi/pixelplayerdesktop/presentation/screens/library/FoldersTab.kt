@@ -65,6 +65,8 @@ fun FoldersTab(
     viewModel: PlayerViewModel,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
+    onEditMetadata: ((Song) -> Unit)? = null,
+    onBatchEditMetadata: ((List<Song>) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val isFoldersPlaylistView by viewModel.isFoldersPlaylistView.collectAsState()
@@ -75,7 +77,9 @@ fun FoldersTab(
             viewModel = viewModel,
             onBack = { onSelectFolderDetail(null) },
             onAddToPlaylist = onAddToPlaylist,
-            onDelete = onDelete
+            onDelete = onDelete,
+            onEditMetadata = onEditMetadata,
+            onBatchEditMetadata = onBatchEditMetadata
         )
     } else {
         val colors = MaterialTheme.colorScheme
@@ -327,6 +331,7 @@ fun FoldersTab(
                                         onAddToQueue = { viewModel.addSongToQueue(song) },
                                         onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
                                         onToggleFavorite = { viewModel.toggleFavorite(song) },
+                                        onEditMetadata = if (onEditMetadata != null) { { onEditMetadata(song) } } else null,
                                         onDelete = if (onDelete != null) { { onDelete(song) } } else null,
                                         onClick = { viewModel.playSongs(currentTreeSongs.drop(index), 0) }
                                     )

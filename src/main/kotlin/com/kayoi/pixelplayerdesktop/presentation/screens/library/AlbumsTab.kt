@@ -52,6 +52,8 @@ fun AlbumsTab(
     viewModel: PlayerViewModel,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
+    onEditMetadata: ((Song) -> Unit)? = null,
+    onBatchEditMetadata: ((List<Song>) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     if (selectedAlbum != null) {
@@ -62,6 +64,8 @@ fun AlbumsTab(
             onBack = { onSelectAlbum(null) },
             onAddToPlaylist = onAddToPlaylist,
             onDelete = onDelete,
+            onEditMetadata = onEditMetadata,
+            onBatchEditMetadata = onBatchEditMetadata,
             modifier = modifier
         )
     } else {

@@ -39,6 +39,7 @@ import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
 import com.kayoi.pixelplayerdesktop.presentation.components.CreatePlaylistDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveScrollBar
+import com.kayoi.pixelplayerdesktop.presentation.components.TrackDialogInput
 import com.kayoi.pixelplayerdesktop.presentation.components.playlistFastScrollLabel
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryActionRow
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.PlaylistListItem
@@ -55,6 +56,7 @@ fun PlaylistsTab(
     viewModel: PlayerViewModel,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
+    onEditMetadata: ((Song) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     if (selectedPlaylistId != null) {
@@ -63,7 +65,8 @@ fun PlaylistsTab(
             viewModel = viewModel,
             onBack = { onSelectPlaylist(null) },
             onAddToPlaylist = onAddToPlaylist,
-            onDelete = onDelete
+            onDelete = onDelete,
+            onEditMetadata = onEditMetadata
         )
     } else {
         val colors = MaterialTheme.colorScheme
@@ -225,6 +228,7 @@ fun PlaylistsTab(
         }
 
         playlistToDelete?.let { pl ->
+            TrackDialogInput()
             AlertDialog(
                 onDismissRequest = { playlistToDelete = null },
                 title = { Text("Delete Playlist") },

@@ -88,6 +88,7 @@ fun ArtistDetailScreen(
     onBack: () -> Unit,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
+    onEditMetadata: ((Song) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val isDarkTheme by viewModel.isDarkMode.collectAsState()
@@ -454,6 +455,7 @@ fun ArtistDetailScreen(
                                                     onAddToQueue = { viewModel.addSongToQueue(song) },
                                                     onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
                                                     onToggleFavorite = { viewModel.toggleFavorite(song) },
+                                                    onEditMetadata = if (onEditMetadata != null) { { onEditMetadata(song) } } else null,
                                                     onDelete = if (onDelete != null) { { onDelete(song) } } else null,
                                                     onClick = { viewModel.playSongs(allSortedSongs, effectiveIndex) }
                                                 )

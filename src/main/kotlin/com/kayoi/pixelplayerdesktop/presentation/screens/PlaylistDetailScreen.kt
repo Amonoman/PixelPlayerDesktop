@@ -71,6 +71,7 @@ import com.kayoi.pixelplayerdesktop.presentation.components.AddSongsToPlaylistDi
 import com.kayoi.pixelplayerdesktop.presentation.components.CreatePlaylistDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveScrollBar
 import com.kayoi.pixelplayerdesktop.presentation.components.PlaylistCover
+import com.kayoi.pixelplayerdesktop.presentation.components.TrackDialogInput
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.EnhancedSongListItem
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import sh.calvin.reorderable.ReorderableItem
@@ -85,6 +86,7 @@ fun PlaylistDetailScreen(
     onBack: () -> Unit,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
+    onEditMetadata: ((Song) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -500,6 +502,7 @@ fun PlaylistDetailScreen(
                                 onAddToQueue = { viewModel.addSongToQueue(song) },
                                 onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
                                 onToggleFavorite = { viewModel.toggleFavorite(song) },
+                                onEditMetadata = if (onEditMetadata != null) { { onEditMetadata(song) } } else null,
                                 onRemoveFromPlaylist = { viewModel.removeSongFromPlaylist(playlist.id, song.id) },
                                 onDelete = if (onDelete != null) { { onDelete(song) } } else null,
                                 onClick = {
@@ -548,6 +551,7 @@ fun PlaylistDetailScreen(
     }
 
     if (showDeleteConfirmDialog) {
+        TrackDialogInput()
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
             title = { Text("Delete Playlist") },

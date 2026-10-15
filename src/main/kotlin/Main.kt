@@ -22,6 +22,8 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.kayoi.pixelplayerdesktop.di.appModules
+import com.kayoi.pixelplayerdesktop.presentation.components.InputFocusTracker
+import com.kayoi.pixelplayerdesktop.presentation.components.LocalInputFocusTracker
 import com.kayoi.pixelplayerdesktop.presentation.components.LocalWindowMinimized
 import com.kayoi.pixelplayerdesktop.presentation.screens.MainAppScaffold
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
@@ -54,7 +56,8 @@ fun main() = application {
     val currentSong by playerViewModel.currentSong.collectAsState()
     val queue by playerViewModel.queue.collectAsState()
     val searchFocusRequester = remember { FocusRequester() }
-    var isSearchFocused by remember { mutableStateOf(false) }
+    var isInputActive by remember { mutableStateOf(false) }
+    val inputFocusTracker = remember { InputFocusTracker { isInputActive = it } }
     var isQueueSidePanelOpen by remember { mutableStateOf(true) }
 
     // System-Based Dynamic Theme (Windows / Linux Accent Color)
@@ -90,12 +93,20 @@ fun main() = application {
                         true
                     }
                     isModifier && keyEvent.key == Key.DirectionRight -> {
-                        playerViewModel.playNext()
-                        true
+                        if (!isInputActive) {
+                            playerViewModel.playNext()
+                            true
+                        } else {
+                            false
+                        }
                     }
                     isModifier && keyEvent.key == Key.DirectionLeft -> {
-                        playerViewModel.playPrevious()
-                        true
+                        if (!isInputActive) {
+                            playerViewModel.playPrevious()
+                            true
+                        } else {
+                            false
+                        }
                     }
                     isModifier && keyEvent.key == Key.DirectionUp -> {
                         val currentVol = playerViewModel.playerInfo.value.volume
@@ -107,7 +118,7 @@ fun main() = application {
                         playerViewModel.setVolume((currentVol - 0.05f).coerceIn(0f, 1f))
                         true
                     }
-                    keyEvent.key == Key.M && !isSearchFocused && !isModifier -> {
+                    keyEvent.key == Key.M && !isInputActive && !isModifier -> {
                         playerViewModel.toggleMute()
                         true
                     }
@@ -119,7 +130,7 @@ fun main() = application {
                         playerViewModel.cycleRepeatMode()
                         true
                     }
-                    keyEvent.key == Key.L && !isSearchFocused && !isModifier -> {
+                    keyEvent.key == Key.L && !isInputActive && !isModifier -> {
                         playerViewModel.toggleFavoriteCurrentSong()
                         true
                     }
@@ -135,7 +146,7 @@ fun main() = application {
                         }
                         true
                     }
-                    keyEvent.key == Key.Spacebar && !isSearchFocused -> {
+                    keyEvent.key == Key.Spacebar && !isInputActive -> {
                         playerViewModel.togglePlayPause()
                         true
                     }
@@ -143,10 +154,10 @@ fun main() = application {
                 }
             } else if (keyEvent.type == KeyEventType.KeyUp) {
                 when {
-                    isModifier && (keyEvent.key == Key.K || keyEvent.key == Key.DirectionRight || keyEvent.key == Key.DirectionLeft || keyEvent.key == Key.DirectionUp || keyEvent.key == Key.DirectionDown || keyEvent.key == Key.S || keyEvent.key == Key.R || keyEvent.key == Key.Q) -> true
+                    isModifier && (keyEvent.key == Key.K || (!isInputActive && (keyEvent.key == Key.DirectionRight || keyEvent.key == Key.DirectionLeft)) || keyEvent.key == Key.DirectionUp || keyEvent.key == Key.DirectionDown || keyEvent.key == Key.S || keyEvent.key == Key.R || keyEvent.key == Key.Q) -> true
                     keyEvent.isAltPressed && keyEvent.key == Key.Q -> true
                     keyEvent.key == Key.F11 -> true
-                    (keyEvent.key == Key.M || keyEvent.key == Key.L || keyEvent.key == Key.Spacebar) && !isSearchFocused && !isModifier -> true
+                    (keyEvent.key == Key.M || keyEvent.key == Key.L || keyEvent.key == Key.Spacebar) && !isInputActive && !isModifier -> true
                     else -> false
                 }
             } else {
@@ -187,7 +198,8 @@ fun main() = application {
         }
 
         CompositionLocalProvider(
-            LocalWindowMinimized provides windowState.isMinimized
+            LocalWindowMinimized provides windowState.isMinimized,
+            LocalInputFocusTracker provides inputFocusTracker
         ) {
             PixelPlayerTheme(
                 darkTheme = isDarkTheme,
@@ -211,7 +223,7 @@ fun main() = application {
                         }
                     },
                     searchFocusRequester = searchFocusRequester,
-                    onSearchFocusChange = { isSearchFocused = it },
+                    onSearchFocusChange = { inputFocusTracker.onFocusChanged(it) },
                     isQueueSidePanelOpen = isQueueSidePanelOpen,
                     onToggleQueueSidePanel = { isQueueSidePanelOpen = !isQueueSidePanelOpen }
                 )

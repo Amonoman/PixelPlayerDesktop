@@ -50,6 +50,7 @@ fun ArtistsTab(
     viewModel: PlayerViewModel,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
+    onEditMetadata: ((Song) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     if (selectedArtist != null) {
@@ -60,6 +61,7 @@ fun ArtistsTab(
             onBack = { onSelectArtist(null) },
             onAddToPlaylist = onAddToPlaylist,
             onDelete = onDelete,
+            onEditMetadata = onEditMetadata,
             modifier = modifier
         )
     } else {

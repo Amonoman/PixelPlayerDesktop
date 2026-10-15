@@ -60,6 +60,7 @@ fun AddToPlaylistDialog(
     onPlaylistSelected: (Playlist) -> Unit,
     onCreatePlaylist: (String) -> Unit
 ) {
+    TrackDialogInput()
     val colors = MaterialTheme.colorScheme
     var searchQuery by remember { mutableStateOf("") }
     var showCreateDialog by remember { mutableStateOf(false) }

@@ -233,6 +233,19 @@ class MusicDao(
         }
     }
 
+    suspend fun updateSongPath(id: String, newPath: String, newContentUri: String) = withContext(ioDispatcher) {
+        database.getConnection().use { conn ->
+            val sql = "UPDATE songs SET path = ?, content_uri_string = ? WHERE id = ?"
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setString(1, newPath)
+                stmt.setString(2, newContentUri)
+                stmt.setString(3, id)
+                stmt.executeUpdate()
+            }
+        }
+        database.notifyTableChanged("songs")
+    }
+
     suspend fun deleteSongsNotInPaths(existingPaths: Set<String>) = withContext(ioDispatcher) {
         if (existingPaths.isEmpty()) {
             database.getConnection().use { conn ->

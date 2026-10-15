@@ -1,5 +1,12 @@
 package com.kayoi.pixelplayerdesktop.presentation.viewmodel
 
+import com.kayoi.pixelplayerdesktop.data.metadata.AudioMetadataDetails
+import com.kayoi.pixelplayerdesktop.data.metadata.BatchMetadataResult
+import com.kayoi.pixelplayerdesktop.data.metadata.BatchSongMetadataUpdate
+import com.kayoi.pixelplayerdesktop.data.metadata.EditableSongMetadata
+import com.kayoi.pixelplayerdesktop.data.metadata.MetadataEditResult
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineReleaseMetadata
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineTrackMetadata
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
@@ -15,6 +22,7 @@ import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
 import com.kayoi.pixelplayerdesktop.utils.AlbumArtCacheManager
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_ARTIST_DELIMITERS
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_WORD_DELIMITERS
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -459,5 +467,63 @@ class LibraryStateHolder(
         coroutineScope.launch {
             musicRepository.toggleFavorite(song.id)
         }
+    }
+
+    suspend fun updateSongMetadata(
+        song: Song,
+        metadata: EditableSongMetadata
+    ): MetadataEditResult {
+        val result = musicRepository.updateSongMetadata(
+            song = song,
+            metadata = metadata,
+            artistDelimiters = artistDelimiters.value,
+            wordDelimiters = wordDelimiters.value,
+            extractArtistFromTitle = extractArtistFromTitle.value
+        )
+        if (result.success && result.updatedSong != null) {
+            if (_searchQuery.value.isNotBlank()) {
+                onSearchQueryChanged(_searchQuery.value)
+            }
+        }
+        return result
+    }
+
+    suspend fun readSongMetadataDetails(file: File): Result<AudioMetadataDetails> {
+        return musicRepository.readSongMetadataDetails(file)
+    }
+
+    suspend fun batchUpdateMetadata(
+        songs: List<Song>,
+        update: BatchSongMetadataUpdate,
+        onProgress: (completed: Int, total: Int) -> Unit = { _, _ -> }
+    ): BatchMetadataResult {
+        val result = musicRepository.batchUpdateMetadata(
+            songs = songs,
+            update = update,
+            artistDelimiters = artistDelimiters.value,
+            wordDelimiters = wordDelimiters.value,
+            extractArtistFromTitle = extractArtistFromTitle.value,
+            onProgress = onProgress
+        )
+        if (result.successCount > 0 && _searchQuery.value.isNotBlank()) {
+            onSearchQueryChanged(_searchQuery.value)
+        }
+        return result
+    }
+
+    suspend fun searchOnlineMetadata(title: String, artist: String): List<OnlineTrackMetadata> {
+        return musicRepository.searchOnlineMetadata(title, artist)
+    }
+
+    suspend fun searchOnlineMetadataByQuery(query: String): List<OnlineTrackMetadata> {
+        return musicRepository.searchOnlineMetadataByQuery(query)
+    }
+
+    suspend fun searchOnlineReleases(query: String): List<OnlineReleaseMetadata> {
+        return musicRepository.searchOnlineReleases(query)
+    }
+
+    suspend fun fetchOnlineCoverArt(releaseId: String): ByteArray? {
+        return musicRepository.fetchOnlineCoverArt(releaseId)
     }
 }

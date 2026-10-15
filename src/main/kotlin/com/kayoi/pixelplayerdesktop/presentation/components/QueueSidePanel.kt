@@ -93,6 +93,7 @@ fun QueueSidePanel(
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
     onToggleFavorite: ((Song) -> Unit)? = null,
+    onEditMetadata: ((Song) -> Unit)? = null,
     favoriteSongIds: Set<String> = emptySet(),
     modifier: Modifier = Modifier
 ) {
@@ -454,6 +455,7 @@ fun QueueSidePanel(
                                     onPlayNext = if (onPlayNext != null) { { onPlayNext(song) } } else null,
                                     onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
                                     onToggleFavorite = if (onToggleFavorite != null) { { onToggleFavorite(song) } } else null,
+                                    onEditMetadata = if (onEditMetadata != null) { { onEditMetadata(song) } } else null,
                                     onRemoveFromQueue = if (onRemoveItem != null) { { onRemoveItem(index) } } else null,
                                     onDelete = if (onDelete != null) { { onDelete(song) } } else null,
                                     onClick = { onSongClick(song, index) }
@@ -475,6 +477,7 @@ fun QueueSidePanel(
     }
 
     if (showClearDialog) {
+        TrackDialogInput()
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
             icon = {

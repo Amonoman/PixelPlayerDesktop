@@ -4,6 +4,15 @@ import com.kayoi.pixelplayerdesktop.data.database.FavoritesDao
 import com.kayoi.pixelplayerdesktop.data.database.LocalPlaylistDao
 import com.kayoi.pixelplayerdesktop.data.database.MusicDao
 import com.kayoi.pixelplayerdesktop.data.database.PixelPlayerDatabase
+import com.kayoi.pixelplayerdesktop.data.metadata.AudioMetadataDetails
+import com.kayoi.pixelplayerdesktop.data.metadata.BatchMetadataResult
+import com.kayoi.pixelplayerdesktop.data.metadata.BatchSongMetadataUpdate
+import com.kayoi.pixelplayerdesktop.data.metadata.DesktopMetadataEditor
+import com.kayoi.pixelplayerdesktop.data.metadata.EditableSongMetadata
+import com.kayoi.pixelplayerdesktop.data.metadata.MetadataEditResult
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.MusicBrainzClient
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineReleaseMetadata
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineTrackMetadata
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.Genre
@@ -18,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import java.io.File
 import java.util.UUID
 
 class MusicRepositoryImpl(
@@ -25,6 +35,8 @@ class MusicRepositoryImpl(
     private val musicDao: MusicDao,
     private val favoritesDao: FavoritesDao,
     private val playlistDao: LocalPlaylistDao,
+    private val metadataEditor: DesktopMetadataEditor? = null,
+    private val musicBrainzClient: MusicBrainzClient? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : MusicRepository {
 
@@ -227,5 +239,66 @@ class MusicRepositoryImpl(
         minTracks: Int
     ): List<SearchResultItem> {
         return musicDao.search(query, filter, minDurationMs, minTracks)
+    }
+
+    override suspend fun updateSongMetadata(
+        song: Song,
+        metadata: EditableSongMetadata,
+        artistDelimiters: List<String>,
+        wordDelimiters: List<String>,
+        extractArtistFromTitle: Boolean
+    ): MetadataEditResult {
+        val editor = metadataEditor ?: DesktopMetadataEditor(musicDao, ioDispatcher = ioDispatcher)
+        return editor.writeMetadata(
+            song = song,
+            metadata = metadata,
+            artistDelimiters = artistDelimiters,
+            wordDelimiters = wordDelimiters,
+            extractArtistFromTitle = extractArtistFromTitle
+        )
+    }
+
+    override suspend fun readSongMetadataDetails(file: File): Result<AudioMetadataDetails> {
+        val editor = metadataEditor ?: DesktopMetadataEditor(musicDao, ioDispatcher = ioDispatcher)
+        return editor.readMetadata(file)
+    }
+
+    override suspend fun batchUpdateMetadata(
+        songs: List<Song>,
+        update: BatchSongMetadataUpdate,
+        artistDelimiters: List<String>,
+        wordDelimiters: List<String>,
+        extractArtistFromTitle: Boolean,
+        onProgress: (completed: Int, total: Int) -> Unit
+    ): BatchMetadataResult {
+        val editor = metadataEditor ?: DesktopMetadataEditor(musicDao, ioDispatcher = ioDispatcher)
+        return editor.batchUpdateMetadata(
+            songs = songs,
+            update = update,
+            artistDelimiters = artistDelimiters,
+            wordDelimiters = wordDelimiters,
+            extractArtistFromTitle = extractArtistFromTitle,
+            onProgress = onProgress
+        )
+    }
+
+    override suspend fun searchOnlineMetadata(title: String, artist: String): List<OnlineTrackMetadata> {
+        val client = musicBrainzClient ?: MusicBrainzClient(ioDispatcher)
+        return client.searchRecordings(title, artist)
+    }
+
+    override suspend fun searchOnlineMetadataByQuery(query: String): List<OnlineTrackMetadata> {
+        val client = musicBrainzClient ?: MusicBrainzClient(ioDispatcher)
+        return client.searchRecordingsByQuery(query)
+    }
+
+    override suspend fun searchOnlineReleases(query: String): List<OnlineReleaseMetadata> {
+        val client = musicBrainzClient ?: MusicBrainzClient(ioDispatcher)
+        return client.searchReleases(query)
+    }
+
+    override suspend fun fetchOnlineCoverArt(releaseId: String): ByteArray? {
+        val client = musicBrainzClient ?: MusicBrainzClient(ioDispatcher)
+        return client.fetchCoverArt(releaseId)
     }
 }

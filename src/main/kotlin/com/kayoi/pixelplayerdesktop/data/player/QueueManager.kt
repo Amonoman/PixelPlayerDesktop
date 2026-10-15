@@ -256,4 +256,17 @@ class QueueManager(
             _currentSong.value = curr.copy(isFavorite = isFav)
         }
     }
+
+    fun updateSong(updatedSong: Song) {
+        _queue.value = _queue.value.map {
+            if (it.id == updatedSong.id) updatedSong else it
+        }
+        _originalQueue.replaceAll {
+            if (it.id == updatedSong.id) updatedSong else it
+        }
+        val curr = _currentSong.value
+        if (curr != null && curr.id == updatedSong.id) {
+            _currentSong.value = updatedSong
+        }
+    }
 }

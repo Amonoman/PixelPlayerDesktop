@@ -94,4 +94,17 @@ class QueueManagerTest {
         assertEquals(3, qm.queue.value.size)
         assertEquals("Song 2", qm.queue.value[1].title)
     }
+
+    @Test
+    fun testUpdateSongInQueue() {
+        val qm = QueueManager()
+        qm.setQueue(sampleSongs, startIndex = 1)
+
+        val updated = sampleSongs[1].copy(title = "Song 2 Updated", artist = "New Artist")
+        qm.updateSong(updated)
+
+        assertEquals("Song 2 Updated", qm.currentSong.value?.title)
+        assertEquals("New Artist", qm.currentSong.value?.artist)
+        assertEquals("Song 2 Updated", qm.queue.value[1].title)
+    }
 }

@@ -18,6 +18,7 @@ fun DeleteSongConfirmationDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
+    TrackDialogInput()
     val colors = MaterialTheme.colorScheme
 
     AlertDialog(

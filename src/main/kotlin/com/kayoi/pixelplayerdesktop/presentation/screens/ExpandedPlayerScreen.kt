@@ -56,6 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.components.LyricsSearchDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueSidePanel
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
@@ -83,6 +84,9 @@ fun ExpandedPlayerScreen(
     onMinimize: () -> Unit = {},
     onMaximizeRestore: () -> Unit = {},
     onCloseWindow: () -> Unit = {},
+    onEditMetadata: ((Song) -> Unit)? = null,
+    onAddToPlaylist: ((Song) -> Unit)? = null,
+    onDelete: ((Song) -> Unit)? = null,
     topBarWrapper: @Composable (@Composable () -> Unit) -> Unit = { it() },
     modifier: Modifier = Modifier
 ) {
@@ -394,6 +398,9 @@ fun ExpandedPlayerScreen(
                                 onPlayNext = { song ->
                                     viewModel.playSongNext(song)
                                 },
+                                onAddToPlaylist = onAddToPlaylist,
+                                onDelete = onDelete,
+                                onEditMetadata = onEditMetadata,
                                 onToggleFavorite = { song ->
                                     viewModel.toggleFavorite(song)
                                 },

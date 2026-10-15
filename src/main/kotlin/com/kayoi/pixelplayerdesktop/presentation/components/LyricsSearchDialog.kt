@@ -66,6 +66,7 @@ fun LyricsSearchDialog(
     onImportFile: (File) -> Unit,
     onDismiss: () -> Unit
 ) {
+    TrackDialogInput()
     val initialQuery = remember(currentSong) {
         if (currentSong != null) {
             val cleanArtist = currentSong.artist.split(",", "/", "&", "feat.", "ft.").firstOrNull()?.trim().orEmpty()

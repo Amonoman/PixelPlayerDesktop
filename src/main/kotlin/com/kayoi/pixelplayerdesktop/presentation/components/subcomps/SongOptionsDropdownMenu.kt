@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.MusicNote
@@ -46,6 +47,7 @@ fun SongOptionsDropdownMenu(
     onAddToPlaylist: (() -> Unit)? = null,
     isFavorite: Boolean? = null,
     onToggleFavorite: (() -> Unit)? = null,
+    onEditMetadata: (() -> Unit)? = null,
     onRemoveFromPlaylist: (() -> Unit)? = null,
     onRemoveFromQueue: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
@@ -191,6 +193,27 @@ fun SongOptionsDropdownMenu(
                     onClick = {
                         onDismissRequest()
                         onToggleFavorite()
+                    }
+                )
+            }
+
+            if (onEditMetadata != null) {
+                DropdownMenuItem(
+                    text = { Text("Edit Metadata", fontWeight = FontWeight.Medium) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Edit,
+                            contentDescription = null,
+                            tint = colors.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    modifier = Modifier
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    onClick = {
+                        onDismissRequest()
+                        onEditMetadata()
                     }
                 )
             }

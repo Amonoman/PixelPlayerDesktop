@@ -63,6 +63,7 @@ fun AddSongsToPlaylistDialog(
     onDismiss: () -> Unit,
     onAddSongs: (List<String>) -> Unit
 ) {
+    TrackDialogInput()
     val colors = MaterialTheme.colorScheme
     var searchQuery by remember { mutableStateOf("") }
     val selectedSongIds = remember { mutableStateListOf<String>() }

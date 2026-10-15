@@ -53,4 +53,29 @@ object DirectoryPicker {
             }
         }
     }
+
+    fun chooseImageFile(
+        title: String = "Select Album Artwork",
+        onSelected: (File) -> Unit
+    ) {
+        SwingUtilities.invokeLater {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+            } catch (_: Exception) {}
+
+            val chooser = JFileChooser().apply {
+                dialogTitle = title
+                fileSelectionMode = JFileChooser.FILES_ONLY
+                fileFilter = javax.swing.filechooser.FileNameExtensionFilter(
+                    "Image Files (*.jpg, *.jpeg, *.png, *.webp)",
+                    "jpg", "jpeg", "png", "webp"
+                )
+            }
+
+            val result = chooser.showOpenDialog(null)
+            if (result == JFileChooser.APPROVE_OPTION && chooser.selectedFile != null) {
+                onSelected(chooser.selectedFile)
+            }
+        }
+    }
 }

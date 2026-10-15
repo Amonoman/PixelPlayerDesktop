@@ -46,6 +46,7 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Tab
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.ViewWeek
+import com.kayoi.pixelplayerdesktop.presentation.components.TrackDialogInput
 import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavDestination
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -244,6 +245,7 @@ fun SettingsCategoryDetail(
                     var showRebuildDialog by remember { mutableStateOf(false) }
 
                     if (showRebuildDialog) {
+                        TrackDialogInput()
                         AlertDialog(
                             onDismissRequest = { showRebuildDialog = false },
                             icon = {
@@ -461,6 +463,7 @@ fun SettingsCategoryDetail(
                     var showResetLyricsDialog by remember { mutableStateOf(false) }
 
                     if (showResetLyricsDialog) {
+                        TrackDialogInput()
                         AlertDialog(
                             onDismissRequest = { showResetLyricsDialog = false },
                             icon = {
@@ -680,6 +683,7 @@ fun SettingsCategoryDetail(
                     }
 
                     if (showDefaultTabDialog) {
+                        TrackDialogInput()
                         AlertDialog(
                             onDismissRequest = { showDefaultTabDialog = false },
                             icon = {

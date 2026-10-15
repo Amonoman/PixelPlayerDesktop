@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.AutoFixHigh
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.FilledTonalIconButton
@@ -85,6 +86,8 @@ fun AlbumDetailScreen(
     onBack: () -> Unit,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
+    onEditMetadata: ((Song) -> Unit)? = null,
+    onBatchEditMetadata: ((List<Song>) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val isDarkTheme by viewModel.isDarkMode.collectAsState()
@@ -168,7 +171,7 @@ fun AlbumDetailScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 val isWide = maxWidth >= 760.dp
-                val headerHeight = if (isWide) 240.dp else 190.dp
+                val headerHeight = if (isWide) 240.dp else 200.dp
                 val coverSize = if (isWide) 140.dp else 100.dp
                 val coverCorner = if (isWide) 20.dp else 14.dp
                 val titleStyle = if (isWide) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.titleLarge
@@ -291,30 +294,102 @@ fun AlbumDetailScreen(
                             )
                         }
 
-                        Spacer(modifier = Modifier.width(24.dp))
+                        Spacer(modifier = Modifier.width(if (isWide) 20.dp else 12.dp))
 
-                        FloatingActionButton(
-                            onClick = {
-                                if (albumSongs.isNotEmpty()) {
-                                    viewModel.shuffleSongs(albumSongs)
+                        if (isWide) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (onBatchEditMetadata != null && albumSongs.isNotEmpty()) {
+                                    FilledTonalIconButton(
+                                        onClick = { onBatchEditMetadata(albumSongs) },
+                                        shape = CircleShape,
+                                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                            containerColor = colors.surfaceContainerLow,
+                                            contentColor = colors.onSurface
+                                        ),
+                                        modifier = Modifier.size(48.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.AutoFixHigh,
+                                            contentDescription = "Edit Album Metadata",
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    }
                                 }
-                            },
-                            shape = RoundedStarShape(sides = 8, curve = 0.05, rotation = 0f),
-                            containerColor = colors.primaryContainer,
-                            contentColor = colors.onPrimaryContainer,
-                            elevation = FloatingActionButtonDefaults.elevation(
-                                defaultElevation = 0.dp,
-                                pressedElevation = 0.dp,
-                                focusedElevation = 0.dp,
-                                hoveredElevation = 0.dp
-                            ),
-                            modifier = Modifier.size(92.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Shuffle,
-                                contentDescription = "Shuffle",
-                                modifier = Modifier.size(28.dp)
-                            )
+
+                                FloatingActionButton(
+                                    onClick = {
+                                        if (albumSongs.isNotEmpty()) {
+                                            viewModel.shuffleSongs(albumSongs)
+                                        }
+                                    },
+                                    shape = RoundedStarShape(sides = 8, curve = 0.05, rotation = 0f),
+                                    containerColor = colors.primaryContainer,
+                                    contentColor = colors.onPrimaryContainer,
+                                    elevation = FloatingActionButtonDefaults.elevation(
+                                        defaultElevation = 0.dp,
+                                        pressedElevation = 0.dp,
+                                        focusedElevation = 0.dp,
+                                        hoveredElevation = 0.dp
+                                    ),
+                                    modifier = Modifier.size(92.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Shuffle,
+                                        contentDescription = "Shuffle",
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                            }
+                        } else {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                if (onBatchEditMetadata != null && albumSongs.isNotEmpty()) {
+                                    FilledTonalIconButton(
+                                        onClick = { onBatchEditMetadata(albumSongs) },
+                                        shape = CircleShape,
+                                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                            containerColor = colors.surfaceContainerLow,
+                                            contentColor = colors.onSurface
+                                        ),
+                                        modifier = Modifier.size(38.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.AutoFixHigh,
+                                            contentDescription = "Edit Album Metadata",
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+
+                                FloatingActionButton(
+                                    onClick = {
+                                        if (albumSongs.isNotEmpty()) {
+                                            viewModel.shuffleSongs(albumSongs)
+                                        }
+                                    },
+                                    shape = RoundedStarShape(sides = 8, curve = 0.05, rotation = 0f),
+                                    containerColor = colors.primaryContainer,
+                                    contentColor = colors.onPrimaryContainer,
+                                    elevation = FloatingActionButtonDefaults.elevation(
+                                        defaultElevation = 0.dp,
+                                        pressedElevation = 0.dp,
+                                        focusedElevation = 0.dp,
+                                        hoveredElevation = 0.dp
+                                    ),
+                                    modifier = Modifier.size(62.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Shuffle,
+                                        contentDescription = "Shuffle",
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -393,6 +468,7 @@ fun AlbumDetailScreen(
                                 onAddToQueue = { viewModel.addSongToQueue(song) },
                                 onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
                                 onToggleFavorite = { viewModel.toggleFavorite(song) },
+                                onEditMetadata = if (onEditMetadata != null) { { onEditMetadata(song) } } else null,
                                 onDelete = if (onDelete != null) { { onDelete(song) } } else null,
                                 onClick = { viewModel.playSongs(albumSongs, effectiveIndex) }
                             )

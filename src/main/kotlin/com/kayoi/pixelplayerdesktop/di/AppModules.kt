@@ -7,7 +7,9 @@ import com.kayoi.pixelplayerdesktop.data.database.MusicDao
 import com.kayoi.pixelplayerdesktop.data.database.PixelPlayerDatabase
 import com.kayoi.pixelplayerdesktop.data.player.QueueManager
 import com.kayoi.pixelplayerdesktop.data.player.VlcjAudioEngine
+import com.kayoi.pixelplayerdesktop.data.metadata.DesktopMetadataEditor
 import com.kayoi.pixelplayerdesktop.data.network.lyrics.LrcLibClient
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.MusicBrainzClient
 import com.kayoi.pixelplayerdesktop.data.repository.LyricsRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.repository.MusicRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.repository.SettingsRepositoryImpl
@@ -54,12 +56,15 @@ val databaseModule: Module = module {
 }
 
 val repositoryModule: Module = module {
+    single { MusicBrainzClient(ioDispatcher = get()) }
     single<MusicRepository> {
         MusicRepositoryImpl(
             database = get(),
             musicDao = get(),
             favoritesDao = get(),
             playlistDao = get(),
+            metadataEditor = get(),
+            musicBrainzClient = get(),
             ioDispatcher = get()
         )
     }
@@ -73,6 +78,7 @@ val repositoryModule: Module = module {
         )
     }
     single { DesktopMusicScanner(musicDao = get(), lyricsDao = get(), ioDispatcher = get()) }
+    single { DesktopMetadataEditor(musicDao = get(), ioDispatcher = get()) }
 }
 
 val playerModule: Module = module {

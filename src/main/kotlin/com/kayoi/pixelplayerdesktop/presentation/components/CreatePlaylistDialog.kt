@@ -42,6 +42,7 @@ fun CreatePlaylistDialog(
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit
 ) {
+    TrackDialogInput()
     var playlistName by remember { mutableStateOf(initialName) }
     val focusRequester = remember { FocusRequester() }
 
