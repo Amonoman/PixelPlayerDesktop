@@ -15,6 +15,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import com.kayoi.pixelplayerdesktop.presentation.components.LocalWindowMinimized
 import kotlinx.coroutines.isActive
 import kotlin.math.PI
 import kotlin.math.sin
@@ -24,6 +25,7 @@ fun PlayingEqIcon(
     modifier: Modifier = Modifier,
     color: Color,
     isPlaying: Boolean = true,
+    isMinimized: Boolean = LocalWindowMinimized.current,
     bars: Int = 3,
     minHeightFraction: Float = 0.28f,
     maxHeightFraction: Float = 1.0f,
@@ -31,12 +33,13 @@ fun PlayingEqIcon(
     wanderDurationMillis: Int = 12000,
     gapFraction: Float = 0.30f
 ) {
+    val shouldAnimate = isPlaying && !isMinimized
     val fullRotation = (2f * PI).toFloat()
     val phaseAnim = remember { Animatable(0f) }
     val wanderAnim = remember { Animatable(0f) }
 
-    LaunchedEffect(isPlaying, phaseDurationMillis) {
-        if (!isPlaying) return@LaunchedEffect
+    LaunchedEffect(shouldAnimate, phaseDurationMillis) {
+        if (!shouldAnimate) return@LaunchedEffect
         while (isActive) {
             val start = (phaseAnim.value % fullRotation).let { if (it < 0f) it + fullRotation else it }
             phaseAnim.snapTo(start)
@@ -47,8 +50,8 @@ fun PlayingEqIcon(
         }
     }
 
-    LaunchedEffect(isPlaying, wanderDurationMillis) {
-        if (!isPlaying) return@LaunchedEffect
+    LaunchedEffect(shouldAnimate, wanderDurationMillis) {
+        if (!shouldAnimate) return@LaunchedEffect
         while (isActive) {
             val start = (wanderAnim.value % fullRotation).let { if (it < 0f) it + fullRotation else it }
             wanderAnim.snapTo(start)

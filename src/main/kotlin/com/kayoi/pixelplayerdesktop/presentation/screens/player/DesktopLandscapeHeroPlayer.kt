@@ -48,6 +48,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -65,16 +66,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
+import com.kayoi.pixelplayerdesktop.presentation.components.PlaybackCurrentTimeText
 import com.kayoi.pixelplayerdesktop.presentation.components.WavySliderExpressive
+import com.kayoi.pixelplayerdesktop.presentation.components.formatTime
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
+import kotlinx.coroutines.flow.StateFlow
 import java.io.File
-
-internal fun formatTime(millis: Long): String {
-    val totalSeconds = (millis / 1000).coerceAtLeast(0)
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return String.format("%d:%02d", minutes, seconds)
-}
 
 internal fun formatAudioMetaLabel(song: Song): String {
     val ext = File(song.path).extension.uppercase()
@@ -93,9 +90,8 @@ internal fun formatAudioMetaLabel(song: Song): String {
 fun DesktopLandscapeHeroPlayer(
     song: Song,
     isPlaying: Boolean,
-    currentPositionMs: Long,
     totalDurationMs: Long,
-    progress: Float,
+    currentPositionFlow: StateFlow<Long>? = null,
     isShuffle: Boolean,
     repeatMode: Int,
     isFavorite: Boolean,
@@ -248,40 +244,14 @@ fun DesktopLandscapeHeroPlayer(
                     }
                 }
 
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    WavySliderExpressive(
-                        value = progress,
-                        onValueChange = onSeek,
-                        isPlaying = isPlaying,
-                        activeTrackColor = colors.primary,
-                        inactiveTrackColor = colors.onPrimaryContainer.copy(alpha = 0.22f),
-                        thumbColor = colors.primary,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(2.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = formatTime(currentPositionMs),
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.onPrimaryContainer.copy(alpha = 0.85f)
-                        )
-
-                        val effectiveDuration = if (totalDurationMs > 0) totalDurationMs else song.duration
-                        Text(
-                            text = formatTime(effectiveDuration),
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.onPrimaryContainer.copy(alpha = 0.85f)
-                        )
-                    }
-                }
+                HeroPlayerProgressTrack(
+                    currentPositionFlow = currentPositionFlow,
+                    totalDurationMs = totalDurationMs,
+                    song = song,
+                    isPlaying = isPlaying,
+                    onSeek = onSeek,
+                    isStacked = true
+                )
 
                 PlaybackControlsRow(
                     isPlaying = isPlaying,
@@ -399,63 +369,15 @@ fun DesktopLandscapeHeroPlayer(
 
                         Spacer(modifier = Modifier.height(if (isCompactHero) 8.dp else 14.dp))
 
-                        WavySliderExpressive(
-                            value = progress,
-                            onValueChange = onSeek,
+                        HeroPlayerProgressTrack(
+                            currentPositionFlow = currentPositionFlow,
+                            totalDurationMs = totalDurationMs,
+                            song = song,
                             isPlaying = isPlaying,
-                            activeTrackColor = colors.primary,
-                            inactiveTrackColor = colors.onPrimaryContainer.copy(alpha = 0.22f),
-                            thumbColor = colors.primary,
-                            modifier = Modifier.fillMaxWidth()
+                            onSeek = onSeek,
+                            isStacked = false,
+                            showPlayerFileInfo = showPlayerFileInfo
                         )
-
-                        Spacer(modifier = Modifier.height(2.dp))
-
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = formatTime(currentPositionMs),
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.5.sp),
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colors.onPrimaryContainer.copy(alpha = 0.85f)
-                                )
-
-                                val effectiveDuration = if (totalDurationMs > 0) totalDurationMs else song.duration
-                                Text(
-                                    text = formatTime(effectiveDuration),
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.5.sp),
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colors.onPrimaryContainer.copy(alpha = 0.85f)
-                                )
-                            }
-
-                            val metaLabel = formatAudioMetaLabel(song)
-                            if (showPlayerFileInfo && metaLabel.isNotBlank()) {
-                                Surface(
-                                    shape = RoundedCornerShape(999.dp),
-                                    color = colors.onPrimaryContainer.copy(alpha = 0.15f),
-                                    contentColor = colors.onPrimaryContainer
-                                ) {
-                                    Text(
-                                        text = metaLabel,
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            fontSize = 10.5.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            letterSpacing = 0.5.sp
-                                        ),
-                                        maxLines = 1,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                                    )
-                                }
-                            }
-                        }
 
                         Spacer(modifier = Modifier.height(if (isCompactHero) 8.dp else 14.dp))
 
@@ -725,6 +647,107 @@ fun PlaybackControlsRow(
                     tint = if (repeatMode > 0) colors.onPrimary else colors.primary,
                     modifier = Modifier.size(if (shuffleRepeatSize < 40.dp) 18.dp else 20.dp)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeroPlayerProgressTrack(
+    currentPositionFlow: StateFlow<Long>?,
+    totalDurationMs: Long,
+    song: Song,
+    isPlaying: Boolean,
+    onSeek: (Float) -> Unit,
+    isStacked: Boolean,
+    showPlayerFileInfo: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    val colors = MaterialTheme.colorScheme
+    val positionState = currentPositionFlow?.collectAsState()
+    val effectiveDuration = if (totalDurationMs > 0) totalDurationMs else song.duration
+    val progress = if (effectiveDuration > 0) {
+        val pos = positionState?.value ?: 0L
+        (pos.toFloat() / effectiveDuration.toFloat()).coerceIn(0f, 1f)
+    } else 0f
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        WavySliderExpressive(
+            value = progress,
+            onValueChange = onSeek,
+            isPlaying = isPlaying,
+            activeTrackColor = colors.primary,
+            inactiveTrackColor = colors.onPrimaryContainer.copy(alpha = 0.22f),
+            thumbColor = colors.primary,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(2.dp))
+
+        if (isStacked) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                PlaybackCurrentTimeText(
+                    positionMsState = positionState,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.onPrimaryContainer.copy(alpha = 0.85f)
+                )
+
+                Text(
+                    text = formatTime(effectiveDuration),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.onPrimaryContainer.copy(alpha = 0.85f)
+                )
+            }
+        } else {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PlaybackCurrentTimeText(
+                        positionMsState = positionState,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.5.sp),
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.onPrimaryContainer.copy(alpha = 0.85f)
+                    )
+
+                    Text(
+                        text = formatTime(effectiveDuration),
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.5.sp),
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.onPrimaryContainer.copy(alpha = 0.85f)
+                    )
+                }
+
+                val metaLabel = formatAudioMetaLabel(song)
+                if (showPlayerFileInfo && metaLabel.isNotBlank()) {
+                    Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = colors.onPrimaryContainer.copy(alpha = 0.15f),
+                        contentColor = colors.onPrimaryContainer
+                    ) {
+                        Text(
+                            text = metaLabel,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 0.5.sp
+                            ),
+                            maxLines = 1,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+                }
             }
         }
     }

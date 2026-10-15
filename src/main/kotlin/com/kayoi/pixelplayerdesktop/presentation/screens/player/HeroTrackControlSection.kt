@@ -57,18 +57,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.collectAsState
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
+import com.kayoi.pixelplayerdesktop.presentation.components.PlaybackCurrentTimeText
 import com.kayoi.pixelplayerdesktop.presentation.components.ToggleSegmentButton
 import com.kayoi.pixelplayerdesktop.presentation.components.WavySliderExpressive
+import com.kayoi.pixelplayerdesktop.presentation.components.formatTime
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun HeroTrackControlSection(
     song: Song,
     isPlaying: Boolean,
-    currentPositionMs: Long,
     totalDurationMs: Long,
-    progress: Float,
+    currentPositionFlow: StateFlow<Long>? = null,
+    currentPositionMs: Long = 0L,
+    progress: Float = 0f,
     isShuffle: Boolean,
     repeatMode: Int,
     isFavorite: Boolean,
@@ -132,9 +137,15 @@ fun HeroTrackControlSection(
 
         Spacer(modifier = Modifier.height(10.dp))
 
+        val positionState = currentPositionFlow?.collectAsState()
+        val effectiveProgress = if (currentPositionFlow != null && totalDurationMs > 0) {
+            val pos = positionState?.value ?: 0L
+            (pos.toFloat() / totalDurationMs.toFloat()).coerceIn(0f, 1f)
+        } else progress
+
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
             WavySliderExpressive(
-                value = progress,
+                value = effectiveProgress,
                 onValueChange = onSeek,
                 isPlaying = isPlaying,
                 activeTrackColor = colors.primary,
@@ -146,13 +157,23 @@ fun HeroTrackControlSection(
             Spacer(modifier = Modifier.height(4.dp))
 
             Box(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = formatTime(currentPositionMs),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colors.onSurfaceVariant,
-                    modifier = Modifier.align(Alignment.CenterStart)
-                )
+                if (currentPositionFlow != null) {
+                    PlaybackCurrentTimeText(
+                        positionMsState = positionState,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.onSurfaceVariant,
+                        modifier = Modifier.align(Alignment.CenterStart)
+                    )
+                } else {
+                    PlaybackCurrentTimeText(
+                        positionProvider = { currentPositionMs },
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.onSurfaceVariant,
+                        modifier = Modifier.align(Alignment.CenterStart)
+                    )
+                }
 
                 Surface(
                     modifier = Modifier.align(Alignment.Center),

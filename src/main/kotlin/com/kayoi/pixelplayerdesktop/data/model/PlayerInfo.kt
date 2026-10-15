@@ -18,7 +18,6 @@ data class PlayerInfo(
     val isPlaying: Boolean = false,
     val albumArtUri: String? = null,
     val albumArtBitmapData: ByteArray? = null,
-    val currentPositionMs: Long = 0L,
     val totalDurationMs: Long = 0L,
     val isFavorite: Boolean = false,
     val lyrics: Lyrics? = null,
@@ -43,7 +42,6 @@ data class PlayerInfo(
             if (other.albumArtBitmapData == null) return false
             if (!albumArtBitmapData.contentEquals(other.albumArtBitmapData)) return false
         } else if (other.albumArtBitmapData != null) return false
-        if (currentPositionMs != other.currentPositionMs) return false
         if (totalDurationMs != other.totalDurationMs) return false
         if (isFavorite != other.isFavorite) return false
         if (queue != other.queue) return false
@@ -63,7 +61,6 @@ data class PlayerInfo(
         result = 31 * result + isPlaying.hashCode()
         result = 31 * result + (albumArtUri?.hashCode() ?: 0)
         result = 31 * result + (albumArtBitmapData?.contentHashCode() ?: 0)
-        result = 31 * result + currentPositionMs.hashCode()
         result = 31 * result + totalDurationMs.hashCode()
         result = 31 * result + isFavorite.hashCode()
         result = 31 * result + queue.hashCode()

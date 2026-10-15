@@ -52,11 +52,13 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,21 +72,13 @@ import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
 import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 
-private fun formatTime(millis: Long): String {
-    val totalSeconds = (millis / 1000).coerceAtLeast(0)
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return String.format("%d:%02d", minutes, seconds)
-}
-
 @Composable
 fun MiniPlayerBar(
     modifier: Modifier = Modifier,
     currentSong: Song?,
     isPlaying: Boolean,
-    currentPositionMs: Long = 0L,
     totalDurationMs: Long = 0L,
-    progress: Float = 0f,
+    currentPositionFlow: StateFlow<Long>? = null,
     isShuffle: Boolean = false,
     repeatMode: Int = 0,
     isFavorite: Boolean = false,
@@ -457,37 +451,15 @@ fun MiniPlayerBar(
 
                         Spacer(modifier = Modifier.height(2.dp))
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = formatTime(currentPositionMs),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = colors.onPrimaryContainer.copy(alpha = 0.75f)
-                            )
-
-                            Spacer(modifier = Modifier.width(if (isMedium) 4.dp else 8.dp))
-
-                            WavySliderExpressive(
-                                value = progress,
-                                onValueChange = onSeek,
-                                isPlaying = isPlaying,
-                                activeTrackColor = colors.primary,
-                                inactiveTrackColor = colors.onPrimaryContainer.copy(alpha = 0.20f),
-                                thumbColor = colors.primary,
-                                modifier = Modifier.weight(1f)
-                            )
-
-                            Spacer(modifier = Modifier.width(if (isMedium) 4.dp else 8.dp))
-
-                            val effectiveDuration = if (totalDurationMs > 0) totalDurationMs else currentSong.duration
-                            Text(
-                                text = formatTime(effectiveDuration),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = colors.onPrimaryContainer.copy(alpha = 0.75f)
-                            )
-                        }
+                        val effectiveDuration = if (totalDurationMs > 0) totalDurationMs else currentSong.duration
+                        MiniPlayerProgressTrack(
+                            currentPositionFlow = currentPositionFlow,
+                            totalDurationMs = totalDurationMs,
+                            effectiveDuration = effectiveDuration,
+                            isPlaying = isPlaying,
+                            isMedium = isMedium,
+                            onSeek = onSeek
+                        )
                     }
 
                     Row(
@@ -590,5 +562,54 @@ fun MiniPlayerBar(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MiniPlayerProgressTrack(
+    currentPositionFlow: StateFlow<Long>?,
+    totalDurationMs: Long,
+    effectiveDuration: Long,
+    isPlaying: Boolean,
+    isMedium: Boolean,
+    onSeek: (Float) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = MaterialTheme.colorScheme
+    val positionState = currentPositionFlow?.collectAsState()
+    val progress = if (effectiveDuration > 0) {
+        val pos = positionState?.value ?: 0L
+        (pos.toFloat() / effectiveDuration.toFloat()).coerceIn(0f, 1f)
+    } else 0f
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        PlaybackCurrentTimeText(
+            positionMsState = positionState,
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.onPrimaryContainer.copy(alpha = 0.75f)
+        )
+
+        Spacer(modifier = Modifier.width(if (isMedium) 4.dp else 8.dp))
+
+        WavySliderExpressive(
+            value = progress,
+            onValueChange = onSeek,
+            isPlaying = isPlaying,
+            activeTrackColor = colors.primary,
+            inactiveTrackColor = colors.onPrimaryContainer.copy(alpha = 0.20f),
+            thumbColor = colors.primary,
+            modifier = Modifier.weight(1f)
+        )
+
+        Spacer(modifier = Modifier.width(if (isMedium) 4.dp else 8.dp))
+
+        Text(
+            text = formatTime(effectiveDuration),
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.onPrimaryContainer.copy(alpha = 0.75f)
+        )
     }
 }

@@ -3,11 +3,7 @@ package com.kayoi.pixelplayerdesktop.presentation.components
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -31,6 +27,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.isActive
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -44,6 +41,7 @@ fun WavySliderExpressive(
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
     isPlaying: Boolean = true,
+    isMinimized: Boolean = LocalWindowMinimized.current,
     enabled: Boolean = true,
     activeTrackColor: Color = MaterialTheme.colorScheme.primary,
     inactiveTrackColor: Color = MaterialTheme.colorScheme.surfaceVariant,
@@ -55,31 +53,47 @@ fun WavySliderExpressive(
 ) {
     var isDragging by remember { mutableStateOf(false) }
 
-    // Interpolate wave amplitude to 0 when playback is paused or the user is actively seeking
+    val targetAmplitude = if (enabled && isPlaying && !isDragging) 1f else 0f
+    var isPhaseRunning by remember { mutableStateOf(targetAmplitude > 0f) }
+
+    if (targetAmplitude > 0f && !isPhaseRunning) {
+        isPhaseRunning = true
+    }
+
     val animatedAmplitude by animateFloatAsState(
-        targetValue = if (enabled && isPlaying && !isDragging) 1f else 0f,
+        targetValue = targetAmplitude,
         animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
-        label = "wavyAmplitude"
+        label = "wavyAmplitude",
+        finishedListener = { finalValue ->
+            if (finalValue <= 0.001f && targetAmplitude == 0f) {
+                isPhaseRunning = false
+            }
+        }
     )
 
-    // Expand thumb size smoothly during user drag interaction
     val thumbInteractionFraction by animateFloatAsState(
         targetValue = if (isDragging) 1f else 0f,
         animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
         label = "thumbInteraction"
     )
 
-    // Continuous looping phase offset for smooth horizontal wave motion
-    val infiniteTransition = rememberInfiniteTransition(label = "wavyProgressPhase")
-    val phase by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 2f * PI.toFloat(),
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1400, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "continuousPhase"
-    )
+    val phaseAnim = remember { Animatable(0f) }
+    val shouldAnimatePhase = isPhaseRunning && !isMinimized
+    val fullRotation = (2f * PI).toFloat()
+
+    LaunchedEffect(shouldAnimatePhase) {
+        if (!shouldAnimatePhase) return@LaunchedEffect
+        while (isActive) {
+            val start = (phaseAnim.value % fullRotation).let { if (it < 0f) it + fullRotation else it }
+            phaseAnim.snapTo(start)
+            phaseAnim.animateTo(
+                targetValue = start + fullRotation,
+                animationSpec = tween(durationMillis = 1400, easing = LinearEasing)
+            )
+        }
+    }
+
+    val wavePath = remember { Path() }
 
     Canvas(
         modifier = modifier
@@ -110,6 +124,7 @@ fun WavySliderExpressive(
                 )
             }
     ) {
+        val phase = phaseAnim.value
         val width = size.width
         val height = size.height
         val centerY = height / 2f
@@ -140,8 +155,8 @@ fun WavySliderExpressive(
 
         // Draw active track with sinusoidal modulation
         if (progressX > trackStart) {
-            val path = Path()
-            path.moveTo(trackStart, centerY)
+            wavePath.reset()
+            wavePath.moveTo(trackStart, centerY)
 
             if (amplitudePx > 0.05f) {
                 val step = 1.5f
@@ -155,16 +170,16 @@ fun WavySliderExpressive(
 
                     val angle = (relX / wavelengthPx) * 2f * PI.toFloat() - phase
                     val y = centerY + sin(angle) * amplitudePx * envelope
-                    path.lineTo(x, y)
+                    wavePath.lineTo(x, y)
                     x += step
                 }
-                path.lineTo(progressX, centerY)
+                wavePath.lineTo(progressX, centerY)
             } else {
-                path.lineTo(progressX, centerY)
+                wavePath.lineTo(progressX, centerY)
             }
 
             drawPath(
-                path = path,
+                path = wavePath,
                 color = activeTrackColor,
                 style = Stroke(width = strokeWidthPx, cap = StrokeCap.Round)
             )

@@ -683,7 +683,7 @@ class MusicDao(
                 stmt.setString(2, songId)
                 stmt.executeUpdate()
             }
-            database.notifyTableChanged("songs")
+            database.notifyTableChanged("recently_played")
         }
     }
 

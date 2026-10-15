@@ -15,6 +15,7 @@ class PlayerViewModel(
 ) {
 
     val playerInfo = playbackStateHolder.playerInfo
+    val currentPositionMs = playbackStateHolder.currentPositionMs
     val currentSong = playbackStateHolder.currentSong
     val queue = playbackStateHolder.queue
     val playbackState = playbackStateHolder.playbackState

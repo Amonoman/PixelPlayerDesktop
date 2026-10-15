@@ -38,6 +38,7 @@ import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
 import com.kayoi.pixelplayerdesktop.presentation.components.MiniPlayerBar
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.math.roundToInt
 
 @Composable
@@ -119,14 +120,14 @@ fun PaletteStyleDetailScreen(
                                         .fillMaxWidth()
                                         .padding(horizontal = 6.dp, vertical = 10.dp)
                                 ) {
+                                    val previewPositionFlow = remember(currentSong) {
+                                        if (currentSong != null) viewModel.currentPositionMs else MutableStateFlow(75000L)
+                                    }
                                     MiniPlayerBar(
                                         currentSong = effectiveSong,
                                         isPlaying = playerInfo.isPlaying,
-                                        currentPositionMs = if (currentSong != null) playerInfo.currentPositionMs else 75000L,
                                         totalDurationMs = if (currentSong != null) playerInfo.totalDurationMs else 214000L,
-                                        progress = if (currentSong != null && playerInfo.totalDurationMs > 0) {
-                                            (playerInfo.currentPositionMs.toFloat() / playerInfo.totalDurationMs).coerceIn(0f, 1f)
-                                        } else 0.35f,
+                                        currentPositionFlow = previewPositionFlow,
                                         isShuffle = playerInfo.isShuffleEnabled,
                                         repeatMode = playerInfo.repeatMode,
                                         isFavorite = playerInfo.isFavorite,

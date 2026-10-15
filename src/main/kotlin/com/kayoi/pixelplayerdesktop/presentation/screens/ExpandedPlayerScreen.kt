@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.FullscreenExit
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,6 +39,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -64,6 +66,8 @@ import com.kayoi.pixelplayerdesktop.presentation.screens.player.WindowControlBut
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.PixelPlayerTheme
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 enum class ExpandedTab {
     LYRICS,
@@ -93,15 +97,33 @@ fun ExpandedPlayerScreen(
     val showPlayerFileInfo by viewModel.showPlayerFileInfo.collectAsState()
     var showLyricsSearchDialog by remember { mutableStateOf(false) }
 
-    val songColorScheme = remember(currentSong?.albumArtUriString, isDarkTheme, isDynamicColor, paletteStyle, colorAccuracy) {
-        if (isDynamicColor && currentSong?.albumArtUriString != null) {
+    val songColorScheme by produceState<ColorScheme?>(
+        initialValue = if (isDynamicColor && currentSong?.albumArtUriString != null) {
+            DynamicColorProcessor.getCachedColorScheme(
+                pathOrUri = currentSong?.albumArtUriString,
+                paletteStyle = paletteStyle,
+                colorAccuracyLevel = colorAccuracy
+            )?.let { if (isDarkTheme) it.dark else it.light }
+        } else null,
+        currentSong?.albumArtUriString,
+        isDarkTheme,
+        isDynamicColor,
+        paletteStyle,
+        colorAccuracy
+    ) {
+        if (!isDynamicColor || currentSong?.albumArtUriString == null) {
+            value = null
+            return@produceState
+        }
+        val scheme = withContext(Dispatchers.Default) {
             val pair = DynamicColorProcessor.extractColorScheme(
                 pathOrUri = currentSong?.albumArtUriString,
                 paletteStyle = paletteStyle,
                 colorAccuracyLevel = colorAccuracy
             )
             if (isDarkTheme) pair?.dark else pair?.light
-        } else null
+        }
+        value = scheme
     }
 
     val focusRequester = remember { FocusRequester() }
@@ -113,12 +135,6 @@ fun ExpandedPlayerScreen(
     if (currentSong == null) {
         LaunchedEffect(Unit) { onClose() }
         return
-    }
-
-    val progressFraction = remember(playerInfo.currentPositionMs, playerInfo.totalDurationMs) {
-        if (playerInfo.totalDurationMs > 0) {
-            (playerInfo.currentPositionMs.toFloat() / playerInfo.totalDurationMs.toFloat()).coerceIn(0f, 1f)
-        } else 0f
     }
 
     PixelPlayerTheme(
@@ -251,9 +267,8 @@ fun ExpandedPlayerScreen(
                                 DesktopLandscapeHeroPlayer(
                                     song = currentSong!!,
                                     isPlaying = playerInfo.isPlaying,
-                                    currentPositionMs = playerInfo.currentPositionMs,
                                     totalDurationMs = playerInfo.totalDurationMs,
-                                    progress = progressFraction,
+                                    currentPositionFlow = viewModel.currentPositionMs,
                                     isShuffle = playerInfo.isShuffleEnabled,
                                     repeatMode = playerInfo.repeatMode,
                                     isFavorite = playerInfo.isFavorite,
@@ -336,7 +351,8 @@ fun ExpandedPlayerScreen(
 
                                     SyncedLyricsView(
                                         lyrics = playerInfo.lyrics,
-                                        currentPositionMs = playerInfo.currentPositionMs,
+                                        currentPositionFlow = viewModel.currentPositionMs,
+                                        isPlaying = playerInfo.isPlaying,
                                         onSeekToMs = { viewModel.seekTo(it) },
                                         onSearchLyrics = { showLyricsSearchDialog = true }
                                     )

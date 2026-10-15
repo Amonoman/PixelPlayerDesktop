@@ -1,11 +1,8 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -19,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -31,6 +29,8 @@ import androidx.compose.ui.graphics.vector.PathNode
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import com.kayoi.pixelplayerdesktop.presentation.components.LocalWindowMinimized
+import kotlinx.coroutines.isActive
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.max
@@ -42,7 +42,9 @@ fun BubblesLine(
     isActive: Boolean,
     color: Color,
     onSeek: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isPlaying: Boolean = true,
+    isMinimized: Boolean = LocalWindowMinimized.current
 ) {
     AnimatedVisibility(
         visible = isActive,
@@ -50,16 +52,20 @@ fun BubblesLine(
         exit = fadeOut(tween(250)) + shrinkVertically(tween(250)),
         modifier = modifier
     ) {
-        val transition = rememberInfiniteTransition(label = "bubbles_transition")
-        val animatedValue by transition.animateFloat(
-            initialValue = 0f,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 3500, easing = LinearEasing),
-                repeatMode = RepeatMode.Restart
-            ),
-            label = "bubble_animation_progress"
-        )
+        val shouldAnimate = isPlaying && !isMinimized
+        val bubbleProgressAnim = remember { Animatable(0f) }
+
+        LaunchedEffect(shouldAnimate) {
+            if (!shouldAnimate) return@LaunchedEffect
+            while (coroutineContext.isActive) {
+                val start = (bubbleProgressAnim.value % 1f).let { if (it < 0f) it + 1f else it }
+                bubbleProgressAnim.snapTo(start)
+                bubbleProgressAnim.animateTo(
+                    targetValue = start + 1f,
+                    animationSpec = tween(durationMillis = 3500, easing = LinearEasing)
+                )
+            }
+        }
 
         val density = LocalDensity.current
         val bubbleRadius = remember(density) { with(density) { 4.5f.dp.toPx() } }
@@ -70,6 +76,8 @@ fun BubblesLine(
             circleNodes to noteNodes
         }
 
+        val bubblePaths = remember { List(3) { Path() } }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -79,6 +87,7 @@ fun BubblesLine(
             contentAlignment = Alignment.CenterStart
         ) {
             Canvas(modifier = Modifier.size(350.dp, 44.dp)) {
+                val animatedValue = bubbleProgressAnim.value
                 val bubbleCount = 3
                 val bubbleColor = color.copy(alpha = 0.85f)
                 val bounceAmplitude = 9.dp.toPx()
@@ -86,11 +95,9 @@ fun BubblesLine(
                 for (i in 0 until bubbleCount) {
                     val progress = (animatedValue + i * (1f / bubbleCount)) % 1f
                     
-                    // Sine wave: progress 0..0.5 moves down (positive y), 0.5..1.0 moves up (negative y)
                     val sinVal = sin(progress * 2 * PI).toFloat()
                     val yOffset = sinVal * bounceAmplitude
 
-                    // Morph progress: 1f (Note) when at the bottom, 0f (Circle) when at the top
                     val morphProgress = when {
                         progress in 0f..0.25f -> progress / 0.25f
                         progress in 0.25f..0.5f -> 1.0f - (progress - 0.25f) / 0.25f
@@ -101,7 +108,7 @@ fun BubblesLine(
                         start = morphableCircle,
                         stop = morphableNote,
                         fraction = morphProgress
-                    ).toPath()
+                    ).toPath(bubblePaths[i])
 
                     val xPos = (size.width / (bubbleCount + 1)) * (i + 1)
                     val yPos = size.height / 2 + yOffset
@@ -149,16 +156,18 @@ private fun lerpFloat(start: Float, stop: Float, fraction: Float): Float {
     return start + (stop - start) * fraction
 }
 
-private fun List<PathNode>.toPath(): Path = Path().apply {
-    this@toPath.forEach { node ->
+private fun List<PathNode>.toPath(targetPath: Path = Path()): Path {
+    targetPath.reset()
+    this.forEach { node ->
         when (node) {
-            is PathNode.MoveTo -> moveTo(node.x, node.y)
-            is PathNode.LineTo -> lineTo(node.x, node.y)
-            is PathNode.CurveTo -> cubicTo(node.x1, node.y1, node.x2, node.y2, node.x3, node.y3)
-            is PathNode.Close -> close()
+            is PathNode.MoveTo -> targetPath.moveTo(node.x, node.y)
+            is PathNode.LineTo -> targetPath.lineTo(node.x, node.y)
+            is PathNode.CurveTo -> targetPath.cubicTo(node.x1, node.y1, node.x2, node.y2, node.x3, node.y3)
+            is PathNode.Close -> targetPath.close()
             else -> {}
         }
     }
+    return targetPath
 }
 
 private fun createVectorNotePathNodes(targetSize: Float): Pair<MutableList<PathNode>, Int> {

@@ -29,8 +29,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,13 +48,16 @@ import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 @Composable
 fun SyncedLyricsView(
     lyrics: Lyrics?,
-    currentPositionMs: Long,
+    currentPositionFlow: StateFlow<Long>? = null,
     onSeekToMs: (Long) -> Unit,
     onSearchLyrics: (() -> Unit)? = null,
+    isPlaying: Boolean = true,
+    currentPositionMs: Long = 0L,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
     val listState = rememberLazyListState()
+    val positionMsState = currentPositionFlow?.collectAsState()
 
     if (lyrics == null || (lyrics.synced.isNullOrEmpty() && lyrics.plain.isNullOrEmpty())) {
         Box(
@@ -94,8 +100,11 @@ fun SyncedLyricsView(
 
     if (!lyrics.synced.isNullOrEmpty()) {
         val syncedLines = lyrics.synced
-        val activeIndex = remember(syncedLines, currentPositionMs) {
-            syncedLines.indexOfLast { it.time <= currentPositionMs }
+        val activeIndex by remember(syncedLines, positionMsState) {
+            derivedStateOf {
+                val currentPos = positionMsState?.value ?: currentPositionMs
+                syncedLines.indexOfLast { it.time <= currentPos }
+            }
         }
 
         LaunchedEffect(activeIndex) {
@@ -121,6 +130,7 @@ fun SyncedLyricsView(
                 if (line.line.isBlank()) {
                     BubblesLine(
                         isActive = isActive,
+                        isPlaying = isPlaying,
                         color = colors.primary,
                         onSeek = { onSeekToMs(line.time.toLong()) }
                     )

@@ -33,6 +33,8 @@ class PlaybackStateHolder(
     private val _playerInfo = MutableStateFlow(PlayerInfo())
     val playerInfo: StateFlow<PlayerInfo> = _playerInfo.asStateFlow()
 
+    val currentPositionMs: StateFlow<Long> = audioEngine.currentPositionMs
+
     private val _lyricsSearchUiState = MutableStateFlow<LyricsSearchUiState>(LyricsSearchUiState.Idle)
     val lyricsSearchUiState: StateFlow<LyricsSearchUiState> = _lyricsSearchUiState.asStateFlow()
 
@@ -106,11 +108,7 @@ class PlaybackStateHolder(
             }
         }
 
-        coroutineScope.launch {
-            audioEngine.currentPositionMs.collect { pos ->
-                _playerInfo.update { it.copy(currentPositionMs = pos) }
-            }
-        }
+
 
         coroutineScope.launch {
             audioEngine.durationMs.collect { dur ->

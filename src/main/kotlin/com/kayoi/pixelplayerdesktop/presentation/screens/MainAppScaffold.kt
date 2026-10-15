@@ -18,11 +18,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -51,6 +53,8 @@ import com.kayoi.pixelplayerdesktop.presentation.screens.settings.SettingsSectio
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.PixelPlayerTheme
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun MainAppScaffold(
@@ -95,15 +99,33 @@ fun MainAppScaffold(
     var settingsInitialSection by remember { mutableStateOf<SettingsSection?>(null) }
     var settingsInitialSubDetail by remember { mutableStateOf(LibrarySubDetail.NONE) }
 
-    val songColorScheme = remember(currentSong?.albumArtUriString, isDarkTheme, isDynamicColor, paletteStyle, colorAccuracy) {
-        if (isDynamicColor && currentSong?.albumArtUriString != null) {
+    val songColorScheme by produceState<ColorScheme?>(
+        initialValue = if (isDynamicColor && currentSong?.albumArtUriString != null) {
+            DynamicColorProcessor.getCachedColorScheme(
+                pathOrUri = currentSong?.albumArtUriString,
+                paletteStyle = paletteStyle,
+                colorAccuracyLevel = colorAccuracy
+            )?.let { if (isDarkTheme) it.dark else it.light }
+        } else null,
+        currentSong?.albumArtUriString,
+        isDarkTheme,
+        isDynamicColor,
+        paletteStyle,
+        colorAccuracy
+    ) {
+        if (!isDynamicColor || currentSong?.albumArtUriString == null) {
+            value = null
+            return@produceState
+        }
+        val scheme = withContext(Dispatchers.Default) {
             val pair = DynamicColorProcessor.extractColorScheme(
                 pathOrUri = currentSong?.albumArtUriString,
                 paletteStyle = paletteStyle,
                 colorAccuracyLevel = colorAccuracy
             )
             if (isDarkTheme) pair?.dark else pair?.light
-        } else null
+        }
+        value = scheme
     }
 
     val initialDestination = remember {
@@ -150,12 +172,6 @@ fun MainAppScaffold(
                 it.album.contains(searchQuery, ignoreCase = true)
             }
         }
-    }
-
-    val progressFraction = remember(playerInfo.currentPositionMs, playerInfo.totalDurationMs) {
-        if (playerInfo.totalDurationMs > 0) {
-            (playerInfo.currentPositionMs.toFloat() / playerInfo.totalDurationMs.toFloat()).coerceIn(0f, 1f)
-        } else 0f
     }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
@@ -397,9 +413,8 @@ fun MainAppScaffold(
                         MiniPlayerBar(
                             currentSong = currentSong!!,
                             isPlaying = playerInfo.isPlaying,
-                            currentPositionMs = playerInfo.currentPositionMs,
                             totalDurationMs = playerInfo.totalDurationMs,
-                            progress = progressFraction,
+                            currentPositionFlow = viewModel.currentPositionMs,
                             isShuffle = playerInfo.isShuffleEnabled,
                             repeatMode = playerInfo.repeatMode,
                             isFavorite = playerInfo.isFavorite,

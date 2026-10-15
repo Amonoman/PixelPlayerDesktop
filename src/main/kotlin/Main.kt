@@ -1,4 +1,5 @@
 import androidx.compose.foundation.window.WindowDraggableArea
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -21,6 +22,7 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.kayoi.pixelplayerdesktop.di.appModules
+import com.kayoi.pixelplayerdesktop.presentation.components.LocalWindowMinimized
 import com.kayoi.pixelplayerdesktop.presentation.screens.MainAppScaffold
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.PixelPlayerTheme
@@ -184,32 +186,36 @@ fun main() = application {
             }
         }
 
-        PixelPlayerTheme(
-            darkTheme = isDarkTheme,
-            colorSchemeOverride = systemColorScheme
+        CompositionLocalProvider(
+            LocalWindowMinimized provides windowState.isMinimized
         ) {
-            MainAppScaffold(
-                viewModel = playerViewModel,
-                isMaximized = windowState.placement == WindowPlacement.Maximized,
-                onMinimize = { windowState.isMinimized = true },
-                onMaximizeRestore = {
-                    windowState.placement = if (windowState.placement == WindowPlacement.Maximized) {
-                        WindowPlacement.Floating
-                    } else {
-                        WindowPlacement.Maximized
-                    }
-                },
-                onClose = ::exitApplication,
-                topBarWrapper = { content ->
-                    WindowDraggableArea {
-                        content()
-                    }
-                },
-                searchFocusRequester = searchFocusRequester,
-                onSearchFocusChange = { isSearchFocused = it },
-                isQueueSidePanelOpen = isQueueSidePanelOpen,
-                onToggleQueueSidePanel = { isQueueSidePanelOpen = !isQueueSidePanelOpen }
-            )
+            PixelPlayerTheme(
+                darkTheme = isDarkTheme,
+                colorSchemeOverride = systemColorScheme
+            ) {
+                MainAppScaffold(
+                    viewModel = playerViewModel,
+                    isMaximized = windowState.placement == WindowPlacement.Maximized,
+                    onMinimize = { windowState.isMinimized = true },
+                    onMaximizeRestore = {
+                        windowState.placement = if (windowState.placement == WindowPlacement.Maximized) {
+                            WindowPlacement.Floating
+                        } else {
+                            WindowPlacement.Maximized
+                        }
+                    },
+                    onClose = ::exitApplication,
+                    topBarWrapper = { content ->
+                        WindowDraggableArea {
+                            content()
+                        }
+                    },
+                    searchFocusRequester = searchFocusRequester,
+                    onSearchFocusChange = { isSearchFocused = it },
+                    isQueueSidePanelOpen = isQueueSidePanelOpen,
+                    onToggleQueueSidePanel = { isQueueSidePanelOpen = !isQueueSidePanelOpen }
+                )
+            }
         }
     }
 }

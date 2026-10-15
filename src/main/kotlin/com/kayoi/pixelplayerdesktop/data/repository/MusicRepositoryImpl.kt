@@ -210,7 +210,7 @@ class MusicRepositoryImpl(
     override fun getRecentlyPlayedSongsFlow(limit: Int): Flow<List<Song>> = flow {
         emit(musicDao.getRecentlyPlayedSongs(limit))
         database.tableInvalidationFlow.collect { table ->
-            if (table == "songs") {
+            if (table == "recently_played" || table == "songs") {
                 emit(musicDao.getRecentlyPlayedSongs(limit))
             }
         }
