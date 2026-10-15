@@ -10,6 +10,7 @@ object LrcParser {
         val lines = content.lines()
         val syncedLines = mutableListOf<SyncedLine>()
         val plainLines = mutableListOf<String>()
+        val entireLyricsHasKana = content.any { it in '\u3040'..'\u309F' || it in '\u30A0'..'\u30FF' }
 
         for (line in lines) {
             val match = timestampRegex.matchEntire(line.trim())
@@ -21,10 +22,21 @@ object LrcParser {
                 val totalMs = (min * 60 + sec) * 1000 + ms
                 val text = match.groupValues[4].trim()
 
+                val romanized = when {
+                    MultiLangRomanizer.isJapanese(text, entireLyricsHasKana) -> MultiLangRomanizer.romanizeJapanese(text)
+                    MultiLangRomanizer.isChinese(text) -> MultiLangRomanizer.romanizeChinese(text)
+                    MultiLangRomanizer.isKorean(text) -> MultiLangRomanizer.romanizeKorean(text)
+                    MultiLangRomanizer.isHindi(text) -> MultiLangRomanizer.romanizeHindi(text)
+                    MultiLangRomanizer.isPunjabi(text) -> MultiLangRomanizer.romanizePunjabi(text)
+                    MultiLangRomanizer.isCyrillic(text) -> MultiLangRomanizer.romanizeCyrillic(text)
+                    else -> null
+                }?.let { MultiLangRomanizer.capitalizeFirstLetter(it) }?.trim()
+
                 syncedLines.add(
                     SyncedLine(
                         time = totalMs,
-                        line = text
+                        line = text,
+                        romanization = romanized
                     )
                 )
             } else if (line.isNotBlank() && !line.startsWith("[")) {
@@ -33,9 +45,29 @@ object LrcParser {
         }
 
         return if (syncedLines.isNotEmpty()) {
-            Lyrics(synced = syncedLines, areFromRemote = false)
+            val plainVersion = syncedLines.map { line ->
+                buildString {
+                    append(line.line)
+                    if (!line.romanization.isNullOrEmpty()) append("\n").append(line.romanization)
+                }
+            }
+            Lyrics(synced = syncedLines, plain = plainVersion, areFromRemote = false)
         } else {
-            Lyrics(plain = plainLines.ifEmpty { lines.filter { it.isNotBlank() } }, areFromRemote = false)
+            val targetPlain = plainLines.ifEmpty { lines.filter { it.isNotBlank() } }
+            val processedPlain = targetPlain.map { line ->
+                val romanized = when {
+                    MultiLangRomanizer.isJapanese(line, entireLyricsHasKana) -> MultiLangRomanizer.romanizeJapanese(line)
+                    MultiLangRomanizer.isChinese(line) -> MultiLangRomanizer.romanizeChinese(line)
+                    MultiLangRomanizer.isKorean(line) -> MultiLangRomanizer.romanizeKorean(line)
+                    MultiLangRomanizer.isHindi(line) -> MultiLangRomanizer.romanizeHindi(line)
+                    MultiLangRomanizer.isPunjabi(line) -> MultiLangRomanizer.romanizePunjabi(line)
+                    MultiLangRomanizer.isCyrillic(line) -> MultiLangRomanizer.romanizeCyrillic(line)
+                    else -> null
+                }?.let { MultiLangRomanizer.capitalizeFirstLetter(it) }?.trim()
+
+                if (!romanized.isNullOrEmpty()) "$line\n$romanized" else line
+            }
+            Lyrics(plain = processedPlain, areFromRemote = false)
         }
     }
 
@@ -50,7 +82,7 @@ object LrcParser {
                 "$timestamp${line.line}"
             }
         } else if (!lyrics.plain.isNullOrEmpty()) {
-            return lyrics.plain.joinToString("\n")
+            return lyrics.plain.joinToString("\n") { it.substringBefore("\n") }
         } else if (!lyrics.synced.isNullOrEmpty()) {
             return lyrics.synced.joinToString("\n") { line ->
                 val totalMs = line.time

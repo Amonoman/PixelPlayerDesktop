@@ -52,11 +52,16 @@ dependencies {
     implementation("org.gagravarr:vorbis-java-core:0.8")
     implementation("uk.co.caprica:vlcj:4.8.3")
 
-    // Reorderable LazyList (Same library as OSS)
+    // Reorderable LazyList
     implementation("sh.calvin.reorderable:reorderable:2.4.3")
 
     // MaterialKolor (M3 Dynamic Colors & Quantizer)
     implementation("com.materialkolor:material-kolor:2.0.2")
+
+    // Lyrics Romanization
+    implementation("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
+    implementation("com.belerweb:pinyin4j:2.5.1")
+    implementation("com.ibm.icu:icu4j:76.1")
 
     // Testing
     testImplementation(kotlin("test"))

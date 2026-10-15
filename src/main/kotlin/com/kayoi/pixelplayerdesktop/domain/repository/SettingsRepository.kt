@@ -45,4 +45,5 @@ interface SettingsRepository {
     suspend fun setDefaultTab(tab: String)
     suspend fun setLyricsAlignment(alignment: String)
     suspend fun setLyricsSyncOffset(songId: String, offsetMs: Int)
+    suspend fun setShowLyricsRomanization(enabled: Boolean)
 }

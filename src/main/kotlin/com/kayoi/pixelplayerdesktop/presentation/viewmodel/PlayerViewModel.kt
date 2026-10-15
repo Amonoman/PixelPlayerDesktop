@@ -176,6 +176,8 @@ class PlayerViewModel(
     fun setDefaultTab(tab: String) = themeStateHolder.setDefaultTab(tab)
     val lyricsAlignment = themeStateHolder.lyricsAlignment
     fun setLyricsAlignment(alignment: String) = themeStateHolder.setLyricsAlignment(alignment)
+    val showLyricsRomanization = themeStateHolder.showLyricsRomanization
+    fun setShowLyricsRomanization(enabled: Boolean) = themeStateHolder.setShowLyricsRomanization(enabled)
 
     suspend fun updateSongMetadata(
         song: Song,

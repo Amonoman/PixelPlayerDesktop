@@ -23,7 +23,14 @@ class LyricsDao(
                 stmt.setString(1, songId)
                 stmt.executeQuery().use { rs ->
                     if (rs.next()) {
-                        val plain = rs.getString("plain_lyrics")?.split("\n")?.filter { it.isNotBlank() }
+                        val plainStr = rs.getString("plain_lyrics")
+                        val plain = if (!plainStr.isNullOrBlank()) {
+                            try {
+                                json.decodeFromString<List<String>>(plainStr)
+                            } catch (_: Exception) {
+                                plainStr.split("\n").filter { it.isNotBlank() }
+                            }
+                        } else null
                         val syncedJson = rs.getString("synced_lyrics_json")
                         val isRemote = rs.getInt("is_from_remote") == 1
                         val synced = if (!syncedJson.isNullOrBlank()) {
@@ -55,7 +62,7 @@ class LyricsDao(
             """.trimIndent()
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, songId)
-                stmt.setString(2, lyrics.plain?.joinToString("\n"))
+                stmt.setString(2, lyrics.plain?.let { json.encodeToString(it) })
                 stmt.setString(3, lyrics.synced?.let { json.encodeToString(syncedLineListSerializer, it) })
                 stmt.setInt(4, if (lyrics.areFromRemote) 1 else 0)
                 stmt.setLong(5, System.currentTimeMillis())

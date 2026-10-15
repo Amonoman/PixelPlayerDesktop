@@ -64,6 +64,16 @@ class ThemeStateHolder(
         .map { it.lyricsAlignment }
         .stateIn(coroutineScope, SharingStarted.Eagerly, "left")
 
+    val showLyricsRomanization: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.showLyricsRomanization }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, true)
+
+    fun setShowLyricsRomanization(enabled: Boolean) {
+        coroutineScope.launch {
+            settingsRepository.setShowLyricsRomanization(enabled)
+        }
+    }
+
     fun setDarkMode(dark: Boolean) {
         coroutineScope.launch {
             settingsRepository.setDarkMode(dark)

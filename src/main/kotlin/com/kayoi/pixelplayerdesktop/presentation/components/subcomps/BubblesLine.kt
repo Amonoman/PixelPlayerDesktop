@@ -43,6 +43,7 @@ fun BubblesLine(
     color: Color,
     onSeek: () -> Unit,
     modifier: Modifier = Modifier,
+    alignment: String = "left",
     isPlaying: Boolean = true,
     isMinimized: Boolean = LocalWindowMinimized.current
 ) {
@@ -78,15 +79,21 @@ fun BubblesLine(
 
         val bubblePaths = remember { List(3) { Path() } }
 
+        val contentAlignment = when (alignment.lowercase()) {
+            "center" -> Alignment.Center
+            "right" -> Alignment.CenterEnd
+            else -> Alignment.CenterStart
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
                 .clickable(onClick = onSeek)
-                .padding(vertical = 8.dp),
-            contentAlignment = Alignment.CenterStart
+                .padding(vertical = 8.dp, horizontal = 10.dp),
+            contentAlignment = contentAlignment
         ) {
-            Canvas(modifier = Modifier.size(350.dp, 44.dp)) {
+            Canvas(modifier = Modifier.size(160.dp, 44.dp)) {
                 val animatedValue = bubbleProgressAnim.value
                 val bubbleCount = 3
                 val bubbleColor = color.copy(alpha = 0.85f)

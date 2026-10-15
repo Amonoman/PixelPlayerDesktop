@@ -81,6 +81,7 @@ import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.PixelPlayerTheme
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
 import com.kayoi.pixelplayerdesktop.utils.DirectoryPicker
+import com.kayoi.pixelplayerdesktop.utils.MultiLangRomanizer
 import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
@@ -116,6 +117,7 @@ fun ExpandedPlayerScreen(
     val colorAccuracy by viewModel.albumArtColorAccuracy.collectAsState()
     val showPlayerFileInfo by viewModel.showPlayerFileInfo.collectAsState()
     val lyricsAlignment by viewModel.lyricsAlignment.collectAsState()
+    val showLyricsRomanization by viewModel.showLyricsRomanization.collectAsState()
     var showLyricsSearchDialog by remember { mutableStateOf(false) }
     var showLyricsMenu by remember { mutableStateOf(false) }
     var showResetConfirmDialog by remember { mutableStateOf(false) }
@@ -415,6 +417,15 @@ fun ExpandedPlayerScreen(
                                                 val hasSyncedLyrics = !playerInfo.lyrics?.synced.isNullOrEmpty()
                                                 val hasLyrics = playerInfo.lyrics != null &&
                                                     (hasSyncedLyrics || !playerInfo.lyrics!!.plain.isNullOrEmpty())
+                                                val hasRomanizedLyrics = remember(playerInfo.lyrics) {
+                                                    val synced = playerInfo.lyrics?.synced?.any { line ->
+                                                        !line.romanization.isNullOrBlank() || MultiLangRomanizer.isScriptThatNeedsRomanization(line.line)
+                                                    } == true
+                                                    val plain = playerInfo.lyrics?.plain?.any { line ->
+                                                        MultiLangRomanizer.isScriptThatNeedsRomanization(line.substringBefore("\n"))
+                                                    } == true
+                                                    synced || plain
+                                                }
 
                                                 LyricsOptionsMenu(
                                                     expanded = showLyricsMenu,
@@ -423,6 +434,9 @@ fun ExpandedPlayerScreen(
                                                     onAlignmentChange = { viewModel.setLyricsAlignment(it) },
                                                     hasLyrics = hasLyrics,
                                                     hasSyncedLyrics = hasSyncedLyrics,
+                                                    hasRomanizedLyrics = hasRomanizedLyrics,
+                                                    showRomanization = showLyricsRomanization,
+                                                    onToggleRomanization = { viewModel.setShowLyricsRomanization(!showLyricsRomanization) },
                                                     showSyncControls = showLyricsSyncControls,
                                                     onToggleSyncControls = { showLyricsSyncControls = !showLyricsSyncControls },
                                                     onSaveToSongFolder = {
@@ -484,6 +498,7 @@ fun ExpandedPlayerScreen(
                                         isPlaying = playerInfo.isPlaying,
                                         alignment = lyricsAlignment,
                                         syncOffsetMs = playerInfo.lyricsSyncOffsetMs,
+                                        showRomanization = showLyricsRomanization,
                                         onSeekToMs = { viewModel.seekTo(it) },
                                         onSearchLyrics = { showLyricsSearchDialog = true }
                                     )

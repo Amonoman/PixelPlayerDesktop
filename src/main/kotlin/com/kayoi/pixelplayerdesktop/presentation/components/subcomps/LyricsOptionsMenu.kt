@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.FormatAlignLeft
 import androidx.compose.material.icons.automirrored.rounded.FormatAlignRight
+import androidx.compose.material.icons.rounded.Abc
 import androidx.compose.material.icons.rounded.FileDownload
 import androidx.compose.material.icons.rounded.FormatAlignCenter
 import androidx.compose.material.icons.rounded.RestartAlt
@@ -40,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveSwitch
 import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 
 @Composable
@@ -50,13 +52,16 @@ fun LyricsOptionsMenu(
     onAlignmentChange: (String) -> Unit,
     hasLyrics: Boolean,
     hasSyncedLyrics: Boolean = false,
+    hasRomanizedLyrics: Boolean = false,
+    showRomanization: Boolean = true,
+    onToggleRomanization: () -> Unit = {},
     showSyncControls: Boolean = false,
     onToggleSyncControls: () -> Unit = {},
     onSaveToSongFolder: () -> Unit,
     onExportFile: () -> Unit,
     onResetLyrics: () -> Unit,
     modifier: Modifier = Modifier,
-    menuWidth: Dp = 295.dp
+    menuWidth: Dp = 310.dp
 ) {
     val colors = MaterialTheme.colorScheme
 
@@ -161,6 +166,20 @@ fun LyricsOptionsMenu(
                         onDismissRequest()
                         onToggleSyncControls()
                     }
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+
+            if (hasRomanizedLyrics) {
+                ExpressiveToggleMenuItem(
+                    icon = Icons.Rounded.Abc,
+                    iconContainerColor = if (showRomanization) colors.primaryContainer else colors.surfaceContainerHighest,
+                    iconColor = if (showRomanization) colors.onPrimaryContainer else colors.onSurfaceVariant,
+                    title = "Show Romanization",
+                    subtitle = "Display Romaji / Pinyin",
+                    checked = showRomanization,
+                    onCheckedChange = { onToggleRomanization() }
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -307,3 +326,59 @@ private fun ExpressiveMenuItem(
         }
     }
 }
+
+@Composable
+private fun ExpressiveToggleMenuItem(
+    icon: ImageVector,
+    iconContainerColor: Color,
+    iconColor: Color,
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 8.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(iconContainerColor),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconColor,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f).padding(end = 6.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant.copy(alpha = 0.8f)
+            )
+        }
+        ExpressiveSwitch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
+    }
+}
+

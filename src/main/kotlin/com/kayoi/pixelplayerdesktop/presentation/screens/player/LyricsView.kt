@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Lyrics
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.BubblesLine
 import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
+import com.kayoi.pixelplayerdesktop.utils.MultiLangRomanizer
 
 @Composable
 fun LyricsView(
@@ -57,6 +58,7 @@ fun LyricsView(
     currentPositionMs: Long = 0L,
     alignment: String = "left",
     syncOffsetMs: Int = 0,
+    showRomanization: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -66,6 +68,11 @@ fun LyricsView(
         "center" -> TextAlign.Center
         "right" -> TextAlign.End
         else -> TextAlign.Start
+    }
+    val horizontalAlignment = when (alignment.lowercase()) {
+        "center" -> Alignment.CenterHorizontally
+        "right" -> Alignment.End
+        else -> Alignment.Start
     }
 
     if (isLoading) {
@@ -148,6 +155,10 @@ fun LyricsView(
             }
         }
 
+        val hasKana = remember(syncedLines) {
+            syncedLines.any { line -> line.line.any { it in '\u3040'..'\u309F' || it in '\u30A0'..'\u30FF' } }
+        }
+
         LazyColumn(
             state = listState,
             modifier = modifier.fillMaxSize().padding(horizontal = 24.dp),
@@ -163,6 +174,7 @@ fun LyricsView(
                         isActive = isActive,
                         isPlaying = isPlaying,
                         color = colors.primary,
+                        alignment = alignment,
                         onSeek = { onSeekToMs(((line.time - syncOffsetMs).toLong()).coerceAtLeast(0L)) }
                     )
                 } else {
@@ -178,35 +190,91 @@ fun LyricsView(
                         else -> colors.onSurfaceVariant.copy(alpha = 0.38f)
                     }
 
-                    Text(
-                        text = line.line,
-                        fontSize = fontSize.sp,
-                        fontWeight = if (isActive) FontWeight.ExtraBold else FontWeight.Medium,
-                        color = textColor,
-                        textAlign = lyricTextAlign,
+                    val romanization = remember(line, hasKana) {
+                        line.romanization?.takeIf { it.isNotBlank() }
+                            ?: if (MultiLangRomanizer.isScriptThatNeedsRomanization(line.line)) {
+                                MultiLangRomanizer.romanizeText(line.line, hasKana)
+                            } else null
+                    }
+
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .clickable { onSeekToMs(((line.time - syncOffsetMs).toLong()).coerceAtLeast(0L)) }
-                            .padding(vertical = 6.dp, horizontal = 10.dp)
-                    )
+                            .padding(vertical = 6.dp, horizontal = 10.dp),
+                        horizontalAlignment = horizontalAlignment
+                    ) {
+                        Text(
+                            text = line.line,
+                            fontSize = fontSize.sp,
+                            fontWeight = if (isActive) FontWeight.ExtraBold else FontWeight.Medium,
+                            color = textColor,
+                            textAlign = lyricTextAlign,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        if (showRomanization && !romanization.isNullOrBlank()) {
+                            Text(
+                                text = romanization,
+                                fontSize = (fontSize * 0.72f).coerceAtLeast(12f).sp,
+                                fontWeight = FontWeight.Normal,
+                                color = textColor.copy(alpha = if (isActive) 0.85f else 0.7f),
+                                textAlign = lyricTextAlign,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 3.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
     } else if (!lyrics.plain.isNullOrEmpty()) {
+        val hasKana = remember(lyrics.plain) {
+            lyrics.plain.any { line -> line.any { it in '\u3040'..'\u309F' || it in '\u30A0'..'\u30FF' } }
+        }
+
         LazyColumn(
             modifier = modifier.fillMaxSize().padding(horizontal = 28.dp),
             contentPadding = PaddingValues(top = 32.dp, bottom = 64.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(lyrics.plain) { line ->
-                Text(
-                    text = line,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = colors.onSurface.copy(alpha = 0.85f),
-                    textAlign = lyricTextAlign,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            items(lyrics.plain) { rawLine ->
+                val parts = remember(rawLine) { rawLine.split("\n") }
+                val primary = parts.firstOrNull().orEmpty()
+                val romanization = remember(rawLine, primary, hasKana) {
+                    if (parts.size > 1 && MultiLangRomanizer.isScriptThatNeedsRomanization(primary)) {
+                        parts[1]
+                    } else if (MultiLangRomanizer.isScriptThatNeedsRomanization(primary)) {
+                        MultiLangRomanizer.romanizeText(primary, hasKana)
+                    } else null
+                }
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = horizontalAlignment
+                ) {
+                    Text(
+                        text = primary,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = colors.onSurface.copy(alpha = 0.85f),
+                        textAlign = lyricTextAlign,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    if (showRomanization && !romanization.isNullOrBlank()) {
+                        Text(
+                            text = romanization,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.onSurfaceVariant.copy(alpha = 0.7f),
+                            textAlign = lyricTextAlign,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 2.dp)
+                        )
+                    }
+                }
             }
         }
     }

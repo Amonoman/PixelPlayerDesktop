@@ -242,6 +242,10 @@ class SettingsRepositoryImpl(
         }
     }
 
+    override suspend fun setShowLyricsRomanization(enabled: Boolean) {
+        updateSettings { it.copy(showLyricsRomanization = enabled) }
+    }
+
     private fun loadSettingsFromDisk(): UserSettings {
         return try {
             if (settingsFile.exists()) {

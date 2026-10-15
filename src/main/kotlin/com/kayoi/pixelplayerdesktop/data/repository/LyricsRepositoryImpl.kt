@@ -7,6 +7,7 @@ import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
 import com.kayoi.pixelplayerdesktop.domain.repository.LyricsRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
 import com.kayoi.pixelplayerdesktop.utils.LrcParser
+import com.kayoi.pixelplayerdesktop.utils.MultiLangRomanizer
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -29,7 +30,11 @@ class LyricsRepositoryImpl(
     ): Lyrics? = withContext(ioDispatcher) {
         val cached = lyricsDao.getLyrics(songId)
         if (cached != null) {
-            return@withContext cached
+            val enriched = MultiLangRomanizer.enrichLyrics(cached)
+            if (enriched != cached) {
+                lyricsDao.insertOrUpdateLyrics(songId, enriched)
+            }
+            return@withContext enriched
         }
 
         val preference = settingsRepository?.getSettings()?.let {
@@ -58,8 +63,9 @@ class LyricsRepositoryImpl(
         for (fetcher in fetchers) {
             val lyrics = fetcher()
             if (lyrics != null && (!lyrics.synced.isNullOrEmpty() || !lyrics.plain.isNullOrEmpty())) {
-                lyricsDao.insertOrUpdateLyrics(songId, lyrics)
-                return@withContext lyrics
+                val enriched = MultiLangRomanizer.enrichLyrics(lyrics)
+                lyricsDao.insertOrUpdateLyrics(songId, enriched)
+                return@withContext enriched
             }
         }
 
@@ -98,7 +104,8 @@ class LyricsRepositoryImpl(
     }
 
     override suspend fun saveLyrics(songId: String, lyrics: Lyrics) {
-        lyricsDao.insertOrUpdateLyrics(songId, lyrics)
+        val enriched = MultiLangRomanizer.enrichLyrics(lyrics)
+        lyricsDao.insertOrUpdateLyrics(songId, enriched)
     }
 
     override suspend fun deleteLyrics(songId: String) = withContext(ioDispatcher) {
