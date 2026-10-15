@@ -159,7 +159,7 @@ fun WavySliderExpressive(
             wavePath.moveTo(trackStart, centerY)
 
             if (amplitudePx > 0.05f) {
-                val step = 1.5f
+                val step = 3.5f
                 var x = trackStart
                 while (x <= progressX) {
                     val relX = x - trackStart

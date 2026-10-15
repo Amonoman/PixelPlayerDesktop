@@ -29,11 +29,16 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.skia.Image
+import org.jetbrains.skia.Rect
+import org.jetbrains.skia.SamplingMode
+import org.jetbrains.skia.Surface
 import java.io.File
 import java.util.Collections
 import java.util.LinkedHashMap
+import kotlin.math.roundToInt
 
-private const val MAX_MEMORY_CACHE_ENTRIES = 500
+private const val MAX_MEMORY_CACHE_ENTRIES = 80
+private const val MAX_ARTWORK_DIMENSION = 512
 
 private val memoryArtworkCache = Collections.synchronizedMap(
     object : LinkedHashMap<String, ImageBitmap>(MAX_MEMORY_CACHE_ENTRIES, 0.75f, true) {
@@ -42,6 +47,42 @@ private val memoryArtworkCache = Collections.synchronizedMap(
         }
     }
 )
+
+private fun decodeAndScaleArtwork(bytes: ByteArray, maxDimension: Int = MAX_ARTWORK_DIMENSION): ImageBitmap? {
+    return try {
+        val rawImage = Image.makeFromEncoded(bytes)
+        val origW = rawImage.width
+        val origH = rawImage.height
+        if (origW <= 0 || origH <= 0) {
+            rawImage.close()
+            return null
+        }
+
+        if (origW > maxDimension || origH > maxDimension) {
+            val scale = maxDimension.toFloat() / maxOf(origW, origH)
+            val targetW = (origW * scale).roundToInt().coerceAtLeast(1)
+            val targetH = (origH * scale).roundToInt().coerceAtLeast(1)
+
+            val surface = Surface.makeRasterN32Premul(targetW, targetH)
+            surface.canvas.drawImageRect(
+                rawImage,
+                Rect.makeWH(origW.toFloat(), origH.toFloat()),
+                Rect.makeWH(targetW.toFloat(), targetH.toFloat()),
+                SamplingMode.MITCHELL,
+                null,
+                true
+            )
+            val scaledSnapshot = surface.makeImageSnapshot()
+            surface.close()
+            rawImage.close()
+            scaledSnapshot.toComposeImageBitmap()
+        } else {
+            rawImage.toComposeImageBitmap()
+        }
+    } catch (_: Exception) {
+        null
+    }
+}
 
 @Composable
 fun AsyncArtworkImage(
@@ -78,8 +119,7 @@ fun AsyncArtworkImage(
                 val file = File(artworkUri)
                 if (file.exists() && file.isFile && file.length() > 0) {
                     val bytes = file.readBytes()
-                    val skiaImage = Image.makeFromEncoded(bytes)
-                    skiaImage.toComposeImageBitmap()
+                    decodeAndScaleArtwork(bytes)
                 } else {
                     null
                 }

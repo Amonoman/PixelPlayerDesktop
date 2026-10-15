@@ -83,6 +83,13 @@ compose.desktop {
     application {
         mainClass = "MainKt"
 
+        jvmArgs(
+            "-Xmx256m",
+            "-XX:+UseG1GC",
+            "-XX:G1PeriodicGCInterval=3000",
+            "-XX:-ShrinkHeapInSteps"
+        )
+
         nativeDistributions {
             modules("java.sql", "java.naming", "java.desktop", "jdk.unsupported")
             appResourcesRootDir.set(project.layout.projectDirectory.dir("src/main/resources-packaged"))
