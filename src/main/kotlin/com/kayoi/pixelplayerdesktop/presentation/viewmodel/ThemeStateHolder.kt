@@ -60,6 +60,10 @@ class ThemeStateHolder(
         .map { it.defaultTab }
         .stateIn(coroutineScope, SharingStarted.Eagerly, "HOME")
 
+    val lyricsAlignment: StateFlow<String> = settingsRepository.settingsFlow
+        .map { it.lyricsAlignment }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, "left")
+
     fun setDarkMode(dark: Boolean) {
         coroutineScope.launch {
             settingsRepository.setDarkMode(dark)
@@ -119,6 +123,12 @@ class ThemeStateHolder(
     fun setDefaultTab(tab: String) {
         coroutineScope.launch {
             settingsRepository.setDefaultTab(tab)
+        }
+    }
+
+    fun setLyricsAlignment(alignment: String) {
+        coroutineScope.launch {
+            settingsRepository.setLyricsAlignment(alignment)
         }
     }
 }

@@ -101,6 +101,10 @@ class LyricsRepositoryImpl(
         lyricsDao.insertOrUpdateLyrics(songId, lyrics)
     }
 
+    override suspend fun deleteLyrics(songId: String) = withContext(ioDispatcher) {
+        lyricsDao.deleteLyrics(songId)
+    }
+
     override suspend fun resetAllLyrics() = withContext(ioDispatcher) {
         lyricsDao.deleteAllLyrics()
     }

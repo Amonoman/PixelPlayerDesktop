@@ -33,6 +33,10 @@ class PlayerViewModel(
     fun applyLyrics(lyrics: com.kayoi.pixelplayerdesktop.data.model.Lyrics) = playbackStateHolder.applyLyrics(lyrics)
     fun importLyricsFromFile(file: java.io.File) = playbackStateHolder.importLyricsFromFile(file)
     fun resetLyricsSearchState() = playbackStateHolder.resetLyricsSearchState()
+    fun resetCurrentSongLyrics() = playbackStateHolder.resetCurrentSongLyrics()
+    fun saveLyricsBesideCurrentSong(preferSynced: Boolean = true) = playbackStateHolder.saveLyricsBesideCurrentSong(preferSynced)
+    fun exportLyricsToFile(targetFile: java.io.File, preferSynced: Boolean = true) = playbackStateHolder.exportLyricsToFile(targetFile, preferSynced)
+    fun setLyricsSyncOffset(offsetMs: Int) = playbackStateHolder.setLyricsSyncOffset(offsetMs)
 
     fun playSong(song: Song) = playbackStateHolder.playSong(song)
     fun playSongs(songs: List<Song>, startIndex: Int = 0) = playbackStateHolder.playSongs(songs, startIndex)
@@ -170,6 +174,8 @@ class PlayerViewModel(
     fun setNavBarCompactMode(enabled: Boolean) = themeStateHolder.setNavBarCompactMode(enabled)
     fun toggleNavBarCompactMode() = themeStateHolder.toggleNavBarCompactMode()
     fun setDefaultTab(tab: String) = themeStateHolder.setDefaultTab(tab)
+    val lyricsAlignment = themeStateHolder.lyricsAlignment
+    fun setLyricsAlignment(alignment: String) = themeStateHolder.setLyricsAlignment(alignment)
 
     suspend fun updateSongMetadata(
         song: Song,

@@ -27,6 +27,9 @@ class SettingsRepositoryTest {
         repository.setAlbumsListView(true)
         repository.setArtistsListView(true)
         repository.setFoldersPlaylistView(true)
+        repository.setLyricsAlignment("center")
+        repository.setLyricsSyncOffset("song_123", 500)
+        repository.setLyricsSyncOffset("song_456", -300)
 
         val updated = repository.getSettings()
         assertEquals(false, updated.isDynamicColorEnabled)
@@ -35,6 +38,15 @@ class SettingsRepositoryTest {
         assertEquals(true, updated.isAlbumsListView)
         assertEquals(true, updated.isArtistsListView)
         assertEquals(true, updated.isFoldersPlaylistView)
+        assertEquals("center", updated.lyricsAlignment)
+        assertEquals(500, updated.lyricsSyncOffsets["song_123"])
+        assertEquals(-300, updated.lyricsSyncOffsets["song_456"])
+
+        // Reset offset to 0 should remove the entry
+        repository.setLyricsSyncOffset("song_123", 0)
+        val resetOffsets = repository.getSettings().lyricsSyncOffsets
+        assertEquals(null, resetOffsets["song_123"])
+        assertEquals(-300, resetOffsets["song_456"])
 
         // Create new repository instance from the same file to verify persistence
         val reloaded = SettingsRepositoryImpl(settingsFile = tempFile)
@@ -45,5 +57,7 @@ class SettingsRepositoryTest {
         assertEquals(true, reloadedSettings.isAlbumsListView)
         assertEquals(true, reloadedSettings.isArtistsListView)
         assertEquals(true, reloadedSettings.isFoldersPlaylistView)
+        assertEquals("center", reloadedSettings.lyricsAlignment)
+        assertEquals(-300, reloadedSettings.lyricsSyncOffsets["song_456"])
     }
 }

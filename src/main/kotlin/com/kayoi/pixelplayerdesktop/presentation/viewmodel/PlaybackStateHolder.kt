@@ -17,6 +17,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
@@ -80,6 +81,53 @@ class PlaybackStateHolder(
         }
     }
 
+    fun resetCurrentSongLyrics() {
+        val currentSong = queueManager.currentSong.value ?: return
+        coroutineScope.launch {
+            lyricsRepository.deleteLyrics(currentSong.id)
+            settingsRepository.setLyricsSyncOffset(currentSong.id, 0)
+            val fresh = lyricsRepository.getLyrics(
+                songId = currentSong.id,
+                songPath = currentSong.path,
+                title = currentSong.title,
+                artist = currentSong.artist
+            )
+            _playerInfo.update { it.copy(lyrics = fresh, lyricsSyncOffsetMs = 0) }
+            _lyricsSearchUiState.value = LyricsSearchUiState.Idle
+        }
+    }
+
+    fun setLyricsSyncOffset(offsetMs: Int) {
+        val currentSong = queueManager.currentSong.value ?: return
+        _playerInfo.update { it.copy(lyricsSyncOffsetMs = offsetMs) }
+        coroutineScope.launch {
+            settingsRepository.setLyricsSyncOffset(currentSong.id, offsetMs)
+        }
+    }
+
+    fun saveLyricsBesideCurrentSong(preferSynced: Boolean = true): File? {
+        val song = queueManager.currentSong.value ?: return null
+        val lyrics = _playerInfo.value.lyrics ?: return null
+        val content = LrcParser.toLrcString(lyrics, preferSynced)
+        if (content.isBlank()) return null
+        return runCatching {
+            val songFile = File(song.path)
+            val lrcFile = File(songFile.parentFile, "${songFile.nameWithoutExtension}.lrc")
+            lrcFile.writeText(content, Charsets.UTF_8)
+            lrcFile
+        }.getOrNull()
+    }
+
+    fun exportLyricsToFile(targetFile: File, preferSynced: Boolean = true): Boolean {
+        val lyrics = _playerInfo.value.lyrics ?: return false
+        val content = LrcParser.toLrcString(lyrics, preferSynced)
+        if (content.isBlank()) return false
+        return runCatching {
+            targetFile.writeText(content, Charsets.UTF_8)
+            true
+        }.getOrDefault(false)
+    }
+
     fun onSongMetadataUpdated(updatedSong: Song) {
         queueManager.updateSong(updatedSong)
         val current = queueManager.currentSong.value
@@ -104,21 +152,34 @@ class PlaybackStateHolder(
     init {
 
         coroutineScope.launch {
-            queueManager.currentSong.collect { song ->
+            queueManager.currentSong.collectLatest { song ->
                 val isFav = if (song != null) musicRepository.isFavorite(song.id) else false
+                val offset = if (song != null) {
+                    settingsRepository.settingsFlow.value.lyricsSyncOffsets[song.id] ?: 0
+                } else 0
                 _playerInfo.update {
                     it.copy(
                         songTitle = song?.title ?: "",
                         artistName = song?.displayArtist ?: "",
                         albumArtUri = song?.albumArtUriString,
                         totalDurationMs = song?.duration ?: 0L,
-                        isFavorite = isFav
+                        isFavorite = isFav,
+                        lyricsSyncOffsetMs = offset,
+                        lyrics = null,
+                        isLoadingLyrics = song != null
                     )
                 }
                 if (song != null) {
                     musicRepository.recordSongPlayed(song.id)
                     val lyrics = lyricsRepository.getLyrics(song.id, song.path, song.title, song.artist)
-                    _playerInfo.update { it.copy(lyrics = lyrics) }
+                    _playerInfo.update {
+                        it.copy(
+                            lyrics = lyrics,
+                            isLoadingLyrics = false
+                        )
+                    }
+                } else {
+                    _playerInfo.update { it.copy(isLoadingLyrics = false) }
                 }
             }
         }

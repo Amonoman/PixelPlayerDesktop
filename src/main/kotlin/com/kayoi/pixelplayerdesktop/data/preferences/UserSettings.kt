@@ -29,5 +29,7 @@ data class UserSettings(
     val lyricsSourcePreference: String = "embedded_first",
     val showPlayerFileInfo: Boolean = true,
     val navBarCompactMode: Boolean = false,
-    val defaultTab: String = "HOME"
+    val defaultTab: String = "HOME",
+    val lyricsAlignment: String = "left",
+    val lyricsSyncOffsets: Map<String, Int> = emptyMap()
 )

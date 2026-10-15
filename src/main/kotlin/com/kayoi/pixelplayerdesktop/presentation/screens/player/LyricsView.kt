@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -46,18 +47,48 @@ import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.BubblesLine
 import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 
 @Composable
-fun SyncedLyricsView(
+fun LyricsView(
     lyrics: Lyrics?,
+    isLoading: Boolean = false,
     currentPositionFlow: StateFlow<Long>? = null,
     onSeekToMs: (Long) -> Unit,
     onSearchLyrics: (() -> Unit)? = null,
     isPlaying: Boolean = true,
     currentPositionMs: Long = 0L,
+    alignment: String = "left",
+    syncOffsetMs: Int = 0,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
     val listState = rememberLazyListState()
     val positionMsState = currentPositionFlow?.collectAsState()
+    val lyricTextAlign = when (alignment.lowercase()) {
+        "center" -> TextAlign.Center
+        "right" -> TextAlign.End
+        else -> TextAlign.Start
+    }
+
+    if (isLoading) {
+        Box(
+            modifier = modifier.fillMaxSize().padding(32.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(36.dp),
+                    color = colors.primary,
+                    strokeWidth = 3.dp
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Loading lyrics...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceVariant.copy(alpha = 0.6f)
+                )
+            }
+        }
+        return
+    }
 
     if (lyrics == null || (lyrics.synced.isNullOrEmpty() && lyrics.plain.isNullOrEmpty())) {
         Box(
@@ -100,9 +131,9 @@ fun SyncedLyricsView(
 
     if (!lyrics.synced.isNullOrEmpty()) {
         val syncedLines = lyrics.synced
-        val activeIndex by remember(syncedLines, positionMsState) {
+        val activeIndex by remember(syncedLines, positionMsState, syncOffsetMs) {
             derivedStateOf {
-                val currentPos = positionMsState?.value ?: currentPositionMs
+                val currentPos = (positionMsState?.value ?: currentPositionMs) + syncOffsetMs
                 syncedLines.indexOfLast { it.time <= currentPos }
             }
         }
@@ -132,7 +163,7 @@ fun SyncedLyricsView(
                         isActive = isActive,
                         isPlaying = isPlaying,
                         color = colors.primary,
-                        onSeek = { onSeekToMs(line.time.toLong()) }
+                        onSeek = { onSeekToMs(((line.time - syncOffsetMs).toLong()).coerceAtLeast(0L)) }
                     )
                 } else {
                     val fontSize by animateFloatAsState(
@@ -152,11 +183,11 @@ fun SyncedLyricsView(
                         fontSize = fontSize.sp,
                         fontWeight = if (isActive) FontWeight.ExtraBold else FontWeight.Medium,
                         color = textColor,
-                        textAlign = TextAlign.Start,
+                        textAlign = lyricTextAlign,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .clickable { onSeekToMs(line.time.toLong()) }
+                            .clickable { onSeekToMs(((line.time - syncOffsetMs).toLong()).coerceAtLeast(0L)) }
                             .padding(vertical = 6.dp, horizontal = 10.dp)
                     )
                 }
@@ -173,7 +204,7 @@ fun SyncedLyricsView(
                     text = line,
                     style = MaterialTheme.typography.bodyLarge,
                     color = colors.onSurface.copy(alpha = 0.85f),
-                    textAlign = TextAlign.Start,
+                    textAlign = lyricTextAlign,
                     modifier = Modifier.fillMaxWidth()
                 )
             }

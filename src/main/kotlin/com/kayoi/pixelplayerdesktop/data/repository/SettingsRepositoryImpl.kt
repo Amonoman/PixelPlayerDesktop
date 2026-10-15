@@ -226,6 +226,22 @@ class SettingsRepositoryImpl(
         updateSettings { it.copy(defaultTab = tab) }
     }
 
+    override suspend fun setLyricsAlignment(alignment: String) {
+        updateSettings { it.copy(lyricsAlignment = alignment) }
+    }
+
+    override suspend fun setLyricsSyncOffset(songId: String, offsetMs: Int) {
+        updateSettings { current ->
+            val updatedMap = current.lyricsSyncOffsets.toMutableMap()
+            if (offsetMs == 0) {
+                updatedMap.remove(songId)
+            } else {
+                updatedMap[songId] = offsetMs
+            }
+            current.copy(lyricsSyncOffsets = updatedMap)
+        }
+    }
+
     private fun loadSettingsFromDisk(): UserSettings {
         return try {
             if (settingsFile.exists()) {

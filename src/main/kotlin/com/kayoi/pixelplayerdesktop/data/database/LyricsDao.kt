@@ -65,6 +65,17 @@ class LyricsDao(
         }
     }
 
+    suspend fun deleteLyrics(songId: String) = withContext(ioDispatcher) {
+        database.getConnection().use { conn ->
+            val sql = "DELETE FROM lyrics_cache WHERE song_id = ?"
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setString(1, songId)
+                stmt.executeUpdate()
+            }
+            database.notifyTableChanged("lyrics_cache")
+        }
+    }
+
     suspend fun deleteAllLyrics() = withContext(ioDispatcher) {
         database.getConnection().use { conn ->
             conn.createStatement().use { stmt ->

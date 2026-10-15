@@ -43,4 +43,6 @@ interface SettingsRepository {
     suspend fun setShowPlayerFileInfo(show: Boolean)
     suspend fun setNavBarCompactMode(enabled: Boolean)
     suspend fun setDefaultTab(tab: String)
+    suspend fun setLyricsAlignment(alignment: String)
+    suspend fun setLyricsSyncOffset(songId: String, offsetMs: Int)
 }

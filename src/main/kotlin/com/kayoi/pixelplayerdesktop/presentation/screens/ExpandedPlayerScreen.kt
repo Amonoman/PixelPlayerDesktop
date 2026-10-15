@@ -17,16 +17,26 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CropSquare
 import androidx.compose.material.icons.rounded.FullscreenExit
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -34,6 +44,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -60,13 +71,18 @@ import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.components.LyricsSearchDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueSidePanel
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
+import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LyricsOptionsMenu
+import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LyricsSyncControls
 import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.presentation.screens.player.DesktopLandscapeHeroPlayer
-import com.kayoi.pixelplayerdesktop.presentation.screens.player.SyncedLyricsView
+import com.kayoi.pixelplayerdesktop.presentation.screens.player.LyricsView
 import com.kayoi.pixelplayerdesktop.presentation.screens.player.WindowControlButton
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.PixelPlayerTheme
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
+import com.kayoi.pixelplayerdesktop.utils.DirectoryPicker
+import java.io.File
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -99,7 +115,19 @@ fun ExpandedPlayerScreen(
     val paletteStyle by viewModel.albumArtPaletteStyle.collectAsState()
     val colorAccuracy by viewModel.albumArtColorAccuracy.collectAsState()
     val showPlayerFileInfo by viewModel.showPlayerFileInfo.collectAsState()
+    val lyricsAlignment by viewModel.lyricsAlignment.collectAsState()
     var showLyricsSearchDialog by remember { mutableStateOf(false) }
+    var showLyricsMenu by remember { mutableStateOf(false) }
+    var showResetConfirmDialog by remember { mutableStateOf(false) }
+    var showLyricsSyncControls by remember { mutableStateOf(false) }
+    var lyricsStatusMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(lyricsStatusMessage) {
+        if (lyricsStatusMessage != null) {
+            delay(2800)
+            lyricsStatusMessage = null
+        }
+    }
 
     val songColorScheme by produceState<ColorScheme?>(
         initialValue = if (isDynamicColor && currentSong?.albumArtUriString != null) {
@@ -331,18 +359,91 @@ fun ExpandedPlayerScreen(
                                                 ),
                                                 color = colors.onSurface
                                             )
+
+                                            AnimatedVisibility(
+                                                visible = lyricsStatusMessage != null,
+                                                enter = fadeIn() + expandHorizontally(),
+                                                exit = fadeOut() + shrinkHorizontally()
+                                            ) {
+                                                Surface(
+                                                    color = colors.primaryContainer,
+                                                    shape = RoundedCornerShape(8.dp)
+                                                ) {
+                                                    Text(
+                                                        text = lyricsStatusMessage.orEmpty(),
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = colors.onPrimaryContainer,
+                                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                                    )
+                                                }
+                                            }
                                         }
 
-                                        AppTooltip("Search / Change Lyrics") {
-                                            IconButton(
-                                                onClick = { showLyricsSearchDialog = true },
-                                                modifier = Modifier.size(32.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Rounded.Search,
-                                                    contentDescription = "Search Lyrics",
-                                                    tint = colors.onSurfaceVariant,
-                                                    modifier = Modifier.size(20.dp)
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            AppTooltip("Search / Change Lyrics") {
+                                                IconButton(
+                                                    onClick = { showLyricsSearchDialog = true },
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Search,
+                                                        contentDescription = "Search Lyrics",
+                                                        tint = colors.onSurfaceVariant,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                            }
+
+                                            Box {
+                                                AppTooltip("Lyrics Options") {
+                                                    IconButton(
+                                                        onClick = { showLyricsMenu = true },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Rounded.MoreVert,
+                                                            contentDescription = "Lyrics Options",
+                                                            tint = colors.onSurfaceVariant,
+                                                            modifier = Modifier.size(20.dp)
+                                                        )
+                                                    }
+                                                }
+
+                                                val hasSyncedLyrics = !playerInfo.lyrics?.synced.isNullOrEmpty()
+                                                val hasLyrics = playerInfo.lyrics != null &&
+                                                    (hasSyncedLyrics || !playerInfo.lyrics!!.plain.isNullOrEmpty())
+
+                                                LyricsOptionsMenu(
+                                                    expanded = showLyricsMenu,
+                                                    onDismissRequest = { showLyricsMenu = false },
+                                                    currentAlignment = lyricsAlignment,
+                                                    onAlignmentChange = { viewModel.setLyricsAlignment(it) },
+                                                    hasLyrics = hasLyrics,
+                                                    hasSyncedLyrics = hasSyncedLyrics,
+                                                    showSyncControls = showLyricsSyncControls,
+                                                    onToggleSyncControls = { showLyricsSyncControls = !showLyricsSyncControls },
+                                                    onSaveToSongFolder = {
+                                                        val saved = viewModel.saveLyricsBesideCurrentSong()
+                                                        lyricsStatusMessage = if (saved != null) "Saved ${saved.name}" else "Failed to save .lrc"
+                                                    },
+                                                    onExportFile = {
+                                                        val current = currentSong
+                                                        val defaultName = current?.let { File(it.path).nameWithoutExtension } ?: "lyrics"
+                                                        val initialDir = current?.let { File(it.path).parentFile }
+                                                        DirectoryPicker.saveLrcFile(
+                                                            defaultFileName = defaultName,
+                                                            initialDir = initialDir
+                                                        ) { file ->
+                                                            val ok = viewModel.exportLyricsToFile(file)
+                                                            lyricsStatusMessage = if (ok) "Exported ${file.name}" else "Failed to export .lrc"
+                                                        }
+                                                    },
+                                                    onResetLyrics = {
+                                                        showResetConfirmDialog = true
+                                                    }
                                                 )
                                             }
                                         }
@@ -353,10 +454,36 @@ fun ExpandedPlayerScreen(
                                         color = colors.outlineVariant.copy(alpha = 0.25f)
                                     )
 
-                                    SyncedLyricsView(
+                                    val hasSyncedLyrics = !playerInfo.lyrics?.synced.isNullOrEmpty()
+                                    AnimatedVisibility(
+                                        visible = showLyricsSyncControls && hasSyncedLyrics,
+                                        enter = expandVertically() + fadeIn(),
+                                        exit = shrinkVertically() + fadeOut()
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 14.dp, vertical = 6.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            LyricsSyncControls(
+                                                offsetMillis = playerInfo.lyricsSyncOffsetMs,
+                                                onOffsetChange = { viewModel.setLyricsSyncOffset(it) },
+                                                onClose = { showLyricsSyncControls = false },
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .widthIn(max = 520.dp)
+                                            )
+                                        }
+                                    }
+
+                                    LyricsView(
                                         lyrics = playerInfo.lyrics,
+                                        isLoading = playerInfo.isLoadingLyrics,
                                         currentPositionFlow = viewModel.currentPositionMs,
                                         isPlaying = playerInfo.isPlaying,
+                                        alignment = lyricsAlignment,
+                                        syncOffsetMs = playerInfo.lyricsSyncOffsetMs,
                                         onSeekToMs = { viewModel.seekTo(it) },
                                         onSearchLyrics = { showLyricsSearchDialog = true }
                                     )
@@ -430,6 +557,30 @@ fun ExpandedPlayerScreen(
                 onDismiss = {
                     showLyricsSearchDialog = false
                     viewModel.resetLyricsSearchState()
+                }
+            )
+        }
+
+        if (showResetConfirmDialog) {
+            AlertDialog(
+                onDismissRequest = { showResetConfirmDialog = false },
+                title = { Text("Reset Lyrics?") },
+                text = { Text("This will clear custom or cached lyrics for this song and reload original embedded or local lyrics.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showResetConfirmDialog = false
+                            viewModel.resetCurrentSongLyrics()
+                            lyricsStatusMessage = "Lyrics reset to default"
+                        }
+                    ) {
+                        Text("Reset", color = colors.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showResetConfirmDialog = false }) {
+                        Text("Cancel")
+                    }
                 }
             )
         }

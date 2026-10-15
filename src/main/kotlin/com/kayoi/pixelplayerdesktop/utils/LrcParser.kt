@@ -38,4 +38,29 @@ object LrcParser {
             Lyrics(plain = plainLines.ifEmpty { lines.filter { it.isNotBlank() } }, areFromRemote = false)
         }
     }
+
+    fun toLrcString(lyrics: Lyrics, preferSynced: Boolean = true): String {
+        if (preferSynced && !lyrics.synced.isNullOrEmpty()) {
+            return lyrics.synced.joinToString("\n") { line ->
+                val totalMs = line.time
+                val minutes = totalMs / 60000
+                val seconds = (totalMs % 60000) / 1000
+                val hundredths = (totalMs % 1000) / 10
+                val timestamp = "[%02d:%02d.%02d]".format(minutes, seconds, hundredths)
+                "$timestamp${line.line}"
+            }
+        } else if (!lyrics.plain.isNullOrEmpty()) {
+            return lyrics.plain.joinToString("\n")
+        } else if (!lyrics.synced.isNullOrEmpty()) {
+            return lyrics.synced.joinToString("\n") { line ->
+                val totalMs = line.time
+                val minutes = totalMs / 60000
+                val seconds = (totalMs % 60000) / 1000
+                val hundredths = (totalMs % 1000) / 10
+                val timestamp = "[%02d:%02d.%02d]".format(minutes, seconds, hundredths)
+                "$timestamp${line.line}"
+            }
+        }
+        return ""
+    }
 }

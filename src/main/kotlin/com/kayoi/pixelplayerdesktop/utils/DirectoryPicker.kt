@@ -54,6 +54,37 @@ object DirectoryPicker {
         }
     }
 
+    fun saveLrcFile(
+        defaultFileName: String = "lyrics.lrc",
+        initialDir: File? = null,
+        title: String = "Save .lrc Lyric File",
+        onSelected: (File) -> Unit
+    ) {
+        SwingUtilities.invokeLater {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+            } catch (_: Exception) {}
+
+            val chooser = JFileChooser().apply {
+                dialogTitle = title
+                fileSelectionMode = JFileChooser.FILES_ONLY
+                fileFilter = javax.swing.filechooser.FileNameExtensionFilter("LRC Lyric Files (*.lrc)", "lrc")
+                if (initialDir != null && initialDir.exists()) {
+                    currentDirectory = initialDir
+                }
+                val safeName = if (defaultFileName.endsWith(".lrc", ignoreCase = true)) defaultFileName else "$defaultFileName.lrc"
+                selectedFile = File(currentDirectory, safeName)
+            }
+
+            val result = chooser.showSaveDialog(null)
+            if (result == JFileChooser.APPROVE_OPTION && chooser.selectedFile != null) {
+                val file = chooser.selectedFile
+                val finalFile = if (file.name.endsWith(".lrc", ignoreCase = true)) file else File(file.parentFile, "${file.name}.lrc")
+                onSelected(finalFile)
+            }
+        }
+    }
+
     fun chooseImageFile(
         title: String = "Select Album Artwork",
         onSelected: (File) -> Unit

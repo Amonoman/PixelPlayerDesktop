@@ -26,7 +26,8 @@ data class PlayerInfo(
     val isShuffleEnabled: Boolean = false,
     val repeatMode: Int = 0,
     val volume: Float = 1.0f,
-    val isMuted: Boolean = false
+    val isMuted: Boolean = false,
+    val lyricsSyncOffsetMs: Int = 0
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -51,6 +52,7 @@ data class PlayerInfo(
         if (repeatMode != other.repeatMode) return false
         if (volume != other.volume) return false
         if (isMuted != other.isMuted) return false
+        if (lyricsSyncOffsetMs != other.lyricsSyncOffsetMs) return false
 
         return true
     }
@@ -70,6 +72,7 @@ data class PlayerInfo(
         result = 31 * result + repeatMode
         result = 31 * result + volume.hashCode()
         result = 31 * result + isMuted.hashCode()
+        result = 31 * result + lyricsSyncOffsetMs
         return result
     }
 }
