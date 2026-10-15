@@ -56,7 +56,7 @@ class VlcjAudioEngine(
         initVlcj()
     }
 
-    private fun setupNativeDiscovery() {
+    private fun setupNativeDiscovery(): File? {
         try {
             val appResourceDir = System.getProperty("compose.application.resources.dir")?.let { File(it) }
             val userDir = File(System.getProperty("user.dir", "."))
@@ -81,7 +81,11 @@ class VlcjAudioEngine(
             )
 
             val vlcDir = candidates.firstOrNull { dir ->
-                dir.exists() && (File(dir, "libvlc.dll").exists() || File(dir, "libvlc.so").exists())
+                dir.exists() && (
+                    File(dir, "libvlc.dll").exists() ||
+                    File(dir, "libvlc.so").exists() ||
+                    File(dir, "libvlc.so.5").exists()
+                )
             }
 
             if (vlcDir != null) {
@@ -97,19 +101,26 @@ class VlcjAudioEngine(
                     System.setProperty("VLC_PLUGIN_PATH", plugins.absolutePath)
                 }
             }
+            return vlcDir
         } catch (_: Exception) {
+            return null
         }
     }
 
     private fun initVlcj() {
         try {
-            setupNativeDiscovery()
-            val f = MediaPlayerFactory(
+            val vlcDir = setupNativeDiscovery()
+            val factoryArgs = mutableListOf(
                 "--no-video",
                 "--no-video-title-show",
                 "--no-osd",
                 "--quiet"
             )
+            val pluginsDir = vlcDir?.resolve("plugins")
+            if (pluginsDir?.exists() == true) {
+                factoryArgs.add("--plugin-path=${pluginsDir.absolutePath}")
+            }
+            val f = MediaPlayerFactory(*factoryArgs.toTypedArray())
             factory = f
             val player = f.mediaPlayers().newMediaPlayer()
             mediaPlayer = player

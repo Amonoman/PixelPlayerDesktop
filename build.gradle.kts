@@ -1,3 +1,5 @@
+import java.net.URI
+
 plugins {
     kotlin("jvm") version "2.4.20"
     kotlin("plugin.serialization") version "2.4.20"
@@ -116,3 +118,133 @@ compose.desktop {
         }
     }
 }
+
+tasks.register("setupVlcWindows") {
+    group = "vlc"
+    description = "Downloads and bundles stripped LibVLC for Windows"
+    val targetDir = layout.projectDirectory.dir("src/main/resources-packaged/windows/vlc").asFile
+    val vlcUrl = "https://download.videolan.org/pub/videolan/vlc/3.0.21/win64/vlc-3.0.21-win64.zip"
+    val downloadDir = layout.buildDirectory.dir("downloads").get().asFile
+    val zipFile = downloadDir.resolve("vlc-3.0.21-win64.zip")
+
+    outputs.dir(targetDir)
+    onlyIf { !targetDir.resolve("libvlc.dll").exists() }
+
+    doLast {
+        downloadDir.mkdirs()
+        if (!zipFile.exists()) {
+            println("Downloading LibVLC Windows x64 from $vlcUrl...")
+            URI(vlcUrl).toURL().openStream().use { input ->
+                zipFile.outputStream().use { output -> input.copyTo(output) }
+            }
+        }
+
+        println("Extracting and stripping LibVLC to $targetDir...")
+        targetDir.mkdirs()
+        copy {
+            from(zipTree(zipFile)) {
+                include("vlc-3.0.21/libvlc.dll")
+                include("vlc-3.0.21/libvlccore.dll")
+                include("vlc-3.0.21/plugins/**")
+                exclude("**/plugins/gui/**")
+                exclude("**/plugins/video_output/**")
+                exclude("**/plugins/video_filter/**")
+                exclude("**/plugins/video_chroma/**")
+                exclude("**/plugins/spu/**")
+                exclude("**/plugins/text_renderer/**")
+                exclude("**/plugins/visualization/**")
+                exclude("**/plugins/control/**")
+                eachFile {
+                    path = path.substringAfter("vlc-3.0.21/")
+                }
+            }
+            includeEmptyDirs = false
+            into(targetDir)
+        }
+        println("LibVLC Windows bundled successfully (video modules stripped).")
+    }
+}
+
+tasks.register("setupVlcLinux") {
+    group = "vlc"
+    description = "Bundles stripped LibVLC for Linux from host system"
+    val targetDir = layout.projectDirectory.dir("src/main/resources-packaged/linux/vlc").asFile
+    outputs.dir(targetDir)
+    onlyIf {
+        !targetDir.resolve("libvlc.so").exists() && !targetDir.resolve("libvlc.so.5").exists()
+    }
+
+    doLast {
+        val searchDirs = listOf(
+            file("/usr/lib/x86_64-linux-gnu"),
+            file("/usr/lib64"),
+            file("/usr/lib")
+        )
+        val vlcLibDir = searchDirs.firstOrNull { dir ->
+            dir.resolve("libvlc.so.5").exists() || dir.resolve("libvlc.so").exists()
+        }
+        val vlcPluginDir = searchDirs.map { it.resolve("vlc/plugins") }.firstOrNull { it.exists() }
+
+        if (vlcLibDir == null) {
+            println("WARNING: LibVLC not found on host Linux system. Install with: sudo apt install -y libvlc-dev vlc")
+            return@doLast
+        }
+
+        println("Bundling LibVLC from $vlcLibDir to $targetDir...")
+        targetDir.mkdirs()
+
+        copy {
+            from(vlcLibDir) {
+                include("libvlc.so*")
+                include("libvlccore.so*")
+            }
+            into(targetDir)
+        }
+
+        val libvlc5 = targetDir.resolve("libvlc.so.5")
+        val libvlcSo = targetDir.resolve("libvlc.so")
+        if (libvlc5.exists() && !libvlcSo.exists()) {
+            libvlc5.copyTo(libvlcSo)
+        }
+        val libvlccore9 = targetDir.resolve("libvlccore.so.9")
+        val libvlccoreSo = targetDir.resolve("libvlccore.so")
+        if (libvlccore9.exists() && !libvlccoreSo.exists()) {
+            libvlccore9.copyTo(libvlccoreSo)
+        }
+
+        if (vlcPluginDir != null && vlcPluginDir.exists()) {
+            println("Bundling and stripping VLC plugins from $vlcPluginDir...")
+            copy {
+                from(vlcPluginDir) {
+                    exclude("gui/**")
+                    exclude("video_output/**")
+                    exclude("video_filter/**")
+                    exclude("video_chroma/**")
+                    exclude("spu/**")
+                    exclude("text_renderer/**")
+                    exclude("visualization/**")
+                    exclude("control/**")
+                }
+                includeEmptyDirs = false
+                into(targetDir.resolve("plugins"))
+            }
+        }
+        println("LibVLC Linux bundled successfully (video modules stripped).")
+    }
+}
+
+tasks.matching {
+    it.name.contains("Resource", ignoreCase = true) ||
+    it.name.startsWith("package") ||
+    it.name == "createDistributable"
+}.configureEach {
+    if (name != "setupVlcWindows" && name != "setupVlcLinux") {
+        val os = org.gradle.internal.os.OperatingSystem.current()
+        if (os.isWindows) {
+            dependsOn("setupVlcWindows")
+        } else if (os.isLinux) {
+            dependsOn("setupVlcLinux")
+        }
+    }
+}
+

@@ -115,20 +115,6 @@ jobs:
         with:
           validate-wrappers: false
 
-      - name: Download and Bundle LibVLC (Windows)
-        shell: pwsh
-        run: |
-          $vlcUrl = "https://download.videolan.org/pub/videolan/vlc/3.0.21/win64/vlc-3.0.21-win64.7z"
-          Write-Host "Downloading LibVLC Windows x64..."
-          Invoke-WebRequest -Uri $vlcUrl -OutFile "vlc-win64.7z"
-          7z x vlc-win64.7z -y
-          $targetDir = "src/main/resources-packaged/windows/vlc"
-          New-Item -ItemType Directory -Force -Path $targetDir
-          Copy-Item "vlc-3.0.21/libvlc.dll" "$targetDir/"
-          Copy-Item "vlc-3.0.21/libvlccore.dll" "$targetDir/"
-          Copy-Item -Recurse "vlc-3.0.21/plugins" "$targetDir/plugins"
-          Write-Host "LibVLC bundled successfully into $targetDir"
-
       - name: Build Windows Distribution
         run: .\gradlew.bat packageMsi packageExe createDistributable "-PAPP_VERSION_NAME=${{ needs.build-linux.outputs.version }}" --no-daemon
 
