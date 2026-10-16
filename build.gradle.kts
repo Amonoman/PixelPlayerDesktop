@@ -158,6 +158,7 @@ tasks.register("setupVlcWindows") {
                 include("vlc-3.0.21/libvlc.dll")
                 include("vlc-3.0.21/libvlccore.dll")
                 include("vlc-3.0.21/plugins/**")
+                exclude("**/plugins/plugins.dat")
                 exclude("**/plugins/gui/**")
                 exclude("**/plugins/video_output/**")
                 exclude("**/plugins/video_filter/**")
@@ -228,6 +229,7 @@ tasks.register("setupVlcLinux") {
             println("Bundling and stripping VLC plugins from $vlcPluginDir...")
             copy {
                 from(vlcPluginDir) {
+                    exclude("plugins.dat")
                     exclude("gui/**")
                     exclude("video_output/**")
                     exclude("video_filter/**")

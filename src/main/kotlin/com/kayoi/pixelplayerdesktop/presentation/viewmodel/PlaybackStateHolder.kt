@@ -15,10 +15,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -30,6 +36,54 @@ class PlaybackStateHolder(
     private val settingsRepository: SettingsRepository,
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) {
+
+    val replayGainEnabled: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.replayGainEnabled }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
+
+    val replayGainMode: StateFlow<String> = settingsRepository.settingsFlow
+        .map { it.replayGainMode }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, "track")
+
+    val crossfadeEnabled: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.crossfadeEnabled }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
+
+    val crossfadeDurationSeconds: StateFlow<Int> = settingsRepository.settingsFlow
+        .map { it.crossfadeDurationSeconds }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, 3)
+
+    val showQueueHistory: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.showQueueHistory }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, true)
+
+    val closeToTray: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.closeToTray }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
+
+    fun setReplayGainEnabled(enabled: Boolean) {
+        coroutineScope.launch { settingsRepository.setReplayGainEnabled(enabled) }
+    }
+
+    fun setReplayGainMode(mode: String) {
+        coroutineScope.launch { settingsRepository.setReplayGainMode(mode) }
+    }
+
+    fun setCrossfadeEnabled(enabled: Boolean) {
+        coroutineScope.launch { settingsRepository.setCrossfadeEnabled(enabled) }
+    }
+
+    fun setCrossfadeDurationSeconds(durationSeconds: Int) {
+        coroutineScope.launch { settingsRepository.setCrossfadeDurationSeconds(durationSeconds) }
+    }
+
+    fun setShowQueueHistory(show: Boolean) {
+        coroutineScope.launch { settingsRepository.setShowQueueHistory(show) }
+    }
+
+    fun setCloseToTray(enabled: Boolean) {
+        coroutineScope.launch { settingsRepository.setCloseToTray(enabled) }
+    }
 
     private val _playerInfo = MutableStateFlow(PlayerInfo())
     val playerInfo: StateFlow<PlayerInfo> = _playerInfo.asStateFlow()
@@ -171,6 +225,7 @@ class PlaybackStateHolder(
                 }
                 if (song != null) {
                     musicRepository.recordSongPlayed(song.id)
+                    scheduleTransitionFor(song)
                     val lyrics = lyricsRepository.getLyrics(song.id, song.path, song.title, song.artist)
                     _playerInfo.update {
                         it.copy(
@@ -179,6 +234,7 @@ class PlaybackStateHolder(
                         )
                     }
                 } else {
+                    transitionSchedulerJob?.cancel()
                     _playerInfo.update { it.copy(isLoadingLyrics = false) }
                 }
             }
@@ -232,7 +288,22 @@ class PlaybackStateHolder(
         }
 
         coroutineScope.launch {
+            settingsRepository.settingsFlow.collect { settings ->
+                audioEngine.setReplayGain(settings.replayGainEnabled, settings.replayGainMode)
+                val curr = queueManager.currentSong.value
+                if (curr != null) {
+                    if (settings.crossfadeEnabled) {
+                        scheduleTransitionFor(curr)
+                    } else {
+                        transitionSchedulerJob?.cancel()
+                    }
+                }
+            }
+        }
+
+        coroutineScope.launch {
             audioEngine.completionEvents.collect {
+                transitionSchedulerJob?.cancel()
                 val next = queueManager.getNextSong()
                 if (next != null) {
                     audioEngine.play(next.path)
@@ -240,6 +311,78 @@ class PlaybackStateHolder(
                     audioEngine.stop()
                 }
             }
+        }
+    }
+
+    private var transitionSchedulerJob: Job? = null
+
+    private fun scheduleTransitionFor(song: Song) {
+        transitionSchedulerJob?.cancel()
+        if (!crossfadeEnabled.value) return
+
+        transitionSchedulerJob = coroutineScope.launch {
+            while (isActive && audioEngine.isCrossfading.value) {
+                delay(200)
+            }
+            if (!isActive || queueManager.currentSong.value?.id != song.id) return@launch
+
+            delay(1500)
+            if (!isActive || queueManager.currentSong.value?.id != song.id) return@launch
+
+            var dur = audioEngine.durationMs.value
+            if (dur <= 0) dur = song.duration
+            var waitCount = 0
+            while (isActive && dur <= 0 && waitCount < 20) {
+                delay(250)
+                dur = audioEngine.durationMs.value
+                waitCount++
+            }
+            if (!isActive || dur <= 0 || queueManager.currentSong.value?.id != song.id) return@launch
+
+            val fadeDurationMs = (crossfadeDurationSeconds.value * 1000L).coerceIn(500L, 12000L)
+            val minTrackLength = fadeDurationMs + 1000L
+            if (dur < minTrackLength) return@launch
+
+            val transitionPoint = dur - fadeDurationMs
+
+            val currentPos = audioEngine.currentPositionMs.value
+            if (currentPos >= transitionPoint) {
+                val remaining = (dur - currentPos).coerceAtLeast(0L)
+                if (remaining > 500L) {
+                    val nextSong = queueManager.peekNextSong()
+                    if (nextSong != null) {
+                        queueManager.getNextSong()
+                        audioEngine.crossfadeTo(nextSong.path, remaining.coerceAtMost(fadeDurationMs))
+                    }
+                }
+                return@launch
+            }
+
+            while (isActive &&
+                queueManager.currentSong.value?.id == song.id &&
+                audioEngine.playbackState.value == PlaybackState.PLAYING
+            ) {
+                val pos = audioEngine.currentPositionMs.value
+                val remaining = transitionPoint - pos
+                if (remaining <= 0) break
+
+                val sleep = when {
+                    remaining > 5000 -> 1000L
+                    remaining > 1000 -> 250L
+                    else -> 50L
+                }.coerceAtMost(remaining).coerceAtLeast(20L)
+
+                delay(sleep)
+            }
+
+            if (!isActive ||
+                queueManager.currentSong.value?.id != song.id ||
+                audioEngine.playbackState.value != PlaybackState.PLAYING
+            ) return@launch
+
+            val nextSong = queueManager.peekNextSong() ?: return@launch
+            queueManager.getNextSong()
+            audioEngine.crossfadeTo(nextSong.path, fadeDurationMs)
         }
     }
 
@@ -275,7 +418,12 @@ class PlaybackStateHolder(
     fun playNext() {
         val next = queueManager.getNextSong()
         if (next != null) {
-            audioEngine.play(next.path)
+            if (crossfadeEnabled.value && audioEngine.playbackState.value == PlaybackState.PLAYING) {
+                val fadeMs = (crossfadeDurationSeconds.value * 1000L).coerceIn(500L, 12000L)
+                audioEngine.crossfadeTo(next.path, fadeMs)
+            } else {
+                audioEngine.play(next.path)
+            }
         } else {
             val current = queueManager.currentSong.value
             if (current != null) {
@@ -295,6 +443,10 @@ class PlaybackStateHolder(
 
     fun seekTo(positionMs: Long) {
         audioEngine.seekTo(positionMs)
+        val song = queueManager.currentSong.value
+        if (song != null && crossfadeEnabled.value) {
+            scheduleTransitionFor(song)
+        }
     }
 
     fun setVolume(vol: Float) {

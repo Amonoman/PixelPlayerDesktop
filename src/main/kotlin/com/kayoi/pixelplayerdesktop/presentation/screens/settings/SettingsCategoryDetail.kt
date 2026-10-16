@@ -35,8 +35,11 @@ import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import androidx.compose.material.icons.automirrored.rounded.VolumeDown
 import androidx.compose.material.icons.rounded.AttachFile
 import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.Brush
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.DarkMode
@@ -771,6 +774,195 @@ fun SettingsCategoryDetail(
                             },
                             shape = getGroupShape(1, 2),
                             onClick = { showDefaultTabDialog = true }
+                        )
+                    }
+                }
+            }
+
+            SettingsSection.PLAYBACK -> {
+                item {
+                    val replayGainEnabled by viewModel.replayGainEnabled.collectAsState()
+                    val replayGainMode by viewModel.replayGainMode.collectAsState()
+
+                    SettingsSubsection(title = "VOLUME NORMALIZATION (REPLAYGAIN)") {
+                        ExpressiveSwitchRow(
+                            title = "Enable ReplayGain",
+                            subtitle = "Normalize volume levels using ReplayGain metadata from audio files.",
+                            checked = replayGainEnabled,
+                            onCheckedChange = { viewModel.setReplayGainEnabled(it) },
+                            leadingIcon = {
+                                Icon(Icons.AutoMirrored.Rounded.VolumeDown, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                            },
+                            shape = if (replayGainEnabled) getGroupShape(0, 2) else getGroupShape(0, 1)
+                        )
+
+                        AnimatedVisibility(
+                            visible = replayGainEnabled,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
+                        ) {
+                            Surface(
+                                shape = getGroupShape(1, 2),
+                                color = colors.surfaceContainer,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Rounded.VolumeDown,
+                                            contentDescription = null,
+                                            tint = colors.secondary,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+
+                                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            Text(
+                                                text = "Gain Mode",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = colors.onSurface
+                                            )
+                                            Text(
+                                                text = "Track: normalize each song. Album: normalize per album.",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = colors.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+
+                                    FlowRow(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        listOf("track" to "Track", "album" to "Album").forEach { (modeKey, modeLabel) ->
+                                            val isSelected = replayGainMode == modeKey
+                                            val animatedContainerColor by animateColorAsState(
+                                                targetValue = if (isSelected) colors.primary else colors.surfaceContainerHighest,
+                                                label = "gainModeContainer"
+                                            )
+                                            val animatedContentColor by animateColorAsState(
+                                                targetValue = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
+                                                label = "gainModeContent"
+                                            )
+
+                                            Surface(
+                                                shape = RoundedCornerShape(12.dp),
+                                                color = animatedContainerColor,
+                                                modifier = Modifier
+                                                    .height(40.dp)
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .clickable { viewModel.setReplayGainMode(modeKey) }
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(
+                                                        text = modeLabel,
+                                                        style = MaterialTheme.typography.labelMedium,
+                                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                        color = animatedContentColor,
+                                                        maxLines = 1
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    val crossfadeEnabled by viewModel.crossfadeEnabled.collectAsState()
+                    val crossfadeDuration by viewModel.crossfadeDurationSeconds.collectAsState()
+                    val showQueueHistory by viewModel.showQueueHistory.collectAsState()
+
+                    var crossfadeDurationDraft by remember(crossfadeDuration) {
+                        mutableStateOf(crossfadeDuration.toFloat())
+                    }
+
+                    SettingsSubsection(title = "QUEUE AND TRANSITIONS") {
+                        val crossfadeShape = when {
+                            crossfadeEnabled -> getGroupShape(0, 3)
+                            else -> getGroupShape(0, 2)
+                        }
+
+                        ExpressiveSwitchRow(
+                            title = "Crossfade",
+                            subtitle = "Enable smooth transition between songs.",
+                            checked = crossfadeEnabled,
+                            onCheckedChange = { viewModel.setCrossfadeEnabled(it) },
+                            leadingIcon = {
+                                Icon(PixelPlayerIcons.AlignJustifySpaceEven, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                            },
+                            shape = crossfadeShape
+                        )
+
+                        AnimatedVisibility(
+                            visible = crossfadeEnabled,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
+                        ) {
+                            ExpressiveSliderSettingsRow(
+                                title = "Crossfade Duration",
+                                value = crossfadeDurationDraft,
+                                valueRange = 1f..12f,
+                                steps = 10,
+                                onValueChange = { crossfadeDurationDraft = it },
+                                onValueChangeFinished = {
+                                    val selected = crossfadeDurationDraft.roundToInt()
+                                    if (selected != crossfadeDuration) {
+                                        viewModel.setCrossfadeDurationSeconds(selected)
+                                    }
+                                },
+                                valueText = { value -> "${value.roundToInt()}s" },
+                                shape = getGroupShape(1, 3)
+                            )
+                        }
+
+                        val queueHistoryShape = when {
+                            crossfadeEnabled -> getGroupShape(2, 3)
+                            else -> getGroupShape(1, 2)
+                        }
+
+                        ExpressiveSwitchRow(
+                            title = "Show queue history",
+                            subtitle = "Show previously played songs in the queue.",
+                            checked = showQueueHistory,
+                            onCheckedChange = { viewModel.setShowQueueHistory(it) },
+                            leadingIcon = {
+                                Icon(Icons.AutoMirrored.Rounded.QueueMusic, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                            },
+                            shape = queueHistoryShape
+                        )
+                    }
+                }
+
+                item {
+                    val closeToTray by viewModel.closeToTray.collectAsState()
+
+                    SettingsSubsection(title = "BACKGROUND PLAYBACK") {
+                        ExpressiveSwitchRow(
+                            title = "Close to system tray",
+                            subtitle = "Keep music playing in system tray when closing the window.",
+                            checked = closeToTray,
+                            onCheckedChange = { viewModel.setCloseToTray(it) },
+                            leadingIcon = {
+                                Icon(Icons.Rounded.Layers, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                            },
+                            shape = getGroupShape(0, 1)
                         )
                     }
                 }

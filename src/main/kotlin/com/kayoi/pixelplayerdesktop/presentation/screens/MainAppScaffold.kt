@@ -92,6 +92,7 @@ fun MainAppScaffold(
     val colorAccuracy by viewModel.albumArtColorAccuracy.collectAsState()
     val navBarCompactMode by viewModel.navBarCompactMode.collectAsState()
     val defaultTabKey by viewModel.defaultTab.collectAsState()
+    val showQueueHistory by viewModel.showQueueHistory.collectAsState()
 
     var selectedPlaylistId by remember { mutableStateOf<String?>(null) }
     var selectedAlbum by remember { mutableStateOf<Album?>(null) }
@@ -382,6 +383,7 @@ fun MainAppScaffold(
                             isPlaying = playerInfo.isPlaying,
                             isShuffleOn = playerInfo.isShuffleEnabled,
                             repeatMode = playerInfo.repeatMode,
+                            showQueueHistory = showQueueHistory,
                             onSongClick = { song, index ->
                                 viewModel.playSongAtIndex(index)
                             },

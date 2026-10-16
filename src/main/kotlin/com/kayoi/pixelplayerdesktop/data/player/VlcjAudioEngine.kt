@@ -20,13 +20,19 @@ import uk.co.caprica.vlcj.factory.MediaPlayerFactory
 import uk.co.caprica.vlcj.player.base.MediaPlayer
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter
 import java.io.File
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 class VlcjAudioEngine(
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) : AudioEngine {
 
     private var factory: MediaPlayerFactory? = null
-    private var mediaPlayer: MediaPlayer? = null
+    private var playerA: MediaPlayer? = null
+    private var playerB: MediaPlayer? = null
+    private var activePlayer: MediaPlayer? = null
+    private var standbyPlayer: MediaPlayer? = null
 
     private val _playbackState = MutableStateFlow(PlaybackState.IDLE)
     override val playbackState: StateFlow<PlaybackState> = _playbackState.asStateFlow()
@@ -50,7 +56,16 @@ class VlcjAudioEngine(
     override val completionEvents: SharedFlow<Unit> = _completionEvents.asSharedFlow()
 
     private var positionTickerJob: Job? = null
+    private var crossfadeJob: Job? = null
+    private var playPauseFadeJob: Job? = null
+    private val _isCrossfading = MutableStateFlow(false)
+    override val isCrossfading: StateFlow<Boolean> = _isCrossfading.asStateFlow()
     private var isInitialized = false
+    private var replayGainEnabled = false
+    private var replayGainMode = "track"
+    private val replayGainManager = ReplayGainManager()
+    private var currentReplayGainMultiplier: Float = 1.0f
+    private var currentTrackPath: String? = null
 
     init {
         initVlcj()
@@ -107,6 +122,60 @@ class VlcjAudioEngine(
         }
     }
 
+    private fun createEventListener(): MediaPlayerEventAdapter {
+        return object : MediaPlayerEventAdapter() {
+            override fun playing(mp: MediaPlayer) {
+                if (mp === activePlayer && mp.status().isPlaying) {
+                    _playbackState.value = PlaybackState.PLAYING
+                    startPositionTicker()
+                }
+            }
+
+            override fun paused(mp: MediaPlayer) {
+                if (mp === activePlayer && !mp.status().isPlaying) {
+                    _playbackState.value = PlaybackState.PAUSED
+                    stopPositionTicker()
+                }
+            }
+
+            override fun stopped(mp: MediaPlayer) {
+                if (mp === activePlayer && !_isCrossfading.value) {
+                    _playbackState.value = PlaybackState.IDLE
+                    stopPositionTicker()
+                    _currentPositionMs.value = 0L
+                }
+            }
+
+            override fun finished(mp: MediaPlayer) {
+                if (mp === activePlayer && !_isCrossfading.value) {
+                    _playbackState.value = PlaybackState.ENDED
+                    stopPositionTicker()
+                    _completionEvents.tryEmit(Unit)
+                }
+            }
+
+            override fun lengthChanged(mp: MediaPlayer, newLength: Long) {
+                if (mp === activePlayer && newLength > 0) {
+                    _durationMs.value = newLength
+                }
+            }
+
+            override fun timeChanged(mp: MediaPlayer, newTime: Long) {
+                if (mp === activePlayer && newTime >= 0) {
+                    _currentPositionMs.value = newTime
+                }
+            }
+
+            override fun error(mp: MediaPlayer) {
+                if (mp === activePlayer) {
+                    _playbackState.value = PlaybackState.ERROR
+                    stopPositionTicker()
+                    _errorEvents.tryEmit("VLC playback error encountered")
+                }
+            }
+        }
+    }
+
     private fun initVlcj() {
         try {
             val vlcDir = setupNativeDiscovery()
@@ -116,64 +185,62 @@ class VlcjAudioEngine(
                 "--no-osd",
                 "--quiet"
             )
-            val pluginsDir = vlcDir?.resolve("plugins")
-            if (pluginsDir?.exists() == true) {
-                factoryArgs.add("--plugin-path=${pluginsDir.absolutePath}")
-            }
             val f = MediaPlayerFactory(*factoryArgs.toTypedArray())
             factory = f
-            val player = f.mediaPlayers().newMediaPlayer()
-            mediaPlayer = player
+            val pA = f.mediaPlayers().newMediaPlayer()
+            val pB = f.mediaPlayers().newMediaPlayer()
+            playerA = pA
+            playerB = pB
+            activePlayer = pA
+            standbyPlayer = pB
 
-            player.events().addMediaPlayerEventListener(object : MediaPlayerEventAdapter() {
-                override fun playing(mediaPlayer: MediaPlayer) {
-                    _playbackState.value = PlaybackState.PLAYING
-                    startPositionTicker()
-                }
-
-                override fun paused(mediaPlayer: MediaPlayer) {
-                    _playbackState.value = PlaybackState.PAUSED
-                    stopPositionTicker()
-                }
-
-                override fun stopped(mediaPlayer: MediaPlayer) {
-                    _playbackState.value = PlaybackState.IDLE
-                    stopPositionTicker()
-                    _currentPositionMs.value = 0L
-                }
-
-                override fun finished(mediaPlayer: MediaPlayer) {
-                    _playbackState.value = PlaybackState.ENDED
-                    stopPositionTicker()
-                    _completionEvents.tryEmit(Unit)
-                }
-
-                override fun lengthChanged(mediaPlayer: MediaPlayer, newLength: Long) {
-                    if (newLength > 0) {
-                        _durationMs.value = newLength
-                    }
-                }
-
-                override fun timeChanged(mediaPlayer: MediaPlayer, newTime: Long) {
-                    if (newTime >= 0) {
-                        _currentPositionMs.value = newTime
-                    }
-                }
-
-                override fun error(mediaPlayer: MediaPlayer) {
-                    _playbackState.value = PlaybackState.ERROR
-                    stopPositionTicker()
-                    _errorEvents.tryEmit("VLC playback error encountered")
-                }
-            })
+            pA.events().addMediaPlayerEventListener(createEventListener())
+            pB.events().addMediaPlayerEventListener(createEventListener())
             isInitialized = true
         } catch (e: Throwable) {
-            // LibVLC not found or mock environment (e.g., CI/headless unit test)
             isInitialized = false
         }
     }
 
+    private fun updateReplayGainMultiplier(filePath: String) {
+        if (!replayGainEnabled) {
+            currentReplayGainMultiplier = 1.0f
+            return
+        }
+        val values = replayGainManager.readReplayGain(filePath)
+        val useAlbum = replayGainMode.equals("album", ignoreCase = true)
+        currentReplayGainMultiplier = replayGainManager.getVolumeMultiplier(values, useAlbum)
+    }
+
+    private fun getEffectiveVolume(multiplier: Float = currentReplayGainMultiplier): Int {
+        if (_isMuted.value) return 0
+        val rawVol = _volume.value * multiplier
+        return (rawVol * 100).toInt().coerceIn(0, 100)
+    }
+
+    private fun applyEffectiveVolume() {
+        if (!_isCrossfading.value && playPauseFadeJob?.isActive != true) {
+            val player = activePlayer
+            if (player != null && isInitialized) {
+                try {
+                    player.audio().setVolume(getEffectiveVolume())
+                } catch (_: Exception) {}
+            }
+        }
+    }
+
     override fun play(mediaPathOrUri: String) {
+        playPauseFadeJob?.cancel()
+        crossfadeJob?.cancel()
+        _isCrossfading.value = false
+        try {
+            standbyPlayer?.controls()?.pause()
+            standbyPlayer?.controls()?.stop()
+        } catch (_: Exception) {}
+
+        _currentPositionMs.value = 0L
+        _durationMs.value = 0L
+
         val file = File(mediaPathOrUri)
         val validPath = if (file.exists()) file.absolutePath else mediaPathOrUri
 
@@ -183,16 +250,19 @@ class VlcjAudioEngine(
             return
         }
 
-        val player = mediaPlayer
+        currentTrackPath = validPath
+        updateReplayGainMultiplier(validPath)
+
+        val player = activePlayer
         if (player == null || !isInitialized) {
-            // Fallback / simulation mode for tests or environments without native LibVLC
             _playbackState.value = PlaybackState.PLAYING
-            _currentPositionMs.value = 0L
             return
         }
 
         try {
             _playbackState.value = PlaybackState.BUFFERING
+            val targetVol = getEffectiveVolume()
+            player.audio().setVolume(targetVol)
             player.media().play(validPath)
         } catch (e: Exception) {
             _playbackState.value = PlaybackState.ERROR
@@ -200,48 +270,235 @@ class VlcjAudioEngine(
         }
     }
 
+    override fun crossfadeTo(mediaPathOrUri: String, durationMs: Long) {
+        val outgoingPlayer = activePlayer
+        val incomingPlayer = standbyPlayer
+
+        if (!isInitialized || outgoingPlayer == null || incomingPlayer == null || _playbackState.value != PlaybackState.PLAYING) {
+            play(mediaPathOrUri)
+            return
+        }
+
+        if (_isCrossfading.value) {
+            play(mediaPathOrUri)
+            return
+        }
+
+        val file = File(mediaPathOrUri)
+        val validPath = if (file.exists()) file.absolutePath else mediaPathOrUri
+
+        if (file.exists() && !file.canRead()) {
+            _playbackState.value = PlaybackState.ERROR
+            _errorEvents.tryEmit("File is not readable: $mediaPathOrUri")
+            return
+        }
+
+        val outgoingMultiplier = currentReplayGainMultiplier
+        val incomingValues = if (replayGainEnabled) replayGainManager.readReplayGain(validPath) else null
+        val incomingMultiplier = if (replayGainEnabled) {
+            replayGainManager.getVolumeMultiplier(incomingValues, replayGainMode.equals("album", ignoreCase = true))
+        } else 1.0f
+        currentTrackPath = validPath
+
+        try {
+            _isCrossfading.value = true
+            _currentPositionMs.value = 0L
+            _durationMs.value = 0L
+
+            activePlayer = incomingPlayer
+            standbyPlayer = outgoingPlayer
+
+            incomingPlayer.audio().setVolume(0)
+            incomingPlayer.media().play(validPath)
+
+            val clampedDuration = durationMs.coerceIn(500L, 12000L)
+            val stepMs = 50L
+
+            crossfadeJob = coroutineScope.launch {
+                var elapsedMs = 0L
+                try {
+                    while (isActive) {
+                        if (_playbackState.value == PlaybackState.PLAYING) {
+                            val progress = (elapsedMs.toFloat() / clampedDuration).coerceIn(0f, 1f)
+                            val baseVol = _volume.value
+                            val isMuted = _isMuted.value
+
+                            if (!isMuted) {
+                                val volOut = (cos(progress * PI / 2.0).toFloat() * baseVol * outgoingMultiplier * 100).toInt().coerceIn(0, 100)
+                                val volIn = (sin(progress * PI / 2.0).toFloat() * baseVol * incomingMultiplier * 100).toInt().coerceIn(0, 100)
+                                try {
+                                    outgoingPlayer.audio().setVolume(volOut)
+                                    incomingPlayer.audio().setVolume(volIn)
+                                } catch (_: Exception) {}
+                            }
+
+                            if (progress >= 1f || elapsedMs >= clampedDuration) break
+                            elapsedMs += stepMs
+                        }
+                        delay(stepMs)
+                    }
+                } finally {
+                    currentReplayGainMultiplier = incomingMultiplier
+                    try {
+                        outgoingPlayer.audio().setVolume(0)
+                        outgoingPlayer.controls().pause()
+                        outgoingPlayer.controls().stop()
+                        val normalVol = getEffectiveVolume(incomingMultiplier)
+                        outgoingPlayer.audio().setVolume(normalVol)
+                        incomingPlayer.audio().setVolume(normalVol)
+                    } catch (_: Exception) {}
+                    _isCrossfading.value = false
+                }
+            }
+        } catch (e: Exception) {
+            _isCrossfading.value = false
+            play(mediaPathOrUri)
+        }
+    }
+
+    override fun setReplayGain(enabled: Boolean, mode: String) {
+        replayGainEnabled = enabled
+        replayGainMode = mode
+        val path = currentTrackPath
+        if (path != null) {
+            updateReplayGainMultiplier(path)
+            applyEffectiveVolume()
+        }
+    }
+
     override fun play() {
-        val player = mediaPlayer
+        val player = activePlayer
         if (player == null || !isInitialized) {
             _playbackState.value = PlaybackState.PLAYING
             return
         }
+        playPauseFadeJob?.cancel()
         try {
+            _playbackState.value = PlaybackState.PLAYING
+            startPositionTicker()
+
+            if (_isCrossfading.value) {
+                player.controls().play()
+                standbyPlayer?.controls()?.play()
+                return
+            }
+
+            val targetVol = getEffectiveVolume()
+            if (targetVol <= 0) {
+                player.controls().play()
+                return
+            }
+
+            val wasPlaying = try { player.status().isPlaying } catch (_: Exception) { false }
+            val currentVol = try { player.audio().volume() } catch (_: Exception) { 0 }
+            val fromVol = if (wasPlaying) currentVol.coerceIn(0, targetVol) else 0
+
+            if (!wasPlaying) {
+                try { player.audio().setVolume(0) } catch (_: Exception) {}
+            }
             player.controls().play()
+
+            playPauseFadeJob = coroutineScope.launch {
+                val durationMs = 300L
+                val steps = 15
+                val stepDelay = durationMs / steps
+                for (i in 1..steps) {
+                    if (!isActive) break
+                    val progress = i.toFloat() / steps
+                    val currentStepVol = (fromVol + progress * (targetVol - fromVol)).toInt().coerceIn(0, 100)
+                    try {
+                        player.audio().setVolume(currentStepVol)
+                    } catch (_: Exception) {}
+                    delay(stepDelay)
+                }
+                try {
+                    player.audio().setVolume(targetVol)
+                } catch (_: Exception) {}
+            }
         } catch (e: Exception) {
             _errorEvents.tryEmit(e.message ?: "Failed to resume playback")
         }
     }
 
     override fun pause() {
-        val player = mediaPlayer
+        val player = activePlayer
         if (player == null || !isInitialized) {
             _playbackState.value = PlaybackState.PAUSED
             return
         }
+        playPauseFadeJob?.cancel()
         try {
-            player.controls().pause()
+            _playbackState.value = PlaybackState.PAUSED
+
+            if (_isCrossfading.value) {
+                player.controls().pause()
+                standbyPlayer?.controls()?.pause()
+                return
+            }
+
+            val targetVol = getEffectiveVolume()
+            val currentVol = try { player.audio().volume() } catch (_: Exception) { targetVol }
+            val startVol = currentVol.coerceIn(0, 100)
+
+            if (startVol <= 0) {
+                player.controls().pause()
+                return
+            }
+
+            playPauseFadeJob = coroutineScope.launch {
+                val durationMs = 300L
+                val steps = 15
+                val stepDelay = durationMs / steps
+                for (i in 1..steps) {
+                    if (!isActive) break
+                    val currentStepVol = (((steps - i).toFloat() / steps) * startVol).toInt().coerceIn(0, 100)
+                    try {
+                        player.audio().setVolume(currentStepVol)
+                    } catch (_: Exception) {}
+                    delay(stepDelay)
+                }
+                try {
+                    player.audio().setVolume(0)
+                    player.controls().pause()
+                    player.audio().setVolume(targetVol)
+                } catch (_: Exception) {}
+            }
         } catch (e: Exception) {
             _errorEvents.tryEmit(e.message ?: "Failed to pause playback")
         }
     }
 
     override fun stop() {
-        val player = mediaPlayer
+        playPauseFadeJob?.cancel()
+        crossfadeJob?.cancel()
+        _isCrossfading.value = false
+        _currentPositionMs.value = 0L
+        _durationMs.value = 0L
+        val player = activePlayer
         if (player == null || !isInitialized) {
             _playbackState.value = PlaybackState.IDLE
-            _currentPositionMs.value = 0L
             return
         }
         try {
             player.controls().stop()
+            standbyPlayer?.controls()?.stop()
         } catch (e: Exception) {
             _errorEvents.tryEmit(e.message ?: "Failed to stop playback")
         }
     }
 
     override fun seekTo(positionMs: Long) {
-        val player = mediaPlayer
+        playPauseFadeJob?.cancel()
+        if (_isCrossfading.value) {
+            crossfadeJob?.cancel()
+            _isCrossfading.value = false
+            try {
+                standbyPlayer?.controls()?.stop()
+                val normalVol = getEffectiveVolume()
+                activePlayer?.audio()?.setVolume(normalVol)
+            } catch (_: Exception) {}
+        }
+        val player = activePlayer
         if (player == null || !isInitialized) {
             _currentPositionMs.value = positionMs
             return
@@ -257,43 +514,32 @@ class VlcjAudioEngine(
     override fun setVolume(volume: Float) {
         val clamped = volume.coerceIn(0.0f, 1.0f)
         _volume.value = clamped
-        val player = mediaPlayer
-        if (player != null && isInitialized) {
-            try {
-                player.audio().setVolume((clamped * 100).toInt())
-            } catch (e: Exception) {
-                // Ignore volume error
-            }
-        }
+        playPauseFadeJob?.cancel()
+        applyEffectiveVolume()
     }
 
     override fun setMute(muted: Boolean) {
         _isMuted.value = muted
-        val player = mediaPlayer
-        if (player != null && isInitialized) {
-            try {
-                player.audio().isMute = muted
-            } catch (e: Exception) {
-                // Ignore mute error
-            }
-        }
+        playPauseFadeJob?.cancel()
+        applyEffectiveVolume()
     }
 
     override fun release() {
         stopPositionTicker()
+        playPauseFadeJob?.cancel()
+        crossfadeJob?.cancel()
         try {
-            mediaPlayer?.release()
+            playerA?.release()
+            playerB?.release()
             factory?.release()
-        } catch (e: Exception) {
-            // Ignore release error
-        }
+        } catch (_: Exception) {}
     }
 
     private fun startPositionTicker() {
         positionTickerJob?.cancel()
         positionTickerJob = coroutineScope.launch {
             while (isActive && _playbackState.value == PlaybackState.PLAYING) {
-                val player = mediaPlayer
+                val player = activePlayer
                 if (player != null && isInitialized) {
                     val time = player.status().time()
                     if (time >= 0) {

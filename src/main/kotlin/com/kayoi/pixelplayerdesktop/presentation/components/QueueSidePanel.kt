@@ -83,6 +83,7 @@ fun QueueSidePanel(
     isPlaying: Boolean,
     isShuffleOn: Boolean,
     repeatMode: Int = 0,
+    showQueueHistory: Boolean = true,
     onSongClick: (Song, Int) -> Unit,
     onToggleShuffle: () -> Unit,
     onCycleRepeat: () -> Unit = {},
@@ -109,13 +110,27 @@ fun QueueSidePanel(
         if (currentSong == null) -1 else localQueue.indexOfFirst { it.song.id == currentSong.id }
     }
 
+    val queueIndexOffset = remember(localQueue, currentSongIndex, showQueueHistory) {
+        if (showQueueHistory || currentSongIndex < 0) 0 else currentSongIndex
+    }
+
+    val displayedQueue = remember(localQueue, queueIndexOffset) {
+        if (queueIndexOffset == 0) localQueue else localQueue.drop(queueIndexOffset)
+    }
+
+    val currentSongDisplayIndex = remember(currentSongIndex, queueIndexOffset) {
+        if (currentSongIndex < 0) -1 else currentSongIndex - queueIndexOffset
+    }
+
     val reorderableState = rememberReorderableLazyListState(
         lazyListState = listState,
         onMove = { from, to ->
+            val actualFrom = from.index + queueIndexOffset
+            val actualTo = to.index + queueIndexOffset
             localQueue = localQueue.toMutableList().apply {
-                add(to.index, removeAt(from.index))
+                add(actualTo, removeAt(actualFrom))
             }
-            onMoveItem(from.index, to.index)
+            onMoveItem(actualFrom, actualTo)
         }
     )
 
@@ -137,33 +152,33 @@ fun QueueSidePanel(
     }
 
     // Keep currently playing song in view when not user-dragging
-    LaunchedEffect(currentSongIndex) {
-        if (!reorderableState.isAnyItemDragging && currentSongIndex >= 0 && currentSongIndex < localQueue.size) {
+    LaunchedEffect(currentSongDisplayIndex) {
+        if (!reorderableState.isAnyItemDragging && currentSongDisplayIndex >= 0 && currentSongDisplayIndex < displayedQueue.size) {
             val visibleItems = listState.layoutInfo.visibleItemsInfo
-            val isVisible = visibleItems.any { it.index == currentSongIndex }
+            val isVisible = visibleItems.any { it.index == currentSongDisplayIndex }
             if (!isVisible) {
                 val firstVisible = listState.firstVisibleItemIndex
-                val distance = kotlin.math.abs(currentSongIndex - firstVisible)
+                val distance = kotlin.math.abs(currentSongDisplayIndex - firstVisible)
                 if (distance > 15) {
-                    val preScrollIndex = if (currentSongIndex > firstVisible) {
-                        (currentSongIndex - 8).coerceAtLeast(0)
+                    val preScrollIndex = if (currentSongDisplayIndex > firstVisible) {
+                        (currentSongDisplayIndex - 8).coerceAtLeast(0)
                     } else {
-                        (currentSongIndex + 8).coerceAtMost(queue.size - 1)
+                        (currentSongDisplayIndex + 8).coerceAtMost(displayedQueue.size - 1)
                     }
                     listState.scrollToItem(preScrollIndex)
                 }
-                listState.animateScrollToItem(currentSongIndex)
+                listState.animateScrollToItem(currentSongDisplayIndex)
             }
         }
     }
 
-    val isCurrentSongVisible by remember(currentSongIndex, listState) {
+    val isCurrentSongVisible by remember(currentSongDisplayIndex, listState) {
         derivedStateOf {
-            if (currentSongIndex < 0) true
+            if (currentSongDisplayIndex < 0) true
             else {
                 val visible = listState.layoutInfo.visibleItemsInfo
                 if (visible.isEmpty()) true
-                else currentSongIndex in visible.first().index..visible.last().index
+                else currentSongDisplayIndex in visible.first().index..visible.last().index
             }
         }
     }
@@ -225,7 +240,7 @@ fun QueueSidePanel(
                             color = colors.onSurface
                         )
                         Text(
-                            text = "${queue.size} ${if (queue.size == 1) "song" else "songs"}",
+                            text = if (queueIndexOffset > 0) "${displayedQueue.size} of ${queue.size} songs" else "${queue.size} ${if (queue.size == 1) "song" else "songs"}",
                             style = MaterialTheme.typography.labelSmall,
                             color = colors.onSurfaceVariant.copy(alpha = 0.7f)
                         )
@@ -238,26 +253,26 @@ fun QueueSidePanel(
                 ) {
                     // Smooth pre-scroll to minimize UI jumping across large index gaps
                     AnimatedVisibility(
-                        visible = !isCurrentSongVisible && currentSongIndex >= 0,
+                        visible = !isCurrentSongVisible && currentSongDisplayIndex >= 0,
                         enter = fadeIn() + scaleIn(),
                         exit = fadeOut() + scaleOut()
                     ) {
                         AppTooltip("Locate playing song") {
                             FilledTonalIconButton(
                                 onClick = {
-                                    if (currentSongIndex >= 0) {
+                                    if (currentSongDisplayIndex >= 0) {
                                         coroutineScope.launch {
                                             val firstVisible = listState.firstVisibleItemIndex
-                                            val distance = kotlin.math.abs(currentSongIndex - firstVisible)
+                                            val distance = kotlin.math.abs(currentSongDisplayIndex - firstVisible)
                                             if (distance > 15) {
-                                                val preScrollIndex = if (currentSongIndex > firstVisible) {
-                                                    (currentSongIndex - 8).coerceAtLeast(0)
+                                                val preScrollIndex = if (currentSongDisplayIndex > firstVisible) {
+                                                    (currentSongDisplayIndex - 8).coerceAtLeast(0)
                                                 } else {
-                                                    (currentSongIndex + 8).coerceAtMost(queue.size - 1)
+                                                    (currentSongDisplayIndex + 8).coerceAtMost(displayedQueue.size - 1)
                                                 }
                                                 listState.scrollToItem(preScrollIndex)
                                             }
-                                            listState.animateScrollToItem(currentSongIndex)
+                                            listState.animateScrollToItem(currentSongDisplayIndex)
                                         }
                                     }
                                 },
@@ -393,16 +408,17 @@ fun QueueSidePanel(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(
-                            count = localQueue.size,
-                            key = { index -> localQueue[index].stableKey },
+                            count = displayedQueue.size,
+                            key = { index -> displayedQueue[index].stableKey },
                             contentType = { "queue_song" }
                         ) { index ->
-                            val song = localQueue[index].song
-                            val isSelected = currentSong?.id == song.id && (index == currentSongIndex || currentSongIndex == -1)
+                            val song = displayedQueue[index].song
+                            val actualIndex = index + queueIndexOffset
+                            val isSelected = currentSong?.id == song.id && (actualIndex == currentSongIndex || currentSongIndex == -1)
 
                             ReorderableItem(
                                 state = reorderableState,
-                                key = localQueue[index].stableKey,
+                                key = displayedQueue[index].stableKey,
                                 animateItemModifier = if (isReordering) {
                                     Modifier.animateItem(
                                         placementSpec = spring(
@@ -456,9 +472,9 @@ fun QueueSidePanel(
                                     onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
                                     onToggleFavorite = if (onToggleFavorite != null) { { onToggleFavorite(song) } } else null,
                                     onEditMetadata = if (onEditMetadata != null) { { onEditMetadata(song) } } else null,
-                                    onRemoveFromQueue = if (onRemoveItem != null) { { onRemoveItem(index) } } else null,
+                                    onRemoveFromQueue = if (onRemoveItem != null) { { onRemoveItem(actualIndex) } } else null,
                                     onDelete = if (onDelete != null) { { onDelete(song) } } else null,
-                                    onClick = { onSongClick(song, index) }
+                                    onClick = { onSongClick(song, actualIndex) }
                                 )
                             }
                         }

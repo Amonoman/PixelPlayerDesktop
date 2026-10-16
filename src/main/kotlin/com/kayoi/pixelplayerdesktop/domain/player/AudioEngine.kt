@@ -19,6 +19,7 @@ interface AudioEngine {
     val durationMs: StateFlow<Long>
     val volume: StateFlow<Float> // 0.0f to 1.0f
     val isMuted: StateFlow<Boolean>
+    val isCrossfading: StateFlow<Boolean> get() = kotlinx.coroutines.flow.MutableStateFlow(false)
     val errorEvents: SharedFlow<String>
     val completionEvents: SharedFlow<Unit>
 
@@ -29,5 +30,9 @@ interface AudioEngine {
     fun seekTo(positionMs: Long)
     fun setVolume(volume: Float)
     fun setMute(muted: Boolean)
+    fun setReplayGain(enabled: Boolean, mode: String = "track")
+    fun crossfadeTo(mediaPathOrUri: String, durationMs: Long) {
+        play(mediaPathOrUri)
+    }
     fun release()
 }

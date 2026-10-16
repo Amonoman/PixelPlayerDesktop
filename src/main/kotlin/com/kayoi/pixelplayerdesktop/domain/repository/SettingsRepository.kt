@@ -46,4 +46,10 @@ interface SettingsRepository {
     suspend fun setLyricsAlignment(alignment: String)
     suspend fun setLyricsSyncOffset(songId: String, offsetMs: Int)
     suspend fun setShowLyricsRomanization(enabled: Boolean)
+    suspend fun setReplayGainEnabled(enabled: Boolean)
+    suspend fun setReplayGainMode(mode: String)
+    suspend fun setCrossfadeEnabled(enabled: Boolean)
+    suspend fun setCrossfadeDurationSeconds(durationSeconds: Int)
+    suspend fun setShowQueueHistory(show: Boolean)
+    suspend fun setCloseToTray(enabled: Boolean)
 }

@@ -109,6 +109,27 @@ class QueueManager(
         }
     }
 
+    fun peekNextSong(): Song? {
+        val currentList = _queue.value
+        if (currentList.isEmpty()) return null
+
+        val currIdx = _currentIndex.value
+        val repMode = _repeatMode.value
+
+        if (repMode == 2) {
+            return _currentSong.value
+        }
+
+        val nextIdx = currIdx + 1
+        return if (nextIdx < currentList.size) {
+            currentList[nextIdx]
+        } else if (repMode == 1) {
+            currentList[0]
+        } else {
+            null
+        }
+    }
+
     fun getPreviousSong(currentPositionMs: Long = 0L): Song? {
         val currentList = _queue.value
         if (currentList.isEmpty()) return null

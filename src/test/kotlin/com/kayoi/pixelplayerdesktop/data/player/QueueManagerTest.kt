@@ -107,4 +107,15 @@ class QueueManagerTest {
         assertEquals("New Artist", qm.currentSong.value?.artist)
         assertEquals("Song 2 Updated", qm.queue.value[1].title)
     }
+
+    @Test
+    fun testPeekNextSong() {
+        val qm = QueueManager()
+        qm.setQueue(sampleSongs, startIndex = 0)
+
+        val peeked = qm.peekNextSong()
+        assertNotNull(peeked)
+        assertEquals("Song 2", peeked.title)
+        assertEquals(0, qm.currentIndex.value) // Index must not advance on peek
+    }
 }

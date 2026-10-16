@@ -60,6 +60,20 @@ class PlayerViewModel(
     fun addSongToQueue(song: Song) = playbackStateHolder.addSongToQueue(song)
     fun playSongNext(song: Song) = playbackStateHolder.playSongNext(song)
 
+    val replayGainEnabled = playbackStateHolder.replayGainEnabled
+    val replayGainMode = playbackStateHolder.replayGainMode
+    val crossfadeEnabled = playbackStateHolder.crossfadeEnabled
+    val crossfadeDurationSeconds = playbackStateHolder.crossfadeDurationSeconds
+    val showQueueHistory = playbackStateHolder.showQueueHistory
+    val closeToTray = playbackStateHolder.closeToTray
+
+    fun setReplayGainEnabled(enabled: Boolean) = playbackStateHolder.setReplayGainEnabled(enabled)
+    fun setReplayGainMode(mode: String) = playbackStateHolder.setReplayGainMode(mode)
+    fun setCrossfadeEnabled(enabled: Boolean) = playbackStateHolder.setCrossfadeEnabled(enabled)
+    fun setCrossfadeDurationSeconds(duration: Int) = playbackStateHolder.setCrossfadeDurationSeconds(duration)
+    fun setShowQueueHistory(show: Boolean) = playbackStateHolder.setShowQueueHistory(show)
+    fun setCloseToTray(enabled: Boolean) = playbackStateHolder.setCloseToTray(enabled)
+
     fun shuffleRandomAlbum(availableAlbums: List<Album>? = null) {
         val targetList = availableAlbums ?: albums.value
         if (targetList.isNotEmpty()) {

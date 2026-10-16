@@ -32,5 +32,11 @@ data class UserSettings(
     val defaultTab: String = "HOME",
     val lyricsAlignment: String = "left",
     val lyricsSyncOffsets: Map<String, Int> = emptyMap(),
-    val showLyricsRomanization: Boolean = true
+    val showLyricsRomanization: Boolean = true,
+    val replayGainEnabled: Boolean = false,
+    val replayGainMode: String = "track",
+    val crossfadeEnabled: Boolean = false,
+    val crossfadeDurationSeconds: Int = 3,
+    val showQueueHistory: Boolean = true,
+    val closeToTray: Boolean = false
 )

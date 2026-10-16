@@ -17,6 +17,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Tray
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
@@ -55,6 +56,10 @@ fun main() = application {
     val isDarkTheme by playerViewModel.isDarkMode.collectAsState()
     val currentSong by playerViewModel.currentSong.collectAsState()
     val queue by playerViewModel.queue.collectAsState()
+    val playerInfo by playerViewModel.playerInfo.collectAsState()
+    val closeToTray by playerViewModel.closeToTray.collectAsState()
+    var isWindowVisible by remember { mutableStateOf(true) }
+
     val searchFocusRequester = remember { FocusRequester() }
     var isInputActive by remember { mutableStateOf(false) }
     val inputFocusTracker = remember { InputFocusTracker { isInputActive = it } }
@@ -78,8 +83,52 @@ fun main() = application {
         }
     }
 
+    if (closeToTray) {
+        Tray(
+            icon = painterResource("icons/icon.png"),
+            tooltip = "PixelPlayer",
+            onAction = {
+                isWindowVisible = true
+                windowState.isMinimized = false
+            },
+            menu = {
+                Item(
+                    text = "Open PixelPlayer",
+                    onClick = {
+                        isWindowVisible = true
+                        windowState.isMinimized = false
+                    }
+                )
+                Item(
+                    text = if (playerInfo.isPlaying) "Pause" else "Play",
+                    onClick = { playerViewModel.togglePlayPause() }
+                )
+                Item(
+                    text = "Next",
+                    onClick = { playerViewModel.playNext() }
+                )
+                Item(
+                    text = "Previous",
+                    onClick = { playerViewModel.playPrevious() }
+                )
+                Separator()
+                Item(
+                    text = "Quit",
+                    onClick = ::exitApplication
+                )
+            }
+        )
+    }
+
     Window(
-        onCloseRequest = ::exitApplication,
+        visible = isWindowVisible,
+        onCloseRequest = {
+            if (closeToTray) {
+                isWindowVisible = false
+            } else {
+                exitApplication()
+            }
+        },
         title = "PixelPlayer",
         icon = painterResource("icons/icon.png"),
         state = windowState,
@@ -216,7 +265,13 @@ fun main() = application {
                             WindowPlacement.Maximized
                         }
                     },
-                    onClose = ::exitApplication,
+                    onClose = {
+                        if (closeToTray) {
+                            isWindowVisible = false
+                        } else {
+                            exitApplication()
+                        }
+                    },
                     topBarWrapper = { content ->
                         WindowDraggableArea {
                             content()

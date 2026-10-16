@@ -4,6 +4,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LibraryMusic
+import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -28,6 +29,12 @@ enum class SettingsSection(
         subtitle = "Themes, layout, and visual styles",
         icon = Icons.Rounded.Palette
     ),
+    PLAYBACK(
+        id = "playback",
+        title = "Playback",
+        subtitle = "Audio behavior, crossfade, and background play",
+        icon = Icons.Rounded.MusicNote
+    ),
     ABOUT(
         id = "about",
         title = "About",
@@ -41,12 +48,14 @@ fun getCategoryColors(category: SettingsSection, isDark: Boolean): Pair<Color, C
         when (category) {
             SettingsSection.LIBRARY -> Color(0xFF004A77) to Color(0xFFC2E7FF)
             SettingsSection.APPEARANCE -> Color(0xFF7D5260) to Color(0xFFFFD8E4)
+            SettingsSection.PLAYBACK -> Color(0xFF633B48) to Color(0xFFFFD8EC)
             SettingsSection.ABOUT -> Color(0xFF3F474D) to Color(0xFFDEE3EB)
         }
     } else {
         when (category) {
             SettingsSection.LIBRARY -> Color(0xFFD7E3FF) to Color(0xFF005AC1)
             SettingsSection.APPEARANCE -> Color(0xFFFFD8E4) to Color(0xFF631835)
+            SettingsSection.PLAYBACK -> Color(0xFFFFD8EC) to Color(0xFF631B4B)
             SettingsSection.ABOUT -> Color(0xFFEFF1F7) to Color(0xFF44474F)
         }
     }

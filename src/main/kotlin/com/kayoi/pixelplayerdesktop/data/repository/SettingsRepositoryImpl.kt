@@ -246,6 +246,30 @@ class SettingsRepositoryImpl(
         updateSettings { it.copy(showLyricsRomanization = enabled) }
     }
 
+    override suspend fun setReplayGainEnabled(enabled: Boolean) {
+        updateSettings { it.copy(replayGainEnabled = enabled) }
+    }
+
+    override suspend fun setReplayGainMode(mode: String) {
+        updateSettings { it.copy(replayGainMode = mode) }
+    }
+
+    override suspend fun setCrossfadeEnabled(enabled: Boolean) {
+        updateSettings { it.copy(crossfadeEnabled = enabled) }
+    }
+
+    override suspend fun setCrossfadeDurationSeconds(durationSeconds: Int) {
+        updateSettings { it.copy(crossfadeDurationSeconds = durationSeconds.coerceIn(1, 12)) }
+    }
+
+    override suspend fun setShowQueueHistory(show: Boolean) {
+        updateSettings { it.copy(showQueueHistory = show) }
+    }
+
+    override suspend fun setCloseToTray(enabled: Boolean) {
+        updateSettings { it.copy(closeToTray = enabled) }
+    }
+
     private fun loadSettingsFromDisk(): UserSettings {
         return try {
             if (settingsFile.exists()) {
