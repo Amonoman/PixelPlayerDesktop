@@ -114,7 +114,6 @@ fun MiniPlayerBar(
         modifier = modifier
             .fillMaxWidth()
             .padding(start = 14.dp, end = 14.dp, top = 2.dp, bottom = 4.dp)
-            .shadow(elevation = 16.dp, shape = miniPlayerShape)
             .clip(miniPlayerShape),
         color = colors.primaryContainer,
         shape = miniPlayerShape

@@ -135,7 +135,6 @@ fun DesktopLandscapeHeroPlayer(
                     Box(
                         modifier = Modifier
                             .size(72.dp)
-                            .shadow(10.dp, shape = RoundedCornerShape(16.dp))
                             .clip(RoundedCornerShape(16.dp))
                     ) {
                         AsyncArtworkImage(
@@ -301,7 +300,6 @@ fun DesktopLandscapeHeroPlayer(
                     Box(
                         modifier = Modifier
                             .size(artworkSize)
-                            .shadow(16.dp, shape = RoundedCornerShape(20.dp))
                             .clip(RoundedCornerShape(20.dp))
                     ) {
                         AsyncArtworkImage(
