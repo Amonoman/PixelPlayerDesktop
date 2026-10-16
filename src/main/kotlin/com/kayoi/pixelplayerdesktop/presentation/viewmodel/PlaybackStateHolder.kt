@@ -574,6 +574,15 @@ class PlaybackStateHolder(
         }
     }
 
+    fun seekRelative(deltaMs: Long) {
+        val duration = queueManager.currentSong.value?.duration?.takeIf { it > 0 }
+            ?: audioEngine.durationMs.value.takeIf { it > 0 }
+            ?: Long.MAX_VALUE
+        val current = audioEngine.currentPositionMs.value
+        val target = (current + deltaMs).coerceIn(0L, duration)
+        seekTo(target)
+    }
+
     fun setVolume(vol: Float) {
         audioEngine.setVolume(vol)
         coroutineScope.launch {

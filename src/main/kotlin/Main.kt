@@ -157,6 +157,14 @@ fun main() = application {
                             false
                         }
                     }
+                    !isModifier && !keyEvent.isAltPressed && !isInputActive && keyEvent.key == Key.DirectionRight -> {
+                        playerViewModel.seekForward(5000L)
+                        true
+                    }
+                    !isModifier && !keyEvent.isAltPressed && !isInputActive && keyEvent.key == Key.DirectionLeft -> {
+                        playerViewModel.seekBackward(5000L)
+                        true
+                    }
                     isModifier && keyEvent.key == Key.DirectionUp -> {
                         val currentVol = playerViewModel.playerInfo.value.volume
                         playerViewModel.setVolume((currentVol + 0.05f).coerceIn(0f, 1f))
@@ -204,6 +212,7 @@ fun main() = application {
             } else if (keyEvent.type == KeyEventType.KeyUp) {
                 when {
                     isModifier && (keyEvent.key == Key.K || (!isInputActive && (keyEvent.key == Key.DirectionRight || keyEvent.key == Key.DirectionLeft)) || keyEvent.key == Key.DirectionUp || keyEvent.key == Key.DirectionDown || keyEvent.key == Key.S || keyEvent.key == Key.R || keyEvent.key == Key.Q) -> true
+                    !isModifier && !keyEvent.isAltPressed && !isInputActive && (keyEvent.key == Key.DirectionRight || keyEvent.key == Key.DirectionLeft) -> true
                     keyEvent.isAltPressed && keyEvent.key == Key.Q -> true
                     keyEvent.key == Key.F11 -> true
                     (keyEvent.key == Key.M || keyEvent.key == Key.L || keyEvent.key == Key.Spacebar) && !isInputActive && !isModifier -> true
