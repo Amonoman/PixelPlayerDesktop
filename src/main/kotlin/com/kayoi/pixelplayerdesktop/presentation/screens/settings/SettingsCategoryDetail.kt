@@ -976,59 +976,7 @@ fun SettingsCategoryDetail(
 
             SettingsSection.ABOUT -> {
                 item {
-                    SettingsSubsection(title = "APPLICATION") {
-                        Surface(
-                            shape = getGroupShape(0, 1),
-                            color = colors.surfaceContainer,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(22.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Surface(
-                                        shape = RoundedCornerShape(16.dp),
-                                        color = colors.primaryContainer
-                                    ) {
-                                        Icon(
-                                            imageVector = PixelPlayerIcons.AppLogo,
-                                            contentDescription = null,
-                                            tint = colors.onPrimaryContainer,
-                                            modifier = Modifier
-                                                .padding(12.dp)
-                                                .size(32.dp)
-                                        )
-                                    }
-
-                                    Spacer(modifier = Modifier.width(16.dp))
-
-                                    Column {
-                                        Text(
-                                            text = "PixelPlayer Desktop",
-                                            style = MaterialTheme.typography.titleLarge,
-                                            fontWeight = FontWeight.Bold,
-                                            color = colors.onSurface
-                                        )
-                                        Text(
-                                            text = "Version 1.0.0 • Material 3 Expressive • VLCJ Core",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = colors.onSurfaceVariant
-                                        )
-                                    }
-                                }
-
-                                Text(
-                                    text = "Crafted for high fidelity playback with dynamic Material You theming faithfully adapted from PixelPlayer OSS for Android.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = colors.onSurfaceVariant.copy(alpha = 0.85f),
-                                    lineHeight = 20.sp
-                                )
-                            }
-                        }
-                    }
+                    AboutSectionContent()
                 }
             }
         }
