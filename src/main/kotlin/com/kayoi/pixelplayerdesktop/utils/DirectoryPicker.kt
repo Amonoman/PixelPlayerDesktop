@@ -1,33 +1,33 @@
 package com.kayoi.pixelplayerdesktop.utils
 
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.openDirectoryPicker
+import io.github.vinceglb.filekit.dialogs.openFilePicker
+import io.github.vinceglb.filekit.dialogs.openFileSaver
 import java.io.File
-import javax.swing.JFileChooser
-import javax.swing.SwingUtilities
-import javax.swing.UIManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 object DirectoryPicker {
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
     fun chooseDirectory(
         initialDir: File? = null,
         title: String = "Select Music Directory",
         onSelected: (File) -> Unit
     ) {
-        SwingUtilities.invokeLater {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
-            } catch (_: Exception) {}
-
-            val chooser = JFileChooser().apply {
-                dialogTitle = title
-                fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                isAcceptAllFileFilterUsed = false
-                if (initialDir != null && initialDir.exists()) {
-                    currentDirectory = initialDir
-                }
-            }
-
-            val result = chooser.showOpenDialog(null)
-            if (result == JFileChooser.APPROVE_OPTION && chooser.selectedFile != null) {
-                onSelected(chooser.selectedFile)
+        scope.launch {
+            val directory = FileKit.openDirectoryPicker(
+                directory = initialDir?.let { PlatformFile(it) },
+                dialogSettings = FileKitDialogSettings(title = title)
+            )
+            if (directory != null) {
+                onSelected(directory.file)
             }
         }
     }
@@ -36,20 +36,13 @@ object DirectoryPicker {
         title: String = "Select .lrc Lyric File",
         onSelected: (File) -> Unit
     ) {
-        SwingUtilities.invokeLater {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
-            } catch (_: Exception) {}
-
-            val chooser = JFileChooser().apply {
-                dialogTitle = title
-                fileSelectionMode = JFileChooser.FILES_ONLY
-                fileFilter = javax.swing.filechooser.FileNameExtensionFilter("LRC Lyric Files (*.lrc)", "lrc")
-            }
-
-            val result = chooser.showOpenDialog(null)
-            if (result == JFileChooser.APPROVE_OPTION && chooser.selectedFile != null) {
-                onSelected(chooser.selectedFile)
+        scope.launch {
+            val file = FileKit.openFilePicker(
+                type = FileKitType.File("lrc"),
+                dialogSettings = FileKitDialogSettings(title = title)
+            )
+            if (file != null) {
+                onSelected(file.file)
             }
         }
     }
@@ -60,26 +53,25 @@ object DirectoryPicker {
         title: String = "Save .lrc Lyric File",
         onSelected: (File) -> Unit
     ) {
-        SwingUtilities.invokeLater {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
-            } catch (_: Exception) {}
-
-            val chooser = JFileChooser().apply {
-                dialogTitle = title
-                fileSelectionMode = JFileChooser.FILES_ONLY
-                fileFilter = javax.swing.filechooser.FileNameExtensionFilter("LRC Lyric Files (*.lrc)", "lrc")
-                if (initialDir != null && initialDir.exists()) {
-                    currentDirectory = initialDir
-                }
-                val safeName = if (defaultFileName.endsWith(".lrc", ignoreCase = true)) defaultFileName else "$defaultFileName.lrc"
-                selectedFile = File(currentDirectory, safeName)
+        scope.launch {
+            val baseName = if (defaultFileName.endsWith(".lrc", ignoreCase = true)) {
+                defaultFileName.substringBeforeLast(".lrc")
+            } else {
+                defaultFileName
             }
 
-            val result = chooser.showSaveDialog(null)
-            if (result == JFileChooser.APPROVE_OPTION && chooser.selectedFile != null) {
-                val file = chooser.selectedFile
-                val finalFile = if (file.name.endsWith(".lrc", ignoreCase = true)) file else File(file.parentFile, "${file.name}.lrc")
+            val file = FileKit.openFileSaver(
+                suggestedName = baseName,
+                defaultExtension = "lrc",
+                directory = initialDir?.let { PlatformFile(it) },
+                dialogSettings = FileKitDialogSettings(title = title)
+            )
+            if (file != null) {
+                val finalFile = if (file.file.name.endsWith(".lrc", ignoreCase = true)) {
+                    file.file
+                } else {
+                    File(file.file.parentFile, "${file.file.name}.lrc")
+                }
                 onSelected(finalFile)
             }
         }
@@ -89,23 +81,13 @@ object DirectoryPicker {
         title: String = "Select Album Artwork",
         onSelected: (File) -> Unit
     ) {
-        SwingUtilities.invokeLater {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
-            } catch (_: Exception) {}
-
-            val chooser = JFileChooser().apply {
-                dialogTitle = title
-                fileSelectionMode = JFileChooser.FILES_ONLY
-                fileFilter = javax.swing.filechooser.FileNameExtensionFilter(
-                    "Image Files (*.jpg, *.jpeg, *.png, *.webp)",
-                    "jpg", "jpeg", "png", "webp"
-                )
-            }
-
-            val result = chooser.showOpenDialog(null)
-            if (result == JFileChooser.APPROVE_OPTION && chooser.selectedFile != null) {
-                onSelected(chooser.selectedFile)
+        scope.launch {
+            val file = FileKit.openFilePicker(
+                type = FileKitType.Image,
+                dialogSettings = FileKitDialogSettings(title = title)
+            )
+            if (file != null) {
+                onSelected(file.file)
             }
         }
     }

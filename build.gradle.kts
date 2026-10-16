@@ -63,6 +63,9 @@ dependencies {
     implementation("com.belerweb:pinyin4j:2.5.1")
     implementation("com.ibm.icu:icu4j:76.1")
 
+    // FileKit (Native File & Directory Picker)
+    implementation("io.github.vinceglb:filekit-dialogs:0.16.0")
+
     // Testing
     testImplementation(kotlin("test"))
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")

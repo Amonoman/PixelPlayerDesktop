@@ -34,12 +34,14 @@ import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.SystemAccentColorProvider
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 
-fun main() = application {
-    val windowState = rememberWindowState(
-        placement = WindowPlacement.Maximized,
-        width = 1100.dp,
-        height = 800.dp
-    )
+fun main() {
+    io.github.vinceglb.filekit.FileKit.init("com.kayoi.pixelplayerdesktop")
+    application {
+        val windowState = rememberWindowState(
+            placement = WindowPlacement.Maximized,
+            width = 1100.dp,
+            height = 800.dp
+        )
 
     val koin = remember {
         val existing = GlobalContext.getOrNull()
@@ -294,4 +296,5 @@ fun main() = application {
             }
         }
     }
+}
 }
