@@ -16,6 +16,7 @@ import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineTrackMetadata
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.Genre
+import com.kayoi.pixelplayerdesktop.data.model.PlaybackEvent
 import com.kayoi.pixelplayerdesktop.data.model.Playlist
 import com.kayoi.pixelplayerdesktop.data.model.SearchFilterType
 import com.kayoi.pixelplayerdesktop.data.model.SearchResultItem
@@ -228,8 +229,25 @@ class MusicRepositoryImpl(
         }
     }.flowOn(ioDispatcher)
 
-    override suspend fun recordSongPlayed(songId: String) {
-        musicDao.recordSongPlayed(songId)
+    override suspend fun recordSongPlayed(songId: String, durationMs: Long) {
+        musicDao.recordSongPlayed(songId, durationMs)
+    }
+
+    override fun getPlaybackEventsFlow(limit: Int): Flow<List<PlaybackEvent>> = flow {
+        emit(musicDao.getPlaybackEvents(limit))
+        database.tableInvalidationFlow.collect { table ->
+            if (table == "playback_events") {
+                emit(musicDao.getPlaybackEvents(limit))
+            }
+        }
+    }.flowOn(ioDispatcher)
+
+    override suspend fun getPlaybackEvents(limit: Int): List<PlaybackEvent> {
+        return musicDao.getPlaybackEvents(limit)
+    }
+
+    override suspend fun getPlaybackEventsBetween(start: Long, end: Long): List<PlaybackEvent> {
+        return musicDao.getPlaybackEventsBetween(start, end)
     }
 
     override suspend fun search(

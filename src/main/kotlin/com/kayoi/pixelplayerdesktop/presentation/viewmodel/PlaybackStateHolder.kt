@@ -36,6 +36,7 @@ class PlaybackStateHolder(
     private val musicRepository: MusicRepository,
     private val lyricsRepository: LyricsRepository,
     private val settingsRepository: SettingsRepository,
+    private val listeningStatsTracker: DesktopListeningStatsTracker = DesktopListeningStatsTracker(musicRepository),
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) {
 
@@ -312,6 +313,7 @@ class PlaybackStateHolder(
 
         coroutineScope.launch {
             queueManager.currentSong.collectLatest { song ->
+                listeningStatsTracker.onSongChanged(song, audioEngine.playbackState.value == PlaybackState.PLAYING)
                 val isFav = if (song != null) musicRepository.isFavorite(song.id) else false
                 val offset = if (song != null) {
                     settingsRepository.settingsFlow.value.lyricsSyncOffsets[song.id] ?: 0
@@ -329,7 +331,6 @@ class PlaybackStateHolder(
                     )
                 }
                 if (song != null) {
-                    musicRepository.recordSongPlayed(song.id)
                     scheduleTransitionFor(song)
                     val lyrics = lyricsRepository.getLyrics(song.id, song.path, song.title, song.artist)
                     _playerInfo.update {
@@ -347,7 +348,9 @@ class PlaybackStateHolder(
 
         coroutineScope.launch {
             audioEngine.playbackState.collect { state ->
-                _playerInfo.update { it.copy(isPlaying = state == PlaybackState.PLAYING) }
+                val isPlaying = state == PlaybackState.PLAYING
+                listeningStatsTracker.onPlaybackStateChanged(isPlaying)
+                _playerInfo.update { it.copy(isPlaying = isPlaying) }
             }
         }
 
@@ -636,6 +639,7 @@ class PlaybackStateHolder(
     private var lastDismissedPositionMs: Long = 0L
 
     fun stopPlayback() {
+        listeningStatsTracker.onPlaybackStopped()
         lastDismissedQueue = queueManager.queue.value
         lastDismissedIndex = queueManager.currentIndex.value
         lastDismissedPositionMs = audioEngine.currentPositionMs.value

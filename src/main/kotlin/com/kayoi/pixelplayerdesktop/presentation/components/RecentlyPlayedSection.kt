@@ -52,12 +52,12 @@ import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.ColorSchemePair
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
+import kotlin.math.ceil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 private val HomeRecentlyPlayedPillHeight = 68.dp
 private val HomeRecentlyPlayedPillSpacing = 12.dp
-private const val HomeRecentlyPlayedPillsLimit = 15
 private const val HomeRecentlyPlayedPillsPerColumn = 3
 internal const val RecentlyPlayedSectionMinSongsToShow = 3
 private val HomeRecentlyPlayedPillArtSize = 50.dp
@@ -82,16 +82,9 @@ fun RecentlyPlayedSection(
     onSeeAllClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val visibleSongs = remember(songs) { songs.take(HomeRecentlyPlayedPillsLimit) }
-    if (visibleSongs.size < RecentlyPlayedSectionMinSongsToShow) return
+    if (songs.size < RecentlyPlayedSectionMinSongsToShow) return
 
     val colors = MaterialTheme.colorScheme
-    val songRows = remember(visibleSongs) {
-        buildRecentlyPlayedPillRows(visibleSongs)
-    }
-    val maxRowContentWidth = remember(songRows) {
-        songRows.maxOfOrNull { it.contentWidth } ?: 0.dp
-    }
     val sharedScrollState = rememberScrollState()
 
     val sectionHeight = HomeRecentlyPlayedPillHeight * HomeRecentlyPlayedPillsPerColumn +
@@ -100,6 +93,19 @@ fun RecentlyPlayedSection(
     BoxWithConstraints(
         modifier = modifier.fillMaxWidth()
     ) {
+        val visibleSongs = remember(songs, maxWidth) {
+            val limit = resolveHomeRecentlyPlayedSongLimit(maxWidth, songs.size)
+            songs.take(limit)
+        }
+        if (visibleSongs.size < RecentlyPlayedSectionMinSongsToShow) return@BoxWithConstraints
+
+        val songRows = remember(visibleSongs) {
+            buildRecentlyPlayedPillRows(visibleSongs)
+        }
+        val maxRowContentWidth = remember(songRows) {
+            songRows.maxOfOrNull { it.contentWidth } ?: 0.dp
+        }
+
         val isCompact = maxWidth < 640.dp
         val titleFontSize = if (isCompact) 22.sp else 26.sp
         val buttonHeight = if (isCompact) 38.dp else 44.dp
@@ -385,4 +391,20 @@ private fun resolveRecentlyPlayedPillWidth(
 
     val resolvedStep = baseStep.coerceIn(0, HomeRecentlyPlayedWidthSteps.lastIndex)
     return HomeRecentlyPlayedWidthSteps[resolvedStep]
+}
+
+private fun resolveHomeRecentlyPlayedSongLimit(
+    availableWidth: Dp,
+    totalSongs: Int
+): Int {
+    if (totalSongs == 0) return 0
+    val minPillTotalWidth = HomeRecentlyPlayedWidthSteps.first() + HomeRecentlyPlayedPillSpacing
+    val estimatedColumns = if (availableWidth > 0.dp) {
+        ceil((availableWidth + HomeRecentlyPlayedPillSpacing) / minPillTotalWidth).toInt()
+    } else {
+        5
+    }
+    val targetColumns = (estimatedColumns + 2).coerceAtLeast(5)
+    val targetSongCount = targetColumns * HomeRecentlyPlayedPillsPerColumn
+    return minOf(totalSongs, targetSongCount)
 }

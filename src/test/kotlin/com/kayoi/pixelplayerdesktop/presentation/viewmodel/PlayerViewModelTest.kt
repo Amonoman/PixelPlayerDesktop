@@ -49,8 +49,9 @@ class PlayerViewModelTest {
         val playbackStateHolder = PlaybackStateHolder(audioEngine, queueManager, musicRepo, lyricsRepo, settingsRepo, coroutineScope = backgroundScope)
         val libraryStateHolder = LibraryStateHolder(musicRepo, settingsRepo, scanner, coroutineScope = backgroundScope)
         val themeStateHolder = ThemeStateHolder(settingsRepo, coroutineScope = backgroundScope)
+        val statsStateHolder = StatsStateHolder(musicRepo, coroutineScope = backgroundScope)
 
-        val viewModel = PlayerViewModel(playbackStateHolder, libraryStateHolder, themeStateHolder)
+        val viewModel = PlayerViewModel(playbackStateHolder, libraryStateHolder, themeStateHolder, statsStateHolder)
 
         // 1. Play song through viewModel
         val song = Song(

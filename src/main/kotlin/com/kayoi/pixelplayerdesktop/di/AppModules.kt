@@ -18,9 +18,11 @@ import com.kayoi.pixelplayerdesktop.domain.player.AudioEngine
 import com.kayoi.pixelplayerdesktop.domain.repository.LyricsRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
+import com.kayoi.pixelplayerdesktop.presentation.viewmodel.DesktopListeningStatsTracker
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.LibraryStateHolder
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlaybackStateHolder
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
+import com.kayoi.pixelplayerdesktop.presentation.viewmodel.StatsStateHolder
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.ThemeStateHolder
 import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
 import kotlinx.coroutines.CoroutineDispatcher
@@ -87,6 +89,7 @@ val playerModule: Module = module {
 }
 
 val stateModule: Module = module {
+    single { DesktopListeningStatsTracker(musicRepository = get()) }
     single {
         PlaybackStateHolder(
             audioEngine = get(),
@@ -94,6 +97,7 @@ val stateModule: Module = module {
             musicRepository = get(),
             lyricsRepository = get(),
             settingsRepository = get(),
+            listeningStatsTracker = get(),
             coroutineScope = get()
         )
     }
@@ -113,10 +117,17 @@ val stateModule: Module = module {
         )
     }
     single {
+        StatsStateHolder(
+            musicRepository = get(),
+            coroutineScope = get()
+        )
+    }
+    single {
         PlayerViewModel(
             playbackStateHolder = get(),
             libraryStateHolder = get(),
-            themeStateHolder = get()
+            themeStateHolder = get(),
+            statsStateHolder = get()
         )
     }
 }

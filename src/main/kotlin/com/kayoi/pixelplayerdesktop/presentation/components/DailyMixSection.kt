@@ -80,8 +80,7 @@ fun DailyMixSection(
         Column(modifier = Modifier.fillMaxWidth()) {
 
             DailyMixHeader(
-                thumbnails = headerSongs,
-                onHeaderClick = onPlayMix
+                thumbnails = headerSongs
             )
 
             DailyMixSongList(
@@ -109,15 +108,12 @@ fun DailyMixSection(
 
 @Composable
 private fun DailyMixHeader(
-    thumbnails: List<Song>,
-    onHeaderClick: () -> Unit
+    thumbnails: List<Song>
 ) {
     val colors = MaterialTheme.colorScheme
 
     BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onHeaderClick)
+        modifier = Modifier.fillMaxWidth()
     ) {
         val isCompact = maxWidth < 640.dp
         val titleStyle = rememberDailyMixTitleStyle(isCompact)
@@ -197,7 +193,7 @@ private fun DailyMixHeader(
 }
 
 @Composable
-private fun threeShapeSwitch(index: Int, thirdShapeCornerRadius: Dp = 22.dp): Shape {
+internal fun threeShapeSwitch(index: Int, thirdShapeCornerRadius: Dp = 22.dp): Shape {
     return when (index) {
         0 -> RoundedStarShape(
             sides = 6,

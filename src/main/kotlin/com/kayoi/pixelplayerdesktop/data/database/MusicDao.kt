@@ -688,19 +688,76 @@ class MusicDao(
         }
     }
 
-    suspend fun recordSongPlayed(songId: String) = withContext(ioDispatcher) {
+    suspend fun recordSongPlayed(songId: String, durationMs: Long = 0L) = withContext(ioDispatcher) {
+        val now = System.currentTimeMillis()
         database.getConnection().use { conn ->
             val sql = "UPDATE songs SET play_count = play_count + 1, last_played_timestamp = ? WHERE id = ?"
             conn.prepareStatement(sql).use { stmt ->
-                stmt.setLong(1, System.currentTimeMillis())
+                stmt.setLong(1, now)
                 stmt.setString(2, songId)
                 stmt.executeUpdate()
             }
+
+            val eventSql = "INSERT INTO playback_events (song_id, timestamp, duration_ms) VALUES (?, ?, ?)"
+            conn.prepareStatement(eventSql).use { stmt ->
+                stmt.setString(1, songId)
+                stmt.setLong(2, now)
+                stmt.setLong(3, durationMs)
+                stmt.executeUpdate()
+            }
             database.notifyTableChanged("recently_played")
+            database.notifyTableChanged("playback_events")
         }
     }
 
-    suspend fun getRecentlyPlayedSongs(limit: Int = 50): List<Song> = withContext(ioDispatcher) {
+    suspend fun getPlaybackEvents(limit: Int = 500): List<PlaybackEvent> = withContext(ioDispatcher) {
+        database.getConnection().use { conn ->
+            val sql = "SELECT id, song_id, timestamp, duration_ms FROM playback_events ORDER BY timestamp DESC LIMIT ?"
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setInt(1, limit)
+                stmt.executeQuery().use { rs ->
+                    val list = mutableListOf<PlaybackEvent>()
+                    while (rs.next()) {
+                        list.add(
+                            PlaybackEvent(
+                                id = rs.getLong("id"),
+                                songId = rs.getString("song_id"),
+                                timestamp = rs.getLong("timestamp"),
+                                durationMs = rs.getLong("duration_ms")
+                            )
+                        )
+                    }
+                    list
+                }
+            }
+        }
+    }
+
+    suspend fun getPlaybackEventsBetween(start: Long, end: Long): List<PlaybackEvent> = withContext(ioDispatcher) {
+        database.getConnection().use { conn ->
+            val sql = "SELECT id, song_id, timestamp, duration_ms FROM playback_events WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp DESC"
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setLong(1, start)
+                stmt.setLong(2, end)
+                stmt.executeQuery().use { rs ->
+                    val list = mutableListOf<PlaybackEvent>()
+                    while (rs.next()) {
+                        list.add(
+                            PlaybackEvent(
+                                id = rs.getLong("id"),
+                                songId = rs.getString("song_id"),
+                                timestamp = rs.getLong("timestamp"),
+                                durationMs = rs.getLong("duration_ms")
+                            )
+                        )
+                    }
+                    list
+                }
+            }
+        }
+    }
+
+    suspend fun getRecentlyPlayedSongs(limit: Int = 500): List<Song> = withContext(ioDispatcher) {
         database.getConnection().use { conn ->
             val sql = "SELECT * FROM songs WHERE last_played_timestamp > 0 ORDER BY last_played_timestamp DESC LIMIT ?"
             conn.prepareStatement(sql).use { stmt ->
@@ -873,6 +930,8 @@ private fun ResultSet.toSong(json: Json): Song {
         sampleRate = if (wasNullSampleRate) null else sampleRate,
         navidromeId = getString("navidrome_id"),
         jellyfinId = getString("jellyfin_id"),
-        artists = artists
+        artists = artists,
+        playCount = runCatching { getInt("play_count") }.getOrDefault(0),
+        lastPlayedTimestamp = runCatching { getLong("last_played_timestamp") }.getOrDefault(0L)
     )
 }

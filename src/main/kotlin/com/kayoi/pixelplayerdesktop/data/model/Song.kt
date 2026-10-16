@@ -37,7 +37,9 @@ data class Song(
     val bitrate: Int? = null,
     val sampleRate: Int? = null,
     val navidromeId: String? = null,
-    val jellyfinId: String? = null
+    val jellyfinId: String? = null,
+    val playCount: Int = 0,
+    val lastPlayedTimestamp: Long = 0L
 ) {
     val displayArtist: String
         get() {

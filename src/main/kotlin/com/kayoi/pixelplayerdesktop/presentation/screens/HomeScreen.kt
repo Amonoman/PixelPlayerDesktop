@@ -49,12 +49,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kayoi.pixelplayerdesktop.data.model.PlaybackStatsSummary
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.domain.DailyMixManager
 import com.kayoi.pixelplayerdesktop.presentation.components.AlbumArtCollage
 import com.kayoi.pixelplayerdesktop.presentation.components.CollagePattern
 import com.kayoi.pixelplayerdesktop.presentation.components.DailyMixSection
 import com.kayoi.pixelplayerdesktop.presentation.components.RecentlyPlayedSection
+import com.kayoi.pixelplayerdesktop.presentation.components.StatsOverviewCard
 import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.utils.shapes.RoundedStarShape
 
@@ -63,12 +65,16 @@ fun HomeScreen(
     songs: List<Song>,
     favoriteSongs: List<Song>,
     recentlyPlayedSongs: List<Song> = emptyList(),
+    homeStatsOverview: PlaybackStatsSummary? = null,
     currentSong: Song?,
     isPlaying: Boolean,
     onSongSelect: (Song) -> Unit,
     onPlaySongs: ((List<Song>, Int) -> Unit)? = null,
     onShuffleAll: () -> Unit,
     onNavigateToLibrary: () -> Unit,
+    onNavigateToDailyMix: () -> Unit = {},
+    onNavigateToRecentlyPlayed: () -> Unit = {},
+    onNavigateToStats: () -> Unit = {},
     onNavigateToFolders: () -> Unit = {},
     onRescanLibrary: () -> Unit = {},
     onPlayNext: ((Song) -> Unit)? = null,
@@ -96,12 +102,12 @@ fun HomeScreen(
     }
 
     val yourMixSongs = remember(songs, favoriteIds) {
-        val mix = dailyMixManager.generateYourMix(songs, favoriteIds, limit = 30)
+        val mix = dailyMixManager.generateYourMix(songs, favoriteIds)
         if (mix.isNotEmpty()) mix else songs
     }
 
-    val dailyMixSongs = remember(songs) {
-        dailyMixManager.generateDailyMix(songs, limit = 30)
+    val dailyMixSongs = remember(songs, favoriteIds) {
+        dailyMixManager.generateDailyMix(songs, favoriteIds, limit = 30)
     }
 
     if (songs.isEmpty()) {
@@ -297,16 +303,7 @@ fun HomeScreen(
                     currentSong = currentSong,
                     isPlaying = isPlaying,
                     onSongClick = { song -> playSongInContext(dailyMixSongs, song) },
-                    onPlayMix = {
-                        if (dailyMixSongs.isNotEmpty()) {
-                            if (onPlaySongs != null) {
-                                onPlaySongs(dailyMixSongs, 0)
-                            } else {
-                                onSongSelect(dailyMixSongs.first())
-                            }
-                        }
-                    },
-                    onSeeAllClick = onNavigateToLibrary,
+                    onSeeAllClick = onNavigateToDailyMix,
                     onPlayNext = onPlayNext,
                     onAddToQueue = onAddToQueue,
                     onAddToPlaylist = onAddToPlaylist,
@@ -324,7 +321,17 @@ fun HomeScreen(
                     currentSong = currentSong,
                     isPlaying = isPlaying,
                     onSongClick = { song -> playSongInContext(recentlyPlayedSongs, song) },
-                    onSeeAllClick = onNavigateToLibrary
+                    onSeeAllClick = onNavigateToRecentlyPlayed
+                )
+            }
+        }
+
+        if (homeStatsOverview != null && homeStatsOverview.hasListeningActivity()) {
+            item {
+                StatsOverviewCard(
+                    summary = homeStatsOverview,
+                    onClick = onNavigateToStats,
+                    modifier = Modifier.padding(horizontal = 4.dp)
                 )
             }
         }

@@ -20,8 +20,12 @@ import java.io.File
 class PlayerViewModel(
     val playbackStateHolder: PlaybackStateHolder,
     val libraryStateHolder: LibraryStateHolder,
-    val themeStateHolder: ThemeStateHolder
+    val themeStateHolder: ThemeStateHolder,
+    val statsStateHolder: StatsStateHolder
 ) {
+    val homeStatsOverview = statsStateHolder.homeOverview
+    val currentStatsSummary = statsStateHolder.currentSummary
+    val selectedStatsRange = statsStateHolder.selectedRange
 
     val playerInfo = playbackStateHolder.playerInfo
     val currentPositionMs = playbackStateHolder.currentPositionMs

@@ -10,6 +10,7 @@ import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineTrackMetadata
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.Genre
+import com.kayoi.pixelplayerdesktop.data.model.PlaybackEvent
 import com.kayoi.pixelplayerdesktop.data.model.Playlist
 import com.kayoi.pixelplayerdesktop.data.model.SearchFilterType
 import com.kayoi.pixelplayerdesktop.data.model.SearchResultItem
@@ -56,8 +57,11 @@ interface MusicRepository {
     suspend fun toggleFavorite(songId: String): Boolean
     suspend fun setFavorite(songId: String, isFavorite: Boolean)
 
-    fun getRecentlyPlayedSongsFlow(limit: Int = 50): Flow<List<Song>>
-    suspend fun recordSongPlayed(songId: String)
+    fun getRecentlyPlayedSongsFlow(limit: Int = 500): Flow<List<Song>>
+    suspend fun recordSongPlayed(songId: String, durationMs: Long = 0L)
+    fun getPlaybackEventsFlow(limit: Int = 500): Flow<List<PlaybackEvent>>
+    suspend fun getPlaybackEvents(limit: Int = 500): List<PlaybackEvent>
+    suspend fun getPlaybackEventsBetween(start: Long, end: Long): List<PlaybackEvent>
 
     suspend fun search(
         query: String,

@@ -81,6 +81,7 @@ fun MainAppScaffold(
     val playlists by viewModel.playlists.collectAsState()
     val favoriteSongs by viewModel.favoriteSongs.collectAsState()
     val recentlyPlayedSongs by viewModel.recentlyPlayedSongs.collectAsState()
+    val homeStatsOverview by viewModel.homeStatsOverview.collectAsState()
     val musicDirectories by viewModel.musicDirectories.collectAsState()
 
     val playerInfo by viewModel.playerInfo.collectAsState()
@@ -162,6 +163,9 @@ fun MainAppScaffold(
     var songToDelete by remember { mutableStateOf<Song?>(null) }
     var songToEditMetadata by remember { mutableStateOf<Song?>(null) }
     var batchSongsToEdit by remember { mutableStateOf<List<Song>?>(null) }
+    var isDailyMixDetailOpen by remember { mutableStateOf(false) }
+    var isRecentlyPlayedDetailOpen by remember { mutableStateOf(false) }
+    var isStatsDetailOpen by remember { mutableStateOf(false) }
 
     val filteredSongs = remember(songs, favoriteSongs, currentDestination, searchQuery) {
         val base = when (currentDestination) {
@@ -189,6 +193,11 @@ fun MainAppScaffold(
                 onNavigate = { destination ->
                     currentDestination = destination
                     previousDestinationBeforeSearch = null
+                    if (destination != DesktopNavDestination.HOME) {
+                        isDailyMixDetailOpen = false
+                        isRecentlyPlayedDetailOpen = false
+                        isStatsDetailOpen = false
+                    }
                     if (destination != DesktopNavDestination.PLAYLISTS) {
                         selectedPlaylistId = null
                     }
@@ -246,38 +255,78 @@ fun MainAppScaffold(
                     ) {
                         when (currentDestination) {
                             DesktopNavDestination.HOME -> {
-                                HomeScreen(
-                                    songs = songs,
-                                    favoriteSongs = favoriteSongs,
-                                    recentlyPlayedSongs = recentlyPlayedSongs,
-                                    currentSong = currentSong,
-                                    isPlaying = playerInfo.isPlaying,
-                                    onSongSelect = { song ->
-                                        val idx = songs.indexOfFirst { it.id == song.id }
-                                        if (idx != -1) {
-                                            viewModel.playSongs(songs.drop(idx), 0)
-                                        } else {
-                                            viewModel.playSong(song)
-                                        }
-                                    },
-                                    onPlaySongs = { songList, startIndex ->
-                                        viewModel.playSongs(songList, startIndex)
-                                    },
-                                    onShuffleAll = { viewModel.playSongs(songs.shuffled()) },
-                                    onNavigateToLibrary = { currentDestination = DesktopNavDestination.SONGS },
-                                    onNavigateToFolders = {
-                                        settingsInitialSection = SettingsSection.LIBRARY
-                                        settingsInitialSubDetail = LibrarySubDetail.FOLDERS
-                                        currentDestination = DesktopNavDestination.SETTINGS
-                                    },
-                                    onRescanLibrary = { viewModel.rescanLibrary() },
-                                    onPlayNext = { song -> viewModel.playSongNext(song) },
-                                    onAddToQueue = { song -> viewModel.addSongToQueue(song) },
-                                    onAddToPlaylist = { song -> songToAddToPlaylist = song },
-                                    onDelete = { song -> songToDelete = song },
-                                    onToggleFavorite = { song -> viewModel.toggleFavorite(song) },
-                                    onEditMetadata = { song -> songToEditMetadata = song }
-                                )
+                                when {
+                                    isDailyMixDetailOpen -> {
+                                        DailyMixScreen(
+                                            songs = songs,
+                                            favoriteSongs = favoriteSongs,
+                                            currentSong = currentSong,
+                                            isPlaying = playerInfo.isPlaying,
+                                            viewModel = viewModel,
+                                            onBack = { isDailyMixDetailOpen = false },
+                                            onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                            onDelete = { song -> songToDelete = song },
+                                            onEditMetadata = { song -> songToEditMetadata = song }
+                                        )
+                                    }
+                                    isRecentlyPlayedDetailOpen -> {
+                                        RecentlyPlayedScreen(
+                                            recentlyPlayedSongs = recentlyPlayedSongs,
+                                            currentSong = currentSong,
+                                            isPlaying = playerInfo.isPlaying,
+                                            viewModel = viewModel,
+                                            onBack = { isRecentlyPlayedDetailOpen = false },
+                                            onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                            onDelete = { song -> songToDelete = song },
+                                            onEditMetadata = { song -> songToEditMetadata = song }
+                                        )
+                                    }
+                                    isStatsDetailOpen -> {
+                                        StatsScreen(
+                                            viewModel = viewModel,
+                                            songs = songs,
+                                            onBack = { isStatsDetailOpen = false }
+                                        )
+                                    }
+                                    else -> {
+                                        HomeScreen(
+                                            songs = songs,
+                                            favoriteSongs = favoriteSongs,
+                                            recentlyPlayedSongs = recentlyPlayedSongs,
+                                            homeStatsOverview = homeStatsOverview,
+                                            currentSong = currentSong,
+                                            isPlaying = playerInfo.isPlaying,
+                                            onSongSelect = { song ->
+                                                val idx = songs.indexOfFirst { it.id == song.id }
+                                                if (idx != -1) {
+                                                    viewModel.playSongs(songs.drop(idx), 0)
+                                                } else {
+                                                    viewModel.playSong(song)
+                                                }
+                                            },
+                                            onPlaySongs = { songList, startIndex ->
+                                                viewModel.playSongs(songList, startIndex)
+                                            },
+                                            onShuffleAll = { viewModel.playSongs(songs.shuffled()) },
+                                            onNavigateToLibrary = { currentDestination = DesktopNavDestination.SONGS },
+                                            onNavigateToDailyMix = { isDailyMixDetailOpen = true },
+                                            onNavigateToRecentlyPlayed = { isRecentlyPlayedDetailOpen = true },
+                                            onNavigateToStats = { isStatsDetailOpen = true },
+                                            onNavigateToFolders = {
+                                                settingsInitialSection = SettingsSection.LIBRARY
+                                                settingsInitialSubDetail = LibrarySubDetail.FOLDERS
+                                                currentDestination = DesktopNavDestination.SETTINGS
+                                            },
+                                            onRescanLibrary = { viewModel.rescanLibrary() },
+                                            onPlayNext = { song -> viewModel.playSongNext(song) },
+                                            onAddToQueue = { song -> viewModel.addSongToQueue(song) },
+                                            onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                            onDelete = { song -> songToDelete = song },
+                                            onToggleFavorite = { song -> viewModel.toggleFavorite(song) },
+                                            onEditMetadata = { song -> songToEditMetadata = song }
+                                        )
+                                    }
+                                }
                             }
 
                             DesktopNavDestination.SONGS, DesktopNavDestination.LIKED -> {
