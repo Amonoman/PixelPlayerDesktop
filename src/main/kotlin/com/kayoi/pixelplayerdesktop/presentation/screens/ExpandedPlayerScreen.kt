@@ -32,10 +32,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CropSquare
 import androidx.compose.material.icons.rounded.FullscreenExit
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Search
+import com.kayoi.pixelplayerdesktop.presentation.screens.settings.EqualizerDialog
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.HorizontalDivider
@@ -118,6 +120,8 @@ fun ExpandedPlayerScreen(
     val showPlayerFileInfo by viewModel.showPlayerFileInfo.collectAsState()
     val lyricsAlignment by viewModel.lyricsAlignment.collectAsState()
     val showLyricsRomanization by viewModel.showLyricsRomanization.collectAsState()
+    val equalizerEnabled by viewModel.equalizerEnabled.collectAsState()
+    var showEqualizerDialog by remember { mutableStateOf(false) }
     var showLyricsSearchDialog by remember { mutableStateOf(false) }
     var showLyricsMenu by remember { mutableStateOf(false) }
     var showResetConfirmDialog by remember { mutableStateOf(false) }
@@ -385,6 +389,20 @@ fun ExpandedPlayerScreen(
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                                         ) {
+                                            AppTooltip("Equalizer") {
+                                                IconButton(
+                                                    onClick = { showEqualizerDialog = true },
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.GraphicEq,
+                                                        contentDescription = "Equalizer",
+                                                        tint = if (equalizerEnabled) colors.primary else colors.onSurfaceVariant,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                            }
+
                                             AppTooltip("Search / Change Lyrics") {
                                                 IconButton(
                                                     onClick = { showLyricsSearchDialog = true },
@@ -597,6 +615,13 @@ fun ExpandedPlayerScreen(
                         Text("Cancel")
                     }
                 }
+            )
+        }
+
+        if (showEqualizerDialog) {
+            EqualizerDialog(
+                viewModel = viewModel,
+                onDismiss = { showEqualizerDialog = false }
             )
         }
     }

@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.domain.repository
 
+import com.kayoi.pixelplayerdesktop.data.model.EqualizerPreset
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
 import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
 import com.kayoi.pixelplayerdesktop.data.preferences.UserSettings
@@ -52,4 +53,13 @@ interface SettingsRepository {
     suspend fun setCrossfadeDurationSeconds(durationSeconds: Int)
     suspend fun setShowQueueHistory(show: Boolean)
     suspend fun setCloseToTray(enabled: Boolean)
+    suspend fun setEqualizerEnabled(enabled: Boolean)
+    suspend fun setEqualizerPreset(preset: String)
+    suspend fun setEqualizerBands(bands: List<Float>)
+    suspend fun setEqualizerPreamp(preamp: Float)
+    suspend fun saveCustomEqualizerPreset(preset: EqualizerPreset)
+    suspend fun deleteCustomEqualizerPreset(presetName: String)
+    suspend fun renameCustomEqualizerPreset(oldName: String, newName: String)
+    suspend fun setPinnedEqualizerPresets(pinnedNames: List<String>)
+    suspend fun setEqualizerViewMode(mode: String)
 }

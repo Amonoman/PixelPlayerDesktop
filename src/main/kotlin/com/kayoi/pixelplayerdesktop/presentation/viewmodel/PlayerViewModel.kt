@@ -9,6 +9,7 @@ import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineReleaseMetada
 import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineTrackMetadata
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Artist
+import com.kayoi.pixelplayerdesktop.data.model.EqualizerPreset
 import com.kayoi.pixelplayerdesktop.data.model.Playlist
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
@@ -66,6 +67,13 @@ class PlayerViewModel(
     val crossfadeDurationSeconds = playbackStateHolder.crossfadeDurationSeconds
     val showQueueHistory = playbackStateHolder.showQueueHistory
     val closeToTray = playbackStateHolder.closeToTray
+    val equalizerEnabled = playbackStateHolder.equalizerEnabled
+    val equalizerPreset = playbackStateHolder.equalizerPreset
+    val equalizerBands = playbackStateHolder.equalizerBands
+    val equalizerPreamp = playbackStateHolder.equalizerPreamp
+    val customEqualizerPresets = playbackStateHolder.customEqualizerPresets
+    val pinnedEqualizerPresets = playbackStateHolder.pinnedEqualizerPresets
+    val equalizerViewMode = playbackStateHolder.equalizerViewMode
 
     fun setReplayGainEnabled(enabled: Boolean) = playbackStateHolder.setReplayGainEnabled(enabled)
     fun setReplayGainMode(mode: String) = playbackStateHolder.setReplayGainMode(mode)
@@ -73,6 +81,15 @@ class PlayerViewModel(
     fun setCrossfadeDurationSeconds(duration: Int) = playbackStateHolder.setCrossfadeDurationSeconds(duration)
     fun setShowQueueHistory(show: Boolean) = playbackStateHolder.setShowQueueHistory(show)
     fun setCloseToTray(enabled: Boolean) = playbackStateHolder.setCloseToTray(enabled)
+    fun setEqualizerEnabled(enabled: Boolean) = playbackStateHolder.setEqualizerEnabled(enabled)
+    fun setEqualizerPreset(preset: EqualizerPreset) = playbackStateHolder.setEqualizerPreset(preset)
+    fun setEqualizerBand(index: Int, level: Float) = playbackStateHolder.setEqualizerBand(index, level)
+    fun setEqualizerPreamp(preamp: Float) = playbackStateHolder.setEqualizerPreamp(preamp)
+    fun saveCustomEqualizerPreset(name: String) = playbackStateHolder.saveCustomEqualizerPreset(name)
+    fun deleteCustomEqualizerPreset(name: String) = playbackStateHolder.deleteCustomEqualizerPreset(name)
+    fun renameCustomEqualizerPreset(oldName: String, newName: String) = playbackStateHolder.renameCustomEqualizerPreset(oldName, newName)
+    fun updatePinnedEqualizerPresets(pinnedNames: List<String>) = playbackStateHolder.updatePinnedEqualizerPresets(pinnedNames)
+    fun setEqualizerViewMode(mode: String) = playbackStateHolder.setEqualizerViewMode(mode)
 
     fun shuffleRandomAlbum(availableAlbums: List<Album>? = null) {
         val targetList = availableAlbums ?: albums.value

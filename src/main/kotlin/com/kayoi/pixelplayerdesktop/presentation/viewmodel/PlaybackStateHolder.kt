@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.presentation.viewmodel
 
+import com.kayoi.pixelplayerdesktop.data.model.EqualizerPreset
 import com.kayoi.pixelplayerdesktop.data.model.Lyrics
 import com.kayoi.pixelplayerdesktop.data.model.PlayerInfo
 import com.kayoi.pixelplayerdesktop.data.model.QueueItem
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -83,6 +85,109 @@ class PlaybackStateHolder(
 
     fun setCloseToTray(enabled: Boolean) {
         coroutineScope.launch { settingsRepository.setCloseToTray(enabled) }
+    }
+
+    val equalizerEnabled: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.equalizerEnabled }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
+
+    val equalizerPreset: StateFlow<String> = settingsRepository.settingsFlow
+        .map { it.equalizerPreset }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, "flat")
+
+    val equalizerBands: StateFlow<List<Float>> = settingsRepository.settingsFlow
+        .map { it.equalizerBands }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, List(10) { 0f })
+
+    val equalizerPreamp: StateFlow<Float> = settingsRepository.settingsFlow
+        .map { it.equalizerPreamp }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, 0f)
+
+    val customEqualizerPresets: StateFlow<List<EqualizerPreset>> = settingsRepository.settingsFlow
+        .map { it.customEqualizerPresets }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, emptyList())
+
+    val pinnedEqualizerPresets: StateFlow<List<String>> = settingsRepository.settingsFlow
+        .map { it.pinnedEqualizerPresets }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, EqualizerPreset.DEFAULT_PINNED)
+
+    val equalizerViewMode: StateFlow<String> = settingsRepository.settingsFlow
+        .map { it.equalizerViewMode }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, "SLIDERS")
+
+    fun setEqualizerEnabled(enabled: Boolean) {
+        coroutineScope.launch { settingsRepository.setEqualizerEnabled(enabled) }
+    }
+
+    fun setEqualizerPreset(preset: EqualizerPreset) {
+        coroutineScope.launch {
+            settingsRepository.updateSettings {
+                it.copy(
+                    equalizerPreset = preset.name,
+                    equalizerBands = preset.bandLevels,
+                    equalizerPreamp = preset.preamp
+                )
+            }
+        }
+    }
+
+    fun setEqualizerBand(index: Int, level: Float) {
+        coroutineScope.launch {
+            val current = settingsRepository.settingsFlow.value.equalizerBands.toMutableList()
+            if (index in 0 until current.size) {
+                current[index] = level.coerceIn(EqualizerPreset.MIN_LEVEL, EqualizerPreset.MAX_LEVEL)
+                settingsRepository.updateSettings {
+                    it.copy(
+                        equalizerBands = current,
+                        equalizerPreset = "custom"
+                    )
+                }
+            }
+        }
+    }
+
+    fun setEqualizerPreamp(preamp: Float) {
+        coroutineScope.launch {
+            settingsRepository.setEqualizerPreamp(preamp.coerceIn(EqualizerPreset.MIN_PREAMP, EqualizerPreset.MAX_PREAMP))
+        }
+    }
+
+    fun saveCustomEqualizerPreset(name: String) {
+        coroutineScope.launch {
+            val currentSettings = settingsRepository.settingsFlow.value
+            val newPreset = EqualizerPreset.custom(
+                name = name,
+                displayName = name,
+                bandLevels = currentSettings.equalizerBands,
+                preamp = currentSettings.equalizerPreamp
+            )
+            settingsRepository.saveCustomEqualizerPreset(newPreset)
+            settingsRepository.setEqualizerPreset(name)
+        }
+    }
+
+    fun deleteCustomEqualizerPreset(name: String) {
+        coroutineScope.launch {
+            settingsRepository.deleteCustomEqualizerPreset(name)
+        }
+    }
+
+    fun renameCustomEqualizerPreset(oldName: String, newName: String) {
+        coroutineScope.launch {
+            settingsRepository.renameCustomEqualizerPreset(oldName, newName)
+        }
+    }
+
+    fun updatePinnedEqualizerPresets(pinnedNames: List<String>) {
+        coroutineScope.launch {
+            settingsRepository.setPinnedEqualizerPresets(pinnedNames)
+        }
+    }
+
+    fun setEqualizerViewMode(mode: String) {
+        coroutineScope.launch {
+            settingsRepository.setEqualizerViewMode(mode)
+        }
     }
 
     private val _playerInfo = MutableStateFlow(PlayerInfo())
@@ -288,17 +393,37 @@ class PlaybackStateHolder(
         }
 
         coroutineScope.launch {
-            settingsRepository.settingsFlow.collect { settings ->
-                audioEngine.setReplayGain(settings.replayGainEnabled, settings.replayGainMode)
-                val curr = queueManager.currentSong.value
-                if (curr != null) {
-                    if (settings.crossfadeEnabled) {
-                        scheduleTransitionFor(curr)
-                    } else {
-                        transitionSchedulerJob?.cancel()
+            settingsRepository.settingsFlow
+                .map { Pair(it.replayGainEnabled, it.replayGainMode) }
+                .distinctUntilChanged()
+                .collect { (enabled, mode) ->
+                    audioEngine.setReplayGain(enabled, mode)
+                }
+        }
+
+        coroutineScope.launch {
+            settingsRepository.settingsFlow
+                .map { Triple(it.equalizerEnabled, it.equalizerBands, it.equalizerPreamp) }
+                .distinctUntilChanged()
+                .collect { (enabled, bands, preamp) ->
+                    audioEngine.setEqualizer(enabled, bands, preamp)
+                }
+        }
+
+        coroutineScope.launch {
+            settingsRepository.settingsFlow
+                .map { Pair(it.crossfadeEnabled, it.crossfadeDurationSeconds) }
+                .distinctUntilChanged()
+                .collect { (enabled, _) ->
+                    val curr = queueManager.currentSong.value
+                    if (curr != null) {
+                        if (enabled) {
+                            scheduleTransitionFor(curr)
+                        } else {
+                            transitionSchedulerJob?.cancel()
+                        }
                     }
                 }
-            }
         }
 
         coroutineScope.launch {

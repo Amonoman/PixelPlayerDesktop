@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.data.repository
 
+import com.kayoi.pixelplayerdesktop.data.model.EqualizerPreset
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtColorAccuracy
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
 import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
@@ -268,6 +269,77 @@ class SettingsRepositoryImpl(
 
     override suspend fun setCloseToTray(enabled: Boolean) {
         updateSettings { it.copy(closeToTray = enabled) }
+    }
+
+    override suspend fun setEqualizerEnabled(enabled: Boolean) {
+        updateSettings { it.copy(equalizerEnabled = enabled) }
+    }
+
+    override suspend fun setEqualizerPreset(preset: String) {
+        updateSettings { it.copy(equalizerPreset = preset) }
+    }
+
+    override suspend fun setEqualizerBands(bands: List<Float>) {
+        updateSettings { it.copy(equalizerBands = bands) }
+    }
+
+    override suspend fun setEqualizerPreamp(preamp: Float) {
+        updateSettings { it.copy(equalizerPreamp = preamp) }
+    }
+
+    override suspend fun saveCustomEqualizerPreset(preset: EqualizerPreset) {
+        updateSettings { settings ->
+            val updated = settings.customEqualizerPresets.filter { !it.name.equals(preset.name, ignoreCase = true) } + preset
+            val updatedPinned = if (!settings.pinnedEqualizerPresets.contains(preset.name)) {
+                settings.pinnedEqualizerPresets + preset.name
+            } else {
+                settings.pinnedEqualizerPresets
+            }
+            settings.copy(
+                customEqualizerPresets = updated,
+                pinnedEqualizerPresets = updatedPinned
+            )
+        }
+    }
+
+    override suspend fun deleteCustomEqualizerPreset(presetName: String) {
+        updateSettings { settings ->
+            val updated = settings.customEqualizerPresets.filter { !it.name.equals(presetName, ignoreCase = true) }
+            val updatedPinned = settings.pinnedEqualizerPresets.filter { !it.equals(presetName, ignoreCase = true) }
+            val newPresetName = if (settings.equalizerPreset.equals(presetName, ignoreCase = true)) "flat" else settings.equalizerPreset
+            settings.copy(
+                customEqualizerPresets = updated,
+                pinnedEqualizerPresets = updatedPinned,
+                equalizerPreset = newPresetName
+            )
+        }
+    }
+
+    override suspend fun renameCustomEqualizerPreset(oldName: String, newName: String) {
+        updateSettings { settings ->
+            val updated = settings.customEqualizerPresets.map {
+                if (it.name.equals(oldName, ignoreCase = true)) {
+                    it.copy(name = newName, displayName = newName)
+                } else it
+            }
+            val updatedPinned = settings.pinnedEqualizerPresets.map {
+                if (it.equals(oldName, ignoreCase = true)) newName else it
+            }
+            val newActive = if (settings.equalizerPreset.equals(oldName, ignoreCase = true)) newName else settings.equalizerPreset
+            settings.copy(
+                customEqualizerPresets = updated,
+                pinnedEqualizerPresets = updatedPinned,
+                equalizerPreset = newActive
+            )
+        }
+    }
+
+    override suspend fun setPinnedEqualizerPresets(pinnedNames: List<String>) {
+        updateSettings { it.copy(pinnedEqualizerPresets = pinnedNames) }
+    }
+
+    override suspend fun setEqualizerViewMode(mode: String) {
+        updateSettings { it.copy(equalizerViewMode = mode) }
     }
 
     private fun loadSettingsFromDisk(): UserSettings {

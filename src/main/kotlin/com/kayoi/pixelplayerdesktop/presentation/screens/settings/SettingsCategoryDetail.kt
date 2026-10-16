@@ -968,6 +968,12 @@ fun SettingsCategoryDetail(
                 }
             }
 
+            SettingsSection.EQUALIZER -> {
+                item {
+                    EqualizerContent(viewModel = viewModel)
+                }
+            }
+
             SettingsSection.ABOUT -> {
                 item {
                     SettingsSubsection(title = "APPLICATION") {

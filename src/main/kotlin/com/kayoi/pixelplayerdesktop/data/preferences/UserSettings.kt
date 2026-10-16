@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.data.preferences
 
+import com.kayoi.pixelplayerdesktop.data.model.EqualizerPreset
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -38,5 +39,12 @@ data class UserSettings(
     val crossfadeEnabled: Boolean = false,
     val crossfadeDurationSeconds: Int = 3,
     val showQueueHistory: Boolean = true,
-    val closeToTray: Boolean = false
+    val closeToTray: Boolean = false,
+    val equalizerEnabled: Boolean = false,
+    val equalizerPreset: String = "flat",
+    val equalizerBands: List<Float> = listOf(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f),
+    val equalizerPreamp: Float = 0f,
+    val customEqualizerPresets: List<EqualizerPreset> = emptyList(),
+    val pinnedEqualizerPresets: List<String> = EqualizerPreset.DEFAULT_PINNED,
+    val equalizerViewMode: String = "SLIDERS"
 )

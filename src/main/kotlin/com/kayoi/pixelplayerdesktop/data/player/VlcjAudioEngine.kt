@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import com.sun.jna.NativeLibrary
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory
+import uk.co.caprica.vlcj.player.base.Equalizer
 import uk.co.caprica.vlcj.player.base.MediaPlayer
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter
 import java.io.File
@@ -28,9 +29,15 @@ class VlcjAudioEngine(
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) : AudioEngine {
 
+    companion object {
+        private const val VLC_EQUALIZER_PREAMP_COMPENSATION_DB = 12.0f
+    }
+
     private var factory: MediaPlayerFactory? = null
     private var playerA: MediaPlayer? = null
     private var playerB: MediaPlayer? = null
+    private var equalizerA: Equalizer? = null
+    private var equalizerB: Equalizer? = null
     private var activePlayer: MediaPlayer? = null
     private var standbyPlayer: MediaPlayer? = null
 
@@ -66,6 +73,9 @@ class VlcjAudioEngine(
     private val replayGainManager = ReplayGainManager()
     private var currentReplayGainMultiplier: Float = 1.0f
     private var currentTrackPath: String? = null
+    private var equalizerEnabled = false
+    private var equalizerBands: List<Float> = List(10) { 0f }
+    private var equalizerPreamp: Float = 0f
 
     init {
         initVlcj()
@@ -194,9 +204,17 @@ class VlcjAudioEngine(
             activePlayer = pA
             standbyPlayer = pB
 
+            val eqA = f.equalizer().newEqualizer()
+            val eqB = f.equalizer().newEqualizer()
+            equalizerA = eqA
+            equalizerB = eqB
+            pA.audio().setEqualizer(eqA)
+            pB.audio().setEqualizer(eqB)
+
             pA.events().addMediaPlayerEventListener(createEventListener())
             pB.events().addMediaPlayerEventListener(createEventListener())
             isInitialized = true
+            applyEqualizerToPlayers()
         } catch (e: Throwable) {
             isInitialized = false
         }
@@ -366,6 +384,45 @@ class VlcjAudioEngine(
         }
     }
 
+    override fun setEqualizer(enabled: Boolean, bands: List<Float>, preamp: Float) {
+        equalizerEnabled = enabled
+        equalizerBands = bands
+        equalizerPreamp = preamp
+        applyEqualizerToPlayers()
+    }
+
+    private fun applyEqualizerToPlayers() {
+        if (!isInitialized) return
+        val eqA = equalizerA ?: return
+        val eqB = equalizerB ?: return
+        try {
+            if (playerA?.audio()?.equalizer() == null) {
+                playerA?.audio()?.setEqualizer(eqA)
+            }
+            if (playerB?.audio()?.equalizer() == null) {
+                playerB?.audio()?.setEqualizer(eqB)
+            }
+
+            val targetPreamp: Float
+            val targetBands: FloatArray
+            if (equalizerEnabled) {
+                targetPreamp = (equalizerPreamp + VLC_EQUALIZER_PREAMP_COMPENSATION_DB).coerceIn(-20f, 20f)
+                val bandCount = eqA.bandCount()
+                targetBands = FloatArray(bandCount) { i ->
+                    if (i < equalizerBands.size) equalizerBands[i].coerceIn(-20f, 20f) else 0f
+                }
+            } else {
+                targetPreamp = VLC_EQUALIZER_PREAMP_COMPENSATION_DB
+                targetBands = FloatArray(eqA.bandCount()) { 0f }
+            }
+
+            eqA.setAmps(targetBands)
+            eqA.setPreamp(targetPreamp)
+            eqB.setAmps(targetBands)
+            eqB.setPreamp(targetPreamp)
+        } catch (_: Exception) {}
+    }
+
     override fun play() {
         val player = activePlayer
         if (player == null || !isInitialized) {
@@ -529,6 +586,8 @@ class VlcjAudioEngine(
         playPauseFadeJob?.cancel()
         crossfadeJob?.cancel()
         try {
+            equalizerA = null
+            equalizerB = null
             playerA?.release()
             playerB?.release()
             factory?.release()

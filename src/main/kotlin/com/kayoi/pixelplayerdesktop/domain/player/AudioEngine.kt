@@ -31,6 +31,7 @@ interface AudioEngine {
     fun setVolume(volume: Float)
     fun setMute(muted: Boolean)
     fun setReplayGain(enabled: Boolean, mode: String = "track")
+    fun setEqualizer(enabled: Boolean, bands: List<Float>, preamp: Float = 0f) {}
     fun crossfadeTo(mediaPathOrUri: String, durationMs: Long) {
         play(mediaPathOrUri)
     }
