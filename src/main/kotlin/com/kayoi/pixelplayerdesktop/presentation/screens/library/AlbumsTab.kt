@@ -81,18 +81,51 @@ fun AlbumsTab(
         var lastHandledAlbumSortKey by remember { mutableStateOf(currentAlbumSortOption.storageKey) }
         var pendingAlbumSortScrollReset by remember { mutableStateOf(false) }
 
-        val onlineAlbumIds = remember(songs) {
-            songs.filter { it.navidromeId != null || it.jellyfinId != null }.map { it.albumId }.toSet()
+        val onlineAlbums = remember(songs) {
+            val ids = mutableSetOf<Long>()
+            val titles = mutableSetOf<String>()
+            songs.filter { it.navidromeId != null || it.jellyfinId != null }.forEach { song ->
+                if (song.albumId != 0L) ids.add(song.albumId)
+                if (song.album.isNotBlank()) titles.add(song.album.lowercase().trim())
+            }
+            ids to titles
         }
-        val offlineAlbumIds = remember(songs) {
-            songs.filter { it.navidromeId == null && it.jellyfinId == null }.map { it.albumId }.toSet()
+        val offlineAlbums = remember(songs) {
+            val ids = mutableSetOf<Long>()
+            val titles = mutableSetOf<String>()
+            songs.filter { it.navidromeId == null && it.jellyfinId == null }.forEach { song ->
+                if (song.albumId != 0L) ids.add(song.albumId)
+                if (song.album.isNotBlank()) titles.add(song.album.lowercase().trim())
+            }
+            ids to titles
         }
 
-        val filteredAlbums = remember(albums, searchQuery, storageFilter, onlineAlbumIds, offlineAlbumIds) {
+        val allAlbumIds = remember(onlineAlbums, offlineAlbums) {
+            onlineAlbums.first + offlineAlbums.first
+        }
+        val allAlbumTitles = remember(onlineAlbums, offlineAlbums) {
+            onlineAlbums.second + offlineAlbums.second
+        }
+
+        val filteredAlbums = remember(
+            albums,
+            searchQuery,
+            storageFilter,
+            onlineAlbums,
+            offlineAlbums,
+            allAlbumIds,
+            allAlbumTitles
+        ) {
             val byStorage = when (storageFilter) {
-                StorageFilter.ALL -> albums
-                StorageFilter.ONLINE -> albums.filter { it.id in onlineAlbumIds }
-                StorageFilter.OFFLINE -> albums.filter { it.id in offlineAlbumIds }
+                StorageFilter.ALL -> albums.filter {
+                    (it.id != 0L && it.id in allAlbumIds) || it.title.lowercase().trim() in allAlbumTitles
+                }
+                StorageFilter.ONLINE -> albums.filter {
+                    (it.id != 0L && it.id in onlineAlbums.first) || it.title.lowercase().trim() in onlineAlbums.second
+                }
+                StorageFilter.OFFLINE -> albums.filter {
+                    (it.id != 0L && it.id in offlineAlbums.first) || it.title.lowercase().trim() in offlineAlbums.second
+                }
             }
             if (searchQuery.isBlank()) byStorage
             else byStorage.filter {

@@ -9,6 +9,7 @@ import com.kayoi.pixelplayerdesktop.utils.DEFAULT_WORD_DELIMITERS
 import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
 import com.kayoi.pixelplayerdesktop.utils.LrcParser
 import com.kayoi.pixelplayerdesktop.utils.collectArtistNames
+import com.kayoi.pixelplayerdesktop.utils.isDirectoryOrParentExcluded
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -83,17 +84,13 @@ class DesktopMusicScanner(
                 val dir = File(dirPath)
                 if (dir.exists() && dir.isDirectory) {
                     val rootDirAbs = dir.absolutePath
-                    val isRootExcluded = normalizedExcluded.any { excluded ->
-                        rootDirAbs == excluded || rootDirAbs.startsWith(if (excluded.endsWith(File.separator)) excluded else excluded + File.separator)
-                    }
+                    val isRootExcluded = isDirectoryOrParentExcluded(rootDirAbs, normalizedExcluded)
                     if (isRootExcluded) continue
 
                     Files.walkFileTree(dir.toPath(), object : SimpleFileVisitor<Path>() {
                         override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
                             val currentDirAbs = dir.toFile().absolutePath
-                            val isExcluded = normalizedExcluded.any { excluded ->
-                                currentDirAbs == excluded || currentDirAbs.startsWith(if (excluded.endsWith(File.separator)) excluded else excluded + File.separator)
-                            }
+                            val isExcluded = isDirectoryOrParentExcluded(currentDirAbs, normalizedExcluded)
                             return if (isExcluded) FileVisitResult.SKIP_SUBTREE else FileVisitResult.CONTINUE
                         }
 

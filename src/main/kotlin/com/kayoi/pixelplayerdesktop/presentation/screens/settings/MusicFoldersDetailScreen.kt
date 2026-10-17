@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.utils.DirectoryPicker
+import com.kayoi.pixelplayerdesktop.utils.isDirectoryOrParentExcluded
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -73,15 +74,12 @@ private val supportedAudioExts = setOf("mp3", "flac", "ogg", "opus", "m4a", "wav
 fun countAudioFilesDeep(dir: File, excludedDirectories: List<String> = emptyList()): Int {
     if (!dir.exists() || !dir.isDirectory) return 0
     return try {
-        val normalizedExcluded = excludedDirectories.map { File(it).absolutePath }
         var count = 0
         val rootPath = dir.toPath()
         Files.walkFileTree(rootPath, object : SimpleFileVisitor<Path>() {
             override fun preVisitDirectory(dirPath: Path, attrs: BasicFileAttributes): FileVisitResult {
                 val abs = dirPath.toFile().absolutePath
-                val isBlocked = normalizedExcluded.any { excluded ->
-                    abs == excluded || abs.startsWith(if (excluded.endsWith(File.separator)) excluded else excluded + File.separator)
-                }
+                val isBlocked = isDirectoryOrParentExcluded(abs, excludedDirectories)
                 return if (isBlocked && abs != rootPath.toFile().absolutePath) {
                     FileVisitResult.SKIP_SUBTREE
                 } else {
@@ -104,14 +102,6 @@ fun countAudioFilesDeep(dir: File, excludedDirectories: List<String> = emptyList
         count
     } catch (_: Exception) {
         0
-    }
-}
-
-fun isDirectoryOrParentExcluded(path: String, excludedList: List<String>): Boolean {
-    val normPath = File(path).absolutePath
-    return excludedList.any { excluded ->
-        val normExcluded = File(excluded).absolutePath
-        normPath == normExcluded || normPath.startsWith(if (normExcluded.endsWith(File.separator)) normExcluded else normExcluded + File.separator)
     }
 }
 

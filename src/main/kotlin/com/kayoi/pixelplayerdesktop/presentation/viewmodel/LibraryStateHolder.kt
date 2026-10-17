@@ -23,6 +23,7 @@ import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
 import com.kayoi.pixelplayerdesktop.utils.AlbumArtCacheManager
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_ARTIST_DELIMITERS
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_WORD_DELIMITERS
+import com.kayoi.pixelplayerdesktop.utils.DirectoryFilterUtils
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -139,11 +140,21 @@ class LibraryStateHolder(
 
     val songs: StateFlow<List<Song>> = combine(
         _songSortOption,
-        minSongDurationMs
-    ) { sort, minDur ->
-        sort to minDur
-    }.flatMapLatest { (sort, minDur) ->
-        musicRepository.getAllSongsFlow(sort, minDur.toLong())
+        minSongDurationMs,
+        excludedDirectories
+    ) { sort, minDur, excluded ->
+        Triple(sort, minDur, excluded)
+    }.flatMapLatest { (sort, minDur, excluded) ->
+        val prefixes = DirectoryFilterUtils.normalizePrefixes(excluded)
+        musicRepository.getAllSongsFlow(sort, minDur.toLong()).map { songsList ->
+            if (prefixes.isEmpty()) {
+                songsList
+            } else {
+                songsList.filterNot { song ->
+                    DirectoryFilterUtils.isPathExcluded(song.path, prefixes)
+                }
+            }
+        }
     }.stateIn(coroutineScope, SharingStarted.Lazily, emptyList())
 
     val albums: StateFlow<List<Album>> = combine(
@@ -163,11 +174,25 @@ class LibraryStateHolder(
         musicRepository.getAllPlaylistsFlow(sort)
     }.stateIn(coroutineScope, SharingStarted.Lazily, emptyList())
 
-    val favoriteSongs: StateFlow<List<Song>> = musicRepository.getFavoriteSongsFlow()
-        .stateIn(coroutineScope, SharingStarted.Lazily, emptyList())
+    val favoriteSongs: StateFlow<List<Song>> = combine(
+        musicRepository.getFavoriteSongsFlow(),
+        excludedDirectories
+    ) { list, excluded ->
+        if (excluded.isEmpty()) list else {
+            val prefixes = DirectoryFilterUtils.normalizePrefixes(excluded)
+            list.filterNot { DirectoryFilterUtils.isPathExcluded(it.path, prefixes) }
+        }
+    }.stateIn(coroutineScope, SharingStarted.Lazily, emptyList())
 
-    val recentlyPlayedSongs: StateFlow<List<Song>> = musicRepository.getRecentlyPlayedSongsFlow()
-        .stateIn(coroutineScope, SharingStarted.Lazily, emptyList())
+    val recentlyPlayedSongs: StateFlow<List<Song>> = combine(
+        musicRepository.getRecentlyPlayedSongsFlow(),
+        excludedDirectories
+    ) { list, excluded ->
+        if (excluded.isEmpty()) list else {
+            val prefixes = DirectoryFilterUtils.normalizePrefixes(excluded)
+            list.filterNot { DirectoryFilterUtils.isPathExcluded(it.path, prefixes) }
+        }
+    }.stateIn(coroutineScope, SharingStarted.Lazily, emptyList())
 
     val scanProgress: StateFlow<ScanProgress> = scanner.scanProgress
 
@@ -417,7 +442,15 @@ class LibraryStateHolder(
                     minDurationMs = minSongDurationMs.value.toLong(),
                     minTracks = minTracksPerAlbum.value
                 )
-                _searchResults.value = results
+                val excluded = excludedDirectories.value
+                val prefixes = DirectoryFilterUtils.normalizePrefixes(excluded)
+                _searchResults.value = if (prefixes.isEmpty()) {
+                    results
+                } else {
+                    results.filterNot { item ->
+                        item is SearchResultItem.SongItem && DirectoryFilterUtils.isPathExcluded(item.song.path, prefixes)
+                    }
+                }
             } else {
                 _searchResults.value = emptyList()
             }

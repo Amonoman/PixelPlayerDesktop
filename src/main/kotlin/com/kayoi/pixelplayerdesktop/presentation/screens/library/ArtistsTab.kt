@@ -128,14 +128,31 @@ fun ArtistsTab(
             ids to names
         }
 
-        val filteredArtists = remember(artists, searchQuery, storageFilter, onlineArtists, offlineArtists) {
+        val allArtistIds = remember(onlineArtists, offlineArtists) {
+            onlineArtists.first + offlineArtists.first
+        }
+        val allArtistNames = remember(onlineArtists, offlineArtists) {
+            onlineArtists.second + offlineArtists.second
+        }
+
+        val filteredArtists = remember(
+            artists,
+            searchQuery,
+            storageFilter,
+            onlineArtists,
+            offlineArtists,
+            allArtistIds,
+            allArtistNames
+        ) {
             val byStorage = when (storageFilter) {
-                StorageFilter.ALL -> artists
+                StorageFilter.ALL -> artists.filter {
+                    (it.id != 0L && it.id in allArtistIds) || it.name.lowercase().trim() in allArtistNames
+                }
                 StorageFilter.ONLINE -> artists.filter {
-                    it.id in onlineArtists.first || it.name.lowercase().trim() in onlineArtists.second
+                    (it.id != 0L && it.id in onlineArtists.first) || it.name.lowercase().trim() in onlineArtists.second
                 }
                 StorageFilter.OFFLINE -> artists.filter {
-                    it.id in offlineArtists.first || it.name.lowercase().trim() in offlineArtists.second
+                    (it.id != 0L && it.id in offlineArtists.first) || it.name.lowercase().trim() in offlineArtists.second
                 }
             }
             if (searchQuery.isBlank()) byStorage

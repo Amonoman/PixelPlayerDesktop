@@ -98,7 +98,7 @@ class MusicRepositoryImpl(
     override fun getAllArtistsFlow(sortOption: SortOption): Flow<List<Artist>> = flow {
         emit(musicDao.getAllArtists(sortOption))
         database.tableInvalidationFlow.collect { table ->
-            if (table == "songs") {
+            if (table == "songs" || table == "artists") {
                 emit(musicDao.getAllArtists(sortOption))
             }
         }
