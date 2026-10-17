@@ -1,7 +1,8 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
+import com.kayoi.pixelplayerdesktop.presentation.components.CollapsiblePageHeader
+
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -31,7 +32,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
@@ -39,9 +39,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -62,15 +60,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.ExperimentalTextApi
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Song
@@ -130,26 +122,20 @@ fun RecentlyPlayedScreen(
         }
 
         Column(modifier = Modifier.fillMaxSize()) {
-            RecentlyPlayedTopBar(
-                isScrolled = isScrolled,
+            CollapsiblePageHeader(
+                title = "Recently Played",
+                subtitle = if (filteredSongs.size == 1) "1 track played" else "${filteredSongs.size} tracks played",
                 onBack = onBack,
+                isScrolled = isScrolled,
                 horizontalPadding = horizontalPadding
             )
 
             LazyColumn(
                 state = lazyListState,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentPadding = PaddingValues(bottom = 28.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                item(key = "recently_played_hero") {
-                    RecentlyPlayedHeroSection(
-                        songCount = filteredSongs.size,
-                        isCompact = isCompact,
-                        isVeryCompact = isVeryCompact,
-                        horizontalPadding = horizontalPadding
-                    )
-                }
 
                 item(key = "recently_played_range_selector") {
                     RecentlyPlayedRangeSelector(
@@ -215,141 +201,6 @@ fun RecentlyPlayedScreen(
     }
 }
 
-@Composable
-private fun RecentlyPlayedTopBar(
-    isScrolled: Boolean,
-    onBack: () -> Unit,
-    horizontalPadding: Dp,
-    modifier: Modifier = Modifier
-) {
-    val colors = MaterialTheme.colorScheme
-    val animatedBgColor by animateColorAsState(
-        targetValue = if (isScrolled) colors.surfaceContainerHigh else Color.Transparent,
-        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
-        label = "rpTopBarBg"
-    )
-
-    val animatedVerticalPadding by animateDpAsState(
-        targetValue = if (isScrolled) 8.dp else 12.dp,
-        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
-        label = "rpTopBarPadding"
-    )
-
-    val collapsedTitleAlpha by animateFloatAsState(
-        targetValue = if (isScrolled) 1f else 0f,
-        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
-        label = "rpCollapsedTitleAlpha"
-    )
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .background(animatedBgColor)
-            .padding(
-                start = horizontalPadding,
-                end = horizontalPadding,
-                top = animatedVerticalPadding,
-                bottom = animatedVerticalPadding
-            )
-    ) {
-        FilledTonalIconButton(
-            onClick = onBack,
-            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                containerColor = colors.surfaceContainerLow,
-                contentColor = colors.onSurface
-            ),
-            modifier = Modifier.size(40.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                contentDescription = "Back",
-                modifier = Modifier.size(20.dp)
-            )
-        }
-
-        if (collapsedTitleAlpha > 0.01f) {
-            Text(
-                text = "Recently Played",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface.copy(alpha = collapsedTitleAlpha),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
-@Composable
-private fun RecentlyPlayedHeroSection(
-    songCount: Int,
-    isCompact: Boolean = false,
-    isVeryCompact: Boolean = false,
-    horizontalPadding: Dp = 24.dp,
-    modifier: Modifier = Modifier
-) {
-    val colors = MaterialTheme.colorScheme
-    val titleFontSize = when {
-        isVeryCompact -> 28.sp
-        isCompact -> 32.sp
-        else -> 36.sp
-    }
-    val titleStyle = rememberRecentlyPlayedTitleStyle(fontSize = titleFontSize)
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(
-                start = horizontalPadding,
-                end = horizontalPadding,
-                top = 4.dp,
-                bottom = 12.dp
-            ),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text(
-            text = "Recently Played",
-            style = titleStyle,
-            color = colors.onSurface
-        )
-
-        val tracksText = if (songCount == 1) "1 track played" else "$songCount tracks played"
-        Text(
-            text = tracksText,
-            style = if (isVeryCompact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
-            color = colors.onSurfaceVariant
-        )
-    }
-}
-
-@OptIn(ExperimentalTextApi::class)
-@Composable
-private fun rememberRecentlyPlayedTitleStyle(fontSize: TextUnit = 36.sp): TextStyle {
-    return remember(fontSize) {
-        TextStyle(
-            fontFamily = FontFamily(
-                Font(
-                    "font/gflex_variable.ttf",
-                    variationSettings = FontVariation.Settings(
-                        FontVariation.weight(560),
-                        FontVariation.width(122f),
-                        FontVariation.grade(40),
-                        FontVariation.Setting("ROND", 100f),
-                        FontVariation.Setting("XTRA", 520f),
-                        FontVariation.Setting("YOPQ", 90f),
-                        FontVariation.Setting("YTLC", 505f)
-                    )
-                )
-            ),
-            fontWeight = FontWeight(560),
-            fontSize = fontSize,
-            lineHeight = (fontSize.value * 1.15f).sp,
-            letterSpacing = (-0.4).sp
-        )
-    }
-}
 
 @Composable
 private fun RecentlyPlayedRangeSelector(

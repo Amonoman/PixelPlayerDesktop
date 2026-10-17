@@ -202,20 +202,40 @@ fun DesktopLandscapeHeroPlayer(
                                 }
                             }
 
+                            val stackedFavCornerRadius by animateDpAsState(
+                                targetValue = if (isFavorite) 8.dp else 16.dp,
+                                animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+                                label = "stackedFavCorner"
+                            )
+                            val stackedFavBgColor by animateColorAsState(
+                                targetValue = if (isFavorite) colors.primary else colors.onPrimary.copy(alpha = 0.45f),
+                                animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+                                label = "stackedFavBg"
+                            )
+                            val stackedFavTint by animateColorAsState(
+                                targetValue = if (isFavorite) colors.onPrimary else colors.primary,
+                                animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+                                label = "stackedFavTint"
+                            )
+
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
                                 AppTooltip(if (isFavorite) "Remove from favorites" else "Add to favorites") {
-                                    IconButton(
-                                        onClick = onToggleFavorite,
-                                        modifier = Modifier.size(32.dp)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(RoundedCornerShape(stackedFavCornerRadius))
+                                            .background(stackedFavBgColor)
+                                            .clickable(onClick = onToggleFavorite),
+                                        contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                                             contentDescription = "Favorite",
-                                            tint = if (isFavorite) colors.primary else colors.onPrimaryContainer.copy(alpha = 0.65f),
-                                            modifier = Modifier.size(20.dp)
+                                            tint = stackedFavTint,
+                                            modifier = Modifier.size(18.dp)
                                         )
                                     }
                                 }
@@ -268,6 +288,22 @@ fun DesktopLandscapeHeroPlayer(
             }
         } else {
             val isCompactHero = heroWidth < 700.dp
+            val favButtonSize = if (isCompactHero) 36.dp else 42.dp
+            val favCornerRadius by animateDpAsState(
+                targetValue = if (isFavorite) 11.dp else (favButtonSize / 2),
+                animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+                label = "favCorner"
+            )
+            val favBgColor by animateColorAsState(
+                targetValue = if (isFavorite) colors.primary else colors.onPrimary.copy(alpha = 0.45f),
+                animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+                label = "favBg"
+            )
+            val favTint by animateColorAsState(
+                targetValue = if (isFavorite) colors.onPrimary else colors.primary,
+                animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+                label = "favTint"
+            )
             val artworkSize = when {
                 heroWidth < 500.dp -> 105.dp
                 heroWidth < 650.dp -> 135.dp
@@ -351,15 +387,19 @@ fun DesktopLandscapeHeroPlayer(
                             }
 
                             AppTooltip(if (isFavorite) "Remove from favorites" else "Add to favorites") {
-                                IconButton(
-                                    onClick = onToggleFavorite,
-                                    modifier = Modifier.size(if (isCompactHero) 36.dp else 42.dp)
+                                Box(
+                                    modifier = Modifier
+                                        .size(favButtonSize)
+                                        .clip(RoundedCornerShape(favCornerRadius))
+                                        .background(favBgColor)
+                                        .clickable(onClick = onToggleFavorite),
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                                         contentDescription = "Favorite",
-                                        tint = if (isFavorite) colors.primary else colors.onPrimaryContainer.copy(alpha = 0.65f),
-                                        modifier = Modifier.size(if (isCompactHero) 22.dp else 26.dp)
+                                        tint = favTint,
+                                        modifier = Modifier.size(if (isCompactHero) 20.dp else 24.dp)
                                     )
                                 }
                             }
@@ -538,12 +578,13 @@ fun PlaybackControlsRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         AppTooltip(if (isShuffle) "Shuffle: On" else "Shuffle: Off") {
-            IconButton(
-                onClick = onToggleShuffle,
+            Box(
                 modifier = Modifier
                     .size(shuffleRepeatSize)
                     .clip(CircleShape)
                     .background(if (isShuffle) colors.primary else colors.onPrimary.copy(alpha = 0.45f))
+                    .clickable(onClick = onToggleShuffle),
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Shuffle,
@@ -632,12 +673,13 @@ fun PlaybackControlsRow(
             else -> "Repeat: Off"
         }
         AppTooltip(repLabel) {
-            IconButton(
-                onClick = onCycleRepeat,
+            Box(
                 modifier = Modifier
                     .size(shuffleRepeatSize)
                     .clip(CircleShape)
                     .background(if (repeatMode > 0) colors.primary else colors.onPrimary.copy(alpha = 0.45f))
+                    .clickable(onClick = onCycleRepeat),
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = repIcon,

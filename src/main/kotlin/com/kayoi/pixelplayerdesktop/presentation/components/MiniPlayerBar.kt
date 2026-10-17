@@ -159,7 +159,7 @@ fun MiniPlayerBar(
 
                         Spacer(modifier = Modifier.width(12.dp))
 
-                        Column(modifier = Modifier.weight(1f, fill = false)) {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = currentSong.title,
                                 style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp),
@@ -300,7 +300,7 @@ fun MiniPlayerBar(
 
                         Spacer(modifier = Modifier.width(artworkSpacing))
 
-                        Column(modifier = Modifier.weight(1f, fill = false)) {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = currentSong.title,
                                 style = MaterialTheme.typography.titleMedium.copy(fontSize = if (isMedium) 15.sp else 16.sp),
@@ -317,22 +317,6 @@ fun MiniPlayerBar(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
-                        }
-
-                        Spacer(modifier = Modifier.width(4.dp))
-
-                        AppTooltip(if (isFavorite) "Remove from favorites" else "Add to favorites") {
-                            IconButton(
-                                onClick = onToggleFavorite,
-                                modifier = Modifier.size(actionButtonSize)
-                            ) {
-                                Icon(
-                                    imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                                    contentDescription = "Favorite",
-                                    tint = if (isFavorite) colors.primary else colors.onPrimaryContainer.copy(alpha = 0.6f),
-                                    modifier = Modifier.size(actionIconSize)
-                                )
-                            }
                         }
                     }
 
@@ -468,6 +452,22 @@ fun MiniPlayerBar(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.End
                     ) {
+                        AppTooltip(if (isFavorite) "Remove from favorites" else "Add to favorites") {
+                            IconButton(
+                                onClick = onToggleFavorite,
+                                modifier = Modifier.size(actionButtonSize)
+                            ) {
+                                Icon(
+                                    imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                                    contentDescription = "Favorite",
+                                    tint = if (isFavorite) colors.primary else colors.onPrimaryContainer.copy(alpha = 0.75f),
+                                    modifier = Modifier.size(actionIconSize)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(2.dp))
+
                         AppTooltip("Queue") {
                             IconButton(
                                 onClick = onQueueClick,

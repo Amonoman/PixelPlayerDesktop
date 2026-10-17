@@ -1,8 +1,9 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
+import com.kayoi.pixelplayerdesktop.presentation.components.CollapsiblePageHeader
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -31,7 +32,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.Album
 import androidx.compose.material.icons.outlined.AutoGraph
 import androidx.compose.material.icons.outlined.Bolt
@@ -67,16 +67,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.ExperimentalTextApi
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.PlaybackStatsSummary
@@ -145,27 +139,51 @@ fun StatsScreen(
         }
 
         Column(modifier = Modifier.fillMaxSize()) {
-            StatsTopBar(
-                isScrolled = isScrolled,
+            val refreshRotation by animateFloatAsState(
+                targetValue = if (isRefreshing) 360f else 0f,
+                animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+                label = "statsTopBarRefreshRotation"
+            )
+
+            CollapsiblePageHeader(
+                title = "Listening Stats",
                 onBack = onBack,
-                onRefresh = {
-                    if (!isRefreshing) {
-                        coroutineScope.launch {
-                            isRefreshing = true
-                            statsHolder.refreshStats()
-                            delay(500)
-                            isRefreshing = false
-                        }
+                isScrolled = isScrolled,
+                horizontalPadding = horizontalPadding,
+                actions = {
+                    FilledTonalIconButton(
+                        onClick = {
+                            if (!isRefreshing) {
+                                coroutineScope.launch {
+                                    isRefreshing = true
+                                    statsHolder.refreshStats()
+                                    delay(500)
+                                    isRefreshing = false
+                                }
+                            }
+                        },
+                        enabled = !isRefreshing,
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = colors.surfaceContainerLow,
+                            contentColor = colors.onSurface
+                        ),
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Refresh,
+                            contentDescription = "Refresh Stats",
+                            modifier = Modifier
+                                .size(20.dp)
+                                .graphicsLayer { rotationZ = refreshRotation }
+                        )
                     }
-                },
-                isRefreshing = isRefreshing,
-                horizontalPadding = horizontalPadding
+                }
             )
 
             val currentSummary = summary
             LazyColumn(
                 state = lazyListState,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentPadding = PaddingValues(
                     start = horizontalPadding,
                     end = horizontalPadding,
@@ -173,12 +191,6 @@ fun StatsScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                item(key = "stats_hero_title") {
-                    StatsHeroSectionTitle(
-                        isCompact = isCompact,
-                        isVeryCompact = isVeryCompact
-                    )
-                }
 
                 item(key = "stats_range_tabs") {
                     RangeTabsHeader(
@@ -239,156 +251,6 @@ fun StatsScreen(
     }
 }
 
-@Composable
-private fun StatsTopBar(
-    isScrolled: Boolean,
-    onBack: () -> Unit,
-    onRefresh: () -> Unit,
-    isRefreshing: Boolean = false,
-    horizontalPadding: Dp,
-    modifier: Modifier = Modifier
-) {
-    val colors = MaterialTheme.colorScheme
-
-    val refreshRotation by animateFloatAsState(
-        targetValue = if (isRefreshing) 360f else 0f,
-        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
-        label = "statsTopBarRefreshRotation"
-    )
-
-    val animatedBgColor by animateColorAsState(
-        targetValue = if (isScrolled) colors.surfaceContainerHigh else Color.Transparent,
-        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
-        label = "statsTopBarBg"
-    )
-
-    val animatedVerticalPadding by animateDpAsState(
-        targetValue = if (isScrolled) 8.dp else 12.dp,
-        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
-        label = "statsTopBarPadding"
-    )
-
-    val collapsedTitleAlpha by animateFloatAsState(
-        targetValue = if (isScrolled) 1f else 0f,
-        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
-        label = "statsCollapsedTitleAlpha"
-    )
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .background(animatedBgColor)
-            .padding(
-                start = horizontalPadding,
-                end = horizontalPadding,
-                top = animatedVerticalPadding,
-                bottom = animatedVerticalPadding
-            )
-    ) {
-        FilledTonalIconButton(
-            onClick = onBack,
-            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                containerColor = colors.surfaceContainerLow,
-                contentColor = colors.onSurface
-            ),
-            modifier = Modifier.size(40.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                contentDescription = "Back",
-                modifier = Modifier.size(20.dp)
-            )
-        }
-
-        if (collapsedTitleAlpha > 0.01f) {
-            Text(
-                text = "Listening Stats",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface.copy(alpha = collapsedTitleAlpha),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
-        } else {
-            Spacer(modifier = Modifier.weight(1f))
-        }
-
-        FilledTonalIconButton(
-            onClick = onRefresh,
-            enabled = !isRefreshing,
-            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                containerColor = colors.surfaceContainerLow,
-                contentColor = colors.onSurface
-            ),
-            modifier = Modifier.size(40.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Refresh,
-                contentDescription = "Refresh Stats",
-                modifier = Modifier
-                    .size(20.dp)
-                    .graphicsLayer { rotationZ = refreshRotation }
-            )
-        }
-    }
-}
-
-@Composable
-private fun StatsHeroSectionTitle(
-    isCompact: Boolean = false,
-    isVeryCompact: Boolean = false,
-    modifier: Modifier = Modifier
-) {
-    val colors = MaterialTheme.colorScheme
-    val titleFontSize = when {
-        isVeryCompact -> 28.sp
-        isCompact -> 32.sp
-        else -> 36.sp
-    }
-    val titleStyle = rememberStatsTitleStyle(fontSize = titleFontSize)
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(top = 4.dp, bottom = 2.dp)
-    ) {
-        Text(
-            text = "Listening Stats",
-            style = titleStyle,
-            color = colors.onSurface
-        )
-    }
-}
-
-@OptIn(ExperimentalTextApi::class)
-@Composable
-private fun rememberStatsTitleStyle(fontSize: TextUnit = 36.sp): TextStyle {
-    return remember(fontSize) {
-        TextStyle(
-            fontFamily = FontFamily(
-                Font(
-                    "font/gflex_variable.ttf",
-                    variationSettings = FontVariation.Settings(
-                        FontVariation.weight(560),
-                        FontVariation.width(122f),
-                        FontVariation.grade(40),
-                        FontVariation.Setting("ROND", 100f),
-                        FontVariation.Setting("XTRA", 520f),
-                        FontVariation.Setting("YOPQ", 90f),
-                        FontVariation.Setting("YTLC", 505f)
-                    )
-                )
-            ),
-            fontWeight = FontWeight(560),
-            fontSize = fontSize,
-            lineHeight = (fontSize.value * 1.15f).sp,
-            letterSpacing = (-0.4).sp
-        )
-    }
-}
 
 @Composable
 private fun RangeTabsHeader(
