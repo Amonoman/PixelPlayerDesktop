@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.presentation.viewmodel
 
+import com.kayoi.pixelplayerdesktop.data.network.listenbrainz.ScrobbleManager
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
 import kotlinx.coroutines.CoroutineScope
@@ -11,6 +12,7 @@ import java.util.concurrent.TimeUnit
 
 class DesktopListeningStatsTracker(
     private val musicRepository: MusicRepository,
+    private val scrobbleManager: ScrobbleManager? = null,
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 ) {
     private var currentSession: ActiveSession? = null
@@ -30,12 +32,16 @@ class DesktopListeningStatsTracker(
 
         val now = System.currentTimeMillis()
         currentSession = ActiveSession(
-            songId = song.id,
+            song = song,
             startedAtEpochMs = now,
             accumulatedListeningMs = 0L,
             lastRecordedEpochMs = now,
             isPlaying = isPlaying
         )
+
+        if (isPlaying) {
+            scrobbleManager?.onPlayingNow(song)
+        }
     }
 
     @Synchronized
@@ -43,8 +49,13 @@ class DesktopListeningStatsTracker(
         val session = currentSession ?: return
         val now = System.currentTimeMillis()
         accumulateTime(session, now)
+        val wasPlaying = session.isPlaying
         session.isPlaying = isPlaying
         session.lastRecordedEpochMs = now
+
+        if (!wasPlaying && isPlaying) {
+            scrobbleManager?.onPlayingNow(session.song)
+        }
     }
 
     @Synchronized
@@ -59,8 +70,9 @@ class DesktopListeningStatsTracker(
         accumulateTime(session, now)
 
         val listenedMs = session.accumulatedListeningMs
+        val song = session.song
         if (listenedMs >= MIN_SESSION_LISTEN_MS) {
-            val songId = session.songId
+            val songId = song.id
             if (forceSynchronous) {
                 runCatching {
                     runBlocking {
@@ -73,6 +85,14 @@ class DesktopListeningStatsTracker(
                 }
             }
         }
+
+        scrobbleManager?.onSessionFinalized(
+            song = song,
+            startedAtEpochMs = session.startedAtEpochMs,
+            listenedMs = listenedMs,
+            trackDurationMs = song.duration
+        )
+
         currentSession = null
     }
 
@@ -85,7 +105,7 @@ class DesktopListeningStatsTracker(
     }
 
     private data class ActiveSession(
-        val songId: String,
+        val song: Song,
         val startedAtEpochMs: Long,
         var accumulatedListeningMs: Long,
         var lastRecordedEpochMs: Long,

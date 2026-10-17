@@ -14,6 +14,7 @@ import com.kayoi.pixelplayerdesktop.data.model.Playlist
 import com.kayoi.pixelplayerdesktop.data.model.SearchResultItem
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
+import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
 import com.kayoi.pixelplayerdesktop.data.scanner.DesktopMusicScanner
 import com.kayoi.pixelplayerdesktop.data.scanner.ScanProgress
 import com.kayoi.pixelplayerdesktop.domain.repository.LyricsRepository
@@ -45,6 +46,21 @@ class LibraryStateHolder(
     private val lyricsRepository: LyricsRepository? = null,
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) {
+
+    private val _storageFilter = MutableStateFlow(StorageFilter.ALL)
+    val storageFilter: StateFlow<StorageFilter> = _storageFilter.asStateFlow()
+
+    fun setStorageFilter(filter: StorageFilter) {
+        _storageFilter.value = filter
+    }
+
+    fun toggleStorageFilter() {
+        _storageFilter.value = when (_storageFilter.value) {
+            StorageFilter.ALL -> StorageFilter.ONLINE
+            StorageFilter.ONLINE -> StorageFilter.OFFLINE
+            StorageFilter.OFFLINE -> StorageFilter.ALL
+        }
+    }
 
     private val _songSortOption = MutableStateFlow<SortOption>(SortOption.SongTitleAZ)
     val songSortOption: StateFlow<SortOption> = _songSortOption.asStateFlow()

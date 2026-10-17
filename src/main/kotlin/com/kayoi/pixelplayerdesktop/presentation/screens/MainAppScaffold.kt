@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +36,7 @@ import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.MusicFolder
 import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
 import com.kayoi.pixelplayerdesktop.presentation.components.AddToPlaylistDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.AppSidebar
 import com.kayoi.pixelplayerdesktop.presentation.components.AppTopBar
@@ -94,6 +96,7 @@ fun MainAppScaffold(
     val navBarCompactMode by viewModel.navBarCompactMode.collectAsState()
     val defaultTabKey by viewModel.defaultTab.collectAsState()
     val showQueueHistory by viewModel.showQueueHistory.collectAsState()
+    val storageFilter by viewModel.storageFilter.collectAsState()
 
     var selectedPlaylistId by remember { mutableStateOf<String?>(null) }
     var selectedAlbum by remember { mutableStateOf<Album?>(null) }
@@ -166,16 +169,27 @@ fun MainAppScaffold(
     var isDailyMixDetailOpen by remember { mutableStateOf(false) }
     var isRecentlyPlayedDetailOpen by remember { mutableStateOf(false) }
     var isStatsDetailOpen by remember { mutableStateOf(false) }
+    var playbackErrorMessage by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) {
+        viewModel.playbackErrorEvents.collect { errorMsg ->
+            playbackErrorMessage = errorMsg
+        }
+    }
 
-    val filteredSongs = remember(songs, favoriteSongs, currentDestination, searchQuery) {
+    val filteredSongs = remember(songs, favoriteSongs, currentDestination, searchQuery, storageFilter) {
         val base = when (currentDestination) {
             DesktopNavDestination.LIKED -> favoriteSongs
             else -> songs
         }
+        val storageFiltered = when (storageFilter) {
+            StorageFilter.ALL -> base
+            StorageFilter.ONLINE -> base.filter { it.navidromeId != null || it.jellyfinId != null }
+            StorageFilter.OFFLINE -> base.filter { it.navidromeId == null && it.jellyfinId == null }
+        }
         if (searchQuery.isBlank()) {
-            base
+            storageFiltered
         } else {
-            base.filter {
+            storageFiltered.filter {
                 it.title.contains(searchQuery, ignoreCase = true) ||
                 it.artist.contains(searchQuery, ignoreCase = true) ||
                 it.album.contains(searchQuery, ignoreCase = true)
@@ -336,6 +350,7 @@ fun MainAppScaffold(
                                     isPlaying = playerInfo.isPlaying,
                                     searchQuery = searchQuery,
                                     viewModel = viewModel,
+                                    isLikedTab = currentDestination == DesktopNavDestination.LIKED,
                                     onAddToPlaylist = { song -> songToAddToPlaylist = song },
                                     onDelete = { song -> songToDelete = song },
                                     onEditMetadata = { song -> songToEditMetadata = song }
@@ -471,6 +486,31 @@ fun MainAppScaffold(
                     }
                 }
 
+                AnimatedVisibility(
+                    visible = playbackErrorMessage != null,
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 14.dp, end = 14.dp, top = 2.dp, bottom = 4.dp)
+                ) {
+                    DismissUndoBar(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        message = playbackErrorMessage ?: "",
+                        actionLabel = "Retry",
+                        onUndo = {
+                            playbackErrorMessage = null
+                            viewModel.togglePlayPause()
+                        },
+                        onClose = {
+                            playbackErrorMessage = null
+                        },
+                        durationMillis = 6000L
+                    )
+                }
+
                 if (currentSong != null) {
                     PixelPlayerTheme(
                         darkTheme = isDarkTheme,
@@ -479,6 +519,7 @@ fun MainAppScaffold(
                         MiniPlayerBar(
                             currentSong = currentSong!!,
                             isPlaying = playerInfo.isPlaying,
+                            isBuffering = playerInfo.isBuffering,
                             totalDurationMs = playerInfo.totalDurationMs,
                             currentPositionFlow = viewModel.currentPositionMs,
                             isShuffle = playerInfo.isShuffleEnabled,

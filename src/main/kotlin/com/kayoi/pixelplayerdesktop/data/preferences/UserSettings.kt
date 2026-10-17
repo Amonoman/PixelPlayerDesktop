@@ -46,5 +46,22 @@ data class UserSettings(
     val equalizerPreamp: Float = 0f,
     val customEqualizerPresets: List<EqualizerPreset> = emptyList(),
     val pinnedEqualizerPresets: List<String> = EqualizerPreset.DEFAULT_PINNED,
-    val equalizerViewMode: String = "SLIDERS"
+    val equalizerViewMode: String = "SLIDERS",
+    val listenBrainzToken: String? = null,
+    val listenBrainzUserName: String? = null,
+    val listenBrainzServerUrl: String? = null,
+    val listenBrainzEnabled: Boolean = false,
+    val listenBrainzScrobbleLocal: Boolean = true,
+    val listenBrainzScrobbleNavidrome: Boolean = true,
+    val listenBrainzScrobbleJellyfin: Boolean = true,
+    val navidromeServerUrl: String? = null,
+    val navidromeUsername: String? = null,
+    val navidromePassword: String? = null,
+    val navidromeAuthMethod: String = "TOKEN",
+    val navidromeEnabled: Boolean = false,
+    val jellyfinServerUrl: String? = null,
+    val jellyfinUsername: String? = null,
+    val jellyfinAccessToken: String? = null,
+    val jellyfinUserId: String? = null,
+    val jellyfinEnabled: Boolean = false
 )

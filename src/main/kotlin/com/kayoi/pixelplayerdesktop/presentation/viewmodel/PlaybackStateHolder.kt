@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import com.kayoi.pixelplayerdesktop.data.player.PlaybackUriResolver
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -37,8 +39,13 @@ class PlaybackStateHolder(
     private val lyricsRepository: LyricsRepository,
     private val settingsRepository: SettingsRepository,
     private val listeningStatsTracker: DesktopListeningStatsTracker = DesktopListeningStatsTracker(musicRepository),
+    private val playbackUriResolver: PlaybackUriResolver? = null,
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) {
+
+    private fun resolvePath(song: Song): String {
+        return playbackUriResolver?.resolve(song) ?: song.path
+    }
 
     val replayGainEnabled: StateFlow<Boolean> = settingsRepository.settingsFlow
         .map { it.replayGainEnabled }
@@ -349,8 +356,9 @@ class PlaybackStateHolder(
         coroutineScope.launch {
             audioEngine.playbackState.collect { state ->
                 val isPlaying = state == PlaybackState.PLAYING
+                val isBuffering = state == PlaybackState.BUFFERING
                 listeningStatsTracker.onPlaybackStateChanged(isPlaying)
-                _playerInfo.update { it.copy(isPlaying = isPlaying) }
+                _playerInfo.update { it.copy(isPlaying = isPlaying, isBuffering = isBuffering) }
             }
         }
 
@@ -432,10 +440,15 @@ class PlaybackStateHolder(
         coroutineScope.launch {
             audioEngine.completionEvents.collect {
                 transitionSchedulerJob?.cancel()
+                val current = queueManager.currentSong.value
                 val next = queueManager.getNextSong()
                 if (next != null) {
-                    audioEngine.play(next.path)
+                    if (current != null && next.id == current.id) {
+                        listeningStatsTracker.onSongChanged(next, isPlaying = true)
+                    }
+                    audioEngine.play(resolvePath(next))
                 } else {
+                    listeningStatsTracker.onPlaybackStopped()
                     audioEngine.stop()
                 }
             }
@@ -480,7 +493,7 @@ class PlaybackStateHolder(
                     val nextSong = queueManager.peekNextSong()
                     if (nextSong != null) {
                         queueManager.getNextSong()
-                        audioEngine.crossfadeTo(nextSong.path, remaining.coerceAtMost(fadeDurationMs))
+                        audioEngine.crossfadeTo(resolvePath(nextSong), remaining.coerceAtMost(fadeDurationMs))
                     }
                 }
                 return@launch
@@ -510,19 +523,19 @@ class PlaybackStateHolder(
 
             val nextSong = queueManager.peekNextSong() ?: return@launch
             queueManager.getNextSong()
-            audioEngine.crossfadeTo(nextSong.path, fadeDurationMs)
+            audioEngine.crossfadeTo(resolvePath(nextSong), fadeDurationMs)
         }
     }
 
     fun playSong(song: Song) {
         queueManager.playSong(song)
-        audioEngine.play(song.path)
+        audioEngine.play(resolvePath(song))
     }
 
     fun playSongs(songs: List<Song>, startIndex: Int = 0) {
         val target = queueManager.setQueue(songs, startIndex)
         if (target != null) {
-            audioEngine.play(target.path)
+            audioEngine.play(resolvePath(target))
         }
     }
 
@@ -548,14 +561,14 @@ class PlaybackStateHolder(
         if (next != null) {
             if (crossfadeEnabled.value && audioEngine.playbackState.value == PlaybackState.PLAYING) {
                 val fadeMs = (crossfadeDurationSeconds.value * 1000L).coerceIn(500L, 12000L)
-                audioEngine.crossfadeTo(next.path, fadeMs)
+                audioEngine.crossfadeTo(resolvePath(next), fadeMs)
             } else {
-                audioEngine.play(next.path)
+                audioEngine.play(resolvePath(next))
             }
         } else {
             val current = queueManager.currentSong.value
             if (current != null) {
-                audioEngine.play(current.path)
+                audioEngine.play(resolvePath(current))
             } else {
                 audioEngine.stop()
             }
@@ -565,7 +578,7 @@ class PlaybackStateHolder(
     fun playPrevious() {
         val prev = queueManager.getPreviousSong(audioEngine.currentPositionMs.value)
         if (prev != null) {
-            audioEngine.play(prev.path)
+            audioEngine.play(resolvePath(prev))
         }
     }
 
@@ -686,6 +699,7 @@ class PlaybackStateHolder(
     }
 
     fun clearQueue() {
+        listeningStatsTracker.onPlaybackStopped()
         audioEngine.stop()
         queueManager.clearQueue()
         _playerInfo.update { PlayerInfo() }
@@ -702,11 +716,12 @@ class PlaybackStateHolder(
     fun playSongAtIndex(index: Int) {
         val target = queueManager.playAtIndex(index)
         if (target != null) {
-            audioEngine.play(target.path)
+            audioEngine.play(resolvePath(target))
         }
     }
 
     val currentSong: StateFlow<Song?> = queueManager.currentSong
     val queue: StateFlow<List<Song>> = queueManager.queue
     val playbackState: StateFlow<PlaybackState> = audioEngine.playbackState
+    val errorEvents: SharedFlow<String> = audioEngine.errorEvents
 }

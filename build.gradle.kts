@@ -40,6 +40,10 @@ dependencies {
     // Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
 
+    // HTTP Client (OkHttp)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
     // DI (Koin)
     implementation("io.insert-koin:koin-core:4.0.2")
     implementation("io.insert-koin:koin-compose:4.0.2")

@@ -9,6 +9,7 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import java.sql.ResultSet
+import java.sql.Types
 
 private val stringListSerializer = ListSerializer(String.serializer())
 
@@ -85,13 +86,13 @@ class LocalPlaylistDao(
                 stmt.setLong(5, playlist.lastModified)
                 stmt.setInt(6, if (playlist.isQueueGenerated) 1 else 0)
                 stmt.setString(7, playlist.coverImageUri)
-                if (playlist.coverColorArgb != null) stmt.setInt(8, playlist.coverColorArgb) else stmt.setNull(8, java.sql.Types.INTEGER)
+                if (playlist.coverColorArgb != null) stmt.setInt(8, playlist.coverColorArgb) else stmt.setNull(8, Types.INTEGER)
                 stmt.setString(9, playlist.coverIconName)
                 stmt.setString(10, playlist.coverShapeType)
-                if (playlist.coverShapeDetail1 != null) stmt.setFloat(11, playlist.coverShapeDetail1) else stmt.setNull(11, java.sql.Types.REAL)
-                if (playlist.coverShapeDetail2 != null) stmt.setFloat(12, playlist.coverShapeDetail2) else stmt.setNull(12, java.sql.Types.REAL)
-                if (playlist.coverShapeDetail3 != null) stmt.setFloat(13, playlist.coverShapeDetail3) else stmt.setNull(13, java.sql.Types.REAL)
-                if (playlist.coverShapeDetail4 != null) stmt.setFloat(14, playlist.coverShapeDetail4) else stmt.setNull(14, java.sql.Types.REAL)
+                if (playlist.coverShapeDetail1 != null) stmt.setFloat(11, playlist.coverShapeDetail1) else stmt.setNull(11, Types.REAL)
+                if (playlist.coverShapeDetail2 != null) stmt.setFloat(12, playlist.coverShapeDetail2) else stmt.setNull(12, Types.REAL)
+                if (playlist.coverShapeDetail3 != null) stmt.setFloat(13, playlist.coverShapeDetail3) else stmt.setNull(13, Types.REAL)
+                if (playlist.coverShapeDetail4 != null) stmt.setFloat(14, playlist.coverShapeDetail4) else stmt.setNull(14, Types.REAL)
                 stmt.setString(15, playlist.source)
                 stmt.executeUpdate()
             }
@@ -104,6 +105,17 @@ class LocalPlaylistDao(
             val sql = "DELETE FROM playlists WHERE id = ?"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, id)
+                stmt.executeUpdate()
+            }
+            database.notifyTableChanged("playlists")
+        }
+    }
+
+    suspend fun clearPlaylistsBySource(source: String) = withContext(ioDispatcher) {
+        database.getConnection().use { conn ->
+            val sql = "DELETE FROM playlists WHERE source = ?"
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setString(1, source)
                 stmt.executeUpdate()
             }
             database.notifyTableChanged("playlists")

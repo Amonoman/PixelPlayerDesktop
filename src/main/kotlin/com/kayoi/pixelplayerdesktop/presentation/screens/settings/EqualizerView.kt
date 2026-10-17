@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -63,6 +64,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import com.kayoi.pixelplayerdesktop.presentation.components.TrackDialogInput
+import com.kayoi.pixelplayerdesktop.presentation.components.trackInputFocus
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -299,7 +302,7 @@ fun EqualizerContent(
                             if (preamp != 0f) {
                                 TextButton(
                                     onClick = { viewModel.setEqualizerPreamp(0f) },
-                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                                 ) {
                                     Icon(Icons.Rounded.RestartAlt, null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
@@ -349,7 +352,7 @@ fun EqualizerContent(
                             if (bandLevels.any { it != 0f }) {
                                 TextButton(
                                     onClick = { viewModel.setEqualizerPreset(EqualizerPreset.FLAT) },
-                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                                 ) {
                                     Icon(Icons.Rounded.RestartAlt, null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
@@ -675,6 +678,7 @@ fun EqualizerDialog(
     viewModel: PlayerViewModel,
     onDismiss: () -> Unit
 ) {
+    TrackDialogInput()
     val colors = MaterialTheme.colorScheme
 
     Dialog(onDismissRequest = onDismiss) {
@@ -738,6 +742,7 @@ private fun SavePresetDialog(
     onDismiss: () -> Unit,
     onSave: (String) -> Unit
 ) {
+    TrackDialogInput()
     var presetName by remember { mutableStateOf(initialName) }
 
     AlertDialog(
@@ -751,7 +756,7 @@ private fun SavePresetDialog(
                     onValueChange = { presetName = it },
                     label = { Text("Preset Name") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().trackInputFocus()
                 )
             }
         },
@@ -785,6 +790,7 @@ private fun ManagePresetsDialog(
     var newName by remember { mutableStateOf("") }
 
     if (renamingTarget != null) {
+        TrackDialogInput()
         AlertDialog(
             onDismissRequest = { renamingTarget = null },
             title = { Text("Rename Preset") },
@@ -794,7 +800,7 @@ private fun ManagePresetsDialog(
                     onValueChange = { newName = it },
                     label = { Text("New Name") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().trackInputFocus()
                 )
             },
             confirmButton = {
@@ -817,6 +823,7 @@ private fun ManagePresetsDialog(
         )
     }
 
+    TrackDialogInput()
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Manage Presets") },

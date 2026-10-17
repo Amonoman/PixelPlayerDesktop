@@ -37,6 +37,7 @@ import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Search
+import com.kayoi.pixelplayerdesktop.presentation.components.TrackDialogInput
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.EqualizerDialog
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ColorScheme
@@ -305,6 +306,7 @@ fun ExpandedPlayerScreen(
                                 DesktopLandscapeHeroPlayer(
                                     song = currentSong!!,
                                     isPlaying = playerInfo.isPlaying,
+                                    isBuffering = playerInfo.isBuffering,
                                     totalDurationMs = playerInfo.totalDurationMs,
                                     currentPositionFlow = viewModel.currentPositionMs,
                                     isShuffle = playerInfo.isShuffleEnabled,
@@ -595,6 +597,7 @@ fun ExpandedPlayerScreen(
         }
 
         if (showResetConfirmDialog) {
+            TrackDialogInput()
             AlertDialog(
                 onDismissRequest = { showResetConfirmDialog = false },
                 title = { Text("Reset Lyrics?") },

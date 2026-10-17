@@ -974,6 +974,12 @@ fun SettingsCategoryDetail(
                 }
             }
 
+            SettingsSection.ACCOUNTS -> {
+                item {
+                    AccountsSectionContent()
+                }
+            }
+
             SettingsSection.ABOUT -> {
                 item {
                     AboutSectionContent()

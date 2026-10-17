@@ -144,7 +144,7 @@ fun LyricsSearchDialog(
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         keyboardActions = KeyboardActions(onSearch = { onSearch(searchQuery) }),
                         shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).trackInputFocus(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = colors.surfaceContainer,
                             unfocusedContainerColor = colors.surfaceContainer,

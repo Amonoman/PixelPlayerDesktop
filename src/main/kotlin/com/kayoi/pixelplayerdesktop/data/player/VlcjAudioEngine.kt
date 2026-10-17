@@ -176,11 +176,21 @@ class VlcjAudioEngine(
                 }
             }
 
+            override fun buffering(mp: MediaPlayer, newCache: Float) {
+                if (mp === activePlayer) {
+                    if (newCache < 100.0f) {
+                        _playbackState.value = PlaybackState.BUFFERING
+                    } else if (mp.status().isPlaying) {
+                        _playbackState.value = PlaybackState.PLAYING
+                    }
+                }
+            }
+
             override fun error(mp: MediaPlayer) {
                 if (mp === activePlayer) {
                     _playbackState.value = PlaybackState.ERROR
                     stopPositionTicker()
-                    _errorEvents.tryEmit("VLC playback error encountered")
+                    _errorEvents.tryEmit("Playback error: stream connection lost or media unavailable")
                 }
             }
         }

@@ -31,14 +31,20 @@ import androidx.compose.ui.unit.dp
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
+import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
 import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveScrollBar
 import com.kayoi.pixelplayerdesktop.presentation.components.artistFastScrollLabel
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.ArtistGridItem
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.ArtistListItem
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryActionRow
+import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryEmptyState
+import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryTabKind
 import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.presentation.screens.ArtistDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
+import com.kayoi.pixelplayerdesktop.utils.DEFAULT_ARTIST_DELIMITERS
+import com.kayoi.pixelplayerdesktop.utils.DEFAULT_WORD_DELIMITERS
+import com.kayoi.pixelplayerdesktop.utils.collectArtistNames
 
 @Composable
 fun ArtistsTab(
@@ -69,14 +75,71 @@ fun ArtistsTab(
         val currentArtistSortOption by viewModel.libraryStateHolder.artistSortOption.collectAsState()
         val fetchDeezerImages by viewModel.fetchDeezerArtistImages.collectAsState()
         val isArtistsListView by viewModel.isArtistsListView.collectAsState()
+        val storageFilter by viewModel.storageFilter.collectAsState()
         val artistsGridState = rememberLazyGridState()
         val artistsListState = rememberLazyListState()
         var lastHandledArtistSortKey by remember { mutableStateOf(currentArtistSortOption.storageKey) }
         var pendingArtistSortScrollReset by remember { mutableStateOf(false) }
 
-        val filteredArtists = remember(artists, searchQuery) {
-            if (searchQuery.isBlank()) artists
-            else artists.filter {
+        val onlineArtists = remember(songs) {
+            val onlineSongs = songs.filter { it.navidromeId != null || it.jellyfinId != null }
+            val ids = mutableSetOf<Long>()
+            val names = mutableSetOf<String>()
+            onlineSongs.forEach { song ->
+                ids.add(song.artistId)
+                names.add(song.artist.lowercase().trim())
+                song.artists.forEach { ref ->
+                    ids.add(ref.id)
+                    names.add(ref.name.lowercase().trim())
+                }
+                collectArtistNames(
+                    rawArtistName = song.artist,
+                    title = song.title,
+                    artistDelimiters = DEFAULT_ARTIST_DELIMITERS,
+                    wordDelimiters = DEFAULT_WORD_DELIMITERS,
+                    extractFromTitle = true
+                ).forEach { name ->
+                    names.add(name.lowercase().trim())
+                }
+            }
+            ids to names
+        }
+        val offlineArtists = remember(songs) {
+            val offlineSongs = songs.filter { it.navidromeId == null && it.jellyfinId == null }
+            val ids = mutableSetOf<Long>()
+            val names = mutableSetOf<String>()
+            offlineSongs.forEach { song ->
+                ids.add(song.artistId)
+                names.add(song.artist.lowercase().trim())
+                song.artists.forEach { ref ->
+                    ids.add(ref.id)
+                    names.add(ref.name.lowercase().trim())
+                }
+                collectArtistNames(
+                    rawArtistName = song.artist,
+                    title = song.title,
+                    artistDelimiters = DEFAULT_ARTIST_DELIMITERS,
+                    wordDelimiters = DEFAULT_WORD_DELIMITERS,
+                    extractFromTitle = true
+                ).forEach { name ->
+                    names.add(name.lowercase().trim())
+                }
+            }
+            ids to names
+        }
+
+        val filteredArtists = remember(artists, searchQuery, storageFilter, onlineArtists, offlineArtists) {
+            val byStorage = when (storageFilter) {
+                StorageFilter.ALL -> artists
+                StorageFilter.ONLINE -> artists.filter {
+                    it.id in onlineArtists.first || it.name.lowercase().trim() in onlineArtists.second
+                }
+                StorageFilter.OFFLINE -> artists.filter {
+                    it.id in offlineArtists.first || it.name.lowercase().trim() in offlineArtists.second
+                }
+            }
+            if (searchQuery.isBlank()) byStorage
+            else byStorage.filter {
                 it.name.contains(searchQuery, ignoreCase = true)
             }
         }
@@ -115,6 +178,9 @@ fun ArtistsTab(
                 showViewModeToggle = true,
                 isListView = isArtistsListView,
                 onToggleViewMode = { viewModel.setArtistsListView(!isArtistsListView) },
+                showStorageFilterButton = true,
+                currentStorageFilter = storageFilter,
+                onStorageFilterClick = { viewModel.toggleStorageFilter() },
                 onSortOptionSelect = { option -> viewModel.setArtistSortOption(option) },
                 onShuffleClick = {
                     viewModel.shuffleRandomArtist(filteredArtists)
@@ -122,30 +188,11 @@ fun ArtistsTab(
             )
 
             if (filteredArtists.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 24.dp, vertical = 32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(
-                            imageVector = PixelPlayerIcons.Artist,
-                            contentDescription = null,
-                            tint = colors.onSurfaceVariant.copy(alpha = 0.4f),
-                            modifier = Modifier.size(54.dp)
-                        )
-                        Text(
-                            text = if (searchQuery.isNotBlank()) "No artists matching \"$searchQuery\"" else "No artists in library",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.onSurfaceVariant
-                        )
-                    }
-                }
+                LibraryEmptyState(
+                    tabKind = LibraryTabKind.ARTISTS,
+                    searchQuery = searchQuery,
+                    storageFilter = storageFilter
+                )
             } else {
                 Box(modifier = Modifier.fillMaxSize()) {
                     if (isArtistsListView) {

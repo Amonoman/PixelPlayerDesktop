@@ -16,6 +16,7 @@ data class PlayerInfo(
     val songTitle: String = "",
     val artistName: String = "",
     val isPlaying: Boolean = false,
+    val isBuffering: Boolean = false,
     val albumArtUri: String? = null,
     val albumArtBitmapData: ByteArray? = null,
     val totalDurationMs: Long = 0L,
@@ -38,6 +39,7 @@ data class PlayerInfo(
         if (songTitle != other.songTitle) return false
         if (artistName != other.artistName) return false
         if (isPlaying != other.isPlaying) return false
+        if (isBuffering != other.isBuffering) return false
         if (albumArtUri != other.albumArtUri) return false
         if (albumArtBitmapData != null) {
             if (other.albumArtBitmapData == null) return false
@@ -61,6 +63,7 @@ data class PlayerInfo(
         var result = songTitle.hashCode()
         result = 31 * result + artistName.hashCode()
         result = 31 * result + isPlaying.hashCode()
+        result = 31 * result + isBuffering.hashCode()
         result = 31 * result + (albumArtUri?.hashCode() ?: 0)
         result = 31 * result + (albumArtBitmapData?.contentHashCode() ?: 0)
         result = 31 * result + totalDurationMs.hashCode()

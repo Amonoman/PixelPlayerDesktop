@@ -1,6 +1,8 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -24,6 +26,9 @@ import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.automirrored.rounded.ViewList
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Cloud
+import androidx.compose.material.icons.rounded.Computer
+import androidx.compose.material.icons.rounded.Dataset
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.MyLocation
 import androidx.compose.material.icons.rounded.Shuffle
@@ -48,6 +53,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
+import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
 
 private val genHeight = 42.dp
 private val outerCorner = 26.dp
@@ -65,6 +71,9 @@ fun LibraryActionRow(
     showViewModeToggle: Boolean = false,
     isListView: Boolean = false,
     onToggleViewMode: () -> Unit = {},
+    showStorageFilterButton: Boolean = false,
+    currentStorageFilter: StorageFilter = StorageFilter.ALL,
+    onStorageFilterClick: () -> Unit = {},
     showShuffleButton: Boolean = true,
     showCreateButton: Boolean = false,
     createButtonLabel: String = "New",
@@ -76,11 +85,17 @@ fun LibraryActionRow(
     val colors = MaterialTheme.colorScheme
     var isSortMenuExpanded by remember { mutableStateOf(false) }
 
-    val hasLeftNeighbors = showLocateButton || showViewModeToggle
+    val hasFilterLeftNeighbors = showLocateButton || showViewModeToggle
+    val hasSortLeftNeighbors = hasFilterLeftNeighbors || showStorageFilterButton
 
     val sortStartCorner by animateDpAsState(
-        targetValue = if (hasLeftNeighbors) innerCorner else outerCorner,
+        targetValue = if (hasSortLeftNeighbors) innerCorner else outerCorner,
         label = "SortStartCorner"
+    )
+
+    val filterStartCorner by animateDpAsState(
+        targetValue = if (hasFilterLeftNeighbors) innerCorner else outerCorner,
+        label = "FilterStartCorner"
     )
 
     val viewModeStartCorner by animateDpAsState(
@@ -93,9 +108,14 @@ fun LibraryActionRow(
         label = "GapBetweenLocateAndNext"
     )
 
-    val gapBetweenViewModeAndSort by animateDpAsState(
+    val gapBetweenViewModeAndNext by animateDpAsState(
         targetValue = if (showViewModeToggle) 4.dp else 0.dp,
-        label = "GapBetweenViewModeAndSort"
+        label = "GapBetweenViewModeAndNext"
+    )
+
+    val gapBetweenFilterAndSort by animateDpAsState(
+        targetValue = if (showStorageFilterButton) 4.dp else 0.dp,
+        label = "GapBetweenFilterAndSort"
     )
 
     BoxWithConstraints(
@@ -263,8 +283,65 @@ fun LibraryActionRow(
                         }
                     }
 
-                    Spacer(modifier = Modifier.width(gapBetweenViewModeAndSort))
+                    Spacer(modifier = Modifier.width(gapBetweenViewModeAndNext))
                 }
+
+                AnimatedVisibility(
+                    visible = showStorageFilterButton,
+                    enter = slideInHorizontally(initialOffsetX = { it / 2 }) + fadeIn(),
+                    exit = slideOutHorizontally(targetOffsetX = { it / 2 }) + fadeOut()
+                ) {
+                    val finalIcon = when (currentStorageFilter) {
+                        StorageFilter.ALL -> Icons.Rounded.Dataset
+                        StorageFilter.ONLINE -> Icons.Rounded.Cloud
+                        StorageFilter.OFFLINE -> Icons.Rounded.Computer
+                    }
+                    val tooltipText = when (currentStorageFilter) {
+                        StorageFilter.ALL -> "Filter: All music"
+                        StorageFilter.ONLINE -> "Filter: Cloud only"
+                        StorageFilter.OFFLINE -> "Filter: Local only"
+                    }
+
+                    val isFiltering = currentStorageFilter != StorageFilter.ALL
+                    val filterContainer by animateColorAsState(
+                        targetValue = if (isFiltering) colors.tertiaryContainer else colors.secondaryContainer,
+                        label = "StorageFilterContainer"
+                    )
+                    val filterContent by animateColorAsState(
+                        targetValue = if (isFiltering) colors.onTertiaryContainer else colors.onSecondaryContainer,
+                        label = "StorageFilterContent"
+                    )
+
+                    AppTooltip(tooltipText) {
+                        FilledTonalIconButton(
+                            onClick = onStorageFilterClick,
+                            shape = RoundedCornerShape(
+                                topStart = filterStartCorner,
+                                bottomStart = filterStartCorner,
+                                topEnd = innerCorner,
+                                bottomEnd = innerCorner
+                            ),
+                            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                containerColor = filterContainer,
+                                contentColor = filterContent
+                            ),
+                            modifier = Modifier.size(genHeight)
+                        ) {
+                            AnimatedContent(
+                                targetState = finalIcon,
+                                label = "StorageFilterIcon"
+                            ) { icon ->
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = tooltipText,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(gapBetweenFilterAndSort))
 
                 Box {
                     if (isCompact) {

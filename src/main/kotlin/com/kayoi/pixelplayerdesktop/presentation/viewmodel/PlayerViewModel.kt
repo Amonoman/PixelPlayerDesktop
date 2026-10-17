@@ -10,9 +10,11 @@ import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineTrackMetadata
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.EqualizerPreset
+import com.kayoi.pixelplayerdesktop.data.model.Lyrics
 import com.kayoi.pixelplayerdesktop.data.model.Playlist
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
+import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
 import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
 import java.io.File
@@ -32,15 +34,16 @@ class PlayerViewModel(
     val currentSong = playbackStateHolder.currentSong
     val queue = playbackStateHolder.queue
     val playbackState = playbackStateHolder.playbackState
+    val playbackErrorEvents = playbackStateHolder.errorEvents
     val lyricsSearchUiState = playbackStateHolder.lyricsSearchUiState
 
     fun searchLyrics(query: String) = playbackStateHolder.searchLyrics(query)
-    fun applyLyrics(lyrics: com.kayoi.pixelplayerdesktop.data.model.Lyrics) = playbackStateHolder.applyLyrics(lyrics)
-    fun importLyricsFromFile(file: java.io.File) = playbackStateHolder.importLyricsFromFile(file)
+    fun applyLyrics(lyrics: Lyrics) = playbackStateHolder.applyLyrics(lyrics)
+    fun importLyricsFromFile(file: File) = playbackStateHolder.importLyricsFromFile(file)
     fun resetLyricsSearchState() = playbackStateHolder.resetLyricsSearchState()
     fun resetCurrentSongLyrics() = playbackStateHolder.resetCurrentSongLyrics()
     fun saveLyricsBesideCurrentSong(preferSynced: Boolean = true) = playbackStateHolder.saveLyricsBesideCurrentSong(preferSynced)
-    fun exportLyricsToFile(targetFile: java.io.File, preferSynced: Boolean = true) = playbackStateHolder.exportLyricsToFile(targetFile, preferSynced)
+    fun exportLyricsToFile(targetFile: File, preferSynced: Boolean = true) = playbackStateHolder.exportLyricsToFile(targetFile, preferSynced)
     fun setLyricsSyncOffset(offsetMs: Int) = playbackStateHolder.setLyricsSyncOffset(offsetMs)
 
     fun playSong(song: Song) = playbackStateHolder.playSong(song)
@@ -124,6 +127,7 @@ class PlayerViewModel(
         }
     }
 
+    val storageFilter = libraryStateHolder.storageFilter
     val songs = libraryStateHolder.songs
     val albums = libraryStateHolder.albums
     val artists = libraryStateHolder.artists
@@ -156,6 +160,9 @@ class PlayerViewModel(
     fun setAutoScanLrcFiles(enabled: Boolean) = libraryStateHolder.setAutoScanLrcFiles(enabled)
     fun setLyricsSourcePreference(preference: LyricsSourcePreference) = libraryStateHolder.setLyricsSourcePreference(preference)
     fun resetAllLyrics() = libraryStateHolder.resetAllLyrics()
+
+    fun setStorageFilter(filter: StorageFilter) = libraryStateHolder.setStorageFilter(filter)
+    fun toggleStorageFilter() = libraryStateHolder.toggleStorageFilter()
 
     fun setSongSortOption(sort: SortOption) = libraryStateHolder.setSongSortOption(sort)
     fun setAlbumSortOption(sort: SortOption) = libraryStateHolder.setAlbumSortOption(sort)

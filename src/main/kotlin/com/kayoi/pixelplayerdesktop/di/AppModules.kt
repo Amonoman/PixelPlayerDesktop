@@ -1,10 +1,23 @@
 package com.kayoi.pixelplayerdesktop.di
 
 import com.kayoi.pixelplayerdesktop.data.database.FavoritesDao
+import com.kayoi.pixelplayerdesktop.data.database.ListenBrainzDao
 import com.kayoi.pixelplayerdesktop.data.database.LocalPlaylistDao
 import com.kayoi.pixelplayerdesktop.data.database.LyricsDao
 import com.kayoi.pixelplayerdesktop.data.database.MusicDao
 import com.kayoi.pixelplayerdesktop.data.database.PixelPlayerDatabase
+import com.kayoi.pixelplayerdesktop.data.network.jellyfin.JellyfinApiClient
+import com.kayoi.pixelplayerdesktop.data.network.jellyfin.JellyfinRepositoryImpl
+import com.kayoi.pixelplayerdesktop.data.network.listenbrainz.ListenBrainzApiClient
+import com.kayoi.pixelplayerdesktop.data.network.listenbrainz.ListenBrainzRepositoryImpl
+import com.kayoi.pixelplayerdesktop.data.network.listenbrainz.ScrobbleManager
+import com.kayoi.pixelplayerdesktop.data.network.navidrome.NavidromeApiClient
+import com.kayoi.pixelplayerdesktop.data.network.navidrome.NavidromeRepositoryImpl
+import com.kayoi.pixelplayerdesktop.domain.repository.JellyfinRepository
+import com.kayoi.pixelplayerdesktop.domain.repository.ListenBrainzRepository
+import com.kayoi.pixelplayerdesktop.domain.repository.NavidromeRepository
+import com.kayoi.pixelplayerdesktop.data.network.RemoteArtworkResolver
+import com.kayoi.pixelplayerdesktop.data.player.PlaybackUriResolver
 import com.kayoi.pixelplayerdesktop.data.player.QueueManager
 import com.kayoi.pixelplayerdesktop.data.player.VlcjAudioEngine
 import com.kayoi.pixelplayerdesktop.data.metadata.DesktopMetadataEditor
@@ -30,8 +43,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import java.util.concurrent.TimeUnit
 
 val coreModule: Module = module {
     single<CoroutineDispatcher> { Dispatchers.IO }
@@ -42,6 +57,12 @@ val coreModule: Module = module {
             ignoreUnknownKeys = true
             encodeDefaults = true
         }
+    }
+    single<OkHttpClient> {
+        OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
     }
 }
 
@@ -55,6 +76,7 @@ val databaseModule: Module = module {
     single { LocalPlaylistDao(database = get(), ioDispatcher = get(), json = get()) }
     single { FavoritesDao(database = get(), ioDispatcher = get()) }
     single { LyricsDao(database = get(), ioDispatcher = get(), json = get()) }
+    single { ListenBrainzDao(database = get(), ioDispatcher = get()) }
 }
 
 val repositoryModule: Module = module {
@@ -79,6 +101,15 @@ val repositoryModule: Module = module {
             ioDispatcher = get()
         )
     }
+    single { ListenBrainzApiClient(okHttpClient = get()) }
+    single<ListenBrainzRepository> { ListenBrainzRepositoryImpl(apiClient = get(), dao = get(), settingsRepository = get(), coroutineScope = get()) }
+    single { NavidromeApiClient(okHttpClient = get(), json = get()) }
+    single<NavidromeRepository> { NavidromeRepositoryImpl(apiClient = get(), musicDao = get(), playlistDao = get(), settingsRepository = get(), coroutineScope = get()) }
+    single { JellyfinApiClient(okHttpClient = get(), json = get()) }
+    single<JellyfinRepository> { JellyfinRepositoryImpl(apiClient = get(), musicDao = get(), playlistDao = get(), settingsRepository = get(), coroutineScope = get()) }
+    single { ScrobbleManager(listenBrainzRepository = get(), navidromeRepository = get(), settingsRepository = get(), coroutineScope = get()) }
+    single { RemoteArtworkResolver(navidromeRepository = get(), jellyfinRepository = get(), okHttpClient = get()) }
+    single { PlaybackUriResolver(navidromeRepository = get(), jellyfinRepository = get()) }
     single { DesktopMusicScanner(musicDao = get(), lyricsDao = get(), ioDispatcher = get()) }
     single { DesktopMetadataEditor(musicDao = get(), ioDispatcher = get()) }
 }
@@ -89,7 +120,7 @@ val playerModule: Module = module {
 }
 
 val stateModule: Module = module {
-    single { DesktopListeningStatsTracker(musicRepository = get()) }
+    single { DesktopListeningStatsTracker(musicRepository = get(), scrobbleManager = get(), coroutineScope = get()) }
     single {
         PlaybackStateHolder(
             audioEngine = get(),
@@ -98,6 +129,7 @@ val stateModule: Module = module {
             lyricsRepository = get(),
             settingsRepository = get(),
             listeningStatsTracker = get(),
+            playbackUriResolver = get(),
             coroutineScope = get()
         )
     }

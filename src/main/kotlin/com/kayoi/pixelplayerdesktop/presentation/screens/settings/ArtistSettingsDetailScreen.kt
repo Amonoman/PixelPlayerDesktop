@@ -1,5 +1,10 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -105,10 +110,10 @@ fun ArtistSettingsDetailScreen(
             ) {
 
         item {
-            androidx.compose.animation.AnimatedVisibility(
+            AnimatedVisibility(
                 visible = rescanRequired,
-                enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
-                exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut()
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
             ) {
                 RescanRequiredBanner(
                     isResyncing = isScanning,
@@ -258,7 +263,7 @@ fun ArtistSettingsDetailScreen(
                                         }
                                     }
                                 ),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f).trackInputFocus()
                             )
 
                             Spacer(modifier = Modifier.width(10.dp))

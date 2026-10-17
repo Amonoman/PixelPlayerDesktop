@@ -34,6 +34,8 @@ import com.kayoi.pixelplayerdesktop.presentation.components.songFastScrollLabel
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.EnhancedSongListItem
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryActionRow
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
+import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryEmptyState
+import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryTabKind
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
@@ -44,6 +46,7 @@ fun SongsTab(
     isPlaying: Boolean,
     searchQuery: String,
     viewModel: PlayerViewModel,
+    isLikedTab: Boolean = false,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
     onEditMetadata: ((Song) -> Unit)? = null,
@@ -96,13 +99,17 @@ fun SongsTab(
         }
     }
     val showLocateButton = currentSongIndex >= 0 && !isCurrentSongVisible
+    val storageFilter by viewModel.storageFilter.collectAsState()
 
     Column(modifier = modifier.fillMaxSize()) {
         LibraryActionRow(
             itemCount = filteredSongs.size,
-            itemCountLabel = "songs",
+            itemCountLabel = if (isLikedTab) "liked songs" else "songs",
             currentSortOption = currentSongSortOption,
             showLocateButton = showLocateButton,
+            showStorageFilterButton = true,
+            currentStorageFilter = storageFilter,
+            onStorageFilterClick = { viewModel.toggleStorageFilter() },
             onLocateClick = {
                 if (currentSongIndex >= 0) {
                     scope.launch {
@@ -125,35 +132,11 @@ fun SongsTab(
         )
 
         if (filteredSongs.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 24.dp, vertical = 32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.MusicNote,
-                        contentDescription = null,
-                        tint = colors.onSurfaceVariant.copy(alpha = 0.4f),
-                        modifier = Modifier.size(54.dp)
-                    )
-                    Text(
-                        text = if (searchQuery.isNotBlank()) "No songs matching \"$searchQuery\"" else "No songs in library",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.onSurfaceVariant
-                    )
-                    Text(
-                        text = if (searchQuery.isNotBlank()) "Try searching with another keyword" else "Add music directories in Settings to scan",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant.copy(alpha = 0.65f)
-                    )
-                }
-            }
+            LibraryEmptyState(
+                tabKind = if (isLikedTab) LibraryTabKind.LIKED else LibraryTabKind.SONGS,
+                searchQuery = searchQuery,
+                storageFilter = storageFilter
+            )
         } else {
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(

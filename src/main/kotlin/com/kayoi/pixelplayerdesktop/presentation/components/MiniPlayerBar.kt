@@ -42,6 +42,7 @@ import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -77,6 +78,7 @@ fun MiniPlayerBar(
     modifier: Modifier = Modifier,
     currentSong: Song?,
     isPlaying: Boolean,
+    isBuffering: Boolean = false,
     totalDurationMs: Long = 0L,
     currentPositionFlow: StateFlow<Long>? = null,
     isShuffle: Boolean = false,
@@ -217,7 +219,7 @@ fun MiniPlayerBar(
                             }
                         }
 
-                        AppTooltip(if (isPlaying) "Pause" else "Play") {
+                        AppTooltip(if (isBuffering) "Buffering…" else if (isPlaying) "Pause" else "Play") {
                             FilledIconButton(
                                 onClick = onPlayPauseClick,
                                 modifier = Modifier.size(38.dp),
@@ -227,11 +229,19 @@ fun MiniPlayerBar(
                                     contentColor = colors.onPrimary
                                 )
                             ) {
-                                Icon(
-                                    imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                                    contentDescription = if (isPlaying) "Pause" else "Play",
-                                    modifier = Modifier.size(22.dp)
-                                )
+                                if (isBuffering) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        color = colors.onPrimary,
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                                        contentDescription = if (isPlaying) "Pause" else "Play",
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
                             }
                         }
 
@@ -369,7 +379,7 @@ fun MiniPlayerBar(
                                 }
                             }
 
-                            AppTooltip(if (isPlaying) "Pause" else "Play") {
+                            AppTooltip(if (isBuffering) "Buffering…" else if (isPlaying) "Pause" else "Play") {
                                 FilledIconButton(
                                     onClick = onPlayPauseClick,
                                     modifier = Modifier.size(if (isMedium) 36.dp else 40.dp),
@@ -379,11 +389,19 @@ fun MiniPlayerBar(
                                         contentColor = colors.onPrimary
                                     )
                                 ) {
-                                    Icon(
-                                        imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                                        contentDescription = if (isPlaying) "Pause" else "Play",
-                                        modifier = Modifier.size(if (isMedium) 20.dp else 24.dp)
-                                    )
+                                    if (isBuffering) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(if (isMedium) 18.dp else 22.dp),
+                                            color = colors.onPrimary,
+                                            strokeWidth = 2.dp
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                                            contentDescription = if (isPlaying) "Pause" else "Play",
+                                            modifier = Modifier.size(if (isMedium) 20.dp else 24.dp)
+                                        )
+                                    }
                                 }
                             }
 

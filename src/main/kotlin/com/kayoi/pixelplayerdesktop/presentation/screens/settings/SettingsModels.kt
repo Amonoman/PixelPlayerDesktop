@@ -2,6 +2,7 @@ package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LibraryMusic
@@ -42,6 +43,12 @@ enum class SettingsSection(
         subtitle = "10-band frequencies, preamp, and audio presets",
         icon = Icons.Rounded.GraphicEq
     ),
+    ACCOUNTS(
+        id = "accounts",
+        title = "Accounts",
+        subtitle = "Manage Navidrome and Jellyfin services",
+        icon = Icons.Rounded.AccountCircle
+    ),
     ABOUT(
         id = "about",
         title = "About",
@@ -57,6 +64,7 @@ fun getCategoryColors(category: SettingsSection, isDark: Boolean): Pair<Color, C
             SettingsSection.APPEARANCE -> Color(0xFF7D5260) to Color(0xFFFFD8E4)
             SettingsSection.PLAYBACK -> Color(0xFF633B48) to Color(0xFFFFD8EC)
             SettingsSection.EQUALIZER -> Color(0xFF6E4E13) to Color(0xFFFFDEAC)
+            SettingsSection.ACCOUNTS -> Color(0xFF37474F) to Color(0xFFBBD9E8)
             SettingsSection.ABOUT -> Color(0xFF3F474D) to Color(0xFFDEE3EB)
         }
     } else {
@@ -65,6 +73,7 @@ fun getCategoryColors(category: SettingsSection, isDark: Boolean): Pair<Color, C
             SettingsSection.APPEARANCE -> Color(0xFFFFD8E4) to Color(0xFF631835)
             SettingsSection.PLAYBACK -> Color(0xFFFFD8EC) to Color(0xFF631B4B)
             SettingsSection.EQUALIZER -> Color(0xFFFFDEAC) to Color(0xFF281900)
+            SettingsSection.ACCOUNTS -> Color(0xFFD6EAF5) to Color(0xFF103548)
             SettingsSection.ABOUT -> Color(0xFFEFF1F7) to Color(0xFF44474F)
         }
     }

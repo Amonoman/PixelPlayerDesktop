@@ -168,7 +168,7 @@ fun SearchOnlineMetadataDialog(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
                         label = { Text("Search title, artist, or album") },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).trackInputFocus(),
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(

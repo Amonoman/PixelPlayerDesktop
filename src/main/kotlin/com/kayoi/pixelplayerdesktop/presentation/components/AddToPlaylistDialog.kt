@@ -189,7 +189,7 @@ fun AddToPlaylistDialog(
                             focusedContainerColor = colors.surfaceContainer,
                             unfocusedContainerColor = colors.surfaceContainer
                         ),
-                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                        modifier = Modifier.fillMaxWidth().height(48.dp).trackInputFocus()
                     )
                 }
 

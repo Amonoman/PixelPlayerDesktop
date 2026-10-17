@@ -38,6 +38,7 @@ import androidx.compose.material.icons.rounded.RepeatOne
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -70,6 +71,7 @@ import com.kayoi.pixelplayerdesktop.presentation.components.PlaybackCurrentTimeT
 import com.kayoi.pixelplayerdesktop.presentation.components.WavySliderExpressive
 import com.kayoi.pixelplayerdesktop.presentation.components.formatTime
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import java.io.File
 
@@ -90,6 +92,7 @@ internal fun formatAudioMetaLabel(song: Song): String {
 fun DesktopLandscapeHeroPlayer(
     song: Song,
     isPlaying: Boolean,
+    isBuffering: Boolean = false,
     totalDurationMs: Long,
     currentPositionFlow: StateFlow<Long>? = null,
     isShuffle: Boolean,
@@ -274,6 +277,7 @@ fun DesktopLandscapeHeroPlayer(
 
                 PlaybackControlsRow(
                     isPlaying = isPlaying,
+                    isBuffering = isBuffering,
                     isShuffle = isShuffle,
                     repeatMode = repeatMode,
                     onPlayPause = onPlayPause,
@@ -421,6 +425,7 @@ fun DesktopLandscapeHeroPlayer(
 
                         PlaybackControlsRow(
                             isPlaying = isPlaying,
+                            isBuffering = isBuffering,
                             isShuffle = isShuffle,
                             repeatMode = repeatMode,
                             onPlayPause = onPlayPause,
@@ -524,6 +529,7 @@ fun VerticalVolumeBar(
 @Composable
 fun PlaybackControlsRow(
     isPlaying: Boolean,
+    isBuffering: Boolean = false,
     isShuffle: Boolean,
     repeatMode: Int,
     onPlayPause: () -> Unit,
@@ -539,7 +545,7 @@ fun PlaybackControlsRow(
     var lastClickedButton by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(lastClickedButton) {
         if (lastClickedButton != null) {
-            kotlinx.coroutines.delay(220L)
+            delay(220L)
             lastClickedButton = null
         }
     }
@@ -623,7 +629,7 @@ fun PlaybackControlsRow(
                 }
             }
 
-            AppTooltip(if (isPlaying) "Pause" else "Play", modifier = Modifier.weight(playWeight * 1.35f).fillMaxHeight()) {
+            AppTooltip(if (isBuffering) "Buffering..." else if (isPlaying) "Pause" else "Play", modifier = Modifier.weight(playWeight * 1.35f).fillMaxHeight()) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -635,12 +641,20 @@ fun PlaybackControlsRow(
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                        contentDescription = if (isPlaying) "Pause" else "Play",
-                        tint = colors.onPrimary,
-                        modifier = Modifier.size(if (buttonHeight < 50.dp) 28.dp else 34.dp)
-                    )
+                    if (isBuffering) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(if (buttonHeight < 50.dp) 24.dp else 28.dp),
+                            color = colors.onPrimary,
+                            strokeWidth = 2.5.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                            contentDescription = if (isPlaying) "Pause" else "Play",
+                            tint = colors.onPrimary,
+                            modifier = Modifier.size(if (buttonHeight < 50.dp) 28.dp else 34.dp)
+                        )
+                    }
                 }
             }
 

@@ -157,6 +157,22 @@ class PixelPlayerDatabase(
                         """.trimIndent()
                     )
 
+                    stmt.execute(
+                        """
+                        CREATE TABLE IF NOT EXISTS listenbrainz_pending_listens (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            listened_at_ms INTEGER NOT NULL,
+                            track_name TEXT NOT NULL,
+                            artist_name TEXT NOT NULL,
+                            release_name TEXT,
+                            duration_ms INTEGER,
+                            recording_mbid TEXT,
+                            source TEXT NOT NULL DEFAULT 'LOCAL',
+                            created_at_ms INTEGER NOT NULL
+                        );
+                        """.trimIndent()
+                    )
+
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_songs_title ON songs(title COLLATE NOCASE);")
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_songs_artist ON songs(artist COLLATE NOCASE);")
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_songs_album ON songs(album COLLATE NOCASE);")
@@ -168,6 +184,7 @@ class PixelPlayerDatabase(
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_artists_name ON artists(name COLLATE NOCASE);")
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_playback_events_timestamp ON playback_events(timestamp);")
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_playback_events_song_id ON playback_events(song_id);")
+                    stmt.execute("CREATE INDEX IF NOT EXISTS idx_lb_pending_created ON listenbrainz_pending_listens(created_at_ms);")
                 }
                 conn.commit()
             } catch (e: SQLException) {

@@ -7,7 +7,9 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import java.io.File
 import java.sql.ResultSet
+import java.sql.Types
 
 private val artistRefListSerializer = ListSerializer(ArtistRef.serializer())
 private val stringListSerializer = ListSerializer(String.serializer())
@@ -156,13 +158,13 @@ class MusicDao(
                         stmt.setString(14, song.lyrics)
                         stmt.setInt(15, if (song.isFavorite) 1 else 0)
                         stmt.setInt(16, song.trackNumber)
-                        if (song.discNumber != null) stmt.setInt(17, song.discNumber) else stmt.setNull(17, java.sql.Types.INTEGER)
+                        if (song.discNumber != null) stmt.setInt(17, song.discNumber) else stmt.setNull(17, Types.INTEGER)
                         stmt.setInt(18, song.year)
                         stmt.setLong(19, song.dateAdded)
                         stmt.setLong(20, song.dateModified)
                         stmt.setString(21, song.mimeType)
-                        if (song.bitrate != null) stmt.setInt(22, song.bitrate) else stmt.setNull(22, java.sql.Types.INTEGER)
-                        if (song.sampleRate != null) stmt.setInt(23, song.sampleRate) else stmt.setNull(23, java.sql.Types.INTEGER)
+                        if (song.bitrate != null) stmt.setInt(22, song.bitrate) else stmt.setNull(22, Types.INTEGER)
+                        if (song.sampleRate != null) stmt.setInt(23, song.sampleRate) else stmt.setNull(23, Types.INTEGER)
                         stmt.setString(24, song.navidromeId)
                         stmt.setString(25, song.jellyfinId)
                         stmt.addBatch()
@@ -187,7 +189,7 @@ class MusicDao(
                         val allArtists = if (song.artists.isNotEmpty()) {
                             song.artists
                         } else {
-                            listOf(com.kayoi.pixelplayerdesktop.data.model.ArtistRef(id = song.artistId, name = song.artist, isPrimary = true))
+                            listOf(ArtistRef(id = song.artistId, name = song.artist, isPrimary = true))
                         }
                         for (ref in allArtists) {
                             artistStmt.setLong(1, ref.id)
@@ -203,7 +205,7 @@ class MusicDao(
                         val allArtists = if (song.artists.isNotEmpty()) {
                             song.artists
                         } else {
-                            listOf(com.kayoi.pixelplayerdesktop.data.model.ArtistRef(id = song.artistId, name = song.artist, isPrimary = true))
+                            listOf(ArtistRef(id = song.artistId, name = song.artist, isPrimary = true))
                         }
                         for (ref in allArtists) {
                             songArtistStmt.setString(1, song.id)
@@ -250,9 +252,9 @@ class MusicDao(
         if (existingPaths.isEmpty()) {
             database.getConnection().use { conn ->
                 conn.createStatement().use { stmt ->
-                    stmt.executeUpdate("DELETE FROM song_artists")
-                    stmt.executeUpdate("DELETE FROM artists")
-                    stmt.executeUpdate("DELETE FROM songs")
+                    stmt.executeUpdate("DELETE FROM songs WHERE navidrome_id IS NULL AND jellyfin_id IS NULL")
+                    stmt.executeUpdate("DELETE FROM song_artists WHERE song_id NOT IN (SELECT id FROM songs)")
+                    stmt.executeUpdate("DELETE FROM artists WHERE id NOT IN (SELECT DISTINCT artist_id FROM song_artists)")
                 }
                 database.notifyTableChanged("songs")
                 database.notifyTableChanged("artists")
@@ -262,7 +264,7 @@ class MusicDao(
         database.getConnection().use { conn ->
             val allPaths = mutableSetOf<String>()
             conn.createStatement().use { stmt ->
-                stmt.executeQuery("SELECT path FROM songs").use { rs ->
+                stmt.executeQuery("SELECT path FROM songs WHERE navidrome_id IS NULL AND jellyfin_id IS NULL").use { rs ->
                     while (rs.next()) {
                         allPaths.add(rs.getString("path"))
                     }
@@ -272,7 +274,7 @@ class MusicDao(
             if (pathsToDelete.isNotEmpty()) {
                 conn.autoCommit = false
                 try {
-                    conn.prepareStatement("DELETE FROM songs WHERE path = ?").use { stmt ->
+                    conn.prepareStatement("DELETE FROM songs WHERE path = ? AND navidrome_id IS NULL AND jellyfin_id IS NULL").use { stmt ->
                         for (path in pathsToDelete) {
                             stmt.setString(1, path)
                             stmt.addBatch()
@@ -294,9 +296,47 @@ class MusicDao(
         }
     }
 
+    suspend fun clearNavidromeSongs() = withContext(ioDispatcher) {
+        database.getConnection().use { conn ->
+            conn.autoCommit = false
+            try {
+                conn.createStatement().use { stmt ->
+                    stmt.executeUpdate("DELETE FROM songs WHERE navidrome_id IS NOT NULL")
+                    stmt.executeUpdate("DELETE FROM song_artists WHERE song_id NOT IN (SELECT id FROM songs)")
+                    stmt.executeUpdate("DELETE FROM artists WHERE id NOT IN (SELECT DISTINCT artist_id FROM song_artists)")
+                }
+                conn.commit()
+                database.notifyTableChanged("songs")
+                database.notifyTableChanged("artists")
+            } catch (e: Exception) {
+                conn.rollback()
+                throw e
+            }
+        }
+    }
+
+    suspend fun clearJellyfinSongs() = withContext(ioDispatcher) {
+        database.getConnection().use { conn ->
+            conn.autoCommit = false
+            try {
+                conn.createStatement().use { stmt ->
+                    stmt.executeUpdate("DELETE FROM songs WHERE jellyfin_id IS NOT NULL")
+                    stmt.executeUpdate("DELETE FROM song_artists WHERE song_id NOT IN (SELECT id FROM songs)")
+                    stmt.executeUpdate("DELETE FROM artists WHERE id NOT IN (SELECT DISTINCT artist_id FROM song_artists)")
+                }
+                conn.commit()
+                database.notifyTableChanged("songs")
+                database.notifyTableChanged("artists")
+            } catch (e: Exception) {
+                conn.rollback()
+                throw e
+            }
+        }
+    }
+
     suspend fun deleteSong(song: Song) = withContext(ioDispatcher) {
         runCatching {
-            val file = java.io.File(song.path)
+            val file = File(song.path)
             if (file.exists()) {
                 file.delete()
             }

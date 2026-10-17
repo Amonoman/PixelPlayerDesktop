@@ -28,7 +28,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.kayoi.pixelplayerdesktop.data.network.RemoteArtworkResolver
 import org.jetbrains.skia.Image
+import org.koin.core.context.GlobalContext
 import org.jetbrains.skia.Rect
 import org.jetbrains.skia.SamplingMode
 import org.jetbrains.skia.Surface
@@ -116,13 +118,14 @@ fun AsyncArtworkImage(
 
         val loaded = withContext(Dispatchers.IO) {
             try {
-                val file = File(artworkUri)
-                if (file.exists() && file.isFile && file.length() > 0) {
-                    val bytes = file.readBytes()
-                    decodeAndScaleArtwork(bytes)
+                val resolver = GlobalContext.getOrNull()?.getOrNull<RemoteArtworkResolver>()
+                val bytes = if (resolver != null) {
+                    resolver.resolveArtworkBytes(artworkUri)
                 } else {
-                    null
+                    val file = File(artworkUri)
+                    if (file.exists() && file.isFile && file.length() > 0) file.readBytes() else null
                 }
+                if (bytes != null) decodeAndScaleArtwork(bytes) else null
             } catch (_: Exception) {
                 null
             }

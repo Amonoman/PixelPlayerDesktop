@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.defaultScrollbarStyle
 import androidx.compose.foundation.layout.Arrangement
@@ -68,6 +69,7 @@ import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -260,7 +262,7 @@ fun BatchEditMetadataDialog(
                         ) {
                             when {
                                 previewBitmap != null -> {
-                                    androidx.compose.foundation.Image(
+                                    Image(
                                         bitmap = previewBitmap!!,
                                         contentDescription = "Artwork Preview",
                                         modifier = Modifier.fillMaxSize(),
@@ -283,7 +285,7 @@ fun BatchEditMetadataDialog(
                                             text = "Artwork will be removed",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = colors.error,
-                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                            textAlign = TextAlign.Center,
                                             modifier = Modifier.padding(horizontal = 8.dp)
                                         )
                                     }

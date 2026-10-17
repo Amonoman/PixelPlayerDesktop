@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 fun DismissUndoBar(
     modifier: Modifier = Modifier,
     message: String = "Playlist dismissed",
+    actionLabel: String = "Undo",
     onUndo: () -> Unit,
     onClose: () -> Unit,
     durationMillis: Long = 4500L
@@ -119,7 +120,7 @@ fun DismissUndoBar(
                         modifier = Modifier.height(36.dp)
                     ) {
                         Text(
-                            text = "Undo",
+                            text = actionLabel,
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.5.sp,
                             color = colors.primary

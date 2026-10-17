@@ -33,11 +33,14 @@ import androidx.compose.ui.unit.dp
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
+import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
 import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveScrollBar
 import com.kayoi.pixelplayerdesktop.presentation.components.albumFastScrollLabel
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AlbumGridItem
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AlbumListItem
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryActionRow
+import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryEmptyState
+import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryTabKind
 import com.kayoi.pixelplayerdesktop.presentation.screens.AlbumDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 
@@ -72,84 +75,81 @@ fun AlbumsTab(
         val colors = MaterialTheme.colorScheme
         val currentAlbumSortOption by viewModel.libraryStateHolder.albumSortOption.collectAsState()
         val isAlbumsListView by viewModel.isAlbumsListView.collectAsState()
+        val storageFilter by viewModel.storageFilter.collectAsState()
         val albumsGridState = rememberLazyGridState()
         val albumsListState = rememberLazyListState()
         var lastHandledAlbumSortKey by remember { mutableStateOf(currentAlbumSortOption.storageKey) }
         var pendingAlbumSortScrollReset by remember { mutableStateOf(false) }
 
-    val filteredAlbums = remember(albums, searchQuery) {
-        if (searchQuery.isBlank()) albums
-        else albums.filter {
-            it.title.contains(searchQuery, ignoreCase = true) ||
-            it.artist.contains(searchQuery, ignoreCase = true)
+        val onlineAlbumIds = remember(songs) {
+            songs.filter { it.navidromeId != null || it.jellyfinId != null }.map { it.albumId }.toSet()
         }
-    }
-
-    val albumFastScrollLabelProvider = remember(filteredAlbums, currentAlbumSortOption) {
-        { index: Int ->
-            albumFastScrollLabel(
-                album = filteredAlbums.getOrNull(index),
-                sortOption = currentAlbumSortOption
-            )
+        val offlineAlbumIds = remember(songs) {
+            songs.filter { it.navidromeId == null && it.jellyfinId == null }.map { it.albumId }.toSet()
         }
-    }
 
-    LaunchedEffect(currentAlbumSortOption) {
-        val currentSortKey = currentAlbumSortOption.storageKey
-        if (currentSortKey != lastHandledAlbumSortKey) {
-            lastHandledAlbumSortKey = currentSortKey
-            pendingAlbumSortScrollReset = true
-            if (isAlbumsListView) albumsListState.scrollToItem(0) else albumsGridState.scrollToItem(0)
-        }
-    }
-
-    LaunchedEffect(filteredAlbums, pendingAlbumSortScrollReset) {
-        if (pendingAlbumSortScrollReset) {
-            if (isAlbumsListView) albumsListState.scrollToItem(0) else albumsGridState.scrollToItem(0)
-            pendingAlbumSortScrollReset = false
-        }
-    }
-
-    Column(modifier = modifier.fillMaxSize()) {
-        LibraryActionRow(
-            itemCount = filteredAlbums.size,
-            itemCountLabel = "albums",
-            currentSortOption = currentAlbumSortOption,
-            availableSortOptions = SortOption.ALBUMS,
-            showViewModeToggle = true,
-            isListView = isAlbumsListView,
-            onToggleViewMode = { viewModel.setAlbumsListView(!isAlbumsListView) },
-            onSortOptionSelect = { option -> viewModel.setAlbumSortOption(option) },
-            onShuffleClick = {
-                viewModel.shuffleRandomAlbum(filteredAlbums)
+        val filteredAlbums = remember(albums, searchQuery, storageFilter, onlineAlbumIds, offlineAlbumIds) {
+            val byStorage = when (storageFilter) {
+                StorageFilter.ALL -> albums
+                StorageFilter.ONLINE -> albums.filter { it.id in onlineAlbumIds }
+                StorageFilter.OFFLINE -> albums.filter { it.id in offlineAlbumIds }
             }
-        )
+            if (searchQuery.isBlank()) byStorage
+            else byStorage.filter {
+                it.title.contains(searchQuery, ignoreCase = true) ||
+                it.artist.contains(searchQuery, ignoreCase = true)
+            }
+        }
+
+        val albumFastScrollLabelProvider = remember(filteredAlbums, currentAlbumSortOption) {
+            { index: Int ->
+                albumFastScrollLabel(
+                    album = filteredAlbums.getOrNull(index),
+                    sortOption = currentAlbumSortOption
+                )
+            }
+        }
+
+        LaunchedEffect(currentAlbumSortOption) {
+            val currentSortKey = currentAlbumSortOption.storageKey
+            if (currentSortKey != lastHandledAlbumSortKey) {
+                lastHandledAlbumSortKey = currentSortKey
+                pendingAlbumSortScrollReset = true
+                if (isAlbumsListView) albumsListState.scrollToItem(0) else albumsGridState.scrollToItem(0)
+            }
+        }
+
+        LaunchedEffect(filteredAlbums, pendingAlbumSortScrollReset) {
+            if (pendingAlbumSortScrollReset) {
+                if (isAlbumsListView) albumsListState.scrollToItem(0) else albumsGridState.scrollToItem(0)
+                pendingAlbumSortScrollReset = false
+            }
+        }
+
+        Column(modifier = modifier.fillMaxSize()) {
+            LibraryActionRow(
+                itemCount = filteredAlbums.size,
+                itemCountLabel = "albums",
+                currentSortOption = currentAlbumSortOption,
+                availableSortOptions = SortOption.ALBUMS,
+                showViewModeToggle = true,
+                isListView = isAlbumsListView,
+                onToggleViewMode = { viewModel.setAlbumsListView(!isAlbumsListView) },
+                showStorageFilterButton = true,
+                currentStorageFilter = storageFilter,
+                onStorageFilterClick = { viewModel.toggleStorageFilter() },
+                onSortOptionSelect = { option -> viewModel.setAlbumSortOption(option) },
+                onShuffleClick = {
+                    viewModel.shuffleRandomAlbum(filteredAlbums)
+                }
+            )
 
         if (filteredAlbums.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 24.dp, vertical = 32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Album,
-                        contentDescription = null,
-                        tint = colors.onSurfaceVariant.copy(alpha = 0.4f),
-                        modifier = Modifier.size(54.dp)
-                    )
-                    Text(
-                        text = if (searchQuery.isNotBlank()) "No albums matching \"$searchQuery\"" else "No albums in library",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.onSurfaceVariant
-                    )
-                }
-            }
+            LibraryEmptyState(
+                tabKind = LibraryTabKind.ALBUMS,
+                searchQuery = searchQuery,
+                storageFilter = storageFilter
+            )
         } else {
             Box(modifier = Modifier.fillMaxSize()) {
                 if (isAlbumsListView) {

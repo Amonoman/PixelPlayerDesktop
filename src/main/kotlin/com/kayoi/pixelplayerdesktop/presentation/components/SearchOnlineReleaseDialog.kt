@@ -164,7 +164,7 @@ fun SearchOnlineReleaseDialog(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
                         label = { Text("Search album title and artist") },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).trackInputFocus(),
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(

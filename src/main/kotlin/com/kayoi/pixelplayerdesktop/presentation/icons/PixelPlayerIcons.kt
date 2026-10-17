@@ -116,4 +116,70 @@ object PixelPlayerIcons {
             fill = SolidColor(Color.White)
         ).build()
     }
+
+    val Jellyfin: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "JellyfinLogo",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).addPath(
+            pathData = PathParser().parsePathString(
+                "M12,0.002C8.826,0.002 -1.398,18.537 0.16,21.666c1.56,3.129 22.14,3.094 23.682,0C25.384,18.573 15.177,0 12,0zM19.76,18.951c-1.008,2.028 -14.493,2.05 -15.514,0C3.224,16.9 9.92,4.755 12.003,4.755c2.081,0 8.77,12.166 7.759,14.196zM12,9.198c-1.054,0 -4.446,6.15 -3.93,7.189c0.518,1.04 7.348,1.027 7.86,0c0.511,-1.027 -2.874,-7.19 -3.93,-7.19z"
+            ).toNodes(),
+            fill = SolidColor(Color.White)
+        ).build()
+    }
+
+    val Subsonic: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "SubsonicLogo",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 512f,
+            viewportHeight = 512f
+        ).addPath(
+            pathData = PathParser().parsePathString(
+                "M256,80C158.8,80 80,158.8 80,256s78.8,176 176,176s176,-78.8 176,-176S353.2,80 256,80zM256,400c-79.5,0 -144,-64.5 -144,-144s64.5,-144 144,-144s144,64.5 144,144S335.5,400 256,400z"
+            ).toNodes(),
+            fill = SolidColor(Color.White)
+        ).addPath(
+            pathData = PathParser().parsePathString(
+                "M256,160C202.9,160 160,202.9 160,256s42.9,96 96,96s96,-42.9 96,-96S309.1,160 256,160zM256,312c-30.9,0 -56,-25.1 -56,-56s25.1,-56 56,-56s56,25.1 56,56S286.9,312 256,312z"
+            ).toNodes(),
+            fill = SolidColor(Color.White)
+        ).addPath(
+            pathData = PathParser().parsePathString(
+                "M256,220c-19.9,0 -36,16.1 -36,36s16.1,36 36,36s36,-16.1 36,-36S275.9,220 256,220z"
+            ).toNodes(),
+            fill = SolidColor(Color.White)
+        ).build()
+    }
+
+    val Navidrome: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "NavidromeLogo",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).addPath(
+            pathData = PathParser().parsePathString(
+                "M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM12,20c-4.41,0 -8,-3.59 -8,-8s3.59,-8 8,-8 8,3.59 8,8S16.41,20 12,20z"
+            ).toNodes(),
+            fill = SolidColor(Color.White)
+        ).addPath(
+            pathData = PathParser().parsePathString(
+                "M12,8c-2.21,0 -4,1.79 -4,4s1.79,4 4,4 4,-1.79 4,-4S14.21,8 12,8zM12,14c-1.1,0 -2,-0.9 -2,-2s0.9,-2 2,-2 2,0.9 2,2S13.1,14 12,14z"
+            ).toNodes(),
+            fill = SolidColor(Color.White)
+        ).addPath(
+            pathData = PathParser().parsePathString(
+                "M12,16.5c-0.28,0 -0.5,0.22 -0.5,0.5s0.22,0.5 0.5,0.5 5,-2.24 5,-5 -0.22,-0.5 -0.5,-0.5S16,12.22 16,12.5c0,2.21 -1.79,4 -4,4z"
+            ).toNodes(),
+            fill = SolidColor(Color.White)
+        ).build()
+    }
 }
+

@@ -40,19 +40,21 @@ val LocalInputFocusTracker = compositionLocalOf { InputFocusTracker {} }
 @Composable
 fun Modifier.trackInputFocus(): Modifier {
     val tracker = LocalInputFocusTracker.current
-    return remember(tracker) {
-        var wasFocused = false
-        Modifier.onFocusChanged { state ->
-            if (state.isFocused != wasFocused) {
-                wasFocused = state.isFocused
-                if (wasFocused) {
-                    tracker.registerActive()
-                } else {
-                    tracker.unregisterActive()
+    return this.then(
+        remember(tracker) {
+            var wasFocused = false
+            Modifier.onFocusChanged { state ->
+                if (state.isFocused != wasFocused) {
+                    wasFocused = state.isFocused
+                    if (wasFocused) {
+                        tracker.registerActive()
+                    } else {
+                        tracker.unregisterActive()
+                    }
                 }
             }
         }
-    }
+    )
 }
 
 @Composable
