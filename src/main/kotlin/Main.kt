@@ -1,4 +1,7 @@
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.window.WindowDraggableArea
+import androidx.compose.ui.Modifier
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -26,16 +29,30 @@ import com.kayoi.pixelplayerdesktop.di.appModules
 import com.kayoi.pixelplayerdesktop.presentation.components.InputFocusTracker
 import com.kayoi.pixelplayerdesktop.presentation.components.LocalInputFocusTracker
 import com.kayoi.pixelplayerdesktop.presentation.components.LocalWindowMinimized
+import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopBackDispatcher
+import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavDestination
+import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavigator
+import com.kayoi.pixelplayerdesktop.presentation.navigation.LocalBackDispatcher
+import com.kayoi.pixelplayerdesktop.presentation.navigation.toDefaultTarget
 import com.kayoi.pixelplayerdesktop.presentation.screens.MainAppScaffold
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.PixelPlayerTheme
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.SystemAccentColorProvider
+import io.github.vinceglb.filekit.FileKit
+import java.awt.AWTEvent
+import java.awt.Dimension
+import java.awt.Rectangle
+import java.awt.Toolkit
+import java.awt.event.AWTEventListener
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.MouseEvent
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 
 fun main() {
-    io.github.vinceglb.filekit.FileKit.init("com.kayoi.pixelplayerdesktop")
+    FileKit.init("com.kayoi.pixelplayerdesktop")
     application {
         val windowState = rememberWindowState(
             placement = WindowPlacement.Maximized,
@@ -66,6 +83,57 @@ fun main() {
     var isInputActive by remember { mutableStateOf(false) }
     val inputFocusTracker = remember { InputFocusTracker { isInputActive = it } }
     var isQueueSidePanelOpen by remember { mutableStateOf(true) }
+
+    val backDispatcher = remember { DesktopBackDispatcher() }
+    val defaultTabKey by playerViewModel.defaultTab.collectAsState()
+    val initialNavTarget = remember(defaultTabKey) {
+        DesktopNavDestination.entries.firstOrNull { it.name == defaultTabKey }?.toDefaultTarget() ?: DesktopNavDestination.HOME.toDefaultTarget()
+    }
+    val navigator = remember { DesktopNavigator(initialNavTarget) }
+
+    var lastNavTimestamp by remember { mutableStateOf(0L) }
+    val triggerBack: () -> Unit = remember(backDispatcher) {
+        {
+            val now = System.currentTimeMillis()
+            if (now - lastNavTimestamp > 350L) {
+                lastNavTimestamp = now
+                backDispatcher.dispatchBack()
+            }
+        }
+    }
+    val triggerForward: () -> Unit = remember(backDispatcher) {
+        {
+            val now = System.currentTimeMillis()
+            if (now - lastNavTimestamp > 350L) {
+                lastNavTimestamp = now
+                backDispatcher.dispatchForward()
+            }
+        }
+    }
+
+    val isWindows = remember { System.getProperty("os.name").startsWith("Windows", ignoreCase = true) }
+
+    DisposableEffect(triggerBack, triggerForward, isWindows) {
+        val mouseListener = AWTEventListener { event ->
+            if (event is MouseEvent && event.id == MouseEvent.MOUSE_RELEASED) {
+                // OpenJDK on X11 maps side buttons 8/9 to AWT 6/7; buttons 4/5 are horizontal scroll.
+                val isBack = if (isWindows) event.button == 4 else event.button == 6
+                val isForward = if (isWindows) event.button == 5 else event.button == 7
+                if (isBack) {
+                    triggerBack()
+                } else if (isForward) {
+                    triggerForward()
+                }
+            }
+        }
+        Toolkit.getDefaultToolkit().addAWTEventListener(
+            mouseListener,
+            AWTEvent.MOUSE_EVENT_MASK
+        )
+        onDispose {
+            Toolkit.getDefaultToolkit().removeAWTEventListener(mouseListener)
+        }
+    }
 
     // System-Based Dynamic Theme (Windows / Linux Accent Color)
     val systemColorSchemePair = remember {
@@ -209,10 +277,28 @@ fun main() {
                         playerViewModel.togglePlayPause()
                         true
                     }
+                    keyEvent.isAltPressed && keyEvent.key == Key.DirectionLeft -> {
+                        triggerBack()
+                        true
+                    }
+                    keyEvent.isAltPressed && keyEvent.key == Key.DirectionRight -> {
+                        triggerForward()
+                        true
+                    }
+                    keyEvent.key == Key.Back -> {
+                        triggerBack()
+                        true
+                    }
+                    keyEvent.key == Key.Escape -> {
+                        triggerBack()
+                        true
+                    }
                     else -> false
                 }
             } else if (keyEvent.type == KeyEventType.KeyUp) {
                 when {
+                    keyEvent.isAltPressed && (keyEvent.key == Key.DirectionLeft || keyEvent.key == Key.DirectionRight) -> true
+                    keyEvent.key == Key.Back || keyEvent.key == Key.Escape -> true
                     isModifier && (keyEvent.key == Key.K || (!isInputActive && (keyEvent.key == Key.DirectionRight || keyEvent.key == Key.DirectionLeft)) || keyEvent.key == Key.DirectionUp || keyEvent.key == Key.DirectionDown || keyEvent.key == Key.S || keyEvent.key == Key.R || keyEvent.key == Key.Q) -> true
                     !isModifier && !keyEvent.isAltPressed && !isInputActive && (keyEvent.key == Key.DirectionRight || keyEvent.key == Key.DirectionLeft) -> true
                     keyEvent.isAltPressed && keyEvent.key == Key.Q -> true
@@ -225,14 +311,14 @@ fun main() {
             }
         }
     ) {
-        window.minimumSize = java.awt.Dimension(760, 560)
+        window.minimumSize = Dimension(760, 560)
 
         DisposableEffect(window) {
             fun updateMaximizedBounds() {
                 val config = window.graphicsConfiguration ?: return
-                val insets = java.awt.Toolkit.getDefaultToolkit().getScreenInsets(config)
+                val insets = Toolkit.getDefaultToolkit().getScreenInsets(config)
                 val bounds = config.bounds
-                window.maximizedBounds = java.awt.Rectangle(
+                window.maximizedBounds = Rectangle(
                     bounds.x + insets.left,
                     bounds.y + insets.top,
                     bounds.width - insets.left - insets.right,
@@ -242,11 +328,11 @@ fun main() {
 
             updateMaximizedBounds()
 
-            val listener = object : java.awt.event.ComponentAdapter() {
-                override fun componentMoved(e: java.awt.event.ComponentEvent?) {
+            val listener = object : ComponentAdapter() {
+                override fun componentMoved(e: ComponentEvent?) {
                     updateMaximizedBounds()
                 }
-                override fun componentResized(e: java.awt.event.ComponentEvent?) {
+                override fun componentResized(e: ComponentEvent?) {
                     updateMaximizedBounds()
                 }
             }
@@ -259,40 +345,47 @@ fun main() {
 
         CompositionLocalProvider(
             LocalWindowMinimized provides windowState.isMinimized,
-            LocalInputFocusTracker provides inputFocusTracker
+            LocalInputFocusTracker provides inputFocusTracker,
+            LocalBackDispatcher provides backDispatcher
         ) {
             PixelPlayerTheme(
                 darkTheme = isDarkTheme,
                 colorSchemeOverride = systemColorScheme
             ) {
-                MainAppScaffold(
-                    viewModel = playerViewModel,
-                    isMaximized = windowState.placement == WindowPlacement.Maximized,
-                    onMinimize = { windowState.isMinimized = true },
-                    onMaximizeRestore = {
-                        windowState.placement = if (windowState.placement == WindowPlacement.Maximized) {
-                            WindowPlacement.Floating
-                        } else {
-                            WindowPlacement.Maximized
-                        }
-                    },
-                    onClose = {
-                        if (closeToTray) {
-                            isWindowVisible = false
-                        } else {
-                            exitApplication()
-                        }
-                    },
-                    topBarWrapper = { content ->
-                        WindowDraggableArea {
-                            content()
-                        }
-                    },
-                    searchFocusRequester = searchFocusRequester,
-                    onSearchFocusChange = { inputFocusTracker.onFocusChanged(it) },
-                    isQueueSidePanelOpen = isQueueSidePanelOpen,
-                    onToggleQueueSidePanel = { isQueueSidePanelOpen = !isQueueSidePanelOpen }
-                )
+                Box(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    MainAppScaffold(
+                        viewModel = playerViewModel,
+                        isMaximized = windowState.placement == WindowPlacement.Maximized,
+                        onMinimize = { windowState.isMinimized = true },
+                        onMaximizeRestore = {
+                            windowState.placement = if (windowState.placement == WindowPlacement.Maximized) {
+                                WindowPlacement.Floating
+                            } else {
+                                WindowPlacement.Maximized
+                            }
+                        },
+                        onClose = {
+                            if (closeToTray) {
+                                isWindowVisible = false
+                            } else {
+                                exitApplication()
+                            }
+                        },
+                        topBarWrapper = { content ->
+                            WindowDraggableArea {
+                                content()
+                            }
+                        },
+                        searchFocusRequester = searchFocusRequester,
+                        onSearchFocusChange = { inputFocusTracker.onFocusChanged(it) },
+                        isQueueSidePanelOpen = isQueueSidePanelOpen,
+                        onToggleQueueSidePanel = { isQueueSidePanelOpen = !isQueueSidePanelOpen },
+                        navigator = navigator,
+                        backDispatcher = backDispatcher
+                    )
+                }
             }
         }
     }

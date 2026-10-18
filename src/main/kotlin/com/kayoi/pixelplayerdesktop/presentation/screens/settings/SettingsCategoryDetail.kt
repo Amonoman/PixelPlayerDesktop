@@ -108,20 +108,14 @@ fun SettingsCategoryDetail(
 ) {
     val colors = MaterialTheme.colorScheme
     val listState = rememberLazyListState()
-    val isScrolled by remember {
-        derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 4 }
-    }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val horizontalPadding = if (maxWidth < 540.dp) 16.dp else 28.dp
 
         Column(modifier = Modifier.fillMaxSize()) {
-            SettingsStickyHeader(
+            SettingsHeader(
                 title = section.title,
-                onBack = onBack,
-                isScrolled = isScrolled,
-                horizontalPadding = horizontalPadding,
-                backContentDescription = "Back to Settings"
+                horizontalPadding = horizontalPadding
             )
 
             LazyColumn(

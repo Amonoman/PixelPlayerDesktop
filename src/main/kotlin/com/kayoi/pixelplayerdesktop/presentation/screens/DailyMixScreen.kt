@@ -52,6 +52,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -83,7 +84,7 @@ fun DailyMixScreen(
     currentSong: Song?,
     isPlaying: Boolean,
     viewModel: PlayerViewModel,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
     onEditMetadata: ((Song) -> Unit)? = null,
@@ -259,27 +260,6 @@ fun DailyMixScreen(
                     .padding(end = 4.dp, top = if (isVeryCompact) 60.dp else 80.dp, bottom = 16.dp)
             )
         }
-
-        FilledTonalIconButton(
-            onClick = onBack,
-            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
-                contentColor = MaterialTheme.colorScheme.onSurface
-            ),
-            modifier = Modifier
-                .padding(
-                    start = if (isVeryCompact) 14.dp else 20.dp,
-                    top = if (isVeryCompact) 12.dp else 16.dp
-                )
-                .size(if (isVeryCompact) 36.dp else 42.dp)
-                .align(Alignment.TopStart)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                contentDescription = "Back",
-                modifier = Modifier.size(if (isVeryCompact) 18.dp else 20.dp)
-            )
-        }
     }
 }
 
@@ -289,7 +269,7 @@ private fun ExpressiveDailyMixHeader(
     scrollState: LazyListState,
     isCompact: Boolean = false,
     isVeryCompact: Boolean = false,
-    horizontalPadding: androidx.compose.ui.unit.Dp = 24.dp
+    horizontalPadding: Dp = 24.dp
 ) {
     val albumArts = remember(songs) {
         songs.mapNotNull { it.albumArtUriString }.distinct().take(3)

@@ -39,13 +39,12 @@ fun SettingsScreen(
     onToggleDarkTheme: () -> Unit,
     onToggleDynamicColor: () -> Unit,
     onRescanLibrary: () -> Unit,
-    initialSection: SettingsSection? = null,
-    initialSubDetail: LibrarySubDetail = LibrarySubDetail.NONE,
+    activeSection: SettingsSection? = null,
+    activeSubDetail: LibrarySubDetail = LibrarySubDetail.NONE,
+    onNavigate: (SettingsSection?, LibrarySubDetail) -> Unit = { _, _ -> },
+    onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    var activeSection by remember(initialSection) { mutableStateOf<SettingsSection?>(initialSection) }
-    var activeSubDetail by remember(initialSubDetail) { mutableStateOf(initialSubDetail) }
-
     AnimatedContent(
         targetState = Pair(activeSection, activeSubDetail),
         transitionSpec = {
@@ -76,35 +75,34 @@ fun SettingsScreen(
             section == null -> {
                 SettingsOverviewMenu(
                     onSelectSection = {
-                        activeSection = it
-                        activeSubDetail = LibrarySubDetail.NONE
+                        onNavigate(it, LibrarySubDetail.NONE)
                     }
                 )
             }
             section == SettingsSection.LIBRARY && subDetail == LibrarySubDetail.FOLDERS -> {
                 MusicFoldersDetailScreen(
                     viewModel = viewModel,
-                    onBack = { activeSubDetail = LibrarySubDetail.NONE }
+                    onBack = onBack
                 )
             }
             section == SettingsSection.LIBRARY && subDetail == LibrarySubDetail.ARTISTS -> {
                 ArtistSettingsDetailScreen(
                     viewModel = viewModel,
-                    onBack = { activeSubDetail = LibrarySubDetail.NONE },
+                    onBack = onBack,
                     onRescanLibrary = onRescanLibrary
                 )
             }
             section == SettingsSection.LIBRARY && subDetail == LibrarySubDetail.DUPLICATES -> {
                 DuplicatesDetailScreen(
                     viewModel = viewModel,
-                    onBack = { activeSubDetail = LibrarySubDetail.NONE }
+                    onBack = onBack
                 )
             }
             section == SettingsSection.APPEARANCE && subDetail == LibrarySubDetail.PALETTE_STYLE -> {
                 PaletteStyleDetailScreen(
                     viewModel = viewModel,
                     isDarkTheme = isDarkTheme,
-                    onBack = { activeSubDetail = LibrarySubDetail.NONE }
+                    onBack = onBack
                 )
             }
             else -> {
@@ -116,11 +114,11 @@ fun SettingsScreen(
                     onToggleDarkTheme = onToggleDarkTheme,
                     onToggleDynamicColor = onToggleDynamicColor,
                     onRescanLibrary = onRescanLibrary,
-                    onOpenFoldersDetail = { activeSubDetail = LibrarySubDetail.FOLDERS },
-                    onOpenArtistsDetail = { activeSubDetail = LibrarySubDetail.ARTISTS },
-                    onOpenDuplicatesDetail = { activeSubDetail = LibrarySubDetail.DUPLICATES },
-                    onOpenPaletteStyleDetail = { activeSubDetail = LibrarySubDetail.PALETTE_STYLE },
-                    onBack = { activeSection = null }
+                    onOpenFoldersDetail = { onNavigate(section, LibrarySubDetail.FOLDERS) },
+                    onOpenArtistsDetail = { onNavigate(section, LibrarySubDetail.ARTISTS) },
+                    onOpenDuplicatesDetail = { onNavigate(section, LibrarySubDetail.DUPLICATES) },
+                    onOpenPaletteStyleDetail = { onNavigate(section, LibrarySubDetail.PALETTE_STYLE) },
+                    onBack = onBack
                 )
             }
         }

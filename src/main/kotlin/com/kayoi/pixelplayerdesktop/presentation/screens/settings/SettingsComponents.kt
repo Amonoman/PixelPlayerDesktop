@@ -33,29 +33,46 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-import com.kayoi.pixelplayerdesktop.presentation.components.CollapsiblePageHeader
+import androidx.compose.ui.unit.sp
 
 @Composable
-fun SettingsStickyHeader(
+fun SettingsHeader(
     title: String,
-    onBack: () -> Unit,
-    isScrolled: Boolean,
     horizontalPadding: Dp,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
-    backContentDescription: String = "Back",
     actions: @Composable RowScope.() -> Unit = {}
 ) {
-    CollapsiblePageHeader(
-        title = title,
-        onBack = onBack,
-        isScrolled = isScrolled,
-        horizontalPadding = horizontalPadding,
-        modifier = modifier,
-        subtitle = subtitle,
-        backContentDescription = backContentDescription,
-        actions = actions
-    )
+    val colors = MaterialTheme.colorScheme
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = horizontalPadding, end = horizontalPadding, top = 20.dp, bottom = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 32.sp
+                ),
+                color = colors.onSurface
+            )
+            if (!subtitle.isNullOrBlank()) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceVariant
+                )
+            }
+        }
+        actions()
+    }
 }
 
 

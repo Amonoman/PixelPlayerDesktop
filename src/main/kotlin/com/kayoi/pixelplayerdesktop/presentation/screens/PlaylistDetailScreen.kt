@@ -83,7 +83,7 @@ private data class PlaylistSongUiItem(val stableKey: String, val song: Song)
 fun PlaylistDetailScreen(
     playlistId: String,
     viewModel: PlayerViewModel,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
     onEditMetadata: ((Song) -> Unit)? = null,
@@ -111,7 +111,7 @@ fun PlaylistDetailScreen(
                     color = colors.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                FilledTonalButton(onClick = onBack) {
+                FilledTonalButton(onClick = { onBack?.invoke() }) {
                     Text("Back to Playlists")
                 }
             }
@@ -193,24 +193,6 @@ fun PlaylistDetailScreen(
                         .padding(start = horizontalPad, end = horizontalPad, top = 16.dp, bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    FilledTonalIconButton(
-                        onClick = onBack,
-                        shape = CircleShape,
-                        colors = IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor = colors.surfaceContainerLow,
-                            contentColor = colors.onSurface
-                        ),
-                        modifier = Modifier.size(42.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(18.dp))
-
                     PlaylistCover(
                         playlist = playlist,
                         playlistSongs = plainSongs,
@@ -293,24 +275,6 @@ fun PlaylistDetailScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        FilledTonalIconButton(
-                            onClick = onBack,
-                            shape = CircleShape,
-                            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                containerColor = colors.surfaceContainerLow,
-                                contentColor = colors.onSurface
-                            ),
-                            modifier = Modifier.size(if (isVeryCompact) 34.dp else 38.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = "Back",
-                                modifier = Modifier.size(if (isVeryCompact) 16.dp else 18.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(if (isVeryCompact) 10.dp else 14.dp))
-
                         PlaylistCover(
                             playlist = playlist,
                             playlistSongs = plainSongs,
@@ -561,7 +525,7 @@ fun PlaylistDetailScreen(
                     onClick = {
                         viewModel.deletePlaylist(playlist.id)
                         showDeleteConfirmDialog = false
-                        onBack()
+                        onBack?.invoke()
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colors.error,

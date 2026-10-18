@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,7 +47,13 @@ import com.kayoi.pixelplayerdesktop.presentation.components.DismissUndoBar
 import com.kayoi.pixelplayerdesktop.presentation.components.EditSongMetadataDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.MiniPlayerBar
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueSidePanel
+import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopBackDispatcher
+import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopBackHandler
 import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavDestination
+import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavTarget
+import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavigator
+import com.kayoi.pixelplayerdesktop.presentation.navigation.LocalBackDispatcher
+import com.kayoi.pixelplayerdesktop.presentation.navigation.toDefaultTarget
 import com.kayoi.pixelplayerdesktop.presentation.screens.LibrarySubDetail
 import com.kayoi.pixelplayerdesktop.presentation.screens.library.AlbumsTab
 import com.kayoi.pixelplayerdesktop.presentation.screens.library.ArtistsTab
@@ -72,6 +79,8 @@ fun MainAppScaffold(
     onSearchFocusChange: (Boolean) -> Unit = {},
     isQueueSidePanelOpen: Boolean = true,
     onToggleQueueSidePanel: () -> Unit = {},
+    navigator: DesktopNavigator? = null,
+    backDispatcher: DesktopBackDispatcher = LocalBackDispatcher.current,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -98,13 +107,12 @@ fun MainAppScaffold(
     val showQueueHistory by viewModel.showQueueHistory.collectAsState()
     val storageFilter by viewModel.storageFilter.collectAsState()
 
-    var selectedPlaylistId by remember { mutableStateOf<String?>(null) }
-    var selectedAlbum by remember { mutableStateOf<Album?>(null) }
-    var selectedArtist by remember { mutableStateOf<Artist?>(null) }
-    var selectedFolderDetail by remember { mutableStateOf<MusicFolder?>(null) }
-    var currentFolderTreePath by remember { mutableStateOf<String?>(null) }
-    var settingsInitialSection by remember { mutableStateOf<SettingsSection?>(null) }
-    var settingsInitialSubDetail by remember { mutableStateOf(LibrarySubDetail.NONE) }
+    val initialDestination = remember {
+        DesktopNavDestination.entries.firstOrNull { it.name == viewModel.defaultTab.value } ?: DesktopNavDestination.HOME
+    }
+    val nav = navigator ?: remember { DesktopNavigator(initialDestination.toDefaultTarget()) }
+    val currentTarget = nav.currentTarget
+    val currentDestination = nav.currentDestination
 
     val songColorScheme by produceState<ColorScheme?>(
         initialValue = if (isDynamicColor && currentSong?.albumArtUriString != null) {
@@ -135,25 +143,21 @@ fun MainAppScaffold(
         value = scheme
     }
 
-    val initialDestination = remember {
-        DesktopNavDestination.entries.firstOrNull { it.name == viewModel.defaultTab.value } ?: DesktopNavDestination.HOME
-    }
-    var currentDestination by remember { mutableStateOf(initialDestination) }
     var searchQuery by remember { mutableStateOf("") }
-    var previousDestinationBeforeSearch by remember { mutableStateOf<DesktopNavDestination?>(null) }
+    var previousTargetBeforeSearch by remember { mutableStateOf<DesktopNavTarget?>(null) }
 
     val handleSearchQueryChange: (String) -> Unit = { newQuery ->
         if (newQuery.isNotBlank()) {
             if (searchQuery.isBlank()) {
                 if (currentDestination == DesktopNavDestination.HOME || currentDestination == DesktopNavDestination.SETTINGS) {
-                    previousDestinationBeforeSearch = currentDestination
-                    currentDestination = DesktopNavDestination.SONGS
+                    previousTargetBeforeSearch = currentTarget
+                    nav.navigate(DesktopNavTarget.Songs)
                 }
             }
         } else {
-            if (previousDestinationBeforeSearch != null) {
-                currentDestination = previousDestinationBeforeSearch!!
-                previousDestinationBeforeSearch = null
+            if (previousTargetBeforeSearch != null) {
+                nav.navigate(previousTargetBeforeSearch!!)
+                previousTargetBeforeSearch = null
             }
         }
         searchQuery = newQuery
@@ -166,14 +170,45 @@ fun MainAppScaffold(
     var songToDelete by remember { mutableStateOf<Song?>(null) }
     var songToEditMetadata by remember { mutableStateOf<Song?>(null) }
     var batchSongsToEdit by remember { mutableStateOf<List<Song>?>(null) }
-    var isDailyMixDetailOpen by remember { mutableStateOf(false) }
-    var isRecentlyPlayedDetailOpen by remember { mutableStateOf(false) }
-    var isStatsDetailOpen by remember { mutableStateOf(false) }
     var playbackErrorMessage by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
         viewModel.playbackErrorEvents.collect { errorMsg ->
             playbackErrorMessage = errorMsg
         }
+    }
+
+    DesktopBackHandler(enabled = batchSongsToEdit != null, dispatcher = backDispatcher) {
+        batchSongsToEdit = null
+        true
+    }
+    DesktopBackHandler(enabled = songToEditMetadata != null, dispatcher = backDispatcher) {
+        songToEditMetadata = null
+        true
+    }
+    DesktopBackHandler(enabled = songToDelete != null, dispatcher = backDispatcher) {
+        songToDelete = null
+        true
+    }
+    DesktopBackHandler(enabled = songToAddToPlaylist != null, dispatcher = backDispatcher) {
+        songToAddToPlaylist = null
+        true
+    }
+    DesktopBackHandler(enabled = isExpandedPlayerOpen, dispatcher = backDispatcher) {
+        isExpandedPlayerOpen = false
+        true
+    }
+    DesktopBackHandler(enabled = nav.canGoBack, dispatcher = backDispatcher) {
+        nav.goBack()
+    }
+    DisposableEffect(nav, backDispatcher) {
+        val reg = backDispatcher.registerForwardHandler {
+            if (!isExpandedPlayerOpen && nav.canGoForward) {
+                nav.goForward()
+            } else {
+                false
+            }
+        }
+        onDispose { reg.close() }
     }
 
     val filteredSongs = remember(songs, favoriteSongs, currentDestination, searchQuery, storageFilter) {
@@ -205,30 +240,8 @@ fun MainAppScaffold(
             AppSidebar(
                 currentDestination = currentDestination,
                 onNavigate = { destination ->
-                    currentDestination = destination
-                    previousDestinationBeforeSearch = null
-                    if (destination != DesktopNavDestination.HOME) {
-                        isDailyMixDetailOpen = false
-                        isRecentlyPlayedDetailOpen = false
-                        isStatsDetailOpen = false
-                    }
-                    if (destination != DesktopNavDestination.PLAYLISTS) {
-                        selectedPlaylistId = null
-                    }
-                    if (destination != DesktopNavDestination.ALBUMS) {
-                        selectedAlbum = null
-                    }
-                    if (destination != DesktopNavDestination.ARTISTS) {
-                        selectedArtist = null
-                    }
-                    if (destination != DesktopNavDestination.FOLDERS) {
-                        selectedFolderDetail = null
-                        currentFolderTreePath = null
-                    }
-                    if (destination != DesktopNavDestination.SETTINGS) {
-                        settingsInitialSection = null
-                        settingsInitialSubDetail = LibrarySubDetail.NONE
-                    }
+                    previousTargetBeforeSearch = null
+                    nav.navigateToRoot(destination)
                 },
                 isCompact = isSidebarCompact
             )
@@ -253,7 +266,11 @@ fun MainAppScaffold(
                         onMaximizeRestore = onMaximizeRestore,
                         onClose = onClose,
                         searchFocusRequester = searchFocusRequester,
-                        onSearchFocusChange = onSearchFocusChange
+                        onSearchFocusChange = onSearchFocusChange,
+                        canGoBack = nav.canGoBack || isExpandedPlayerOpen || songToAddToPlaylist != null || songToDelete != null || songToEditMetadata != null || batchSongsToEdit != null,
+                        canGoForward = nav.canGoForward && !isExpandedPlayerOpen,
+                        onGoBack = { backDispatcher.dispatchBack() },
+                        onGoForward = { backDispatcher.dispatchForward() }
                     )
                 }
 
@@ -269,37 +286,37 @@ fun MainAppScaffold(
                     ) {
                         when (currentDestination) {
                             DesktopNavDestination.HOME -> {
-                                when {
-                                    isDailyMixDetailOpen -> {
+                                when (currentTarget) {
+                                    is DesktopNavTarget.DailyMix -> {
                                         DailyMixScreen(
                                             songs = songs,
                                             favoriteSongs = favoriteSongs,
                                             currentSong = currentSong,
                                             isPlaying = playerInfo.isPlaying,
                                             viewModel = viewModel,
-                                            onBack = { isDailyMixDetailOpen = false },
+                                            onBack = { nav.goBack() },
                                             onAddToPlaylist = { song -> songToAddToPlaylist = song },
                                             onDelete = { song -> songToDelete = song },
                                             onEditMetadata = { song -> songToEditMetadata = song }
                                         )
                                     }
-                                    isRecentlyPlayedDetailOpen -> {
+                                    is DesktopNavTarget.RecentlyPlayed -> {
                                         RecentlyPlayedScreen(
                                             recentlyPlayedSongs = recentlyPlayedSongs,
                                             currentSong = currentSong,
                                             isPlaying = playerInfo.isPlaying,
                                             viewModel = viewModel,
-                                            onBack = { isRecentlyPlayedDetailOpen = false },
+                                            onBack = { nav.goBack() },
                                             onAddToPlaylist = { song -> songToAddToPlaylist = song },
                                             onDelete = { song -> songToDelete = song },
                                             onEditMetadata = { song -> songToEditMetadata = song }
                                         )
                                     }
-                                    isStatsDetailOpen -> {
+                                    is DesktopNavTarget.Stats -> {
                                         StatsScreen(
                                             viewModel = viewModel,
                                             songs = songs,
-                                            onBack = { isStatsDetailOpen = false }
+                                            onBack = { nav.goBack() }
                                         )
                                     }
                                     else -> {
@@ -322,14 +339,17 @@ fun MainAppScaffold(
                                                 viewModel.playSongs(songList, startIndex)
                                             },
                                             onShuffleAll = { viewModel.playSongs(songs.shuffled()) },
-                                            onNavigateToLibrary = { currentDestination = DesktopNavDestination.SONGS },
-                                            onNavigateToDailyMix = { isDailyMixDetailOpen = true },
-                                            onNavigateToRecentlyPlayed = { isRecentlyPlayedDetailOpen = true },
-                                            onNavigateToStats = { isStatsDetailOpen = true },
+                                            onNavigateToLibrary = { nav.navigate(DesktopNavTarget.Songs) },
+                                            onNavigateToDailyMix = { nav.navigate(DesktopNavTarget.DailyMix) },
+                                            onNavigateToRecentlyPlayed = { nav.navigate(DesktopNavTarget.RecentlyPlayed) },
+                                            onNavigateToStats = { nav.navigate(DesktopNavTarget.Stats) },
                                             onNavigateToFolders = {
-                                                settingsInitialSection = SettingsSection.LIBRARY
-                                                settingsInitialSubDetail = LibrarySubDetail.FOLDERS
-                                                currentDestination = DesktopNavDestination.SETTINGS
+                                                nav.navigate(
+                                                    DesktopNavTarget.Settings(
+                                                        SettingsSection.LIBRARY,
+                                                        LibrarySubDetail.FOLDERS
+                                                    )
+                                                )
                                             },
                                             onRescanLibrary = { viewModel.rescanLibrary() },
                                             onPlayNext = { song -> viewModel.playSongNext(song) },
@@ -358,13 +378,20 @@ fun MainAppScaffold(
                             }
 
                             DesktopNavDestination.ALBUMS -> {
+                                val selectedAlbum = (currentTarget as? DesktopNavTarget.AlbumDetail)?.album
                                 AlbumsTab(
                                     albums = albums,
                                     songs = songs,
                                     isDarkTheme = isDarkTheme,
                                     searchQuery = searchQuery,
                                     selectedAlbum = selectedAlbum,
-                                    onSelectAlbum = { selectedAlbum = it },
+                                    onSelectAlbum = { album ->
+                                        if (album != null) {
+                                            nav.navigate(DesktopNavTarget.AlbumDetail(album))
+                                        } else {
+                                            nav.goBack()
+                                        }
+                                    },
                                     viewModel = viewModel,
                                     onAddToPlaylist = { song -> songToAddToPlaylist = song },
                                     onDelete = { song -> songToDelete = song },
@@ -374,12 +401,19 @@ fun MainAppScaffold(
                             }
 
                             DesktopNavDestination.ARTISTS -> {
+                                val selectedArtist = (currentTarget as? DesktopNavTarget.ArtistDetail)?.artist
                                 ArtistsTab(
                                     artists = artists,
                                     songs = songs,
                                     searchQuery = searchQuery,
                                     selectedArtist = selectedArtist,
-                                    onSelectArtist = { selectedArtist = it },
+                                    onSelectArtist = { artist ->
+                                        if (artist != null) {
+                                            nav.navigate(DesktopNavTarget.ArtistDetail(artist))
+                                        } else {
+                                            nav.goBack()
+                                        }
+                                    },
                                     viewModel = viewModel,
                                     onAddToPlaylist = { song -> songToAddToPlaylist = song },
                                     onDelete = { song -> songToDelete = song },
@@ -388,12 +422,19 @@ fun MainAppScaffold(
                             }
 
                             DesktopNavDestination.PLAYLISTS -> {
+                                val selectedPlaylistId = (currentTarget as? DesktopNavTarget.PlaylistDetail)?.playlistId
                                 PlaylistsTab(
                                     playlists = playlists,
                                     songs = songs,
                                     searchQuery = searchQuery,
                                     selectedPlaylistId = selectedPlaylistId,
-                                    onSelectPlaylist = { selectedPlaylistId = it },
+                                    onSelectPlaylist = { playlistId ->
+                                        if (playlistId != null) {
+                                            nav.navigate(DesktopNavTarget.PlaylistDetail(playlistId))
+                                        } else {
+                                            nav.goBack()
+                                        }
+                                    },
                                     viewModel = viewModel,
                                     onAddToPlaylist = { song -> songToAddToPlaylist = song },
                                     onDelete = { song -> songToDelete = song },
@@ -402,6 +443,8 @@ fun MainAppScaffold(
                             }
 
                             DesktopNavDestination.FOLDERS -> {
+                                val selectedFolderDetail = (currentTarget as? DesktopNavTarget.FolderDetail)?.folder
+                                val currentFolderTreePath = (currentTarget as? DesktopNavTarget.Folders)?.treePath
                                 FoldersTab(
                                     songs = songs,
                                     musicDirectories = musicDirectories,
@@ -410,9 +453,15 @@ fun MainAppScaffold(
                                     favoriteSongs = favoriteSongs,
                                     searchQuery = searchQuery,
                                     selectedFolderDetail = selectedFolderDetail,
-                                    onSelectFolderDetail = { selectedFolderDetail = it },
+                                    onSelectFolderDetail = { folder ->
+                                        if (folder != null) {
+                                            nav.navigate(DesktopNavTarget.FolderDetail(folder))
+                                        } else {
+                                            nav.goBack()
+                                        }
+                                    },
                                     currentFolderTreePath = currentFolderTreePath,
-                                    onFolderTreePathChange = { currentFolderTreePath = it },
+                                    onFolderTreePathChange = { path -> nav.navigate(DesktopNavTarget.Folders(path)) },
                                     viewModel = viewModel,
                                     onAddToPlaylist = { song -> songToAddToPlaylist = song },
                                     onDelete = { song -> songToDelete = song },
@@ -422,6 +471,7 @@ fun MainAppScaffold(
                             }
 
                             DesktopNavDestination.SETTINGS -> {
+                                val settingsTarget = currentTarget as? DesktopNavTarget.Settings
                                 SettingsScreen(
                                     viewModel = viewModel,
                                     isDarkTheme = isDarkTheme,
@@ -429,8 +479,12 @@ fun MainAppScaffold(
                                     onToggleDarkTheme = { viewModel.toggleDarkMode() },
                                     onToggleDynamicColor = { viewModel.toggleDynamicColor() },
                                     onRescanLibrary = { viewModel.rescanLibrary() },
-                                    initialSection = settingsInitialSection,
-                                    initialSubDetail = settingsInitialSubDetail
+                                    activeSection = settingsTarget?.section,
+                                    activeSubDetail = settingsTarget?.subDetail ?: LibrarySubDetail.NONE,
+                                    onNavigate = { section, subDetail ->
+                                        nav.navigate(DesktopNavTarget.Settings(section, subDetail))
+                                    },
+                                    onBack = { nav.goBack() }
                                 )
                             }
                         }

@@ -71,7 +71,7 @@ private fun formatTotalDuration(songs: List<Song>): String {
 fun FolderDetailScreen(
     folder: MusicFolder,
     viewModel: PlayerViewModel,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
     onEditMetadata: ((Song) -> Unit)? = null,
@@ -118,24 +118,6 @@ fun FolderDetailScreen(
                         .padding(start = horizontalPad, end = horizontalPad, top = 16.dp, bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    FilledTonalIconButton(
-                        onClick = onBack,
-                        shape = CircleShape,
-                        colors = IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor = colors.surfaceContainerHigh,
-                            contentColor = colors.onSurface
-                        ),
-                        modifier = Modifier.size(42.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(18.dp))
-
                     Box(
                         modifier = Modifier
                             .size(coverSize)
@@ -270,24 +252,6 @@ fun FolderDetailScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        FilledTonalIconButton(
-                            onClick = onBack,
-                            shape = CircleShape,
-                            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                containerColor = colors.surfaceContainerHigh,
-                                contentColor = colors.onSurface
-                            ),
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = "Back",
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(14.dp))
-
                         Box(
                             modifier = Modifier
                                 .size(coverSize)

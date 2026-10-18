@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
+import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopBackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -197,32 +198,28 @@ fun MusicFoldersDetailScreen(
         currentDirectory?.name.orEmpty()
     }
 
+    DesktopBackHandler(enabled = currentDirectory != null) {
+        val parent = currentDirectory?.parentFile
+        val isParentConfiguredRoot = parent != null && musicDirectories.any { File(it).absolutePath == parent.absolutePath }
+        val isCurrentConfiguredRoot = musicDirectories.any { File(it).absolutePath == currentDirectory?.absolutePath }
+        if (isCurrentConfiguredRoot) {
+            currentDirectory = null
+        } else if (parent != null && musicDirectories.any { currentDirectory?.absolutePath?.startsWith(File(it).absolutePath) == true }) {
+            currentDirectory = parent
+        } else {
+            currentDirectory = null
+        }
+        true
+    }
+
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val horizontalPadding = if (maxWidth < 540.dp) 16.dp else 28.dp
 
         Column(modifier = Modifier.fillMaxSize()) {
-            SettingsStickyHeader(
+            SettingsHeader(
                 title = "Music Folders",
                 subtitle = folderSubtitle,
-                onBack = {
-                    if (currentDirectory != null) {
-                        val parent = currentDirectory?.parentFile
-                        val isParentConfiguredRoot = parent != null && musicDirectories.any { File(it).absolutePath == parent.absolutePath }
-                        val isCurrentConfiguredRoot = musicDirectories.any { File(it).absolutePath == currentDirectory?.absolutePath }
-                        if (isCurrentConfiguredRoot) {
-                            currentDirectory = null
-                        } else if (parent != null && musicDirectories.any { currentDirectory?.absolutePath?.startsWith(File(it).absolutePath) == true }) {
-                            currentDirectory = parent
-                        } else {
-                            currentDirectory = null
-                        }
-                    } else {
-                        onBack()
-                    }
-                },
-                isScrolled = isScrolled,
-                horizontalPadding = horizontalPadding,
-                backContentDescription = "Back"
+                horizontalPadding = horizontalPadding
             )
 
             LazyColumn(

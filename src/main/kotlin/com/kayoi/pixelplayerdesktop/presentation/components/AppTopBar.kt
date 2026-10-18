@@ -38,6 +38,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Close
@@ -72,10 +74,14 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
 import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavDestination
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,6 +100,10 @@ fun AppTopBar(
     onClose: () -> Unit = {},
     searchFocusRequester: FocusRequester = remember { FocusRequester() },
     onSearchFocusChange: (Boolean) -> Unit = {},
+    canGoBack: Boolean = false,
+    canGoForward: Boolean = false,
+    onGoBack: () -> Unit = {},
+    onGoForward: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -134,32 +144,73 @@ fun AppTopBar(
             animationSpec = tween(150)
         )
 
-        val leftSlotMaxWidth = if (isNarrow) 120.dp else 220.dp
+        val sideSlotMaxWidth = (((availableWidth - searchBarWidth) / 2) - horizontalPadding - 8.dp).coerceAtLeast(70.dp)
 
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = horizontalPadding),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = horizontalPadding)
         ) {
             Row(
-                modifier = Modifier.widthIn(min = 40.dp, max = leftSlotMaxWidth),
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .widthIn(max = sideSlotMaxWidth),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                AppTooltip(
+                    text = "Back (Alt+Left)",
+                    alignment = Alignment.BottomCenter,
+                    offset = DpOffset(0.dp, 6.dp)
+                ) {
+                    IconButton(
+                        onClick = onGoBack,
+                        enabled = canGoBack,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = "Back (Alt+Left)",
+                            tint = if (canGoBack) colors.onSurface else colors.onSurface.copy(alpha = 0.25f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                AppTooltip(
+                    text = "Forward (Alt+Right)",
+                    alignment = Alignment.BottomCenter,
+                    offset = DpOffset(0.dp, 6.dp)
+                ) {
+                    IconButton(
+                        onClick = onGoForward,
+                        enabled = canGoForward,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = "Forward (Alt+Right)",
+                            tint = if (canGoForward) colors.onSurface else colors.onSurface.copy(alpha = 0.25f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(6.dp))
+
                 Text(
                     text = currentDestination.title,
                     style = if (isNarrow) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
-
             Surface(
                 modifier = Modifier
+                    .align(Alignment.Center)
                     .width(searchBarWidth)
                     .height(42.dp),
                 shape = RoundedCornerShape(21.dp),
@@ -241,9 +292,8 @@ fun AppTopBar(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
-
             Row(
+                modifier = Modifier.align(Alignment.CenterEnd),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(if (isNarrow) 4.dp else 8.dp)
             ) {
@@ -371,10 +421,10 @@ fun AppTopBar(
 @Composable
 private fun WindowControlButton(
     onClick: () -> Unit,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     contentDescription: String,
-    buttonSize: androidx.compose.ui.unit.Dp = 38.dp,
-    iconSize: androidx.compose.ui.unit.Dp = 22.dp,
+    buttonSize: Dp = 38.dp,
+    iconSize: Dp = 22.dp,
     isClose: Boolean = false
 ) {
     val interactionSource = remember { MutableInteractionSource() }

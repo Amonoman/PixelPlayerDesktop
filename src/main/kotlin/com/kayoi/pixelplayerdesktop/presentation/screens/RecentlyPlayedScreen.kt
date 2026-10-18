@@ -1,6 +1,5 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
-import com.kayoi.pixelplayerdesktop.presentation.components.CollapsiblePageHeader
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
@@ -61,6 +60,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -80,7 +80,7 @@ fun RecentlyPlayedScreen(
     currentSong: Song?,
     isPlaying: Boolean,
     viewModel: PlayerViewModel,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
     onEditMetadata: ((Song) -> Unit)? = null,
@@ -117,25 +117,36 @@ fun RecentlyPlayedScreen(
             else -> 24.dp
         }
 
-        val isScrolled by remember {
-            derivedStateOf { lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 4 }
-        }
-
         Column(modifier = Modifier.fillMaxSize()) {
-            CollapsiblePageHeader(
-                title = "Recently Played",
-                subtitle = if (filteredSongs.size == 1) "1 track played" else "${filteredSongs.size} tracks played",
-                onBack = onBack,
-                isScrolled = isScrolled,
-                horizontalPadding = horizontalPadding
-            )
-
             LazyColumn(
                 state = lazyListState,
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentPadding = PaddingValues(bottom = 28.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                item(key = "recently_played_header") {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = horizontalPadding, end = horizontalPadding, top = 20.dp, bottom = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "Recently Played",
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 32.sp
+                            ),
+                            color = colors.onSurface
+                        )
+                        val subtitle = if (filteredSongs.size == 1) "1 track played" else "${filteredSongs.size} tracks played"
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.onSurfaceVariant
+                        )
+                    }
+                }
 
                 item(key = "recently_played_range_selector") {
                     RecentlyPlayedRangeSelector(
@@ -486,13 +497,13 @@ private fun RecentlyPlayedEmptyState(
                 text = "No tracks played in ${range.displayName.lowercase()}",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = TextAlign.Center
             )
             Text(
                 text = "Songs you listen to will appear here.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = TextAlign.Center
             )
         }
     }

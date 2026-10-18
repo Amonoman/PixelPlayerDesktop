@@ -92,13 +92,10 @@ fun PaletteStyleDetailScreen(
         val horizontalPadding = if (maxWidth < 540.dp) 16.dp else 28.dp
 
         Column(modifier = Modifier.fillMaxSize()) {
-            SettingsStickyHeader(
+            SettingsHeader(
                 title = "Album Art Palette Style",
                 subtitle = "Choose the album colors for the player UI",
-                onBack = onBack,
-                isScrolled = isScrolled,
-                horizontalPadding = horizontalPadding,
-                backContentDescription = "Back to Appearance"
+                horizontalPadding = horizontalPadding
             )
 
             LazyColumn(

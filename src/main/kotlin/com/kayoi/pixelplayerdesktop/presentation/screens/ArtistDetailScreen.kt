@@ -85,7 +85,7 @@ fun ArtistDetailScreen(
     artist: Artist,
     songs: List<Song>,
     viewModel: PlayerViewModel,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
     onEditMetadata: ((Song) -> Unit)? = null,
@@ -210,7 +210,7 @@ fun ArtistDetailScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 val isWide = maxWidth >= 760.dp
-                val headerHeight = if (isWide) 240.dp else 190.dp
+                val headerHeight = if (isWide) 180.dp else 140.dp
                 val coverSize = if (isWide) 140.dp else 100.dp
                 val titleStyle = if (isWide) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.titleLarge
                 val subtitleStyle = if (isWide) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium
@@ -254,29 +254,11 @@ fun ArtistDetailScreen(
                             )
                     )
 
-                    FilledTonalIconButton(
-                        onClick = onBack,
-                        shape = CircleShape,
-                        colors = IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor = colors.surfaceContainerLow,
-                            contentColor = colors.onSurface
-                        ),
-                        modifier = Modifier
-                            .padding(start = 24.dp, top = 16.dp)
-                            .size(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .align(Alignment.BottomStart)
-                            .padding(start = 24.dp, end = 24.dp, bottom = 16.dp),
+                            .align(Alignment.CenterStart)
+                            .padding(horizontal = 24.dp, vertical = 16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         AsyncArtworkImage(

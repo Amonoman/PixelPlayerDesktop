@@ -1,6 +1,5 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
-import com.kayoi.pixelplayerdesktop.presentation.components.CollapsiblePageHeader
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -105,7 +104,7 @@ enum class CategoryDimension(
 fun StatsScreen(
     viewModel: PlayerViewModel,
     songs: List<Song>,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val statsHolder = viewModel.statsStateHolder
@@ -134,50 +133,11 @@ fun StatsScreen(
         val isCompact = screenWidth < 600.dp
         val horizontalPadding = if (isVeryCompact) 16.dp else 24.dp
 
-        val isScrolled by remember {
-            derivedStateOf { lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 4 }
-        }
-
         Column(modifier = Modifier.fillMaxSize()) {
             val refreshRotation by animateFloatAsState(
                 targetValue = if (isRefreshing) 360f else 0f,
                 animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
                 label = "statsTopBarRefreshRotation"
-            )
-
-            CollapsiblePageHeader(
-                title = "Listening Stats",
-                onBack = onBack,
-                isScrolled = isScrolled,
-                horizontalPadding = horizontalPadding,
-                actions = {
-                    FilledTonalIconButton(
-                        onClick = {
-                            if (!isRefreshing) {
-                                coroutineScope.launch {
-                                    isRefreshing = true
-                                    statsHolder.refreshStats()
-                                    delay(500)
-                                    isRefreshing = false
-                                }
-                            }
-                        },
-                        enabled = !isRefreshing,
-                        colors = IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor = colors.surfaceContainerLow,
-                            contentColor = colors.onSurface
-                        ),
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Refresh,
-                            contentDescription = "Refresh Stats",
-                            modifier = Modifier
-                                .size(20.dp)
-                                .graphicsLayer { rotationZ = refreshRotation }
-                        )
-                    }
-                }
             )
 
             val currentSummary = summary
@@ -191,6 +151,51 @@ fun StatsScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
+                item(key = "stats_header") {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 20.dp, bottom = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Listening Stats",
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 32.sp
+                            ),
+                            color = colors.onSurface
+                        )
+
+                        FilledTonalIconButton(
+                            onClick = {
+                                if (!isRefreshing) {
+                                    coroutineScope.launch {
+                                        isRefreshing = true
+                                        statsHolder.refreshStats()
+                                        delay(500)
+                                        isRefreshing = false
+                                    }
+                                }
+                            },
+                            enabled = !isRefreshing,
+                            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                containerColor = colors.surfaceContainerLow,
+                                contentColor = colors.onSurface
+                            ),
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Refresh,
+                                contentDescription = "Refresh Stats",
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .graphicsLayer { rotationZ = refreshRotation }
+                            )
+                        }
+                    }
+                }
 
                 item(key = "stats_range_tabs") {
                     RangeTabsHeader(

@@ -78,13 +78,10 @@ fun DuplicatesDetailScreen(
         val horizontalPadding = if (maxWidth < 540.dp) 16.dp else 28.dp
 
         Column(modifier = Modifier.fillMaxSize()) {
-            SettingsStickyHeader(
+            SettingsHeader(
                 title = "Duplicate Songs",
                 subtitle = subtitle,
-                onBack = onBack,
-                isScrolled = isScrolled,
-                horizontalPadding = horizontalPadding,
-                backContentDescription = "Back to Music Management"
+                horizontalPadding = horizontalPadding
             )
 
             if (duplicateGroups.isEmpty()) {
