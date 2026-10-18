@@ -45,6 +45,7 @@ import com.kayoi.pixelplayerdesktop.presentation.components.BatchEditMetadataDia
 import com.kayoi.pixelplayerdesktop.presentation.components.DeleteSongConfirmationDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.DismissUndoBar
 import com.kayoi.pixelplayerdesktop.presentation.components.EditSongMetadataDialog
+import com.kayoi.pixelplayerdesktop.presentation.components.KeyboardShortcutsDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.MiniPlayerBar
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueSidePanel
 import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopBackDispatcher
@@ -110,6 +111,7 @@ fun MainAppScaffold(
     val defaultTabKey by viewModel.defaultTab.collectAsState()
     val showQueueHistory by viewModel.showQueueHistory.collectAsState()
     val storageFilter by viewModel.storageFilter.collectAsState()
+    val showShortcutsDialog by viewModel.showShortcutsDialog.collectAsState()
 
     val initialDestination = remember {
         DesktopNavDestination.entries.firstOrNull { it.name == viewModel.defaultTab.value } ?: DesktopNavDestination.HOME
@@ -678,6 +680,12 @@ fun MainAppScaffold(
                 songs = batchSongsToEdit!!,
                 viewModel = viewModel,
                 onDismiss = { batchSongsToEdit = null }
+            )
+        }
+
+        if (showShortcutsDialog) {
+            KeyboardShortcutsDialog(
+                onDismiss = { viewModel.hideShortcutsDialog() }
             )
         }
     }

@@ -19,6 +19,9 @@ import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
 import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
 import com.kayoi.pixelplayerdesktop.platform.mediasession.MediaSessionBridge
 import java.io.File
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class PlayerViewModel(
     val playbackStateHolder: PlaybackStateHolder,
@@ -38,6 +41,21 @@ class PlayerViewModel(
     val playbackState = playbackStateHolder.playbackState
     val playbackErrorEvents = playbackStateHolder.errorEvents
     val lyricsSearchUiState = playbackStateHolder.lyricsSearchUiState
+
+    private val _showShortcutsDialog = MutableStateFlow(false)
+    val showShortcutsDialog: StateFlow<Boolean> = _showShortcutsDialog.asStateFlow()
+
+    fun showShortcutsDialog() {
+        _showShortcutsDialog.value = true
+    }
+
+    fun hideShortcutsDialog() {
+        _showShortcutsDialog.value = false
+    }
+
+    fun toggleShortcutsDialog() {
+        _showShortcutsDialog.value = !_showShortcutsDialog.value
+    }
 
     fun searchLyrics(query: String) = playbackStateHolder.searchLyrics(query)
     fun applyLyrics(lyrics: Lyrics) = playbackStateHolder.applyLyrics(lyrics)

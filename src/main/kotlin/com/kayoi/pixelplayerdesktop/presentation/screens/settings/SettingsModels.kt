@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Keyboard
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Palette
@@ -49,6 +50,12 @@ enum class SettingsSection(
         subtitle = "Manage Navidrome and Jellyfin services",
         icon = Icons.Rounded.AccountCircle
     ),
+    SHORTCUTS(
+        id = "shortcuts",
+        title = "Keyboard Shortcuts",
+        subtitle = "Hotkeys, playback controls, and navigation cheatsheet",
+        icon = Icons.Rounded.Keyboard
+    ),
     ABOUT(
         id = "about",
         title = "About",
@@ -65,6 +72,7 @@ fun getCategoryColors(category: SettingsSection, isDark: Boolean): Pair<Color, C
             SettingsSection.PLAYBACK -> Color(0xFF633B48) to Color(0xFFFFD8EC)
             SettingsSection.EQUALIZER -> Color(0xFF6E4E13) to Color(0xFFFFDEAC)
             SettingsSection.ACCOUNTS -> Color(0xFF37474F) to Color(0xFFBBD9E8)
+            SettingsSection.SHORTCUTS -> Color(0xFF2E4369) to Color(0xFFBFD2F8)
             SettingsSection.ABOUT -> Color(0xFF3F474D) to Color(0xFFDEE3EB)
         }
     } else {
@@ -74,6 +82,7 @@ fun getCategoryColors(category: SettingsSection, isDark: Boolean): Pair<Color, C
             SettingsSection.PLAYBACK -> Color(0xFFFFD8EC) to Color(0xFF631B4B)
             SettingsSection.EQUALIZER -> Color(0xFFFFDEAC) to Color(0xFF281900)
             SettingsSection.ACCOUNTS -> Color(0xFFD6EAF5) to Color(0xFF103548)
+            SettingsSection.SHORTCUTS -> Color(0xFFD6E3FF) to Color(0xFF285EA7)
             SettingsSection.ABOUT -> Color(0xFFEFF1F7) to Color(0xFF44474F)
         }
     }

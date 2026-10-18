@@ -986,6 +986,12 @@ fun SettingsCategoryDetail(
                 }
             }
 
+            SettingsSection.SHORTCUTS -> {
+                item {
+                    KeyboardShortcutsContent()
+                }
+            }
+
             SettingsSection.ABOUT -> {
                 item {
                     AboutSectionContent()

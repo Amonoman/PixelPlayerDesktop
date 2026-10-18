@@ -338,18 +338,27 @@ fun main(args: Array<String> = emptyArray()) {
                         triggerForward()
                         true
                     }
+                    (isModifier && keyEvent.key == Key.Slash) || keyEvent.key == Key.F1 -> {
+                        playerViewModel.toggleShortcutsDialog()
+                        true
+                    }
                     keyEvent.key == Key.Back -> {
                         triggerBack()
                         true
                     }
                     keyEvent.key == Key.Escape -> {
-                        triggerBack()
+                        if (playerViewModel.showShortcutsDialog.value) {
+                            playerViewModel.hideShortcutsDialog()
+                        } else {
+                            triggerBack()
+                        }
                         true
                     }
                     else -> false
                 }
             } else if (keyEvent.type == KeyEventType.KeyUp) {
                 when {
+                    (isModifier && keyEvent.key == Key.Slash) || keyEvent.key == Key.F1 -> true
                     keyEvent.isAltPressed && (keyEvent.key == Key.DirectionLeft || keyEvent.key == Key.DirectionRight) -> true
                     keyEvent.key == Key.Back || keyEvent.key == Key.Escape -> true
                     isModifier && (keyEvent.key == Key.K || (!isInputActive && (keyEvent.key == Key.DirectionRight || keyEvent.key == Key.DirectionLeft)) || keyEvent.key == Key.DirectionUp || keyEvent.key == Key.DirectionDown || keyEvent.key == Key.S || keyEvent.key == Key.R || keyEvent.key == Key.Q) -> true
