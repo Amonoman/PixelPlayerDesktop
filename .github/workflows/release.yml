@@ -94,6 +94,7 @@ jobs:
         with:
           name: linux-dist
           path: dist-linux/*
+          retention-days: 1
 
   build-windows:
     name: Build Windows Packages
@@ -136,6 +137,7 @@ jobs:
         with:
           name: windows-dist
           path: dist-windows/*
+          retention-days: 1
 
   publish-release:
     name: Publish GitHub Release
