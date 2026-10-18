@@ -9,6 +9,7 @@ data class UserSettings(
     val musicDirectories: List<String> = emptyList(),
     val isDynamicColorEnabled: Boolean = true,
     val isDarkMode: Boolean = true,
+    val lastKnownAccentColor: Int? = null,
     val albumArtPaletteStyle: String = "tonal_spot",
     val albumArtColorAccuracy: Int = 0,
     val volume: Float = 1.0f,

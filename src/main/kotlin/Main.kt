@@ -8,8 +8,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -49,10 +54,17 @@ import java.awt.event.AWTEventListener
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.MouseEvent
+import javax.swing.SwingUtilities
+import kotlin.system.exitProcess
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
+import com.kayoi.pixelplayerdesktop.domain.player.AudioEngine
+import com.kayoi.pixelplayerdesktop.lifecycle.AppShutdownCoordinator
 
-fun main() {
+fun main(args: Array<String> = emptyArray()) {
+    val appStartTime = System.currentTimeMillis()
+    val isBenchmark = args.contains("--benchmark-first-frame")
+    AppShutdownCoordinator.registerShutdownHook()
     FileKit.init("com.kayoi.pixelplayerdesktop")
     application {
         val windowState = rememberWindowState(
@@ -73,6 +85,7 @@ fun main() {
     }
 
     val playerViewModel = remember { koin.get<PlayerViewModel>() }
+    val audioEngine = remember { koin.get<AudioEngine>() }
     val initialSetupDone by playerViewModel.initialSetupDone.collectAsState()
     val isDarkTheme by playerViewModel.isDarkMode.collectAsState()
     val currentSong by playerViewModel.currentSong.collectAsState()
@@ -80,6 +93,21 @@ fun main() {
     val playerInfo by playerViewModel.playerInfo.collectAsState()
     val closeToTray by playerViewModel.closeToTray.collectAsState()
     var isWindowVisible by remember { mutableStateOf(true) }
+    var isExiting by remember { mutableStateOf(false) }
+
+    val exitApp: () -> Unit = remember(audioEngine) {
+        {
+            if (!isExiting) {
+                isExiting = true
+                isWindowVisible = false
+                AppShutdownCoordinator.shutdownAndExit(audioEngine = audioEngine) {
+                    SwingUtilities.invokeLater {
+                        exitApplication()
+                    }
+                }
+            }
+        }
+    }
 
     val searchFocusRequester = remember { FocusRequester() }
     var isInputActive by remember { mutableStateOf(false) }
@@ -138,9 +166,22 @@ fun main() {
     }
 
     // System-Based Dynamic Theme (Windows / Linux Accent Color)
-    val systemColorSchemePair = remember {
-        val systemSeed = SystemAccentColorProvider.getSystemAccentColor()
-        DynamicColorProcessor.generateColorSchemePair(systemSeed)
+    val persistedAccent = playerViewModel.themeStateHolder.lastKnownAccentColor.value
+    val initialAccent = remember {
+        persistedAccent?.let { Color(it) } ?: SystemAccentColorProvider.defaultAccentColor
+    }
+    val systemColorSchemePair by produceState(
+        initialValue = remember(initialAccent) { DynamicColorProcessor.generateColorSchemePair(initialAccent) }
+    ) {
+        val systemSeed = withContext(Dispatchers.IO) {
+            SystemAccentColorProvider.getSystemAccentColor()
+        }
+        if (persistedAccent == null || Color(persistedAccent) != systemSeed) {
+            playerViewModel.themeStateHolder.updateLastKnownAccentColor(systemSeed.toArgb())
+        }
+        if (systemSeed != initialAccent) {
+            value = DynamicColorProcessor.generateColorSchemePair(systemSeed)
+        }
     }
     val systemColorScheme = if (isDarkTheme) systemColorSchemePair.dark else systemColorSchemePair.light
 
@@ -154,6 +195,14 @@ fun main() {
     LaunchedEffect(currentSong?.id) {
         if (currentSong != null && queue.isNotEmpty()) {
             isQueueSidePanelOpen = true
+        }
+    }
+
+    if (isBenchmark) {
+        LaunchedEffect(Unit) {
+            val ttf = System.currentTimeMillis() - appStartTime
+            println("TIME_TO_FIRST_FRAME: ${ttf}ms")
+            exitApp()
         }
     }
 
@@ -188,7 +237,7 @@ fun main() {
                 Separator()
                 Item(
                     text = "Quit",
-                    onClick = ::exitApplication
+                    onClick = exitApp
                 )
             }
         )
@@ -200,7 +249,7 @@ fun main() {
             if (closeToTray) {
                 isWindowVisible = false
             } else {
-                exitApplication()
+                exitApp()
             }
         },
         title = "PixelPlayer",
@@ -371,9 +420,7 @@ fun main() {
                                     WindowPlacement.Maximized
                                 }
                             },
-                            onClose = {
-                                exitApplication()
-                            },
+                            onClose = exitApp,
                             onSetupComplete = {
                                 playerViewModel.setInitialSetupDone(true)
                                 playerViewModel.scanLibrary(forceRescan = true)
@@ -400,7 +447,7 @@ fun main() {
                                 if (closeToTray) {
                                     isWindowVisible = false
                                 } else {
-                                    exitApplication()
+                                    exitApp()
                                 }
                             },
                             topBarWrapper = { content ->
@@ -421,4 +468,6 @@ fun main() {
         }
     }
 }
+    AppShutdownCoordinator.performTeardown(timeoutMs = 1000L)
+    exitProcess(0)
 }

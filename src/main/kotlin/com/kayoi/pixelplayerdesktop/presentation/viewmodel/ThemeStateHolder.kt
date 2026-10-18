@@ -40,6 +40,16 @@ class ThemeStateHolder(
         .map { it.isDynamicColorEnabled }
         .stateIn(coroutineScope, SharingStarted.Eagerly, true)
 
+    val lastKnownAccentColor: StateFlow<Int?> = settingsRepository.settingsFlow
+        .map { it.lastKnownAccentColor }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, settingsRepository.settingsFlow.value.lastKnownAccentColor)
+
+    fun updateLastKnownAccentColor(colorArgb: Int) {
+        coroutineScope.launch {
+            settingsRepository.updateSettings { it.copy(lastKnownAccentColor = colorArgb) }
+        }
+    }
+
     val albumArtPaletteStyle: StateFlow<AlbumArtPaletteStyle> = settingsRepository.settingsFlow
         .map { AlbumArtPaletteStyle.fromStorageKey(it.albumArtPaletteStyle) }
         .stateIn(coroutineScope, SharingStarted.Eagerly, AlbumArtPaletteStyle.default)
