@@ -566,9 +566,10 @@ fun MainAppScaffold(
                 }
 
                 if (currentSong != null) {
+                    val activePlayerColorScheme = songColorScheme ?: MaterialTheme.colorScheme
                     PixelPlayerTheme(
                         darkTheme = isDarkTheme,
-                        colorSchemeOverride = songColorScheme
+                        colorSchemeOverride = activePlayerColorScheme
                     ) {
                         MiniPlayerBar(
                             currentSong = currentSong!!,

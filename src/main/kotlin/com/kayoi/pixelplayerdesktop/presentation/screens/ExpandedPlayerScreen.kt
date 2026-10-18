@@ -176,9 +176,10 @@ fun ExpandedPlayerScreen(
         return
     }
 
+    val activePlayerColorScheme = songColorScheme ?: MaterialTheme.colorScheme
     PixelPlayerTheme(
         darkTheme = isDarkTheme,
-        colorSchemeOverride = songColorScheme
+        colorSchemeOverride = activePlayerColorScheme
     ) {
         val colors = MaterialTheme.colorScheme
 
