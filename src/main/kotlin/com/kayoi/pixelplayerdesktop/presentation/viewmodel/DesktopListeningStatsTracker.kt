@@ -1,21 +1,26 @@
 package com.kayoi.pixelplayerdesktop.presentation.viewmodel
 
-import com.kayoi.pixelplayerdesktop.data.network.listenbrainz.ScrobbleManager
 import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.data.network.listenbrainz.ScrobbleManager
 import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 class DesktopListeningStatsTracker(
     private val musicRepository: MusicRepository,
     private val scrobbleManager: ScrobbleManager? = null,
-    private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
+    private val timeProvider: () -> Long = { System.currentTimeMillis() }
 ) {
-    private var currentSession: ActiveSession? = null
+    private val currentSession = AtomicReference<ActiveSession?>(null)
 
     init {
         runCatching {
@@ -25,91 +30,112 @@ class DesktopListeningStatsTracker(
         }
     }
 
-    @Synchronized
     fun onSongChanged(song: Song?, isPlaying: Boolean) {
         finalizeCurrentSession()
         if (song == null) return
 
-        val now = System.currentTimeMillis()
-        currentSession = ActiveSession(
+        val now = timeProvider()
+        val newSession = ActiveSession(
             song = song,
             startedAtEpochMs = now,
             accumulatedListeningMs = 0L,
             lastRecordedEpochMs = now,
             isPlaying = isPlaying
         )
+        val prev = currentSession.getAndSet(newSession)
+        if (prev != null) {
+            finalizeSessionInternal(prev, now, forceSynchronous = false)
+        }
 
         if (isPlaying) {
             scrobbleManager?.onPlayingNow(song)
         }
     }
 
-    @Synchronized
     fun onPlaybackStateChanged(isPlaying: Boolean) {
-        val session = currentSession ?: return
-        val now = System.currentTimeMillis()
-        accumulateTime(session, now)
-        val wasPlaying = session.isPlaying
-        session.isPlaying = isPlaying
-        session.lastRecordedEpochMs = now
+        val now = timeProvider()
+        var newlyStartedPlayingSong: Song? = null
 
-        if (!wasPlaying && isPlaying) {
-            scrobbleManager?.onPlayingNow(session.song)
+        currentSession.updateAndGet { session ->
+            if (session == null) return@updateAndGet null
+            val accumulated = accumulateTime(session, now)
+            val wasPlaying = session.isPlaying
+            if (!wasPlaying && isPlaying) {
+                newlyStartedPlayingSong = session.song
+            }
+            accumulated.copy(
+                isPlaying = isPlaying,
+                lastRecordedEpochMs = now
+            )
         }
+
+        newlyStartedPlayingSong?.let { scrobbleManager?.onPlayingNow(it) }
     }
 
-    @Synchronized
     fun onPlaybackStopped() {
         finalizeCurrentSession()
     }
 
-    @Synchronized
     fun finalizeCurrentSession(forceSynchronous: Boolean = false) {
-        val session = currentSession ?: return
-        val now = System.currentTimeMillis()
-        accumulateTime(session, now)
+        val session = currentSession.getAndUpdate { null } ?: return
+        val now = timeProvider()
+        finalizeSessionInternal(session, now, forceSynchronous)
+    }
 
-        val listenedMs = session.accumulatedListeningMs
-        val song = session.song
-        if (listenedMs >= MIN_SESSION_LISTEN_MS) {
+    fun flush(forceSynchronous: Boolean = false) {
+        finalizeCurrentSession(forceSynchronous)
+    }
+
+    private fun finalizeSessionInternal(session: ActiveSession, now: Long, forceSynchronous: Boolean) {
+        val finalSession = accumulateTime(session, now)
+        val listenedMs = finalSession.accumulatedListeningMs
+        val song = finalSession.song
+
+        if (listenedMs >= MIN_SESSION_LISTEN_MS && !finalSession.isCountRecorded) {
             val songId = song.id
-            if (forceSynchronous) {
+            if (forceSynchronous || !coroutineScope.isActive) {
                 runCatching {
                     runBlocking {
-                        musicRepository.recordSongPlayed(songId, listenedMs)
+                        withContext(NonCancellable) {
+                            musicRepository.recordSongPlayed(songId, listenedMs)
+                        }
                     }
                 }
             } else {
                 coroutineScope.launch {
-                    musicRepository.recordSongPlayed(songId, listenedMs)
+                    withContext(NonCancellable) {
+                        musicRepository.recordSongPlayed(songId, listenedMs)
+                    }
                 }
             }
         }
 
         scrobbleManager?.onSessionFinalized(
             song = song,
-            startedAtEpochMs = session.startedAtEpochMs,
+            startedAtEpochMs = finalSession.startedAtEpochMs,
             listenedMs = listenedMs,
             trackDurationMs = song.duration
         )
-
-        currentSession = null
     }
 
-    private fun accumulateTime(session: ActiveSession, now: Long) {
-        if (!session.isPlaying) return
-        val delta = (now - session.lastRecordedEpochMs).coerceAtLeast(0L)
-        if (delta > 0L) {
-            session.accumulatedListeningMs += delta
+    private fun accumulateTime(session: ActiveSession, now: Long): ActiveSession {
+        if (!session.isPlaying) {
+            return session.copy(lastRecordedEpochMs = now)
         }
+        val delta = (now - session.lastRecordedEpochMs).coerceAtLeast(0L)
+        return session.copy(
+            accumulatedListeningMs = session.accumulatedListeningMs + delta,
+            lastRecordedEpochMs = now
+        )
     }
 
     private data class ActiveSession(
         val song: Song,
         val startedAtEpochMs: Long,
-        var accumulatedListeningMs: Long,
-        var lastRecordedEpochMs: Long,
-        var isPlaying: Boolean
+        val accumulatedListeningMs: Long,
+        val lastRecordedEpochMs: Long,
+        val isPlaying: Boolean,
+        val isCountRecorded: Boolean = false
     )
 
     companion object {
