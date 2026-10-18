@@ -1,5 +1,11 @@
 <p align="center">
-  <img src="src/main/resources/icons/icon.png" alt="PixelPlayer Desktop Icon" height="180"/>
+  <img src="src/main/resources/icons/icon.png" alt="PixelPlayer Desktop Icon" height="160"/>
+</p>
+
+<h1 align="center">PixelPlayer Desktop</h1>
+
+<p align="center">
+  A modern, high-fidelity local and streaming music player for Linux and Windows, crafted with Compose Multiplatform and Material 3 Expressive design.
 </p>
 
 <p align="center">
@@ -13,41 +19,100 @@
   <img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge" alt="GPLv3 license">
 </p>
 
-## What It Is
+---
 
-PixelPlayer Desktop is the desktop companion music player for Linux and Windows maintained by [@adlifarizi](https://github.com/adlifarizi) (Kayoi). It focuses on high-fidelity local audio playback, expressive Material 3 (Material You) UI, and an intuitive desktop workflow.
+## Table of Contents
 
-The app works completely offline with zero telemetry and no proprietary lock-in.
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Keyboard Shortcuts](#keyboard-shortcuts)
+- [Requirements](#requirements)
+- [Download & Installation](#download--installation)
+- [Building from Source](#building-from-source)
+- [Project Structure](#project-structure)
+- [Tech Stack](#tech-stack)
+- [Contributing](#contributing)
+- [License & Credits](#license--credits)
 
-Package identifier: `com.kayoi.pixelplayerdesktop`
+---
 
-## Why This Exists
+## Overview
 
-PixelPlayer Desktop brings the beloved PixelPlayer Material 3 expressive design and local music experience to desktop environments (Linux and Windows).
+**PixelPlayer Desktop** brings the expressive Material 3 (Material You) music experience from mobile to desktop environments. It focuses on high-fidelity offline audio playback, seamless local library management, streaming server synchronization, and an intuitive desktop workflow.
 
-It is built specifically for desktop operating systems, providing keyboard navigation, system accent integration, responsive side panels, and low-latency audio playback powered by LibVLC.
+- **Offline-First & Private**: Works completely offline with zero telemetry and no proprietary lock-in.
+- **Native Audio Performance**: Low-latency, gapless audio playback powered by LibVLC (`vlcj`).
+- **Dynamic Theming**: Fluid Material 3 interface that adapts dynamically to your album art or system accent color.
+- **Package Identifier**: `com.kayoi.pixelplayerdesktop`
 
-## Features
+---
 
-| Area | Highlights |
+## Key Features
+
+| Category | Highlights |
 | --- | --- |
-| Playback | LibVLC (`vlcj`) audio engine, gapless playback, seek controls, volume control, mute, shuffle, repeat modes, queue management |
-| Formats | Native decoding for FLAC, MP3, WAV, OGG Vorbis, AAC, M4A, Opus, and ALAC |
-| Library | Local recursive directory scanner, SQLite caching, Songs, Albums, Artists, Folder tree explorer, Favorites, Playlists, Daily Mix, instant search |
-| Lyrics | Embedded LRC parser, synchronized interactive playback, line-by-line jumping, auto-scroll |
-| UI & Theming | Compose Multiplatform, Material 3, adaptive color palettes extracted from system accent or album art, light/dark modes, custom window controls |
-| Desktop Controls | Keyboard shortcuts (`Space`, `Ctrl+Right/Left`, `Ctrl+Up/Down`, `Ctrl+K`, `Ctrl+Q`, `F11`), window maximize/minimize/close, queue side panel |
+| **Audio & Playback** | LibVLC engine, gapless playback, 10-band graphic equalizer with presets and preamp, ReplayGain (volume normalization), sleep timer, queue management, and shuffle/repeat modes |
+| **Format Support** | Native decoding for FLAC, MP3, WAV, OGG Vorbis, AAC, M4A, Opus, and ALAC |
+| **Library Management** | Recursive folder scanner with multi-directory and exclusion support, fast SQLite caching, Songs, Albums, Artists, Folder tree explorer, Playlists, Favorites, and Daily Mix |
+| **Cloud & Streaming** | Account integration with Subsonic / Navidrome and Jellyfin music servers, plus ListenBrainz scrobbling support |
+| **Metadata & Tagging** | Single and batch ID3 tag editor (Jaudiotagger), online metadata and cover art fetching via MusicBrainz, multi-artist delimiter parsing |
+| **Interactive Lyrics** | Embedded and synced LRC support, real-time sync offset adjustment, interactive line-by-line jumping, online lyrics search via LRCLIB, file import/export, and romanization (Pinyin, Romaji, Furigana, Hangul) |
+| **Expressive Theming** | Material 3 dynamic color extraction with customizable palette styles (Vibrant, Expressive, Muted, etc.), light and dark modes, and compact sidebar option |
+| **Desktop Experience** | Frameless window with custom title bar, system media key / MPRIS integration, responsive queue side panel, mini player bar, and fullscreen expanded view |
+
+---
+
+## Keyboard Shortcuts
+
+PixelPlayer Desktop includes full keyboard navigation for seamless playback and interface control. You can press <kbd>Ctrl</kbd> + <kbd>/</kbd> or <kbd>F1</kbd> anywhere inside the app to view the in-app cheatsheet dialog.
+
+| Action | Shortcut |
+| --- | --- |
+| **Play / Pause** | <kbd>Space</kbd> |
+| **Next Track** | <kbd>Ctrl</kbd> + <kbd>→</kbd> |
+| **Previous Track** | <kbd>Ctrl</kbd> + <kbd>←</kbd> |
+| **Seek Forward (+5s)** | <kbd>→</kbd> |
+| **Seek Backward (-5s)** | <kbd>←</kbd> |
+| **Volume Up (+5%)** | <kbd>Ctrl</kbd> + <kbd>↑</kbd> |
+| **Volume Down (-5%)** | <kbd>Ctrl</kbd> + <kbd>↓</kbd> |
+| **Mute / Unmute** | <kbd>M</kbd> |
+| **Toggle Shuffle** | <kbd>Ctrl</kbd> + <kbd>S</kbd> |
+| **Cycle Repeat Mode** | <kbd>Ctrl</kbd> + <kbd>R</kbd> |
+| **Favorite Track** | <kbd>L</kbd> |
+| **Search Library** | <kbd>Ctrl</kbd> + <kbd>K</kbd> |
+| **Toggle Queue Panel** | <kbd>Ctrl</kbd> + <kbd>Q</kbd> or <kbd>Alt</kbd> + <kbd>Q</kbd> |
+| **Toggle Fullscreen** | <kbd>F11</kbd> |
+| **Navigate Back** | <kbd>Alt</kbd> + <kbd>←</kbd> or <kbd>Esc</kbd> |
+| **Navigate Forward** | <kbd>Alt</kbd> + <kbd>→</kbd> |
+| **Shortcuts Cheatsheet** | <kbd>Ctrl</kbd> + <kbd>/</kbd> or <kbd>F1</kbd> |
+
+---
 
 ## Requirements
 
 | Requirement | Details |
 | --- | --- |
-| Operating System | Linux (Ubuntu/Debian, Fedora, Arch, etc.) or Windows 10/11 (64-bit) |
-| Linux Runtime | `vlc` and `libvlc-dev` (`sudo apt install vlc libvlc-dev`) |
-| Windows Runtime | 64-bit VLC Media Player installed |
-| Build Toolchain | JDK 21 |
+| **Operating System** | Linux (Ubuntu/Debian, Fedora, Arch, etc.) or Windows 10/11 (64-bit) |
+| **Windows Runtime** | LibVLC is automatically bundled in release installers and portable archives. No separate VLC installation required. |
+| **Linux Runtime** | LibVLC runtime libraries (`sudo apt install vlc libvlc-dev` on Debian/Ubuntu, or distro equivalent) |
+| **Build Toolchain** | JDK 21 (for building from source) |
 
-## Build From Source
+---
+
+## Download & Installation
+
+Pre-built binaries and release installers are available on the [GitHub Releases page](https://github.com/adlifarizi/PixelPlayerDesktop/releases):
+
+- **Windows**:
+  - Installer: `.msi` or `.exe` setup package.
+  - Portable: `.zip` archive (extract and launch `PixelPlayer.exe`).
+- **Linux**:
+  - Debian/Ubuntu: `.deb` package (`sudo dpkg -i pixelplayer-desktop_*.deb`).
+  - Portable: `.tar.gz` archive.
+
+---
+
+## Building from Source
 
 Clone the repository:
 
@@ -62,7 +127,7 @@ Run in development mode:
 ./gradlew run
 ```
 
-Build portable unpacked binary (current OS):
+Build portable unpacked binary (for current OS):
 
 ```sh
 ./gradlew createDistributable
@@ -74,78 +139,77 @@ Build Debian installer package (`.deb`):
 ./gradlew packageDeb
 ```
 
-Build Windows installer packages (`.msi` and `.exe` on Windows host):
+Build Windows installers (`.msi` and `.exe` on a Windows host):
 
 ```cmd
 gradlew.bat packageMsi packageExe
 ```
 
-Run unit tests and verification checks:
+Run unit tests and verification suite:
 
 ```sh
-./gradlew check
+./gradlew test
 ```
 
-## Download
-
-GitHub releases are available at:
-
-```text
-https://github.com/adlifarizi/PixelPlayerDesktop/releases
-```
-
-### Alpha builds
-
-Every merge or push into `main` automatically publishes a pre-release tagged like `v0.1.0-alpha.N` on the [releases page](https://github.com/adlifarizi/PixelPlayerDesktop/releases). These automated builds provide the latest features and fixes for testing on Linux and Windows.
-
-Available release assets:
-- **Linux**: `.deb` installer and portable `.tar.gz` archive.
-- **Windows**: `.msi` / `.exe` installers and portable `.zip` archive.
+---
 
 ## Project Structure
 
 ```text
-src/main/kotlin/com/kayoi/pixelplayerdesktop/
-- cli/              CLI debug verification runner
-- data/             SQLite database, DAOs, repositories, audio scanner, LibVLC engine, preferences
-- di/               Koin dependency injection modules
-- domain/           Core domain models, audio engine contracts, playlist managers
-- presentation/     Compose UI screens, components, viewmodels, navigation
-- ui/theme/         Material 3 Expressive theme, dynamic color extractors, typography, shapes
-- utils/            Platform utilities and path providers
+src/main/kotlin/
+├── Main.kt                                    # Desktop window entrypoint, hotkey router, and life-cycle
+└── com/kayoi/pixelplayerdesktop/
+    ├── cli/                                   # Standalone CLI diagnostic runner
+    ├── data/                                  # SQLite database, DAOs, repositories, audio scanner, LibVLC engine, preferences
+    ├── di/                                    # Koin dependency injection configuration
+    ├── domain/                                # Core domain models, contracts, and repository interfaces
+    ├── platform/                              # Windows media key session and Linux MPRIS integration
+    ├── presentation/
+    │   ├── components/                        # Reusable Compose UI components, dialogs, player controls
+    │   ├── navigation/                        # Back-stack dispatcher, destinations, and navigator
+    │   ├── screens/                           # Top-level view screens (Home, Library, Settings, Expanded Player)
+    │   └── viewmodel/                         # Architecture viewmodels and UI state holders
+    └── ui/theme/                              # Material 3 theme definitions, dynamic color palette processors, typography
 ```
+
+---
 
 ## Tech Stack
 
-| Area | Technology |
+| Component | Technology |
 | --- | --- |
-| Language | Kotlin (JVM Toolchain 21) |
-| UI Framework | Compose Multiplatform (Desktop) |
-| Design System | Material 3 / MaterialKolor (Dynamic Color) |
-| Audio Engine | LibVLC via `vlcj` |
-| Database | SQLite via `sqlite-jdbc` |
-| Dependency Injection | Koin Core & Koin Compose |
-| Audio Tag Reader | Jaudiotagger & Vorbis Java |
-| Reorderable List | `sh.calvin.reorderable` |
-| Concurrency | Kotlin Coroutines & Flows |
+| **Language & Toolchain** | Kotlin 2.1 (JVM Toolchain 21) |
+| **UI Framework** | Compose Multiplatform (Desktop) |
+| **Design System** | Material 3 & MaterialKolor (Dynamic Color Extraction) |
+| **Audio Engine** | LibVLC via `vlcj` |
+| **Database** | SQLite via `sqlite-jdbc` |
+| **Dependency Injection** | Koin Core & Koin Compose |
+| **Metadata & Audio Tags** | Jaudiotagger & Vorbis Java |
+| **Networking** | OkHttp & Kotlinx Serialization |
+| **Interactive Lists** | `sh.calvin.reorderable` |
+| **Concurrency** | Kotlin Coroutines & Asynchronous Flows |
+
+---
 
 ## Contributing
 
-Contributions are welcome. Please open an issue or pull request with clear descriptions.
+Contributions, bug reports, and feature suggestions are welcome! Feel free to open an issue or submit a pull request.
 
-Useful local checks:
+Before creating a pull request, ensure tests and build verification pass:
 
 ```sh
 ./gradlew check
 ```
 
-## License
+---
+
+## License & Credits
 
 PixelPlayer Desktop is licensed under the [GNU General Public License v3.0](LICENSE) (`SPDX-License-Identifier: GPL-3.0-or-later`).
 
-```
+```text
 PixelPlayer Desktop
-Copyright (C) 2026 Theo Vilardo
+Copyright (C) 2026 Theo Vilardo, adlifarizi, and contributors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -162,11 +226,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ```
 
 <p align="center">
-  Desktop version maintained by <a href="https://github.com/adlifarizi">Kayoi (adlifarizi)</a>
-</p>
-<p align="center">
+  Desktop version ported and maintained by <a href="https://github.com/adlifarizi">adlifarizi</a><br />
   Original Android version by <a href="https://github.com/theovilardo">theovilardo</a> (<a href="https://github.com/PixelPlayerHQ/PixelPlayer">PixelPlayer</a>)<br />
-  Open-source Android version maintained by <a href="https://github.com/lostf1sh">lostf1sh</a> (<a href="https://github.com/PixelPlayerHQ/PixelPlayerOSS">PixelPlayerOSS</a>)<br />
-  Part of <a href="https://github.com/PixelPlayerHQ">PixelPlayerHQ</a>
+  Open-source Android version maintained by <a href="https://github.com/lostf1sh">lostf1sh</a> (<a href="https://github.com/PixelPlayerHQ/PixelPlayerOSS">PixelPlayerOSS</a>)
 </p>
-
