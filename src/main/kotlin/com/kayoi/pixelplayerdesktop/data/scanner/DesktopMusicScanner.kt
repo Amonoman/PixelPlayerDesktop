@@ -21,6 +21,7 @@ import org.gagravarr.opus.OpusTags
 import org.jaudiotagger.audio.AudioFileIO
 import org.jaudiotagger.tag.FieldKey
 import java.io.File
+import java.io.IOException
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.file.FileVisitResult
@@ -81,28 +82,47 @@ class DesktopMusicScanner(
             // 1. Discover all audio files across directories
             val discoveredFiles = mutableListOf<File>()
             for (dirPath in directories) {
-                val dir = File(dirPath)
-                if (dir.exists() && dir.isDirectory) {
-                    val rootDirAbs = dir.absolutePath
-                    val isRootExcluded = isDirectoryOrParentExcluded(rootDirAbs, normalizedExcluded)
-                    if (isRootExcluded) continue
+                try {
+                    val dir = File(dirPath)
+                    if (dir.exists() && dir.isDirectory) {
+                        val rootDirAbs = dir.absolutePath
+                        val isRootExcluded = isDirectoryOrParentExcluded(rootDirAbs, normalizedExcluded)
+                        if (isRootExcluded) continue
 
-                    Files.walkFileTree(dir.toPath(), object : SimpleFileVisitor<Path>() {
-                        override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
-                            val currentDirAbs = dir.toFile().absolutePath
-                            val isExcluded = isDirectoryOrParentExcluded(currentDirAbs, normalizedExcluded)
-                            return if (isExcluded) FileVisitResult.SKIP_SUBTREE else FileVisitResult.CONTINUE
-                        }
-
-                        override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-                            val f = file.toFile()
-                            val ext = f.extension.lowercase()
-                            if (supportedExtensions.contains(ext)) {
-                                discoveredFiles.add(f)
+                        Files.walkFileTree(dir.toPath(), object : SimpleFileVisitor<Path>() {
+                            override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
+                                return try {
+                                    val currentDirAbs = dir.toFile().absolutePath
+                                    val isExcluded = isDirectoryOrParentExcluded(currentDirAbs, normalizedExcluded)
+                                    if (isExcluded) FileVisitResult.SKIP_SUBTREE else FileVisitResult.CONTINUE
+                                } catch (_: Exception) {
+                                    FileVisitResult.SKIP_SUBTREE
+                                }
                             }
-                            return FileVisitResult.CONTINUE
-                        }
-                    })
+
+                            override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+                                try {
+                                    val f = file.toFile()
+                                    val ext = f.extension.lowercase()
+                                    if (supportedExtensions.contains(ext)) {
+                                        discoveredFiles.add(f)
+                                    }
+                                } catch (_: Exception) { }
+                                return FileVisitResult.CONTINUE
+                            }
+
+                            override fun visitFileFailed(file: Path, exc: IOException): FileVisitResult {
+                                // Gracefully skip inaccessible or malformed files/directories
+                                return FileVisitResult.CONTINUE
+                            }
+
+                            override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+                                return FileVisitResult.CONTINUE
+                            }
+                        })
+                    }
+                } catch (_: Exception) {
+                    // Safely ignore failures accessing a specific directory
                 }
             }
 
@@ -120,36 +140,42 @@ class DesktopMusicScanner(
 
             var scannedCount = 0
             for (file in discoveredFiles) {
-                scannedCount++
-                val path = file.absolutePath
-                allDiscoveredPaths.add(path)
+                try {
+                    scannedCount++
+                    val path = file.absolutePath
+                    allDiscoveredPaths.add(path)
 
-                _scanProgress.value = ScanProgress.Scanning(
-                    currentFile = file.name,
-                    scannedCount = scannedCount,
-                    totalDiscovered = totalDiscovered
-                )
+                    _scanProgress.value = ScanProgress.Scanning(
+                        currentFile = file.name,
+                        scannedCount = scannedCount,
+                        totalDiscovered = totalDiscovered
+                    )
 
-                val lastModified = file.lastModified()
-                val existing = existingSongs[path]
+                    val lastModified = file.lastModified()
+                    val existing = existingSongs[path]
 
-                if (!forceRescan && existing != null && existing.dateModified == lastModified) {
-                    continue
-                }
-
-                // Extract tags
-                val song = extractSongMetadata(file, existing?.id, artistDelimiters, wordDelimiters, extractArtistFromTitle)
-                if (song != null) {
-                    songsToUpsert.add(song)
-                    if (autoScanLrcFiles && lyricsDao != null) {
-                        scanAndCacheLrcFile(file, song.id)
+                    if (!forceRescan && existing != null && existing.dateModified == lastModified) {
+                        continue
                     }
+
+                    // Extract tags
+                    val song = extractSongMetadata(file, existing?.id, artistDelimiters, wordDelimiters, extractArtistFromTitle)
+                    if (song != null) {
+                        songsToUpsert.add(song)
+                        if (autoScanLrcFiles && lyricsDao != null) {
+                            scanAndCacheLrcFile(file, song.id)
+                        }
+                    }
+                } catch (_: Exception) {
+                    // Gracefully skip metadata extraction errors for single corrupted files
                 }
             }
 
-            // 3. Batch save to DB
+            // 3. Batch save to DB in chunks
             if (songsToUpsert.isNotEmpty()) {
-                musicDao.upsertSongs(songsToUpsert)
+                songsToUpsert.chunked(500).forEach { batch ->
+                    musicDao.upsertSongs(batch)
+                }
             }
 
             // 4. Prune missing files if enabled

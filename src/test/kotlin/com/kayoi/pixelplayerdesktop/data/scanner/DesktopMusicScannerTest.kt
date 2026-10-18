@@ -71,4 +71,36 @@ class DesktopMusicScannerTest {
         assertEquals(1, songsAfterPrune.size)
         assertEquals("song1", songsAfterPrune[0].title)
     }
+
+    @Test
+    fun testScannerHandlesInaccessibleOrMalformedDirectories() = runTest {
+        val tempDb = File.createTempFile("test_scanner_error_db", ".db")
+        tempDb.deleteOnExit()
+        val db = PixelPlayerDatabase(tempDb)
+        val musicDao = MusicDao(db)
+
+        val tempMusicDir = File(System.getProperty("java.io.tmpdir"), "test_music_valid_${System.currentTimeMillis()}")
+        tempMusicDir.mkdirs()
+        tempMusicDir.deleteOnExit()
+
+        val validSong = File(tempMusicDir, "valid_song.mp3")
+        validSong.writeBytes(byteArrayOf(0, 1, 2, 3))
+        validSong.deleteOnExit()
+
+        val nonExistentDir = "Z:\\NonExistent\\Path\\DoesNotExist"
+
+        val scanner = DesktopMusicScanner(
+            musicDao = musicDao,
+            artworkCacheDir = tempMusicDir
+        )
+
+        // Scan valid dir alongside non-existent/invalid dir
+        val result = scanner.scanDirectories(listOf(tempMusicDir.absolutePath, nonExistentDir))
+        assertTrue(result is ScanProgress.Completed)
+        assertEquals(1, result.totalScanned)
+        assertEquals(1, result.addedOrUpdated)
+
+        val songs = musicDao.getAllSongs()
+        assertEquals(1, songs.size)
+    }
 }
