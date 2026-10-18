@@ -70,9 +70,26 @@ dependencies {
     // FileKit (Native File & Directory Picker)
     implementation("io.github.vinceglb:filekit-dialogs:0.16.0")
 
+    // Linux D-Bus & MPRIS
+    implementation("com.github.hypfvieh:dbus-java-core:5.1.0")
+    implementation("com.github.hypfvieh:dbus-java-transport-native-unixsocket:5.1.0")
+
     // Testing
     testImplementation(kotlin("test"))
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
+}
+
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        substitute(module("net.java.dev.jna:jna-jpms"))
+            .using(module("net.java.dev.jna:jna:5.19.1"))
+        substitute(module("net.java.dev.jna:jna-platform-jpms"))
+            .using(module("net.java.dev.jna:jna-platform:5.19.1"))
+        substitute(module("org.jetbrains.androidx.navigationevent:navigationevent-compose"))
+            .using(module("androidx.navigationevent:navigationevent-compose:1.1.1"))
+        substitute(module("org.jetbrains.androidx.navigationevent:navigationevent-compose-desktop"))
+            .using(module("androidx.navigationevent:navigationevent-compose-desktop:1.1.1"))
+    }
 }
 
 kotlin {
@@ -96,10 +113,10 @@ compose.desktop {
         mainClass = "MainKt"
 
         jvmArgs(
-            "-Xmx256m",
+            "-Xms128m",
+            "-Xmx512m",
             "-XX:+UseG1GC",
-            "-XX:G1PeriodicGCInterval=3000",
-            "-XX:-ShrinkHeapInSteps"
+            "-XX:G1HeapRegionSize=4m"
         )
 
         buildTypes.release.proguard {
@@ -107,7 +124,16 @@ compose.desktop {
         }
 
         nativeDistributions {
-            modules("java.sql", "java.naming", "java.desktop", "jdk.unsupported")
+            modules(
+                "java.sql",
+                "java.naming",
+                "java.desktop",
+                "jdk.unsupported",
+                "jdk.security.auth",
+                "jdk.crypto.ec",
+                "jdk.net",
+                "java.instrument"
+            )
             appResourcesRootDir.set(project.layout.projectDirectory.dir("src/main/resources-packaged"))
 
             targetFormats(
