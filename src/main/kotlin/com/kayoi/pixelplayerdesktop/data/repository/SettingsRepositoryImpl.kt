@@ -115,8 +115,16 @@ class SettingsRepositoryImpl(
         updateSettings { it.copy(repeatMode = repeatMode.coerceIn(0, 2)) }
     }
 
+    override suspend fun setInitialSetupDone(done: Boolean) {
+        updateSettings { it.copy(initialSetupDone = done) }
+    }
+
     override suspend fun setFetchDeezerArtistImages(enabled: Boolean) {
         updateSettings { it.copy(fetchDeezerArtistImages = enabled) }
+    }
+
+    override suspend fun setFetchOnlineLyrics(enabled: Boolean) {
+        updateSettings { it.copy(fetchOnlineLyrics = enabled) }
     }
 
     override suspend fun setArtistDelimiters(delimiters: List<String>) {

@@ -35,6 +35,7 @@ import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavigator
 import com.kayoi.pixelplayerdesktop.presentation.navigation.LocalBackDispatcher
 import com.kayoi.pixelplayerdesktop.presentation.navigation.toDefaultTarget
 import com.kayoi.pixelplayerdesktop.presentation.screens.MainAppScaffold
+import com.kayoi.pixelplayerdesktop.presentation.screens.setup.SetupScreen
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.PixelPlayerTheme
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
@@ -72,6 +73,7 @@ fun main() {
     }
 
     val playerViewModel = remember { koin.get<PlayerViewModel>() }
+    val initialSetupDone by playerViewModel.initialSetupDone.collectAsState()
     val isDarkTheme by playerViewModel.isDarkMode.collectAsState()
     val currentSong by playerViewModel.currentSong.collectAsState()
     val queue by playerViewModel.queue.collectAsState()
@@ -142,9 +144,11 @@ fun main() {
     }
     val systemColorScheme = if (isDarkTheme) systemColorSchemePair.dark else systemColorSchemePair.light
 
-    // Scan user's library on initial launch
-    LaunchedEffect(Unit) {
-        playerViewModel.scanLibrary()
+    // Scan user's library on launch if setup already completed
+    LaunchedEffect(initialSetupDone) {
+        if (initialSetupDone) {
+            playerViewModel.scanLibrary()
+        }
     }
 
     LaunchedEffect(currentSong?.id) {
@@ -355,36 +359,63 @@ fun main() {
                 Box(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    MainAppScaffold(
-                        viewModel = playerViewModel,
-                        isMaximized = windowState.placement == WindowPlacement.Maximized,
-                        onMinimize = { windowState.isMinimized = true },
-                        onMaximizeRestore = {
-                            windowState.placement = if (windowState.placement == WindowPlacement.Maximized) {
-                                WindowPlacement.Floating
-                            } else {
-                                WindowPlacement.Maximized
-                            }
-                        },
-                        onClose = {
-                            if (closeToTray) {
-                                isWindowVisible = false
-                            } else {
+                    if (!initialSetupDone) {
+                        SetupScreen(
+                            viewModel = playerViewModel,
+                            isMaximized = windowState.placement == WindowPlacement.Maximized,
+                            onMinimize = { windowState.isMinimized = true },
+                            onMaximizeRestore = {
+                                windowState.placement = if (windowState.placement == WindowPlacement.Maximized) {
+                                    WindowPlacement.Floating
+                                } else {
+                                    WindowPlacement.Maximized
+                                }
+                            },
+                            onClose = {
                                 exitApplication()
+                            },
+                            onSetupComplete = {
+                                playerViewModel.setInitialSetupDone(true)
+                                playerViewModel.scanLibrary(forceRescan = true)
+                            },
+                            topBarWrapper = { content ->
+                                WindowDraggableArea {
+                                    content()
+                                }
                             }
-                        },
-                        topBarWrapper = { content ->
-                            WindowDraggableArea {
-                                content()
-                            }
-                        },
-                        searchFocusRequester = searchFocusRequester,
-                        onSearchFocusChange = { inputFocusTracker.onFocusChanged(it) },
-                        isQueueSidePanelOpen = isQueueSidePanelOpen,
-                        onToggleQueueSidePanel = { isQueueSidePanelOpen = !isQueueSidePanelOpen },
-                        navigator = navigator,
-                        backDispatcher = backDispatcher
-                    )
+                        )
+                    } else {
+                        MainAppScaffold(
+                            viewModel = playerViewModel,
+                            isMaximized = windowState.placement == WindowPlacement.Maximized,
+                            onMinimize = { windowState.isMinimized = true },
+                            onMaximizeRestore = {
+                                windowState.placement = if (windowState.placement == WindowPlacement.Maximized) {
+                                    WindowPlacement.Floating
+                                } else {
+                                    WindowPlacement.Maximized
+                                }
+                            },
+                            onClose = {
+                                if (closeToTray) {
+                                    isWindowVisible = false
+                                } else {
+                                    exitApplication()
+                                }
+                            },
+                            topBarWrapper = { content ->
+                                WindowDraggableArea {
+                                    content()
+                                }
+                            },
+                            searchFocusRequester = searchFocusRequester,
+                            onSearchFocusChange = { inputFocusTracker.onFocusChanged(it) },
+                            isQueueSidePanelOpen = isQueueSidePanelOpen,
+                            onToggleQueueSidePanel = { isQueueSidePanelOpen = !isQueueSidePanelOpen },
+                            navigator = navigator,
+                            backDispatcher = backDispatcher
+                        )
+                    }
                 }
             }
         }

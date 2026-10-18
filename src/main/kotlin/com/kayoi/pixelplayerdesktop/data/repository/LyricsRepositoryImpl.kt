@@ -37,26 +37,28 @@ class LyricsRepositoryImpl(
             return@withContext enriched
         }
 
-        val preference = settingsRepository?.getSettings()?.let {
+        val settings = settingsRepository?.getSettings()
+        val preference = settings?.let {
             LyricsSourcePreference.fromStorageKey(it.lyricsSourcePreference)
         } ?: LyricsSourcePreference.EMBEDDED_FIRST
+        val allowOnline = settings?.fetchOnlineLyrics ?: false
         val file = File(songPath)
 
         val fetchers: List<suspend () -> Lyrics?> = when (preference) {
-            LyricsSourcePreference.EMBEDDED_FIRST -> listOf(
+            LyricsSourcePreference.EMBEDDED_FIRST -> listOfNotNull(
                 { fetchEmbedded(file) },
-                { fetchOnline(title, artist) },
+                if (allowOnline) ({ fetchOnline(title, artist) }) else null,
                 { fetchLocal(file) }
             )
-            LyricsSourcePreference.API_FIRST -> listOf(
-                { fetchOnline(title, artist) },
+            LyricsSourcePreference.API_FIRST -> listOfNotNull(
+                if (allowOnline) ({ fetchOnline(title, artist) }) else null,
                 { fetchEmbedded(file) },
                 { fetchLocal(file) }
             )
-            LyricsSourcePreference.LOCAL_FIRST -> listOf(
+            LyricsSourcePreference.LOCAL_FIRST -> listOfNotNull(
                 { fetchLocal(file) },
                 { fetchEmbedded(file) },
-                { fetchOnline(title, artist) }
+                if (allowOnline) ({ fetchOnline(title, artist) }) else null
             )
         }
 

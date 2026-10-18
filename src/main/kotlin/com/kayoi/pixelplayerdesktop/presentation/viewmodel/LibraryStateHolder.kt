@@ -78,9 +78,17 @@ class LibraryStateHolder(
     private val _folderSortOption = MutableStateFlow<SortOption>(SortOption.FolderNameAZ)
     val folderSortOption: StateFlow<SortOption> = _folderSortOption.asStateFlow()
 
+    val initialSetupDone: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.initialSetupDone }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
+
     val fetchDeezerArtistImages: StateFlow<Boolean> = settingsRepository.settingsFlow
         .map { it.fetchDeezerArtistImages }
-        .stateIn(coroutineScope, SharingStarted.Eagerly, true)
+        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
+
+    val fetchOnlineLyrics: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.fetchOnlineLyrics }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
 
     val autoScanLrcFiles: StateFlow<Boolean> = settingsRepository.settingsFlow
         .map { it.autoScanLrcFiles }
@@ -240,6 +248,12 @@ class LibraryStateHolder(
         }
     }
 
+    fun setInitialSetupDone(done: Boolean) {
+        coroutineScope.launch {
+            settingsRepository.setInitialSetupDone(done)
+        }
+    }
+
     fun setFetchDeezerArtistImages(enabled: Boolean) {
         coroutineScope.launch {
             settingsRepository.setFetchDeezerArtistImages(enabled)
@@ -248,6 +262,16 @@ class LibraryStateHolder(
 
     fun toggleFetchDeezerArtistImages() {
         setFetchDeezerArtistImages(!fetchDeezerArtistImages.value)
+    }
+
+    fun setFetchOnlineLyrics(enabled: Boolean) {
+        coroutineScope.launch {
+            settingsRepository.setFetchOnlineLyrics(enabled)
+        }
+    }
+
+    fun toggleFetchOnlineLyrics() {
+        setFetchOnlineLyrics(!fetchOnlineLyrics.value)
     }
 
     fun addMusicDirectory(path: String) {

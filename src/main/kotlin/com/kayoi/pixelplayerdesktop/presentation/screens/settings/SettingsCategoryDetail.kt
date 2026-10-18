@@ -440,6 +440,7 @@ fun SettingsCategoryDetail(
 
                 item {
                     val fetchDeezerImages by viewModel.fetchDeezerArtistImages.collectAsState()
+                    val fetchOnlineLyrics by viewModel.fetchOnlineLyrics.collectAsState()
 
                     SettingsSubsection(title = "ONLINE SERVICES") {
                         ExpressiveSwitchRow(
@@ -450,7 +451,18 @@ fun SettingsCategoryDetail(
                             leadingIcon = {
                                 Icon(Icons.Outlined.Person, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
-                            shape = getGroupShape(0, 1)
+                            shape = getGroupShape(0, 2)
+                        )
+
+                        ExpressiveSwitchRow(
+                            title = "Fetch Online Lyrics (LRCLIB)",
+                            subtitle = "Automatically fetch and sync lyrics from LRCLIB online database",
+                            checked = fetchOnlineLyrics,
+                            onCheckedChange = { viewModel.setFetchOnlineLyrics(it) },
+                            leadingIcon = {
+                                Icon(Icons.Outlined.Sync, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                            },
+                            shape = getGroupShape(1, 2)
                         )
                     }
                 }

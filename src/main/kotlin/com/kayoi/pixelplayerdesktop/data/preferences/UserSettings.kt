@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserSettings(
+    val initialSetupDone: Boolean = false,
     val musicDirectories: List<String> = emptyList(),
     val isDynamicColorEnabled: Boolean = true,
     val isDarkMode: Boolean = true,
@@ -14,7 +15,8 @@ data class UserSettings(
     val isMuted: Boolean = false,
     val isShuffleEnabled: Boolean = false,
     val repeatMode: Int = 0, // 0: OFF, 1: ALL, 2: ONE
-    val fetchDeezerArtistImages: Boolean = true,
+    val fetchDeezerArtistImages: Boolean = false,
+    val fetchOnlineLyrics: Boolean = false,
     val excludedDirectories: List<String> = emptyList(),
     val artistDelimiters: List<String> = listOf("/", ";", ",", "+", "&"),
     val wordDelimiters: List<String> = listOf("featuring", "feat.", "feat", "ft.", "ft", "vs.", "vs", "versus", "with", "prod.", "prod"),

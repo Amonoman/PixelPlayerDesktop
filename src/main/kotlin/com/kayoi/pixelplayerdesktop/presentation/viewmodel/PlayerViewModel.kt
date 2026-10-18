@@ -137,7 +137,9 @@ class PlayerViewModel(
     val scanProgress = libraryStateHolder.scanProgress
     val searchQuery = libraryStateHolder.searchQuery
     val searchResults = libraryStateHolder.searchResults
+    val initialSetupDone = libraryStateHolder.initialSetupDone
     val fetchDeezerArtistImages = libraryStateHolder.fetchDeezerArtistImages
+    val fetchOnlineLyrics = libraryStateHolder.fetchOnlineLyrics
     val musicDirectories = libraryStateHolder.musicDirectories
     val excludedDirectories = libraryStateHolder.excludedDirectories
     val folderSortOption = libraryStateHolder.folderSortOption
@@ -172,8 +174,11 @@ class PlayerViewModel(
     fun setAlbumsListView(isListView: Boolean) = libraryStateHolder.setAlbumsListView(isListView)
     fun setArtistsListView(isListView: Boolean) = libraryStateHolder.setArtistsListView(isListView)
     fun setFoldersPlaylistView(isPlaylistView: Boolean) = libraryStateHolder.setFoldersPlaylistView(isPlaylistView)
+    fun setInitialSetupDone(done: Boolean) = libraryStateHolder.setInitialSetupDone(done)
     fun setFetchDeezerArtistImages(enabled: Boolean) = libraryStateHolder.setFetchDeezerArtistImages(enabled)
     fun toggleFetchDeezerArtistImages() = libraryStateHolder.toggleFetchDeezerArtistImages()
+    fun setFetchOnlineLyrics(enabled: Boolean) = libraryStateHolder.setFetchOnlineLyrics(enabled)
+    fun toggleFetchOnlineLyrics() = libraryStateHolder.toggleFetchOnlineLyrics()
     fun scanLibrary(directories: List<String>? = null, forceRescan: Boolean = false) = libraryStateHolder.scanLibrary(directories, forceRescan)
     fun rescanLibrary() = libraryStateHolder.scanLibrary(forceRescan = true)
     fun rebuildDatabase() = libraryStateHolder.rebuildDatabase()
