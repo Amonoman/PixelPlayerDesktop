@@ -10,7 +10,7 @@ class FavoritesDao(
 ) {
 
     suspend fun isFavorite(songId: String): Boolean = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = "SELECT 1 FROM favorites WHERE song_id = ?"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, songId)
@@ -20,7 +20,7 @@ class FavoritesDao(
     }
 
     suspend fun getFavoriteSongIds(): List<String> = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = "SELECT song_id FROM favorites ORDER BY date_added DESC"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.executeQuery().use { rs ->
@@ -35,48 +35,34 @@ class FavoritesDao(
     }
 
     suspend fun addFavorite(songId: String) = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
-            conn.autoCommit = false
-            try {
-                conn.prepareStatement("INSERT OR REPLACE INTO favorites (song_id, date_added) VALUES (?, ?)").use { stmt ->
-                    stmt.setString(1, songId)
-                    stmt.setLong(2, System.currentTimeMillis())
-                    stmt.executeUpdate()
-                }
-                conn.prepareStatement("UPDATE songs SET is_favorite = 1 WHERE id = ?").use { stmt ->
-                    stmt.setString(1, songId)
-                    stmt.executeUpdate()
-                }
-                conn.commit()
-                database.notifyTableChanged("favorites")
-                database.notifyTableChanged("songs")
-            } catch (e: Exception) {
-                conn.rollback()
-                throw e
+        database.withTransaction { conn ->
+            conn.prepareStatement("INSERT OR REPLACE INTO favorites (song_id, date_added) VALUES (?, ?)").use { stmt ->
+                stmt.setString(1, songId)
+                stmt.setLong(2, System.currentTimeMillis())
+                stmt.executeUpdate()
+            }
+            conn.prepareStatement("UPDATE songs SET is_favorite = 1 WHERE id = ?").use { stmt ->
+                stmt.setString(1, songId)
+                stmt.executeUpdate()
             }
         }
+        database.notifyTableChanged("favorites")
+        database.notifyTableChanged("songs")
     }
 
     suspend fun removeFavorite(songId: String) = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
-            conn.autoCommit = false
-            try {
-                conn.prepareStatement("DELETE FROM favorites WHERE song_id = ?").use { stmt ->
-                    stmt.setString(1, songId)
-                    stmt.executeUpdate()
-                }
-                conn.prepareStatement("UPDATE songs SET is_favorite = 0 WHERE id = ?").use { stmt ->
-                    stmt.setString(1, songId)
-                    stmt.executeUpdate()
-                }
-                conn.commit()
-                database.notifyTableChanged("favorites")
-                database.notifyTableChanged("songs")
-            } catch (e: Exception) {
-                conn.rollback()
-                throw e
+        database.withTransaction { conn ->
+            conn.prepareStatement("DELETE FROM favorites WHERE song_id = ?").use { stmt ->
+                stmt.setString(1, songId)
+                stmt.executeUpdate()
+            }
+            conn.prepareStatement("UPDATE songs SET is_favorite = 0 WHERE id = ?").use { stmt ->
+                stmt.setString(1, songId)
+                stmt.executeUpdate()
             }
         }
+        database.notifyTableChanged("favorites")
+        database.notifyTableChanged("songs")
     }
 
     suspend fun toggleFavorite(songId: String): Boolean = withContext(ioDispatcher) {

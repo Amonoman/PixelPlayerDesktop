@@ -28,7 +28,7 @@ class LocalPlaylistDao(
             else -> "name COLLATE NOCASE ASC"
         }
 
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = "SELECT * FROM playlists ORDER BY $orderByClause"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.executeQuery().use { rs ->
@@ -43,7 +43,7 @@ class LocalPlaylistDao(
     }
 
     suspend fun getPlaylistById(id: String): Playlist? = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = "SELECT * FROM playlists WHERE id = ?"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, id)
@@ -55,7 +55,7 @@ class LocalPlaylistDao(
     }
 
     suspend fun insertPlaylist(playlist: Playlist) = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             val sql = """
                 INSERT INTO playlists (
                     id, name, song_ids_json, created_at, last_modified, is_queue_generated,
@@ -101,7 +101,7 @@ class LocalPlaylistDao(
     }
 
     suspend fun deletePlaylist(id: String) = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             val sql = "DELETE FROM playlists WHERE id = ?"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, id)
@@ -112,7 +112,7 @@ class LocalPlaylistDao(
     }
 
     suspend fun clearPlaylistsBySource(source: String) = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             val sql = "DELETE FROM playlists WHERE source = ?"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, source)

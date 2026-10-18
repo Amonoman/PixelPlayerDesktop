@@ -17,7 +17,7 @@ class LyricsDao(
 ) {
 
     suspend fun getLyrics(songId: String): Lyrics? = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = "SELECT plain_lyrics, synced_lyrics_json, is_from_remote FROM lyrics_cache WHERE song_id = ?"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, songId)
@@ -50,7 +50,7 @@ class LyricsDao(
     }
 
     suspend fun insertOrUpdateLyrics(songId: String, lyrics: Lyrics) = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             val sql = """
                 INSERT INTO lyrics_cache (song_id, plain_lyrics, synced_lyrics_json, is_from_remote, last_updated)
                 VALUES (?, ?, ?, ?, ?)
@@ -73,7 +73,7 @@ class LyricsDao(
     }
 
     suspend fun deleteLyrics(songId: String) = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             val sql = "DELETE FROM lyrics_cache WHERE song_id = ?"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, songId)
@@ -84,7 +84,7 @@ class LyricsDao(
     }
 
     suspend fun deleteAllLyrics() = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             conn.createStatement().use { stmt ->
                 stmt.executeUpdate("DELETE FROM lyrics_cache")
             }

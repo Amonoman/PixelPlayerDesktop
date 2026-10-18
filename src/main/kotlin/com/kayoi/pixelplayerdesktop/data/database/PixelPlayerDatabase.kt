@@ -7,27 +7,63 @@ import java.io.File
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 class PixelPlayerDatabase(
-    private val dbFile: File
-) {
+    private val dbFile: File,
+    private val readPoolSize: Int = 4
+) : AutoCloseable {
     private val dbUrl = "jdbc:sqlite:${dbFile.absolutePath}"
 
     private val _tableInvalidationFlow = MutableSharedFlow<String>(extraBufferCapacity = 64)
     val tableInvalidationFlow: SharedFlow<String> = _tableInvalidationFlow.asSharedFlow()
 
+    private val isClosed = AtomicBoolean(false)
+    private val writeLock = ReentrantLock()
+    private val writeConnection: Connection
+    private val readPool = ArrayBlockingQueue<Connection>(readPoolSize)
+    private val allReadConnections = mutableListOf<Connection>()
+
+    private class ConnectionHolder(
+        val connection: Connection,
+        val isWrite: Boolean,
+        var refCount: Int = 1,
+        val parent: ConnectionHolder? = null,
+        var explicitlySetAutoCommitFalse: Boolean = false,
+        var isCommittedOrRolledBack: Boolean = false
+    )
+
+    private val currentHolder = ThreadLocal<ConnectionHolder?>()
+
     init {
-        val parent = dbFile.parentFile
-        if (parent != null && !parent.exists()) {
-            parent.mkdirs()
+        try {
+            val parent = dbFile.parentFile
+            if (parent != null && !parent.exists()) {
+                parent.mkdirs()
+            }
+            writeConnection = createConnection(isWrite = true)
+            initDatabase()
+            for (i in 0 until readPoolSize) {
+                val readConn = createConnection(isWrite = false)
+                allReadConnections.add(readConn)
+                readPool.offer(readConn)
+            }
+        } catch (e: Throwable) {
+            close()
+            throw e
         }
-        initDatabase()
     }
 
-    fun getConnection(): Connection {
+    private fun createConnection(isWrite: Boolean): Connection {
         val conn = DriverManager.getConnection(dbUrl)
         conn.createStatement().use { stmt ->
-            stmt.execute("PRAGMA journal_mode=WAL;")
+            if (isWrite) {
+                stmt.execute("PRAGMA journal_mode=WAL;")
+            }
             stmt.execute("PRAGMA synchronous=NORMAL;")
             stmt.execute("PRAGMA busy_timeout=5000;")
             stmt.execute("PRAGMA foreign_keys=ON;")
@@ -35,8 +71,231 @@ class PixelPlayerDatabase(
         return conn
     }
 
+    fun getConnection(readOnly: Boolean = false): Connection {
+        checkClosed()
+        val existing = currentHolder.get()
+        if (existing != null) {
+            if (existing.isWrite) {
+                existing.refCount++
+                return LeasedConnection(existing.connection, existing) {
+                    releaseHolder(existing)
+                }
+            } else {
+                if (readOnly) {
+                    existing.refCount++
+                    return LeasedConnection(existing.connection, existing) {
+                        releaseHolder(existing)
+                    }
+                } else {
+                    writeLock.lock()
+                    try {
+                        checkClosed()
+                        val newHolder = ConnectionHolder(
+                            connection = writeConnection,
+                            isWrite = true,
+                            refCount = 1,
+                            parent = existing
+                        )
+                        currentHolder.set(newHolder)
+                        return LeasedConnection(writeConnection, newHolder) {
+                            releaseHolder(newHolder)
+                        }
+                    } catch (t: Throwable) {
+                        writeLock.unlock()
+                        throw t
+                    }
+                }
+            }
+        } else {
+            if (!readOnly) {
+                writeLock.lock()
+                try {
+                    checkClosed()
+                    val newHolder = ConnectionHolder(
+                        connection = writeConnection,
+                        isWrite = true,
+                        refCount = 1,
+                        parent = null
+                    )
+                    currentHolder.set(newHolder)
+                    return LeasedConnection(writeConnection, newHolder) {
+                        releaseHolder(newHolder)
+                    }
+                } catch (t: Throwable) {
+                    writeLock.unlock()
+                    throw t
+                }
+            } else {
+                checkClosed()
+                val readConn = borrowReadConnection()
+                try {
+                    val newHolder = ConnectionHolder(
+                        connection = readConn,
+                        isWrite = false,
+                        refCount = 1,
+                        parent = null
+                    )
+                    currentHolder.set(newHolder)
+                    return LeasedConnection(readConn, newHolder) {
+                        releaseHolder(newHolder)
+                    }
+                } catch (t: Throwable) {
+                    returnReadConnection(readConn)
+                    throw t
+                }
+            }
+        }
+    }
+
+    inline fun <T> withConnection(readOnly: Boolean = false, block: (Connection) -> T): T {
+        return getConnection(readOnly).use(block)
+    }
+
+    inline fun <T> withTransaction(block: (Connection) -> T): T {
+        return withConnection(readOnly = false) { conn ->
+            val wasAutoCommit = conn.autoCommit
+            if (wasAutoCommit) {
+                conn.autoCommit = false
+            }
+            try {
+                val result = block(conn)
+                if (wasAutoCommit) {
+                    conn.commit()
+                }
+                result
+            } catch (e: Throwable) {
+                if (wasAutoCommit) {
+                    runCatching { conn.rollback() }
+                }
+                throw e
+            } finally {
+                if (wasAutoCommit) {
+                    runCatching { conn.autoCommit = true }
+                }
+            }
+        }
+    }
+
+    private fun borrowReadConnection(): Connection {
+        checkClosed()
+        return readPool.poll(5000, TimeUnit.MILLISECONDS)
+            ?: throw SQLException("Timed out waiting for available read connection")
+    }
+
+    private fun returnReadConnection(conn: Connection) {
+        if (!isClosed.get()) {
+            readPool.offer(conn)
+        } else {
+            runCatching { conn.close() }
+        }
+    }
+
+    private fun releaseHolder(holder: ConnectionHolder) {
+        holder.refCount--
+        if (holder.refCount > 0) {
+            return
+        }
+
+        try {
+            if (!holder.connection.isClosed) {
+                if (holder.explicitlySetAutoCommitFalse && !holder.isCommittedOrRolledBack) {
+                    runCatching { holder.connection.rollback() }
+                }
+                if (!holder.connection.autoCommit) {
+                    runCatching { holder.connection.autoCommit = true }
+                }
+            }
+        } finally {
+            if (holder.parent != null) {
+                currentHolder.set(holder.parent)
+            } else {
+                currentHolder.remove()
+            }
+
+            if (holder.isWrite) {
+                writeLock.unlock()
+            } else {
+                returnReadConnection(holder.connection)
+            }
+        }
+    }
+
+    private fun checkClosed() {
+        if (isClosed.get()) {
+            throw IllegalStateException("PixelPlayerDatabase is closed")
+        }
+    }
+
+    override fun close() {
+        if (!isClosed.compareAndSet(false, true)) return
+        writeLock.withLock {
+            runCatching {
+                if (!writeConnection.isClosed) {
+                    writeConnection.close()
+                }
+            }
+            for (readConn in allReadConnections) {
+                runCatching {
+                    if (!readConn.isClosed) {
+                        readConn.close()
+                    }
+                }
+            }
+            readPool.clear()
+            allReadConnections.clear()
+        }
+    }
+
     fun notifyTableChanged(tableName: String) {
         _tableInvalidationFlow.tryEmit(tableName)
+    }
+
+    private class LeasedConnection(
+        private val delegate: Connection,
+        private val holder: ConnectionHolder,
+        private val onRelease: () -> Unit
+    ) : Connection by delegate {
+        private val isClosedFlag = AtomicBoolean(false)
+
+        override fun setAutoCommit(autoCommit: Boolean) {
+            checkNotClosed()
+            if (!autoCommit) {
+                holder.explicitlySetAutoCommitFalse = true
+                holder.isCommittedOrRolledBack = false
+            } else {
+                holder.explicitlySetAutoCommitFalse = false
+                holder.isCommittedOrRolledBack = false
+            }
+            delegate.autoCommit = autoCommit
+        }
+
+        override fun commit() {
+            checkNotClosed()
+            if (holder.refCount == 1) {
+                delegate.commit()
+                holder.isCommittedOrRolledBack = true
+            }
+        }
+
+        override fun rollback() {
+            checkNotClosed()
+            delegate.rollback()
+            holder.isCommittedOrRolledBack = true
+        }
+
+        override fun close() {
+            if (isClosedFlag.compareAndSet(false, true)) {
+                onRelease()
+            }
+        }
+
+        override fun isClosed(): Boolean = isClosedFlag.get() || delegate.isClosed
+
+        private fun checkNotClosed() {
+            if (isClosedFlag.get()) {
+                throw SQLException("Connection is closed")
+            }
+        }
     }
 
     private fun initDatabase() {

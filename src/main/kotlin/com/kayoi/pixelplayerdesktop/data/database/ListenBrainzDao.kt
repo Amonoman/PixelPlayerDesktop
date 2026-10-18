@@ -18,7 +18,7 @@ class ListenBrainzDao(
 ) {
 
     suspend fun insert(listen: ListenBrainzPendingListen): Boolean = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             val sql = """
                 INSERT INTO listenbrainz_pending_listens (
                     listened_at_ms, track_name, artist_name, release_name, duration_ms, recording_mbid, source, created_at_ms
@@ -45,7 +45,7 @@ class ListenBrainzDao(
     }
 
     suspend fun getPendingListens(limit: Int = 100): List<ListenBrainzPendingListen> = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = "SELECT * FROM listenbrainz_pending_listens ORDER BY created_at_ms ASC LIMIT ?"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setInt(1, limit)
@@ -75,7 +75,7 @@ class ListenBrainzDao(
 
     suspend fun deleteListens(ids: List<Long>): Int = withContext(ioDispatcher) {
         if (ids.isEmpty()) return@withContext 0
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             val placeholders = ids.joinToString(",") { "?" }
             val sql = "DELETE FROM listenbrainz_pending_listens WHERE id IN ($placeholders)"
             conn.prepareStatement(sql).use { stmt ->
@@ -92,7 +92,7 @@ class ListenBrainzDao(
     }
 
     suspend fun count(): Int = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             conn.createStatement().use { stmt ->
                 stmt.executeQuery("SELECT COUNT(*) FROM listenbrainz_pending_listens").use { rs ->
                     if (rs.next()) rs.getInt(1) else 0
@@ -114,7 +114,7 @@ class ListenBrainzDao(
         val total = count()
         if (total <= maxSize) return@withContext 0
         val toRemove = total - maxSize
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             val sql = """
                 DELETE FROM listenbrainz_pending_listens WHERE id IN (
                     SELECT id FROM listenbrainz_pending_listens ORDER BY created_at_ms ASC LIMIT ?

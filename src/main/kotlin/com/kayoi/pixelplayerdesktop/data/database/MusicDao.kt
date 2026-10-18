@@ -38,7 +38,7 @@ class MusicDao(
             else -> "title COLLATE NOCASE ASC"
         }
 
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = if (minDurationMs > 0L) {
                 "SELECT * FROM songs WHERE duration >= ? ORDER BY $orderByClause"
             } else {
@@ -60,7 +60,7 @@ class MusicDao(
     }
 
     suspend fun getSongById(id: String): Song? = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = "SELECT * FROM songs WHERE id = ?"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, id)
@@ -72,7 +72,7 @@ class MusicDao(
     }
 
     suspend fun getSongByPath(path: String): Song? = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = "SELECT * FROM songs WHERE path = ?"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, path)
@@ -86,7 +86,7 @@ class MusicDao(
     suspend fun getSongsByIds(ids: List<String>): List<Song> = withContext(ioDispatcher) {
         if (ids.isEmpty()) return@withContext emptyList()
         val placeholders = ids.joinToString(",") { "?" }
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = "SELECT * FROM songs WHERE id IN ($placeholders)"
             conn.prepareStatement(sql).use { stmt ->
                 ids.forEachIndexed { index, id ->
@@ -107,7 +107,7 @@ class MusicDao(
 
     suspend fun upsertSongs(songs: List<Song>) = withContext(ioDispatcher) {
         if (songs.isEmpty()) return@withContext
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             conn.autoCommit = false
             try {
                 val sql = """
@@ -236,7 +236,7 @@ class MusicDao(
     }
 
     suspend fun updateSongPath(id: String, newPath: String, newContentUri: String) = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             val sql = "UPDATE songs SET path = ?, content_uri_string = ? WHERE id = ?"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, newPath)
@@ -250,7 +250,7 @@ class MusicDao(
 
     suspend fun deleteSongsNotInPaths(existingPaths: Set<String>) = withContext(ioDispatcher) {
         if (existingPaths.isEmpty()) {
-            database.getConnection().use { conn ->
+            database.withConnection { conn ->
                 conn.createStatement().use { stmt ->
                     stmt.executeUpdate("DELETE FROM songs WHERE navidrome_id IS NULL AND jellyfin_id IS NULL")
                     stmt.executeUpdate("DELETE FROM song_artists WHERE song_id NOT IN (SELECT id FROM songs)")
@@ -261,7 +261,7 @@ class MusicDao(
             }
             return@withContext
         }
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             val allPaths = mutableSetOf<String>()
             conn.createStatement().use { stmt ->
                 stmt.executeQuery("SELECT path FROM songs WHERE navidrome_id IS NULL AND jellyfin_id IS NULL").use { rs ->
@@ -297,7 +297,7 @@ class MusicDao(
     }
 
     suspend fun clearNavidromeSongs() = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             conn.autoCommit = false
             try {
                 conn.createStatement().use { stmt ->
@@ -316,7 +316,7 @@ class MusicDao(
     }
 
     suspend fun clearJellyfinSongs() = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             conn.autoCommit = false
             try {
                 conn.createStatement().use { stmt ->
@@ -341,7 +341,7 @@ class MusicDao(
                 file.delete()
             }
         }
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             conn.autoCommit = false
             try {
                 conn.prepareStatement("DELETE FROM songs WHERE id = ?").use { stmt ->
@@ -425,7 +425,7 @@ class MusicDao(
             else -> "album COLLATE NOCASE ASC"
         }
 
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = """
                 SELECT
                     album_id,
@@ -468,7 +468,7 @@ class MusicDao(
     }
 
     suspend fun getAlbumById(albumId: Long): Album? = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = """
                 SELECT
                     album_id,
@@ -506,7 +506,7 @@ class MusicDao(
     }
 
     suspend fun getSongsByAlbum(albumId: Long): List<Song> = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = "SELECT * FROM songs WHERE album_id = ? ORDER BY disc_number ASC, track_number ASC, title COLLATE NOCASE ASC"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setLong(1, albumId)
@@ -530,7 +530,7 @@ class MusicDao(
             else -> "a.name COLLATE NOCASE ASC"
         }
 
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = """
                 SELECT
                     a.id as artist_id,
@@ -596,7 +596,7 @@ class MusicDao(
     }
 
     suspend fun getArtistById(artistId: Long): Artist? = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = """
                 SELECT
                     a.id as artist_id,
@@ -654,7 +654,7 @@ class MusicDao(
     }
 
     suspend fun getSongsByArtist(artistId: Long): List<Song> = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = """
                 SELECT s.* FROM songs s
                 JOIN song_artists sa ON s.id = sa.song_id
@@ -691,7 +691,7 @@ class MusicDao(
     }
 
     suspend fun getAllGenres(): List<Genre> = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = """
                 SELECT genre, COUNT(*) as count
                 FROM songs
@@ -713,7 +713,7 @@ class MusicDao(
     }
 
     suspend fun getSongsByGenre(genreName: String): List<Song> = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = "SELECT * FROM songs WHERE genre = ? ORDER BY title COLLATE NOCASE ASC"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, genreName)
@@ -730,7 +730,7 @@ class MusicDao(
 
     suspend fun recordSongPlayed(songId: String, durationMs: Long = 0L) = withContext(ioDispatcher) {
         val now = System.currentTimeMillis()
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             val sql = "UPDATE songs SET play_count = play_count + 1, last_played_timestamp = ? WHERE id = ?"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setLong(1, now)
@@ -751,7 +751,7 @@ class MusicDao(
     }
 
     suspend fun getPlaybackEvents(limit: Int = 500): List<PlaybackEvent> = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = "SELECT id, song_id, timestamp, duration_ms FROM playback_events ORDER BY timestamp DESC LIMIT ?"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setInt(1, limit)
@@ -774,7 +774,7 @@ class MusicDao(
     }
 
     suspend fun getPlaybackEventsBetween(start: Long, end: Long): List<PlaybackEvent> = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = "SELECT id, song_id, timestamp, duration_ms FROM playback_events WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp DESC"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setLong(1, start)
@@ -798,7 +798,7 @@ class MusicDao(
     }
 
     suspend fun getRecentlyPlayedSongs(limit: Int = 500): List<Song> = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             val sql = "SELECT * FROM songs WHERE last_played_timestamp > 0 ORDER BY last_played_timestamp DESC LIMIT ?"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setInt(1, limit)
@@ -823,7 +823,7 @@ class MusicDao(
         val q = "%$query%"
         val results = mutableListOf<SearchResultItem>()
 
-        database.getConnection().use { conn ->
+        database.withConnection(readOnly = true) { conn ->
             if (filter == SearchFilterType.ALL || filter == SearchFilterType.SONGS) {
                 val songSql = if (minDurationMs > 0L) {
                     "SELECT * FROM songs WHERE (title LIKE ? OR artist LIKE ? OR album LIKE ?) AND duration >= ? LIMIT 50"
@@ -907,7 +907,7 @@ class MusicDao(
     }
 
     suspend fun clearLibrary() = withContext(ioDispatcher) {
-        database.getConnection().use { conn ->
+        database.withConnection { conn ->
             conn.autoCommit = false
             try {
                 conn.createStatement().use { stmt ->
