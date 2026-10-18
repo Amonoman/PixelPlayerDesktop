@@ -46,19 +46,26 @@ object MultiLangRomanizer {
     private val KYRGYZ_ROMAJI_MAP = mapOf("Ү" to "Ü", "ү" to "ü", "Ы" to "Y", "ы" to "y")
     private val MACEDONIAN_ROMAJI_MAP = mapOf("Ѓ" to "Gj", "Ѕ" to "Dz", "И" to "I", "Ј" to "J", "Љ" to "Lj", "Њ" to "Nj", "Ќ" to "Kj", "Џ" to "Dž", "Ч" to "Č", "Ш" to "Sh", "Ж" to "Zh", "Ц" to "C", "Х" to "H", "ѓ" to "gj", "ѕ" to "dz", "и" to "i", "ј" to "j", "љ" to "lj", "њ" to "nj", "ќ" to "kj", "џ" to "dž", "ч" to "č", "ш" to "sh", "ж" to "zh", "ц" to "c", "х" to "h")
 
-    private val RUSSIAN_CYRILLIC_LETTERS = setOf("А", "Б", "В", "Г", "Д", "Е", "Ё", "Ж", "З", "И", "Й", "К", "Л", "М", "Н", "О", "П", "Р", "С", "Т", "У", "Ф", "Х", "Ц", "Ч", "Ш", "Щ", "Ъ", "Ы", "Ь", "Э", "Ю", "Я", "а", "б", "в", "г", "д", "е", "ё", "ж", "з", "и", "й", "к", "л", "м", "н", "о", "п", "р", "с", "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "ъ", "ы", "ь", "э", "ю", "я")
-    private val UKRAINIAN_CYRILLIC_LETTERS = setOf("А", "Б", "В", "Г", "Ґ", "Д", "Е", "Є", "Ж", "З", "И", "І", "Ї", "Й", "К", "Л", "М", "Н", "О", "П", "Р", "С", "Т", "У", "Ф", "Х", "Ц", "Ч", "Ш", "Щ", "Ь", "Ю", "Я", "а", "б", "в", "г", "ґ", "д", "е", "є", "ж", "з", "и", "і", "ї", "й", "к", "л", "м", "н", "о", "п", "р", "с", "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "ь", "ю", "я")
-    private val SERBIAN_CYRILLIC_LETTERS = setOf("А", "Б", "В", "Г", "Д", "Ђ", "Е", "Ж", "З", "И", "Ј", "К", "Л", "Љ", "М", "Н", "Њ", "О", "П", "Р", "С", "Т", "Ћ", "У", "Ф", "Х", "Ц", "Ч", "Џ", "Ш", "а", "б", "в", "г", "д", "ђ", "е", "ж", "з", "и", "ј", "к", "л", "љ", "м", "н", "њ", "о", "п", "р", "с", "т", "ћ", "у", "ф", "х", "ц", "ч", "џ", "ш")
-    private val BULGARIAN_CYRILLIC_LETTERS = setOf("А", "Б", "В", "Г", "Д", "Е", "Ж", "З", "И", "Й", "К", "Л", "М", "Н", "О", "П", "Р", "С", "Т", "У", "Ф", "Х", "Ц", "Ч", "Ш", "Щ", "Ъ", "Ь", "Ю", "Я", "а", "б", "в", "г", "д", "е", "ж", "з", "и", "й", "к", "л", "м", "н", "о", "п", "р", "с", "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "ъ", "ь", "ю", "я")
-    private val BELARUSIAN_CYRILLIC_LETTERS = setOf("А", "Б", "В", "Г", "Д", "Е", "Ё", "Ж", "З", "І", "Й", "К", "Л", "М", "Н", "О", "П", "Р", "С", "Т", "У", "Ў", "Ф", "Х", "Ц", "Ч", "Ш", "Ь", "Ю", "Я", "Ы", "Э", "а", "б", "в", "г", "д", "е", "ё", "ж", "з", "і", "й", "к", "л", "м", "н", "о", "п", "р", "с", "т", "у", "ў", "ф", "х", "ц", "ч", "ш", "ь", "ю", "я", "ы", "э")
-    private val KYRGYZ_CYRILLIC_LETTERS = setOf("А", "Б", "В", "Г", "Д", "Е", "Ё", "Ж", "З", "И", "Й", "К", "Л", "М", "Н", "Ң", "О", "Ө", "П", "Р", "С", "Т", "У", "Ү", "Ф", "Х", "Ц", "Ч", "Ш", "Щ", "Ъ", "Ы", "Ь", "Э", "Ю", "Я", "а", "б", "в", "г", "д", "е", "ё", "ж", "з", "и", "й", "к", "л", "м", "н", "ң", "о", "ө", "п", "р", "с", "т", "у", "ү", "ф", "х", "ц", "ч", "ш", "щ", "ъ", "ы", "ь", "э", "ю", "я")
-    private val MACEDONIAN_CYRILLIC_LETTERS = setOf("А", "Б", "В", "Г", "Д", "Ѓ", "Е", "Ж", "З", "Ѕ", "И", "Ј", "К", "Л", "Љ", "М", "Н", "Њ", "О", "П", "Р", "С", "Т", "Ќ", "У", "Ф", "Х", "Ц", "Ч", "Џ", "Ш", "а", "б", "в", "г", "д", "ѓ", "е", "ж", "з", "ѕ", "и", "ј", "к", "л", "љ", "м", "н", "њ", "о", "п", "р", "с", "т", "ќ", "у", "ф", "х", "ц", "ч", "џ", "ш")
+    private val MULTI_SPACE_REGEX = Regex("""\s+""")
+    private val JAPANESE_N_ASSIMILATION_REGEX = Regex("n(?=[bp])")
+    private val ERHUA_NG_REGEX = Regex("ng$")
+    private val ERHUA_N_REGEX = Regex("n$")
+    private val CYRILLIC_WORD_SPLIT_REGEX = Regex("((?<=\\s|[.,!?;])|(?=\\s|[.,!?;]))")
+    private val CYRILLIC_PUNCTUATION_CHARS = setOf('.', ',', '!', '?', ';')
 
-    private val UKRAINIAN_SPECIFIC_CYRILLIC_LETTERS = setOf("Ґ", "ґ", "Є", "є", "І", "і", "Ї", "ї")
-    private val SERBIAN_SPECIFIC_CYRILLIC_LETTERS = setOf("Ђ", "ђ", "Ј", "ј", "Љ", "љ", "Њ", "њ", "Ћ", "ћ", "Џ", "џ")
-    private val BELARUSIAN_SPECIFIC_CYRILLIC_LETTERS = setOf("Ў", "ў", "І", "і")
-    private val KYRGYZ_SPECIFIC_CYRILLIC_LETTERS = setOf("Ң", "ң", "Ө", "ө", "Ү", "ү")
-    private val MACEDONIAN_SPECIFIC_CYRILLIC_LETTERS = setOf("Ѓ", "ѓ", "Ѕ", "ѕ", "Ќ", "ќ")
+    private val RUSSIAN_CYRILLIC_LETTERS = setOf('А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ё', 'Ж', 'З', 'И', 'Й', 'К', 'Л', 'М', 'Н', 'О', 'П', 'Р', 'С', 'Т', 'У', 'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Щ', 'Ъ', 'Ы', 'Ь', 'Э', 'Ю', 'Я', 'а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ъ', 'ы', 'ь', 'э', 'ю', 'я')
+    private val UKRAINIAN_CYRILLIC_LETTERS = setOf('А', 'Б', 'В', 'Г', 'Ґ', 'Д', 'Е', 'Є', 'Ж', 'З', 'И', 'І', 'Ї', 'Й', 'К', 'Л', 'М', 'Н', 'О', 'П', 'Р', 'С', 'Т', 'У', 'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Щ', 'Ь', 'Ю', 'Я', 'а', 'б', 'в', 'г', 'ґ', 'д', 'е', 'є', 'ж', 'з', 'и', 'і', 'ї', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ь', 'ю', 'я')
+    private val SERBIAN_CYRILLIC_LETTERS = setOf('А', 'Б', 'В', 'Г', 'Д', 'Ђ', 'Е', 'Ж', 'З', 'И', 'Ј', 'К', 'Л', 'Љ', 'М', 'Н', 'Њ', 'О', 'П', 'Р', 'С', 'Т', 'Ћ', 'У', 'Ф', 'Х', 'Ц', 'Ч', 'Џ', 'Ш', 'а', 'б', 'в', 'г', 'д', 'ђ', 'е', 'ж', 'з', 'и', 'ј', 'к', 'л', 'љ', 'м', 'н', 'њ', 'о', 'п', 'р', 'с', 'т', 'ћ', 'у', 'ф', 'х', 'ц', 'ч', 'џ', 'ш')
+    private val BULGARIAN_CYRILLIC_LETTERS = setOf('А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ж', 'З', 'И', 'Й', 'К', 'Л', 'М', 'Н', 'О', 'П', 'Р', 'С', 'Т', 'У', 'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Щ', 'Ъ', 'Ь', 'Ю', 'Я', 'а', 'б', 'в', 'г', 'д', 'е', 'ж', 'з', 'и', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ъ', 'ь', 'ю', 'я')
+    private val BELARUSIAN_CYRILLIC_LETTERS = setOf('А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ё', 'Ж', 'З', 'І', 'Й', 'К', 'Л', 'М', 'Н', 'О', 'П', 'Р', 'С', 'Т', 'У', 'Ў', 'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Ь', 'Ю', 'Я', 'Ы', 'Э', 'а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'і', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ў', 'ф', 'х', 'ц', 'ч', 'ш', 'ь', 'ю', 'я', 'ы', 'э')
+    private val KYRGYZ_CYRILLIC_LETTERS = setOf('А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ё', 'Ж', 'З', 'И', 'Й', 'К', 'Л', 'М', 'Н', 'Ң', 'О', 'Ө', 'П', 'Р', 'С', 'Т', 'У', 'Ү', 'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Щ', 'Ъ', 'Ы', 'Ь', 'Э', 'Ю', 'Я', 'а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и', 'й', 'к', 'л', 'м', 'н', 'ң', 'о', 'ө', 'п', 'р', 'с', 'т', 'у', 'ү', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ъ', 'ы', 'ь', 'э', 'ю', 'я')
+    private val MACEDONIAN_CYRILLIC_LETTERS = setOf('А', 'Б', 'В', 'Г', 'Д', 'Ѓ', 'Е', 'Ж', 'З', 'Ѕ', 'И', 'Ј', 'К', 'Л', 'Љ', 'М', 'Н', 'Њ', 'О', 'П', 'Р', 'С', 'Т', 'Ќ', 'У', 'Ф', 'Х', 'Ц', 'Ч', 'Џ', 'Ш', 'а', 'б', 'в', 'г', 'д', 'ѓ', 'е', 'ж', 'з', 'ѕ', 'и', 'ј', 'к', 'л', 'љ', 'м', 'н', 'њ', 'о', 'п', 'р', 'с', 'т', 'ќ', 'у', 'ф', 'х', 'ц', 'ч', 'џ', 'ш')
+
+    private val UKRAINIAN_SPECIFIC_CYRILLIC_LETTERS = setOf('Ґ', 'ґ', 'Є', 'є', 'І', 'і', 'Ї', 'ї')
+    private val SERBIAN_SPECIFIC_CYRILLIC_LETTERS = setOf('Ђ', 'ђ', 'Ј', 'ј', 'Љ', 'љ', 'Њ', 'њ', 'Ћ', 'ћ', 'Џ', 'џ')
+    private val BELARUSIAN_SPECIFIC_CYRILLIC_LETTERS = setOf('Ў', 'ў', 'І', 'і')
+    private val KYRGYZ_SPECIFIC_CYRILLIC_LETTERS = setOf('Ң', 'ң', 'Ө', 'ө', 'Ү', 'ү')
+    private val MACEDONIAN_SPECIFIC_CYRILLIC_LETTERS = setOf('Ѓ', 'ѓ', 'Ѕ', 'ѕ', 'Ќ', 'ќ')
 
     fun isJapanese(text: String, entireLyricsHasKana: Boolean = false): Boolean {
         if (text.any { it in '\u3040'..'\u309F' || it in '\u30A0'..'\u30FF' }) return true
@@ -126,13 +133,13 @@ object MultiLangRomanizer {
         return lyrics.copy(synced = enrichedSynced, plain = enrichedPlain)
     }
 
-    private fun isRussian(text: String) = text.any { RUSSIAN_CYRILLIC_LETTERS.contains(it.toString()) } && text.all { RUSSIAN_CYRILLIC_LETTERS.contains(it.toString()) || !it.toString().matches("[\\u0400-\\u04FF]".toRegex()) }
-    private fun isUkrainian(text: String) = text.any { UKRAINIAN_CYRILLIC_LETTERS.contains(it.toString()) || UKRAINIAN_SPECIFIC_CYRILLIC_LETTERS.contains(it.toString()) } && text.all { UKRAINIAN_CYRILLIC_LETTERS.contains(it.toString()) || UKRAINIAN_SPECIFIC_CYRILLIC_LETTERS.contains(it.toString()) || !it.toString().matches("[\\u0400-\\u04FF]".toRegex()) }
-    private fun isSerbian(text: String) = text.any { SERBIAN_CYRILLIC_LETTERS.contains(it.toString()) || SERBIAN_SPECIFIC_CYRILLIC_LETTERS.contains(it.toString()) } && text.all { SERBIAN_CYRILLIC_LETTERS.contains(it.toString()) || SERBIAN_SPECIFIC_CYRILLIC_LETTERS.contains(it.toString()) || !it.toString().matches("[\\u0400-\\u04FF]".toRegex()) }
-    private fun isBulgarian(text: String) = text.any { BULGARIAN_CYRILLIC_LETTERS.contains(it.toString()) } && text.all { BULGARIAN_CYRILLIC_LETTERS.contains(it.toString()) || !it.toString().matches("[\\u0400-\\u04FF]".toRegex()) }
-    private fun isBelarusian(text: String) = text.any { BELARUSIAN_CYRILLIC_LETTERS.contains(it.toString()) || BELARUSIAN_SPECIFIC_CYRILLIC_LETTERS.contains(it.toString()) } && text.all { BELARUSIAN_CYRILLIC_LETTERS.contains(it.toString()) || BELARUSIAN_SPECIFIC_CYRILLIC_LETTERS.contains(it.toString()) || !it.toString().matches("[\\u0400-\\u04FF]".toRegex()) }
-    private fun isKyrgyz(text: String) = text.any { KYRGYZ_CYRILLIC_LETTERS.contains(it.toString()) || KYRGYZ_SPECIFIC_CYRILLIC_LETTERS.contains(it.toString()) } && text.all { KYRGYZ_CYRILLIC_LETTERS.contains(it.toString()) || KYRGYZ_SPECIFIC_CYRILLIC_LETTERS.contains(it.toString()) || !it.toString().matches("[\\u0400-\\u04FF]".toRegex()) }
-    private fun isMacedonian(text: String) = text.any { MACEDONIAN_CYRILLIC_LETTERS.contains(it.toString()) || MACEDONIAN_SPECIFIC_CYRILLIC_LETTERS.contains(it.toString()) } && text.all { MACEDONIAN_CYRILLIC_LETTERS.contains(it.toString()) || MACEDONIAN_SPECIFIC_CYRILLIC_LETTERS.contains(it.toString()) || !it.toString().matches("[\\u0400-\\u04FF]".toRegex()) }
+    internal fun isRussian(text: String) = text.any { it in RUSSIAN_CYRILLIC_LETTERS } && text.all { it in RUSSIAN_CYRILLIC_LETTERS || it !in '\u0400'..'\u04FF' }
+    internal fun isUkrainian(text: String) = text.any { it in UKRAINIAN_CYRILLIC_LETTERS || it in UKRAINIAN_SPECIFIC_CYRILLIC_LETTERS } && text.all { it in UKRAINIAN_CYRILLIC_LETTERS || it in UKRAINIAN_SPECIFIC_CYRILLIC_LETTERS || it !in '\u0400'..'\u04FF' }
+    internal fun isSerbian(text: String) = text.any { it in SERBIAN_CYRILLIC_LETTERS || it in SERBIAN_SPECIFIC_CYRILLIC_LETTERS } && text.all { it in SERBIAN_CYRILLIC_LETTERS || it in SERBIAN_SPECIFIC_CYRILLIC_LETTERS || it !in '\u0400'..'\u04FF' }
+    internal fun isBulgarian(text: String) = text.any { it in BULGARIAN_CYRILLIC_LETTERS } && text.all { it in BULGARIAN_CYRILLIC_LETTERS || it !in '\u0400'..'\u04FF' }
+    internal fun isBelarusian(text: String) = text.any { it in BELARUSIAN_CYRILLIC_LETTERS || it in BELARUSIAN_SPECIFIC_CYRILLIC_LETTERS } && text.all { it in BELARUSIAN_CYRILLIC_LETTERS || it in BELARUSIAN_SPECIFIC_CYRILLIC_LETTERS || it !in '\u0400'..'\u04FF' }
+    internal fun isKyrgyz(text: String) = text.any { it in KYRGYZ_CYRILLIC_LETTERS || it in KYRGYZ_SPECIFIC_CYRILLIC_LETTERS } && text.all { it in KYRGYZ_CYRILLIC_LETTERS || it in KYRGYZ_SPECIFIC_CYRILLIC_LETTERS || it !in '\u0400'..'\u04FF' }
+    internal fun isMacedonian(text: String) = text.any { it in MACEDONIAN_CYRILLIC_LETTERS || it in MACEDONIAN_SPECIFIC_CYRILLIC_LETTERS } && text.all { it in MACEDONIAN_CYRILLIC_LETTERS || it in MACEDONIAN_SPECIFIC_CYRILLIC_LETTERS || it !in '\u0400'..'\u04FF' }
 
     fun romanizeJapanese(japaneseText: String): String? {
         val tokenizer = kuromojiTokenizer ?: return null
@@ -196,15 +203,15 @@ object MultiLangRomanizer {
                 kataBuf.append(kata)
             }
 
-            val katakanaText = kataBuf.toString().replace("\\s+".toRegex(), " ").trim()
+            val katakanaText = kataBuf.toString().replace(MULTI_SPACE_REGEX, " ").trim()
 
             val latin = Transliterator
                 .getInstance("Katakana-Latin; Lower")
                 .transliterate(katakanaText)
 
             latin
-                .replace(Regex("n(?=[bp])"), "m")
-                .replace(Regex("\\s+"), " ")
+                .replace(JAPANESE_N_ASSIMILATION_REGEX, "m")
+                .replace(MULTI_SPACE_REGEX, " ")
                 .trim()
         } catch (_: Throwable) {
             null
@@ -258,19 +265,19 @@ object MultiLangRomanizer {
 
                 when {
                     next == '儿' && idx + 1 < chars.size
-                        && c.toString().matches(Regex("[\u4E00-\u9FA5]"))
+                        && c in '\u4E00'..'\u9FA5'
                         && c != '儿' -> {
                         val base = getPinyin(c, format, prevChar = chars.getOrNull(idx - 1))
                         val erhua = base
-                            .replace(Regex("ng$"), "r")
-                            .replace(Regex("n$"), "r")
+                            .replace(ERHUA_NG_REGEX, "r")
+                            .replace(ERHUA_N_REGEX, "r")
                             .let { if (!it.endsWith("r")) it + "r" else it }
                         sb.append(erhua).append(" ")
                         idx += 2
                         continue
                     }
 
-                    c.toString().matches(Regex("[\u4E00-\u9FA5]")) -> {
+                    c in '\u4E00'..'\u9FA5' -> {
                         sb.append(getPinyin(c, format, prevChar = chars.getOrNull(idx - 1))).append(" ")
                         idx++
                         continue
@@ -284,7 +291,7 @@ object MultiLangRomanizer {
                 }
             }
 
-            sb.toString().replace(Regex("""\s+"""), " ").trim()
+            sb.toString().replace(MULTI_SPACE_REGEX, " ").trim()
         } catch (_: Throwable) {
             null
         }
@@ -425,10 +432,10 @@ object MultiLangRomanizer {
 
     private fun processCyrillicWordByWord(text: String, specificMap: Map<String, String>, isRussian: Boolean = false): String {
         val romajiBuilder = StringBuilder(text.length)
-        val words = text.split("((?<=\\s|[.,!?;])|(?=\\s|[.,!?;]))".toRegex()).filter { it.isNotEmpty() }
+        val words = text.split(CYRILLIC_WORD_SPLIT_REGEX).filter { it.isNotEmpty() }
 
         words.forEach { word ->
-            if (word.matches("[.,!?;]".toRegex()) || word.isBlank()) {
+            if ((word.length == 1 && word[0] in CYRILLIC_PUNCTUATION_CHARS) || word.isBlank()) {
                 romajiBuilder.append(word)
                 return@forEach
             }
@@ -511,10 +518,10 @@ object MultiLangRomanizer {
 
     private fun processUkrainian(text: String): String {
         val romajiBuilder = StringBuilder(text.length)
-        val words = text.split("((?<=\\s|[.,!?;])|(?=\\s|[.,!?;]))".toRegex()).filter { it.isNotEmpty() }
+        val words = text.split(CYRILLIC_WORD_SPLIT_REGEX).filter { it.isNotEmpty() }
 
         words.forEach { word ->
-            if (word.matches("[.,!?;]".toRegex()) || word.isBlank()) {
+            if ((word.length == 1 && word[0] in CYRILLIC_PUNCTUATION_CHARS) || word.isBlank()) {
                 romajiBuilder.append(word)
             } else {
                 var charIndex = 0
@@ -539,10 +546,10 @@ object MultiLangRomanizer {
 
     private fun processBelarusian(text: String): String {
         val romajiBuilder = StringBuilder(text.length)
-        val words = text.split("((?<=\\s|[.,!?;])|(?=\\s|[.,!?;]))".toRegex()).filter { it.isNotEmpty() }
+        val words = text.split(CYRILLIC_WORD_SPLIT_REGEX).filter { it.isNotEmpty() }
 
         words.forEach { word ->
-            if (word.matches("[.,!?;]".toRegex()) || word.isBlank()) {
+            if ((word.length == 1 && word[0] in CYRILLIC_PUNCTUATION_CHARS) || word.isBlank()) {
                 romajiBuilder.append(word)
             } else {
                 var charIndex = 0
