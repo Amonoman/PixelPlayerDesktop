@@ -1,22 +1,22 @@
 package com.kayoi.pixelplayerdesktop.ui.theme.dynamic
 
 import androidx.compose.ui.graphics.Color
-import java.io.BufferedReader
+import com.sun.jna.platform.win32.Advapi32Util
+import com.sun.jna.platform.win32.WinReg
 import java.io.File
-import java.io.InputStreamReader
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
-/**
- * Detects native system accent colors across Linux (GNOME/KDE) and Windows platforms
- * to seamlessly align dynamic themes with user OS preferences.
- */
 object SystemAccentColorProvider {
 
+    val defaultAccentColor = Color(0xFF6750A4)
+    private const val PROCESS_TIMEOUT_MS = 500L
+
+    @Volatile
     private var cachedColor: Color? = null
 
-    /**
-     * Resolves the current operating system accent color with fallback to Material 3 baseline purple.
-     */
+    fun getCachedAccentColor(): Color? = cachedColor
+
     fun getSystemAccentColor(): Color {
         cachedColor?.let { return it }
 
@@ -27,76 +27,70 @@ object SystemAccentColorProvider {
             else -> null
         }
 
-        val finalColor = detected ?: Color(0xFF6750A4)
+        val finalColor = detected ?: defaultAccentColor
         cachedColor = finalColor
         return finalColor
     }
 
-    /**
-     * Queries Windows Desktop Window Manager (DWM) registry for ColorizationColor.
-     */
     private fun getWindowsAccentColor(): Color? {
-        return try {
-            val process = ProcessBuilder("reg", "query", "HKCU\\Software\\Microsoft\\Windows\\DWM", "/v", "ColorizationColor").start()
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            var line: String?
-            var hexString: String? = null
-            while (reader.readLine().also { line = it } != null) {
-                val currentLine = line ?: continue
-                if (currentLine.contains("ColorizationColor")) {
-                    val parts = currentLine.trim().split(Regex("\\s+"))
-                    if (parts.size >= 3) {
-                        hexString = parts[2]
-                        break
-                    }
-                }
-            }
-            process.waitFor()
-
-            if (hexString != null) {
-                val cleanHex = hexString.removePrefix("0x")
-                val value = cleanHex.toLongOrNull(16)
-                if (value != null) {
-                    val r = ((value shr 16) and 0xFF).toInt()
-                    val g = ((value shr 8) and 0xFF).toInt()
-                    val b = (value and 0xFF).toInt()
-                    Color(red = r, green = g, blue = b, alpha = 255)
-                } else null
-            } else null
-        } catch (e: Exception) {
-            null
+        try {
+            val value = Advapi32Util.registryGetIntValue(
+                WinReg.HKEY_CURRENT_USER,
+                "Software\\Microsoft\\Windows\\DWM",
+                "ColorizationColor"
+            )
+            val r = (value shr 16) and 0xFF
+            val g = (value shr 8) and 0xFF
+            val b = value and 0xFF
+            return Color(red = r, green = g, blue = b, alpha = 255)
+        } catch (_: Throwable) {
+            return getWindowsAccentColorViaRegProcess()
         }
     }
 
-    /**
-     * Attempts accent extraction for Linux environments (GNOME gsettings or KDE Plasma kdeglobals).
-     */
+    private fun getWindowsAccentColorViaRegProcess(): Color? {
+        val output = runProcessWithTimeout(
+            listOf("reg", "query", "HKCU\\Software\\Microsoft\\Windows\\DWM", "/v", "ColorizationColor")
+        ) ?: return null
+
+        val hexString = output.lineSequence().firstOrNull { it.contains("ColorizationColor") }
+            ?.trim()
+            ?.split(Regex("\\s+"))
+            ?.getOrNull(2)
+            ?: return null
+
+        val cleanHex = hexString.removePrefix("0x")
+        val value = cleanHex.toLongOrNull(16) ?: return null
+        val r = ((value shr 16) and 0xFF).toInt()
+        val g = ((value shr 8) and 0xFF).toInt()
+        val b = (value and 0xFF).toInt()
+        return Color(red = r, green = g, blue = b, alpha = 255)
+    }
+
     private fun getLinuxAccentColor(): Color? {
-        // Query GNOME 47+ gsettings accent-color key
-        try {
-            val process = ProcessBuilder("gsettings", "get", "org.gnome.desktop.interface", "accent-color").start()
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            val line = reader.readLine()?.trim()?.removeSurrounding("'")?.lowercase(Locale.ROOT)
-            process.waitFor()
+        getGnomeAccentColor()?.let { return it }
+        return getKdeAccentColor()
+    }
 
-            if (!line.isNullOrBlank()) {
-                val color = when (line) {
-                    "blue" -> Color(0xFF3584E4)
-                    "teal" -> Color(0xFF2190A4)
-                    "green" -> Color(0xFF3A944C)
-                    "yellow" -> Color(0xFFE5A50A)
-                    "orange" -> Color(0xFFE66100)
-                    "red" -> Color(0xFFE01B24)
-                    "pink" -> Color(0xFFD56199)
-                    "purple" -> Color(0xFF9141AC)
-                    "slate" -> Color(0xFF63717B)
-                    else -> null
-                }
-                if (color != null) return color
-            }
-        } catch (_: Exception) {}
+    private fun getGnomeAccentColor(): Color? {
+        val output = runProcessWithTimeout(listOf("gsettings", "get", "org.gnome.desktop.interface", "accent-color"))
+            ?: return null
+        val name = output.removeSurrounding("'").lowercase(Locale.ROOT)
+        return when (name) {
+            "blue" -> Color(0xFF3584E4)
+            "teal" -> Color(0xFF2190A4)
+            "green" -> Color(0xFF3A944C)
+            "yellow" -> Color(0xFFE5A50A)
+            "orange" -> Color(0xFFE66100)
+            "red" -> Color(0xFFE01B24)
+            "pink" -> Color(0xFFD56199)
+            "purple" -> Color(0xFF9141AC)
+            "slate" -> Color(0xFF63717B)
+            else -> null
+        }
+    }
 
-        // Query KDE Plasma AccentColor from user configuration
+    private fun getKdeAccentColor(): Color? {
         try {
             val kdeglobals = File(System.getProperty("user.home"), ".config/kdeglobals")
             if (kdeglobals.exists() && kdeglobals.canRead()) {
@@ -119,22 +113,43 @@ object SystemAccentColorProvider {
             }
 
             for (cmd in listOf(
-                arrayOf("kreadconfig6", "--file", "kdeglobals", "--group", "General", "--key", "AccentColor"),
-                arrayOf("kreadconfig5", "--file", "kdeglobals", "--group", "General", "--key", "AccentColor")
+                listOf("kreadconfig6", "--file", "kdeglobals", "--group", "General", "--key", "AccentColor"),
+                listOf("kreadconfig5", "--file", "kdeglobals", "--group", "General", "--key", "AccentColor")
             )) {
-                val process = ProcessBuilder(*cmd).start()
-                val reader = BufferedReader(InputStreamReader(process.inputStream))
-                val line = reader.readLine()?.trim()
-                process.waitFor()
-                if (!line.isNullOrBlank() && line.contains(",")) {
-                    val parts = line.split(",").mapNotNull { it.trim().toIntOrNull() }
-                    if (parts.size >= 3) {
-                        return Color(parts[0], parts[1], parts[2])
-                    }
+                val output = runProcessWithTimeout(cmd) ?: continue
+                val parts = output.split(",").mapNotNull { it.trim().toIntOrNull() }
+                if (parts.size >= 3) {
+                    return Color(parts[0], parts[1], parts[2])
                 }
             }
-        } catch (_: Exception) {}
+        } catch (_: Throwable) {}
 
         return null
+    }
+
+    internal fun runProcessWithTimeout(
+        command: List<String>,
+        timeoutMs: Long = PROCESS_TIMEOUT_MS
+    ): String? {
+        return try {
+            val process = ProcessBuilder(command)
+                .redirectError(ProcessBuilder.Redirect.DISCARD)
+                .start()
+            val finished = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
+            if (!finished) {
+                process.destroyForcibly()
+                return null
+            }
+            if (process.exitValue() != 0) {
+                return null
+            }
+            process.inputStream.bufferedReader().use { it.readText().trim() }
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    internal fun resetCache() {
+        cachedColor = null
     }
 }

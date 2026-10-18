@@ -38,6 +38,8 @@ import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -73,6 +75,11 @@ fun LyricsView(
         "center" -> Alignment.CenterHorizontally
         "right" -> Alignment.End
         else -> Alignment.Start
+    }
+    val lyricTransformOrigin = when (alignment.lowercase()) {
+        "center" -> TransformOrigin(0.5f, 0.5f)
+        "right" -> TransformOrigin(1f, 0.5f)
+        else -> TransformOrigin(0f, 0.5f)
     }
 
     if (isLoading) {
@@ -163,7 +170,7 @@ fun LyricsView(
             state = listState,
             modifier = modifier.fillMaxSize().padding(horizontal = 24.dp),
             contentPadding = PaddingValues(top = 36.dp, bottom = 80.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             itemsIndexed(syncedLines) { index, line ->
                 val isActive = activeIndex >= 0 && index == activeIndex
@@ -178,16 +185,28 @@ fun LyricsView(
                         onSeek = { onSeekToMs(((line.time - syncOffsetMs).toLong()).coerceAtLeast(0L)) }
                     )
                 } else {
-                    val fontSize by animateFloatAsState(
-                        targetValue = if (isActive) 23f else 17f,
+                    val scaleAnim = animateFloatAsState(
+                        targetValue = if (isActive) 1f else 17f / 23f,
                         animationSpec = spring(stiffness = Spring.StiffnessLow),
-                        label = "lyricFontSize"
+                        label = "lyricScale"
                     )
 
-                    val textColor = when {
-                        isActive -> colors.primary
-                        isPast -> colors.onSurface.copy(alpha = 0.85f)
-                        else -> colors.onSurfaceVariant.copy(alpha = 0.38f)
+                    val alphaAnim = animateFloatAsState(
+                        targetValue = when {
+                            isActive -> 1f
+                            isPast -> 0.85f
+                            else -> 0.38f
+                        },
+                        animationSpec = spring(stiffness = Spring.StiffnessLow),
+                        label = "lyricAlpha"
+                    )
+
+                    val textColor = if (isActive) {
+                        colors.primary
+                    } else if (isPast) {
+                        colors.onSurface
+                    } else {
+                        colors.onSurfaceVariant
                     }
 
                     val romanization = remember(line, hasKana) {
@@ -202,12 +221,18 @@ fun LyricsView(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .clickable { onSeekToMs(((line.time - syncOffsetMs).toLong()).coerceAtLeast(0L)) }
-                            .padding(vertical = 6.dp, horizontal = 10.dp),
+                            .padding(vertical = 4.dp, horizontal = 10.dp)
+                            .graphicsLayer {
+                                scaleX = scaleAnim.value
+                                scaleY = scaleAnim.value
+                                alpha = alphaAnim.value
+                                transformOrigin = lyricTransformOrigin
+                            },
                         horizontalAlignment = horizontalAlignment
                     ) {
                         Text(
                             text = line.line,
-                            fontSize = fontSize.sp,
+                            fontSize = 23.sp,
                             fontWeight = if (isActive) FontWeight.ExtraBold else FontWeight.Medium,
                             color = textColor,
                             textAlign = lyricTextAlign,
@@ -217,9 +242,9 @@ fun LyricsView(
                         if (showRomanization && !romanization.isNullOrBlank()) {
                             Text(
                                 text = romanization,
-                                fontSize = (fontSize * 0.72f).coerceAtLeast(12f).sp,
+                                fontSize = 16.5.sp,
                                 fontWeight = FontWeight.Normal,
-                                color = textColor.copy(alpha = if (isActive) 0.85f else 0.7f),
+                                color = textColor.copy(alpha = if (isActive) 0.85f else 0.75f),
                                 textAlign = lyricTextAlign,
                                 modifier = Modifier
                                     .fillMaxWidth()
