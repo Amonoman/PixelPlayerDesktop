@@ -13,10 +13,11 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class QueueManager(
     initialShuffle: Boolean = false,
-    initialRepeatMode: Int = 0 // 0: OFF, 1: ALL, 2: ONE
+    initialRepeatMode: Int = 0
 ) {
 
-    private val _originalQueue = mutableListOf<Song>()
+    private val lock = Any()
+    private var originalQueue: List<Song> = emptyList()
 
     private val _queue = MutableStateFlow<List<Song>>(emptyList())
     val queue: StateFlow<List<Song>> = _queue.asStateFlow()
@@ -33,7 +34,7 @@ class QueueManager(
     private val _repeatMode = MutableStateFlow(initialRepeatMode)
     val repeatMode: StateFlow<Int> = _repeatMode.asStateFlow()
 
-    fun setQueue(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = _isShuffleEnabled.value): Song? {
+    fun setQueue(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = _isShuffleEnabled.value): Song? = synchronized(lock) {
         if (songs.isEmpty()) {
             clearQueue()
             return null
@@ -42,30 +43,29 @@ class QueueManager(
         val clampedIndex = startIndex.coerceIn(0, songs.size - 1)
         val targetSong = songs[clampedIndex]
 
-        _originalQueue.clear()
-        _originalQueue.addAll(songs)
+        originalQueue = songs.toList()
 
         if (shuffle) {
             val shuffled = songs.toMutableList()
             shuffled.removeAt(clampedIndex)
             shuffled.shuffle()
             shuffled.add(0, targetSong)
-            _queue.value = shuffled
+            _queue.value = shuffled.toList()
             _currentIndex.value = 0
             _currentSong.value = targetSong
         } else {
-            _queue.value = songs
+            _queue.value = songs.toList()
             _currentIndex.value = clampedIndex
             _currentSong.value = targetSong
         }
 
-        return targetSong
+        targetSong
     }
 
-    fun playSong(song: Song): Song {
+    fun playSong(song: Song): Song = synchronized(lock) {
         val currentList = _queue.value
         val index = currentList.indexOfFirst { it.id == song.id }
-        return if (index != -1) {
+        if (index != -1) {
             _currentIndex.value = index
             _currentSong.value = currentList[index]
             currentList[index]
@@ -74,42 +74,18 @@ class QueueManager(
         }
     }
 
-    fun playAtIndex(index: Int): Song? {
+    fun playAtIndex(index: Int): Song? = synchronized(lock) {
         val currentList = _queue.value
         if (index in currentList.indices) {
             _currentIndex.value = index
             _currentSong.value = currentList[index]
-            return currentList[index]
-        }
-        return null
-    }
-
-    fun getNextSong(): Song? {
-        val currentList = _queue.value
-        if (currentList.isEmpty()) return null
-
-        val currIdx = _currentIndex.value
-        val repMode = _repeatMode.value
-
-        if (repMode == 2) { // REPEAT ONE
-            return _currentSong.value
-        }
-
-        val nextIdx = currIdx + 1
-        return if (nextIdx < currentList.size) {
-            _currentIndex.value = nextIdx
-            _currentSong.value = currentList[nextIdx]
-            currentList[nextIdx]
-        } else if (repMode == 1) { // REPEAT ALL
-            _currentIndex.value = 0
-            _currentSong.value = currentList[0]
-            currentList[0]
+            currentList[index]
         } else {
             null
         }
     }
 
-    fun peekNextSong(): Song? {
+    fun getNextSong(): Song? = synchronized(lock) {
         val currentList = _queue.value
         if (currentList.isEmpty()) return null
 
@@ -121,7 +97,32 @@ class QueueManager(
         }
 
         val nextIdx = currIdx + 1
-        return if (nextIdx < currentList.size) {
+        if (nextIdx < currentList.size) {
+            _currentIndex.value = nextIdx
+            _currentSong.value = currentList[nextIdx]
+            currentList[nextIdx]
+        } else if (repMode == 1) {
+            _currentIndex.value = 0
+            _currentSong.value = currentList[0]
+            currentList[0]
+        } else {
+            null
+        }
+    }
+
+    fun peekNextSong(): Song? = synchronized(lock) {
+        val currentList = _queue.value
+        if (currentList.isEmpty()) return null
+
+        val currIdx = _currentIndex.value
+        val repMode = _repeatMode.value
+
+        if (repMode == 2) {
+            return _currentSong.value
+        }
+
+        val nextIdx = currIdx + 1
+        if (nextIdx < currentList.size) {
             currentList[nextIdx]
         } else if (repMode == 1) {
             currentList[0]
@@ -130,23 +131,22 @@ class QueueManager(
         }
     }
 
-    fun getPreviousSong(currentPositionMs: Long = 0L): Song? {
+    fun getPreviousSong(currentPositionMs: Long = 0L): Song? = synchronized(lock) {
         val currentList = _queue.value
         if (currentList.isEmpty()) return null
 
         val currIdx = _currentIndex.value
 
-        // If song has played for more than 3 seconds, restart current song
         if (currentPositionMs > 3000L && _currentSong.value != null) {
             return _currentSong.value
         }
 
         val prevIdx = currIdx - 1
-        return if (prevIdx >= 0) {
+        if (prevIdx >= 0) {
             _currentIndex.value = prevIdx
             _currentSong.value = currentList[prevIdx]
             currentList[prevIdx]
-        } else if (_repeatMode.value == 1) { // REPEAT ALL
+        } else if (_repeatMode.value == 1) {
             val lastIdx = currentList.size - 1
             _currentIndex.value = lastIdx
             _currentSong.value = currentList[lastIdx]
@@ -156,75 +156,84 @@ class QueueManager(
         }
     }
 
-    fun toggleShuffle(): Boolean {
+    fun toggleShuffle(): Boolean = synchronized(lock) {
         val newShuffle = !_isShuffleEnabled.value
         _isShuffleEnabled.value = newShuffle
 
         val curr = _currentSong.value
-        if (curr == null || _originalQueue.isEmpty()) {
+        if (curr == null || originalQueue.isEmpty()) {
             return newShuffle
         }
 
         if (newShuffle) {
-            val remaining = _originalQueue.filter { it.id != curr.id }.shuffled()
+            val remaining = originalQueue.filter { it.id != curr.id }.shuffled()
             val newQueue = listOf(curr) + remaining
             _queue.value = newQueue
             _currentIndex.value = 0
         } else {
-            val origIndex = _originalQueue.indexOfFirst { it.id == curr.id }.coerceAtLeast(0)
-            _queue.value = _originalQueue.toList()
+            val origIndex = originalQueue.indexOfFirst { it.id == curr.id }.coerceAtLeast(0)
+            _queue.value = originalQueue
             _currentIndex.value = origIndex
         }
 
-        return newShuffle
+        newShuffle
     }
 
-    fun cycleRepeatMode(): Int {
+    fun cycleRepeatMode(): Int = synchronized(lock) {
         val next = when (_repeatMode.value) {
-            0 -> 1 // ALL
-            1 -> 2 // ONE
-            else -> 0 // OFF
+            0 -> 1
+            1 -> 2
+            else -> 0
         }
         _repeatMode.value = next
-        return next
+        next
     }
 
     fun setRepeatMode(mode: Int) {
-        _repeatMode.value = mode.coerceIn(0, 2)
+        synchronized(lock) {
+            _repeatMode.value = mode.coerceIn(0, 2)
+        }
     }
 
     fun addToQueue(songs: List<Song>) {
-        if (songs.isEmpty()) return
-        if (_queue.value.isEmpty()) {
-            setQueue(songs)
-            return
+        synchronized(lock) {
+            if (songs.isEmpty()) return
+            if (_queue.value.isEmpty()) {
+                setQueue(songs)
+                return
+            }
+            originalQueue = originalQueue + songs
+            _queue.value = _queue.value + songs
         }
-        _originalQueue.addAll(songs)
-        _queue.value = _queue.value + songs
     }
 
     fun playNextInQueue(song: Song) {
-        val currentList = _queue.value.toMutableList()
-        val currIdx = _currentIndex.value
-        if (currIdx in currentList.indices) {
-            currentList.add(currIdx + 1, song)
-        } else {
-            currentList.add(song)
+        synchronized(lock) {
+            val currentList = _queue.value.toMutableList()
+            val currIdx = _currentIndex.value
+            if (currIdx in currentList.indices) {
+                currentList.add(currIdx + 1, song)
+            } else {
+                currentList.add(song)
+            }
+            _queue.value = currentList.toList()
+            originalQueue = originalQueue + song
         }
-        _queue.value = currentList
-        _originalQueue.add(song)
     }
 
-    fun removeFromQueue(index: Int): Song? {
+    fun removeFromQueue(index: Int): Song? = synchronized(lock) {
         val currentList = _queue.value.toMutableList()
         if (index !in currentList.indices) return _currentSong.value
 
         val removed = currentList.removeAt(index)
-        _originalQueue.remove(removed)
-        _queue.value = currentList
+        val origIndex = originalQueue.indexOf(removed)
+        if (origIndex != -1) {
+            originalQueue = originalQueue.toMutableList().apply { removeAt(origIndex) }.toList()
+        }
+        _queue.value = currentList.toList()
 
         val currIdx = _currentIndex.value
-        return when {
+        when {
             index < currIdx -> {
                 _currentIndex.value = currIdx - 1
                 _currentSong.value
@@ -245,49 +254,57 @@ class QueueManager(
     }
 
     fun moveQueueItem(fromIndex: Int, toIndex: Int) {
-        val currentList = _queue.value.toMutableList()
-        if (fromIndex !in currentList.indices || toIndex !in currentList.indices || fromIndex == toIndex) return
+        synchronized(lock) {
+            val currentList = _queue.value.toMutableList()
+            if (fromIndex !in currentList.indices || toIndex !in currentList.indices || fromIndex == toIndex) return
 
-        val item = currentList.removeAt(fromIndex)
-        currentList.add(toIndex, item)
-        _queue.value = currentList
+            val item = currentList.removeAt(fromIndex)
+            currentList.add(toIndex, item)
+            _queue.value = currentList.toList()
 
-        val curr = _currentSong.value
-        if (curr != null) {
-            _currentIndex.value = currentList.indexOfFirst { it.id == curr.id }
+            val curr = _currentSong.value
+            if (curr != null) {
+                _currentIndex.value = currentList.indexOfFirst { it.id == curr.id }
+            }
         }
     }
 
     fun clearQueue() {
-        _originalQueue.clear()
-        _queue.value = emptyList()
-        _currentIndex.value = -1
-        _currentSong.value = null
+        synchronized(lock) {
+            originalQueue = emptyList()
+            _queue.value = emptyList()
+            _currentIndex.value = -1
+            _currentSong.value = null
+        }
     }
 
     fun updateSongFavorite(songId: String, isFav: Boolean) {
-        _queue.value = _queue.value.map {
-            if (it.id == songId) it.copy(isFavorite = isFav) else it
-        }
-        _originalQueue.replaceAll {
-            if (it.id == songId) it.copy(isFavorite = isFav) else it
-        }
-        val curr = _currentSong.value
-        if (curr != null && curr.id == songId) {
-            _currentSong.value = curr.copy(isFavorite = isFav)
+        synchronized(lock) {
+            _queue.value = _queue.value.map {
+                if (it.id == songId) it.copy(isFavorite = isFav) else it
+            }
+            originalQueue = originalQueue.map {
+                if (it.id == songId) it.copy(isFavorite = isFav) else it
+            }
+            val curr = _currentSong.value
+            if (curr != null && curr.id == songId) {
+                _currentSong.value = curr.copy(isFavorite = isFav)
+            }
         }
     }
 
     fun updateSong(updatedSong: Song) {
-        _queue.value = _queue.value.map {
-            if (it.id == updatedSong.id) updatedSong else it
-        }
-        _originalQueue.replaceAll {
-            if (it.id == updatedSong.id) updatedSong else it
-        }
-        val curr = _currentSong.value
-        if (curr != null && curr.id == updatedSong.id) {
-            _currentSong.value = updatedSong
+        synchronized(lock) {
+            _queue.value = _queue.value.map {
+                if (it.id == updatedSong.id) updatedSong else it
+            }
+            originalQueue = originalQueue.map {
+                if (it.id == updatedSong.id) updatedSong else it
+            }
+            val curr = _currentSong.value
+            if (curr != null && curr.id == updatedSong.id) {
+                _currentSong.value = updatedSong
+            }
         }
     }
 }

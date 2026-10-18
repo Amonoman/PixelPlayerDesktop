@@ -1,6 +1,10 @@
 package com.kayoi.pixelplayerdesktop.data.player
 
 import com.kayoi.pixelplayerdesktop.data.model.Song
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -116,6 +120,61 @@ class QueueManagerTest {
         val peeked = qm.peekNextSong()
         assertNotNull(peeked)
         assertEquals("Song 2", peeked.title)
-        assertEquals(0, qm.currentIndex.value) // Index must not advance on peek
+        assertEquals(0, qm.currentIndex.value)
+    }
+
+    @Test
+    fun testConcurrentOperationsMaintainConsistency() = runBlocking {
+        val qm = QueueManager()
+        val initialSongs = (1..20).map { i ->
+            Song(id = "init_$i", title = "Initial $i", artist = "Artist", path = "/path/$i.mp3")
+        }
+        qm.setQueue(initialSongs, startIndex = 0)
+
+        val iterations = 100
+        val jobs = listOf(
+            launch(Dispatchers.Default) {
+                repeat(iterations) { i ->
+                    qm.addToQueue(listOf(Song(id = "add_$i", title = "Add $i", artist = "Artist", path = "/path/add_$i.mp3")))
+                }
+            },
+            launch(Dispatchers.Default) {
+                repeat(iterations) {
+                    qm.toggleShuffle()
+                }
+            },
+            launch(Dispatchers.Default) {
+                repeat(iterations) {
+                    qm.getNextSong()
+                }
+            },
+            launch(Dispatchers.Default) {
+                repeat(iterations) {
+                    val currSize = qm.queue.value.size
+                    if (currSize > 1) {
+                        qm.removeFromQueue((0 until currSize).random())
+                    }
+                }
+            },
+            launch(Dispatchers.Default) {
+                repeat(iterations) { i ->
+                    qm.playNextInQueue(Song(id = "next_$i", title = "Next $i", artist = "Artist", path = "/path/next_$i.mp3"))
+                }
+            }
+        )
+
+        jobs.joinAll()
+
+        val finalQueue = qm.queue.value
+        val finalIndex = qm.currentIndex.value
+        val finalSong = qm.currentSong.value
+
+        if (finalQueue.isEmpty()) {
+            assertEquals(-1, finalIndex)
+            assertNull(finalSong)
+        } else {
+            assertTrue(finalIndex in finalQueue.indices)
+            assertEquals(finalQueue[finalIndex].id, finalSong?.id)
+        }
     }
 }

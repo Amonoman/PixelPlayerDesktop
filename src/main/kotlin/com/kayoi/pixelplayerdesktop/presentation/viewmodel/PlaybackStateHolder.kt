@@ -559,12 +559,7 @@ class PlaybackStateHolder(
     fun playNext() {
         val next = queueManager.getNextSong()
         if (next != null) {
-            if (crossfadeEnabled.value && audioEngine.playbackState.value == PlaybackState.PLAYING) {
-                val fadeMs = (crossfadeDurationSeconds.value * 1000L).coerceIn(500L, 12000L)
-                audioEngine.crossfadeTo(resolvePath(next), fadeMs)
-            } else {
-                audioEngine.play(resolvePath(next))
-            }
+            audioEngine.play(resolvePath(next))
         } else {
             val current = queueManager.currentSong.value
             if (current != null) {
