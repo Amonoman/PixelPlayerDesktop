@@ -27,7 +27,7 @@ object DeezerClient {
     )
 
     private val cacheDir: File by lazy {
-        val dir = File(DesktopPathProvider.configDir, "artist_cache")
+        val dir = File(DesktopPathProvider.cacheDir, "artist_cache")
         if (!dir.exists()) dir.mkdirs()
         dir
     }
