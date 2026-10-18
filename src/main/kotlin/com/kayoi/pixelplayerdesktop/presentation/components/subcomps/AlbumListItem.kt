@@ -69,9 +69,7 @@ fun AlbumListItem(
         DynamicColorProcessor.defaultColorAccuracyLevel
     ) {
         if (colorSchemePair == null && !album.albumArtUriString.isNullOrBlank()) {
-            val extracted = withContext(Dispatchers.IO) {
-                DynamicColorProcessor.extractColorScheme(album.albumArtUriString)
-            }
+            val extracted = DynamicColorProcessor.extractColorSchemeAsync(album.albumArtUriString)
             if (extracted != null) {
                 colorSchemePair = extracted
             }
@@ -92,12 +90,12 @@ fun AlbumListItem(
 
     val gradientBaseColor by animateColorAsState(
         targetValue = targetGradientBaseColor,
-        animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
         label = "albumListContainerColor"
     )
     val onGradientColor by animateColorAsState(
         targetValue = targetOnGradientColor,
-        animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
         label = "albumListOnContainerColor"
     )
     val cardCornerRadius = 18.dp

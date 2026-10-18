@@ -7,10 +7,19 @@ import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtColorAccuracy
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
 import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.koin.core.context.GlobalContext
@@ -37,6 +46,11 @@ object DynamicColorProcessor {
 
     private val memoryCache = ConcurrentHashMap<String, ColorSchemePair>()
     private val seedDiskCache = ConcurrentHashMap<String, Int>()
+    private val extractionSemaphore = Semaphore(4)
+    private val inFlightJobs = ConcurrentHashMap<String, Deferred<ColorSchemePair?>>()
+
+    private var saveJob: Job? = null
+    private val saveMutex = Mutex()
 
     init {
         loadDiskCache()
@@ -56,13 +70,19 @@ object DynamicColorProcessor {
 
     private fun scheduleSaveToDisk() {
         scope.launch {
-            runCatching {
-                val snapshot = seedDiskCache.toMap()
-                val tempFile = File(diskCacheFile.parentFile, "${diskCacheFile.name}.tmp")
-                tempFile.writeText(json.encodeToString(snapshot))
-                if (tempFile.exists()) {
-                    if (diskCacheFile.exists()) diskCacheFile.delete()
-                    tempFile.renameTo(diskCacheFile)
+            saveMutex.withLock {
+                saveJob?.cancel()
+                saveJob = scope.launch {
+                    delay(1000)
+                    runCatching {
+                        val snapshot = seedDiskCache.toMap()
+                        val tempFile = File(diskCacheFile.parentFile, "${diskCacheFile.name}.tmp")
+                        tempFile.writeText(json.encodeToString(snapshot))
+                        if (tempFile.exists()) {
+                            if (diskCacheFile.exists()) diskCacheFile.delete()
+                            tempFile.renameTo(diskCacheFile)
+                        }
+                    }
                 }
             }
         }
@@ -164,6 +184,83 @@ object DynamicColorProcessor {
         return null
     }
 
+    suspend fun extractColorSchemeAsync(
+        pathOrUri: String?,
+        paletteStyle: AlbumArtPaletteStyle = defaultPaletteStyle,
+        colorAccuracyLevel: Int = defaultColorAccuracyLevel
+    ): ColorSchemePair? = withContext(Dispatchers.IO) {
+        if (pathOrUri.isNullOrBlank()) return@withContext null
+        getCachedColorScheme(pathOrUri, paletteStyle, colorAccuracyLevel)?.let { return@withContext it }
+
+        val cacheKey = "$pathOrUri|${paletteStyle.storageKey}|$colorAccuracyLevel"
+        val deferred = inFlightJobs.computeIfAbsent(cacheKey) {
+            scope.async(Dispatchers.IO) {
+                extractionSemaphore.withPermit {
+                    try {
+                        extractColorScheme(pathOrUri, paletteStyle, colorAccuracyLevel)
+                    } finally {
+                        inFlightJobs.remove(cacheKey)
+                    }
+                }
+            }
+        }
+        deferred.await()
+    }
+
+    private fun readSampledImage(file: File, maxDimension: Int = 128): BufferedImage? {
+        return try {
+            val iis = ImageIO.createImageInputStream(file) ?: return null
+            val readers = ImageIO.getImageReaders(iis)
+            if (!readers.hasNext()) {
+                iis.close()
+                return null
+            }
+            val reader = readers.next()
+            try {
+                reader.input = iis
+                val width = reader.getWidth(0)
+                val height = reader.getHeight(0)
+                val maxDim = maxOf(width, height)
+                val sampleSize = maxOf(1, maxDim / maxDimension)
+                val param = reader.defaultReadParam
+                param.setSourceSubsampling(sampleSize, sampleSize, 0, 0)
+                reader.read(0, param)
+            } finally {
+                reader.dispose()
+                iis.close()
+            }
+        } catch (_: Exception) {
+            runCatching { ImageIO.read(file) }.getOrNull()
+        }
+    }
+
+    private fun readSampledImage(bytes: ByteArray, maxDimension: Int = 128): BufferedImage? {
+        return try {
+            val iis = ImageIO.createImageInputStream(ByteArrayInputStream(bytes)) ?: return null
+            val readers = ImageIO.getImageReaders(iis)
+            if (!readers.hasNext()) {
+                iis.close()
+                return null
+            }
+            val reader = readers.next()
+            try {
+                reader.input = iis
+                val width = reader.getWidth(0)
+                val height = reader.getHeight(0)
+                val maxDim = maxOf(width, height)
+                val sampleSize = maxOf(1, maxDim / maxDimension)
+                val param = reader.defaultReadParam
+                param.setSourceSubsampling(sampleSize, sampleSize, 0, 0)
+                reader.read(0, param)
+            } finally {
+                reader.dispose()
+                iis.close()
+            }
+        } catch (_: Exception) {
+            runCatching { ImageIO.read(ByteArrayInputStream(bytes)) }.getOrNull()
+        }
+    }
+
     fun extractColorScheme(
         file: File,
         paletteStyle: AlbumArtPaletteStyle = defaultPaletteStyle,
@@ -174,7 +271,7 @@ object DynamicColorProcessor {
         getCachedColorScheme(file.absolutePath, paletteStyle, colorAccuracyLevel)?.let { return it }
 
         return try {
-            val image = ImageIO.read(file) ?: return null
+            val image = readSampledImage(file, 128) ?: return null
             val config = ColorExtractionConfig(accuracyLevel = colorAccuracyLevel)
             val seedColor = extractSeedColorFromImage(image, config)
             val seedArgb = seedColor.toArgb()
@@ -199,7 +296,7 @@ object DynamicColorProcessor {
     ): ColorSchemePair? {
         if (bytes.isEmpty()) return null
         return try {
-            val image = ImageIO.read(ByteArrayInputStream(bytes)) ?: return null
+            val image = readSampledImage(bytes, 128) ?: return null
             extractFromBufferedImage(image, paletteStyle, colorAccuracyLevel)
         } catch (e: Exception) {
             null

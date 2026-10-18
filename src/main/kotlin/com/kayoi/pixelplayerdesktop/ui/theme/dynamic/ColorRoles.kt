@@ -17,6 +17,7 @@ import com.materialkolor.scheme.SchemeMonochrome
 import com.materialkolor.scheme.SchemeTonalSpot
 import com.materialkolor.scheme.SchemeVibrant
 import java.awt.Image
+import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import kotlin.math.abs
 import kotlin.math.floor
@@ -235,8 +236,14 @@ private fun resizeForExtraction(image: BufferedImage, maxDimension: Int): Buffer
 
     val scaled = BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB)
     val g = scaled.createGraphics()
-    g.drawImage(image.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH), 0, 0, null)
-    g.dispose()
+    try {
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED)
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
+        g.drawImage(image, 0, 0, targetWidth, targetHeight, null)
+    } finally {
+        g.dispose()
+    }
     return scaled
 }
 
