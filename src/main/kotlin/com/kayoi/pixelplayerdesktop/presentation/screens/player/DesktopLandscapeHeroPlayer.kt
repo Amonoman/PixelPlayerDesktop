@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.presentation.components.ArtworkSize
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
 import com.kayoi.pixelplayerdesktop.presentation.components.PlaybackCurrentTimeText
 import com.kayoi.pixelplayerdesktop.presentation.components.WavySliderExpressive
@@ -344,6 +345,7 @@ fun DesktopLandscapeHeroPlayer(
                     ) {
                         AsyncArtworkImage(
                             artworkUri = song.albumArtUriString,
+                            targetSize = ArtworkSize.LARGE,
                             modifier = Modifier.fillMaxSize(),
                             placeholderIcon = Icons.Rounded.MusicNote,
                             placeholderIconSize = if (isCompactHero) 40.dp else 56.dp,
