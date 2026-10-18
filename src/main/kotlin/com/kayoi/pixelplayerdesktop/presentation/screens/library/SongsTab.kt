@@ -88,6 +88,14 @@ fun SongsTab(
         }
     }
 
+    var lastHandledSearchQuery by remember { mutableStateOf(searchQuery) }
+    LaunchedEffect(filteredSongs) {
+        if (searchQuery != lastHandledSearchQuery) {
+            lastHandledSearchQuery = searchQuery
+            songsListState.scrollToItem(0)
+        }
+    }
+
     val isCurrentSongVisible by remember(currentSongIndex, songsListState) {
         derivedStateOf {
             if (currentSongIndex < 0) false

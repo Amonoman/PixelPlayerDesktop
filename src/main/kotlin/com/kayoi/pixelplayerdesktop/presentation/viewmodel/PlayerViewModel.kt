@@ -17,13 +17,15 @@ import com.kayoi.pixelplayerdesktop.data.model.SortOption
 import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
 import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
+import com.kayoi.pixelplayerdesktop.platform.mediasession.MediaSessionBridge
 import java.io.File
 
 class PlayerViewModel(
     val playbackStateHolder: PlaybackStateHolder,
     val libraryStateHolder: LibraryStateHolder,
     val themeStateHolder: ThemeStateHolder,
-    val statsStateHolder: StatsStateHolder
+    val statsStateHolder: StatsStateHolder,
+    private val mediaSessionBridge: MediaSessionBridge? = null
 ) {
     val homeStatsOverview = statsStateHolder.homeOverview
     val currentStatsSummary = statsStateHolder.currentSummary
@@ -133,6 +135,10 @@ class PlayerViewModel(
     val artists = libraryStateHolder.artists
     val playlists = libraryStateHolder.playlists
     val favoriteSongs = libraryStateHolder.favoriteSongs
+    val filteredSongs = libraryStateHolder.filteredSongs
+    val filteredFavoriteSongs = libraryStateHolder.filteredFavoriteSongs
+    val filteredAlbums = libraryStateHolder.filteredAlbums
+    val filteredArtists = libraryStateHolder.filteredArtists
     val recentlyPlayedSongs = libraryStateHolder.recentlyPlayedSongs
     val scanProgress = libraryStateHolder.scanProgress
     val searchQuery = libraryStateHolder.searchQuery

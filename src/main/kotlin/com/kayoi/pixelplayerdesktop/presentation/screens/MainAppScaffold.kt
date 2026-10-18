@@ -87,8 +87,12 @@ fun MainAppScaffold(
     var showDismissUndoBar by remember { mutableStateOf(false) }
 
     val songs by viewModel.songs.collectAsState()
+    val filteredSongs by viewModel.filteredSongs.collectAsState()
+    val filteredFavoriteSongs by viewModel.filteredFavoriteSongs.collectAsState()
     val albums by viewModel.albums.collectAsState()
+    val filteredAlbums by viewModel.filteredAlbums.collectAsState()
     val artists by viewModel.artists.collectAsState()
+    val filteredArtists by viewModel.filteredArtists.collectAsState()
     val playlists by viewModel.playlists.collectAsState()
     val favoriteSongs by viewModel.favoriteSongs.collectAsState()
     val recentlyPlayedSongs by viewModel.recentlyPlayedSongs.collectAsState()
@@ -211,25 +215,10 @@ fun MainAppScaffold(
         onDispose { reg.close() }
     }
 
-    val filteredSongs = remember(songs, favoriteSongs, currentDestination, searchQuery, storageFilter) {
-        val base = when (currentDestination) {
-            DesktopNavDestination.LIKED -> favoriteSongs
-            else -> songs
-        }
-        val storageFiltered = when (storageFilter) {
-            StorageFilter.ALL -> base
-            StorageFilter.ONLINE -> base.filter { it.navidromeId != null || it.jellyfinId != null }
-            StorageFilter.OFFLINE -> base.filter { it.navidromeId == null && it.jellyfinId == null }
-        }
-        if (searchQuery.isBlank()) {
-            storageFiltered
-        } else {
-            storageFiltered.filter {
-                it.title.contains(searchQuery, ignoreCase = true) ||
-                it.artist.contains(searchQuery, ignoreCase = true) ||
-                it.album.contains(searchQuery, ignoreCase = true)
-            }
-        }
+    val displayedSongs = if (currentDestination == DesktopNavDestination.LIKED) {
+        filteredFavoriteSongs
+    } else {
+        filteredSongs
     }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
@@ -365,7 +354,7 @@ fun MainAppScaffold(
 
                             DesktopNavDestination.SONGS, DesktopNavDestination.LIKED -> {
                                 SongsTab(
-                                    filteredSongs = filteredSongs,
+                                    filteredSongs = displayedSongs,
                                     currentSong = currentSong,
                                     isPlaying = playerInfo.isPlaying,
                                     searchQuery = searchQuery,
@@ -393,6 +382,7 @@ fun MainAppScaffold(
                                         }
                                     },
                                     viewModel = viewModel,
+                                    filteredAlbums = filteredAlbums,
                                     onAddToPlaylist = { song -> songToAddToPlaylist = song },
                                     onDelete = { song -> songToDelete = song },
                                     onEditMetadata = { song -> songToEditMetadata = song },
@@ -415,6 +405,7 @@ fun MainAppScaffold(
                                         }
                                     },
                                     viewModel = viewModel,
+                                    filteredArtists = filteredArtists,
                                     onAddToPlaylist = { song -> songToAddToPlaylist = song },
                                     onDelete = { song -> songToDelete = song },
                                     onEditMetadata = { song -> songToEditMetadata = song }

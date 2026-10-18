@@ -53,6 +53,7 @@ fun AlbumsTab(
     selectedAlbum: Album? = null,
     onSelectAlbum: (Album?) -> Unit = {},
     viewModel: PlayerViewModel,
+    filteredAlbums: List<Album> = albums,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
     onEditMetadata: ((Song) -> Unit)? = null,
@@ -81,56 +82,11 @@ fun AlbumsTab(
         var lastHandledAlbumSortKey by remember { mutableStateOf(currentAlbumSortOption.storageKey) }
         var pendingAlbumSortScrollReset by remember { mutableStateOf(false) }
 
-        val onlineAlbums = remember(songs) {
-            val ids = mutableSetOf<Long>()
-            val titles = mutableSetOf<String>()
-            songs.filter { it.navidromeId != null || it.jellyfinId != null }.forEach { song ->
-                if (song.albumId != 0L) ids.add(song.albumId)
-                if (song.album.isNotBlank()) titles.add(song.album.lowercase().trim())
-            }
-            ids to titles
-        }
-        val offlineAlbums = remember(songs) {
-            val ids = mutableSetOf<Long>()
-            val titles = mutableSetOf<String>()
-            songs.filter { it.navidromeId == null && it.jellyfinId == null }.forEach { song ->
-                if (song.albumId != 0L) ids.add(song.albumId)
-                if (song.album.isNotBlank()) titles.add(song.album.lowercase().trim())
-            }
-            ids to titles
-        }
-
-        val allAlbumIds = remember(onlineAlbums, offlineAlbums) {
-            onlineAlbums.first + offlineAlbums.first
-        }
-        val allAlbumTitles = remember(onlineAlbums, offlineAlbums) {
-            onlineAlbums.second + offlineAlbums.second
-        }
-
-        val filteredAlbums = remember(
-            albums,
-            searchQuery,
-            storageFilter,
-            onlineAlbums,
-            offlineAlbums,
-            allAlbumIds,
-            allAlbumTitles
-        ) {
-            val byStorage = when (storageFilter) {
-                StorageFilter.ALL -> albums.filter {
-                    (it.id != 0L && it.id in allAlbumIds) || it.title.lowercase().trim() in allAlbumTitles
-                }
-                StorageFilter.ONLINE -> albums.filter {
-                    (it.id != 0L && it.id in onlineAlbums.first) || it.title.lowercase().trim() in onlineAlbums.second
-                }
-                StorageFilter.OFFLINE -> albums.filter {
-                    (it.id != 0L && it.id in offlineAlbums.first) || it.title.lowercase().trim() in offlineAlbums.second
-                }
-            }
-            if (searchQuery.isBlank()) byStorage
-            else byStorage.filter {
-                it.title.contains(searchQuery, ignoreCase = true) ||
-                it.artist.contains(searchQuery, ignoreCase = true)
+        var lastHandledSearchQuery by remember { mutableStateOf(searchQuery) }
+        LaunchedEffect(filteredAlbums) {
+            if (searchQuery != lastHandledSearchQuery) {
+                lastHandledSearchQuery = searchQuery
+                if (isAlbumsListView) albumsListState.scrollToItem(0) else albumsGridState.scrollToItem(0)
             }
         }
 

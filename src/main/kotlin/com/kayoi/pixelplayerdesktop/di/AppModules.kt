@@ -31,6 +31,7 @@ import com.kayoi.pixelplayerdesktop.domain.player.AudioEngine
 import com.kayoi.pixelplayerdesktop.domain.repository.LyricsRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
+import com.kayoi.pixelplayerdesktop.platform.mediasession.MediaSessionBridge
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.DesktopListeningStatsTracker
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.LibraryStateHolder
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlaybackStateHolder
@@ -155,11 +156,18 @@ val stateModule: Module = module {
         )
     }
     single {
+        MediaSessionBridge(
+            playbackStateHolder = get(),
+            coroutineScope = get()
+        )
+    }
+    single {
         PlayerViewModel(
             playbackStateHolder = get(),
             libraryStateHolder = get(),
             themeStateHolder = get(),
-            statsStateHolder = get()
+            statsStateHolder = get(),
+            mediaSessionBridge = get()
         )
     }
 }

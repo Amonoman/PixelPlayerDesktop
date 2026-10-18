@@ -207,6 +207,42 @@ class LibraryStateHolder(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
+    val songSearchStateHolder = SongSearchStateHolder(
+        songsFlow = songs,
+        storageFilterFlow = storageFilter,
+        searchQueryFlow = _searchQuery,
+        coroutineScope = coroutineScope
+    )
+
+    val favoriteSearchStateHolder = SongSearchStateHolder(
+        songsFlow = favoriteSongs,
+        storageFilterFlow = storageFilter,
+        searchQueryFlow = _searchQuery,
+        coroutineScope = coroutineScope
+    )
+
+    val filteredSongs: StateFlow<List<Song>> = songSearchStateHolder.filteredSongs
+    val filteredFavoriteSongs: StateFlow<List<Song>> = favoriteSearchStateHolder.filteredSongs
+
+    val albumSearchStateHolder = AlbumSearchStateHolder(
+        albumsFlow = albums,
+        songsFlow = songs,
+        storageFilterFlow = storageFilter,
+        searchQueryFlow = _searchQuery,
+        coroutineScope = coroutineScope
+    )
+
+    val artistSearchStateHolder = ArtistSearchStateHolder(
+        artistsFlow = artists,
+        songsFlow = songs,
+        storageFilterFlow = storageFilter,
+        searchQueryFlow = _searchQuery,
+        coroutineScope = coroutineScope
+    )
+
+    val filteredAlbums: StateFlow<List<Album>> = albumSearchStateHolder.filteredAlbums
+    val filteredArtists: StateFlow<List<Artist>> = artistSearchStateHolder.filteredArtists
+
     private val _searchResults = MutableStateFlow<List<SearchResultItem>>(emptyList())
     val searchResults: StateFlow<List<SearchResultItem>> = _searchResults.asStateFlow()
 
