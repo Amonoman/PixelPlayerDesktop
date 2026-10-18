@@ -35,5 +35,6 @@ interface AudioEngine {
     fun crossfadeTo(mediaPathOrUri: String, durationMs: Long) {
         play(mediaPathOrUri)
     }
+    fun isClosed(): Boolean = false
     fun release()
 }
