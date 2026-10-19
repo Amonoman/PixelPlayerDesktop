@@ -155,7 +155,7 @@ fun MainAppScaffold(
     val handleSearchQueryChange: (String) -> Unit = { newQuery ->
         if (newQuery.isNotBlank()) {
             if (searchQuery.isBlank()) {
-                if (currentDestination == DesktopNavDestination.HOME || currentDestination == DesktopNavDestination.SETTINGS) {
+                if (currentDestination == DesktopNavDestination.HOME) {
                     previousTargetBeforeSearch = currentTarget
                     nav.navigate(DesktopNavTarget.Songs)
                 }
@@ -474,6 +474,8 @@ fun MainAppScaffold(
                                     onRescanLibrary = { viewModel.rescanLibrary() },
                                     activeSection = settingsTarget?.section,
                                     activeSubDetail = settingsTarget?.subDetail ?: LibrarySubDetail.NONE,
+                                    searchQuery = searchQuery,
+                                    onClearSearch = { handleSearchQueryChange("") },
                                     onNavigate = { section, subDetail ->
                                         nav.navigate(DesktopNavTarget.Settings(section, subDetail))
                                     },

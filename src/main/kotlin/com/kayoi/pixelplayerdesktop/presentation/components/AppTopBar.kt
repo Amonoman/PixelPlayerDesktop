@@ -128,10 +128,20 @@ fun AppTopBar(
             else -> (availableWidth - 220.dp).coerceIn(140.dp, 200.dp)
         }
 
+        val targetName = when (currentDestination) {
+            DesktopNavDestination.HOME -> if (searchBarWidth >= 420.dp) "songs, albums, artists" else "songs, artists"
+            DesktopNavDestination.SONGS -> "songs"
+            DesktopNavDestination.ALBUMS -> "albums"
+            DesktopNavDestination.ARTISTS -> "artists"
+            DesktopNavDestination.PLAYLISTS -> "playlists"
+            DesktopNavDestination.FOLDERS -> "folders"
+            DesktopNavDestination.LIKED -> "liked songs"
+            DesktopNavDestination.SETTINGS -> "settings"
+        }
+
         val placeholder = when {
-            searchBarWidth >= 420.dp -> "Search songs, albums, artists... (Ctrl+K)"
-            searchBarWidth >= 320.dp -> "Search songs, artists... (Ctrl+K)"
-            searchBarWidth >= 220.dp -> "Search... (Ctrl+K)"
+            searchBarWidth >= 260.dp -> "Search $targetName... (Ctrl+K)"
+            searchBarWidth >= 180.dp -> "Search $targetName..."
             else -> "Search..."
         }
 

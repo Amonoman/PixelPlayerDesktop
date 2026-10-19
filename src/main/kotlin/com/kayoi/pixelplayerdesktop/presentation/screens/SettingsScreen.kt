@@ -20,6 +20,8 @@ import com.kayoi.pixelplayerdesktop.presentation.screens.settings.MusicFoldersDe
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.PaletteStyleDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.SettingsCategoryDetail
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.SettingsOverviewMenu
+import com.kayoi.pixelplayerdesktop.presentation.screens.settings.SettingsSearchCatalog
+import com.kayoi.pixelplayerdesktop.presentation.screens.settings.SettingsSearchResults
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.SettingsSection
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 
@@ -41,10 +43,29 @@ fun SettingsScreen(
     onRescanLibrary: () -> Unit,
     activeSection: SettingsSection? = null,
     activeSubDetail: LibrarySubDetail = LibrarySubDetail.NONE,
+    searchQuery: String = "",
+    onClearSearch: () -> Unit = {},
     onNavigate: (SettingsSection?, LibrarySubDetail) -> Unit = { _, _ -> },
     onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    if (searchQuery.isNotBlank()) {
+        val searchResults = remember(searchQuery) {
+            SettingsSearchCatalog.search(searchQuery)
+        }
+        SettingsSearchResults(
+            query = searchQuery,
+            results = searchResults,
+            isDarkTheme = isDarkTheme,
+            onSelect = { item ->
+                onClearSearch()
+                onNavigate(item.section, item.subDetail)
+            },
+            modifier = modifier
+        )
+        return
+    }
+
     AnimatedContent(
         targetState = Pair(activeSection, activeSubDetail),
         transitionSpec = {
