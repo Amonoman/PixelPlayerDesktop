@@ -59,12 +59,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kayoi.pixelplayerdesktop.data.model.ArtistRef
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.components.ArtworkSize
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
@@ -99,6 +110,8 @@ fun DesktopLandscapeHeroPlayer(
     onToggleFavorite: () -> Unit,
     onVolumeChange: (Float) -> Unit,
     onToggleMute: () -> Unit,
+    onArtistClick: ((ArtistRef) -> Unit)? = null,
+    onAlbumClick: (() -> Unit)? = null,
     showPlayerFileInfo: Boolean = true,
     modifier: Modifier = Modifier
 ) {
@@ -125,20 +138,29 @@ fun DesktopLandscapeHeroPlayer(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                    ) {
-                        AsyncArtworkImage(
-                            artworkUri = song.albumArtUriString,
-                            modifier = Modifier.fillMaxSize(),
-                            placeholderIcon = Icons.Rounded.MusicNote,
-                            placeholderIconSize = 36.dp,
-                            containerColor = colors.primaryContainer,
-                            contentColor = colors.onPrimaryContainer,
-                            contentDescription = "${song.title} artwork"
-                        )
+                    AppTooltip(if (onAlbumClick != null) "View album" else "") {
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .then(
+                                    if (onAlbumClick != null) {
+                                        Modifier
+                                            .pointerHoverIcon(PointerIcon.Hand)
+                                            .clickable(onClick = onAlbumClick)
+                                    } else Modifier
+                                )
+                        ) {
+                            AsyncArtworkImage(
+                                artworkUri = song.albumArtUriString,
+                                modifier = Modifier.fillMaxSize(),
+                                placeholderIcon = Icons.Rounded.MusicNote,
+                                placeholderIconSize = 36.dp,
+                                containerColor = colors.primaryContainer,
+                                contentColor = colors.onPrimaryContainer,
+                                contentDescription = "${song.title} artwork"
+                            )
+                        }
                     }
 
                     Column(
@@ -163,15 +185,14 @@ fun DesktopLandscapeHeroPlayer(
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = song.displayArtist,
+                                InteractiveArtistNames(
+                                    song = song,
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Medium
                                     ),
                                     color = colors.onPrimaryContainer.copy(alpha = 0.75f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    onArtistClick = onArtistClick
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 val metaLabel = formatAudioMetaLabel(song)
@@ -327,21 +348,30 @@ fun DesktopLandscapeHeroPlayer(
                     horizontalArrangement = Arrangement.spacedBy(gap),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(artworkSize)
-                            .clip(RoundedCornerShape(20.dp))
-                    ) {
-                        AsyncArtworkImage(
-                            artworkUri = song.albumArtUriString,
-                            targetSize = ArtworkSize.LARGE,
-                            modifier = Modifier.fillMaxSize(),
-                            placeholderIcon = Icons.Rounded.MusicNote,
-                            placeholderIconSize = if (isCompactHero) 40.dp else 56.dp,
-                            containerColor = colors.primaryContainer,
-                            contentColor = colors.onPrimaryContainer,
-                            contentDescription = "${song.title} artwork"
-                        )
+                    AppTooltip(if (onAlbumClick != null) "View album" else "") {
+                        Box(
+                            modifier = Modifier
+                                .size(artworkSize)
+                                .clip(RoundedCornerShape(20.dp))
+                                .then(
+                                    if (onAlbumClick != null) {
+                                        Modifier
+                                            .pointerHoverIcon(PointerIcon.Hand)
+                                            .clickable(onClick = onAlbumClick)
+                                    } else Modifier
+                                )
+                        ) {
+                            AsyncArtworkImage(
+                                artworkUri = song.albumArtUriString,
+                                targetSize = ArtworkSize.LARGE,
+                                modifier = Modifier.fillMaxSize(),
+                                placeholderIcon = Icons.Rounded.MusicNote,
+                                placeholderIconSize = if (isCompactHero) 40.dp else 56.dp,
+                                containerColor = colors.primaryContainer,
+                                contentColor = colors.onPrimaryContainer,
+                                contentDescription = "${song.title} artwork"
+                            )
+                        }
                     }
 
                     Column(
@@ -369,15 +399,14 @@ fun DesktopLandscapeHeroPlayer(
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = song.displayArtist,
+                                InteractiveArtistNames(
+                                    song = song,
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontSize = if (isCompactHero) 13.5.sp else 15.sp,
                                         fontWeight = FontWeight.Medium
                                     ),
                                     color = colors.onPrimaryContainer.copy(alpha = 0.75f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    onArtistClick = onArtistClick
                                 )
                             }
 
@@ -796,4 +825,52 @@ private fun HeroPlayerProgressTrack(
             }
         }
     }
+}
+
+@Composable
+fun InteractiveArtistNames(
+    song: Song,
+    style: TextStyle,
+    color: Color,
+    onArtistClick: ((ArtistRef) -> Unit)?,
+    modifier: Modifier = Modifier
+) {
+    val artists = song.resolvedArtists
+    val annotatedString = remember(artists, color, onArtistClick) {
+        buildAnnotatedString {
+            artists.forEachIndexed { index, artistRef ->
+                if (onArtistClick != null) {
+                    withLink(
+                        LinkAnnotation.Clickable(
+                            tag = artistRef.id.toString(),
+                            styles = TextLinkStyles(
+                                style = SpanStyle(color = color),
+                                hoveredStyle = SpanStyle(
+                                    color = color.copy(alpha = 1f),
+                                    textDecoration = TextDecoration.Underline
+                                )
+                            ),
+                            linkInteractionListener = { onArtistClick(artistRef) }
+                        )
+                    ) {
+                        append(artistRef.name)
+                    }
+                } else {
+                    append(artistRef.name)
+                }
+                if (index < artists.lastIndex) {
+                    append(", ")
+                }
+            }
+        }
+    }
+
+    Text(
+        text = annotatedString,
+        style = style,
+        color = color,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier
+    )
 }

@@ -641,6 +641,14 @@ fun MainAppScaffold(
                 onEditMetadata = { song -> songToEditMetadata = song },
                 onAddToPlaylist = { song -> songToAddToPlaylist = song },
                 onDelete = { song -> songToDelete = song },
+                onNavigateToArtist = { artist ->
+                    isExpandedPlayerOpen = false
+                    nav.navigate(DesktopNavTarget.ArtistDetail(artist))
+                },
+                onNavigateToAlbum = { album ->
+                    isExpandedPlayerOpen = false
+                    nav.navigate(DesktopNavTarget.AlbumDetail(album))
+                },
                 topBarWrapper = topBarWrapper
             )
         }

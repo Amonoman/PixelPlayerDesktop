@@ -48,4 +48,19 @@ data class Song(
             }
             return artist
         }
+
+    val resolvedArtists: List<ArtistRef>
+        get() {
+            val validArtists = artists.filter { it.name.isNotBlank() }
+            if (validArtists.isNotEmpty()) {
+                return validArtists.sortedByDescending { it.isPrimary }
+            }
+            return listOf(
+                ArtistRef(
+                    id = artistId,
+                    name = artist.ifBlank { "Unknown Artist" },
+                    isPrimary = true
+                )
+            )
+        }
 }

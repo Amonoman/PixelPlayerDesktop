@@ -70,6 +70,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kayoi.pixelplayerdesktop.data.model.Album
+import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.components.LyricsSearchDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueSidePanel
@@ -107,12 +109,16 @@ fun ExpandedPlayerScreen(
     onEditMetadata: ((Song) -> Unit)? = null,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
+    onNavigateToArtist: ((Artist) -> Unit)? = null,
+    onNavigateToAlbum: ((Album) -> Unit)? = null,
     topBarWrapper: @Composable (@Composable () -> Unit) -> Unit = { it() },
     modifier: Modifier = Modifier
 ) {
     val playerInfo by viewModel.playerInfo.collectAsState()
     val currentSong by viewModel.currentSong.collectAsState()
     val queue by viewModel.queue.collectAsState()
+    val allArtists by viewModel.artists.collectAsState()
+    val allAlbums by viewModel.albums.collectAsState()
     val favoriteSongs by viewModel.favoriteSongs.collectAsState()
     val isDarkTheme by viewModel.isDarkMode.collectAsState()
     val isDynamicColor by viewModel.isDynamicColorEnabled.collectAsState()
@@ -327,6 +333,30 @@ fun ExpandedPlayerScreen(
                                     onToggleFavorite = { viewModel.toggleFavoriteCurrentSong() },
                                     onVolumeChange = { viewModel.setVolume(it) },
                                     onToggleMute = { viewModel.toggleMute() },
+                                    onArtistClick = if (onNavigateToArtist != null) {
+                                        { artistRef ->
+                                            val targetArtist = allArtists.firstOrNull { it.id == artistRef.id || it.name.equals(artistRef.name, ignoreCase = true) }
+                                                ?: Artist(id = artistRef.id, name = artistRef.name)
+                                            onClose()
+                                            onNavigateToArtist(targetArtist)
+                                        }
+                                    } else null,
+                                    onAlbumClick = if (onNavigateToAlbum != null) {
+                                        {
+                                            val song = currentSong
+                                            if (song != null) {
+                                                val targetAlbum = allAlbums.firstOrNull { it.id == song.albumId || it.title.equals(song.album, ignoreCase = true) }
+                                                    ?: Album(
+                                                        id = song.albumId,
+                                                        title = song.album.ifBlank { "Unknown Album" },
+                                                        artist = song.artist,
+                                                        albumArtUriString = song.albumArtUriString
+                                                    )
+                                                onClose()
+                                                onNavigateToAlbum(targetAlbum)
+                                            }
+                                        }
+                                    } else null,
                                     showPlayerFileInfo = showPlayerFileInfo,
                                     modifier = Modifier.fillMaxWidth()
                                 )
