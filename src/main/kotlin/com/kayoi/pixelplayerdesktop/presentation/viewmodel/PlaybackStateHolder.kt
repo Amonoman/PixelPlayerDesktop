@@ -317,6 +317,15 @@ class PlaybackStateHolder(
     }
 
     init {
+        val initialSettings = settingsRepository.settingsFlow.value
+        audioEngine.setVolume(initialSettings.volume)
+        audioEngine.setMute(initialSettings.isMuted)
+        _playerInfo.update {
+            it.copy(
+                volume = initialSettings.volume,
+                isMuted = initialSettings.isMuted
+            )
+        }
 
         coroutineScope.launch {
             queueManager.currentSong.collectLatest { song ->
@@ -653,7 +662,14 @@ class PlaybackStateHolder(
         lastDismissedPositionMs = audioEngine.currentPositionMs.value
         audioEngine.stop()
         queueManager.clearQueue()
-        _playerInfo.update { PlayerInfo() }
+        _playerInfo.update {
+            PlayerInfo(
+                volume = audioEngine.volume.value,
+                isMuted = audioEngine.isMuted.value,
+                isShuffleEnabled = queueManager.isShuffleEnabled.value,
+                repeatMode = queueManager.repeatMode.value
+            )
+        }
     }
 
     fun undoStopPlayback() {
@@ -697,7 +713,14 @@ class PlaybackStateHolder(
         listeningStatsTracker.onPlaybackStopped()
         audioEngine.stop()
         queueManager.clearQueue()
-        _playerInfo.update { PlayerInfo() }
+        _playerInfo.update {
+            PlayerInfo(
+                volume = audioEngine.volume.value,
+                isMuted = audioEngine.isMuted.value,
+                isShuffleEnabled = queueManager.isShuffleEnabled.value,
+                repeatMode = queueManager.repeatMode.value
+            )
+        }
     }
 
     fun addSongToQueue(song: Song) {

@@ -225,6 +225,18 @@ class VlcjAudioEngine(
                 if (isClosed()) return
                 if (mp === playerPair.get().active && newTime >= 0) {
                     _currentPositionMs.value = newTime
+                    if (_playbackState.value == PlaybackState.BUFFERING) {
+                        _playbackState.value = PlaybackState.PLAYING
+                        startPositionTicker()
+                    }
+                }
+            }
+
+            override fun positionChanged(mp: MediaPlayer, newPosition: Float) {
+                if (isClosed()) return
+                if (mp === playerPair.get().active && _playbackState.value == PlaybackState.BUFFERING) {
+                    _playbackState.value = PlaybackState.PLAYING
+                    startPositionTicker()
                 }
             }
 
@@ -245,10 +257,8 @@ class VlcjAudioEngine(
                     if (newCache < 100.0f) {
                         _playbackState.value = PlaybackState.BUFFERING
                     } else {
-                        val isPlaying = try { mp.status().isPlaying } catch (_: Exception) { false }
-                        if (isPlaying) {
-                            _playbackState.value = PlaybackState.PLAYING
-                        }
+                        _playbackState.value = PlaybackState.PLAYING
+                        startPositionTicker()
                     }
                 }
             }
