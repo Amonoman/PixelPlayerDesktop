@@ -72,22 +72,11 @@ import com.kayoi.pixelplayerdesktop.presentation.components.PlaybackCurrentTimeT
 import com.kayoi.pixelplayerdesktop.presentation.components.WavySliderExpressive
 import com.kayoi.pixelplayerdesktop.presentation.components.formatTime
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
+import com.kayoi.pixelplayerdesktop.utils.AudioMetaUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
-import java.io.File
 
-internal fun formatAudioMetaLabel(song: Song): String {
-    val ext = File(song.path).extension.uppercase()
-    return when (ext) {
-        "FLAC" -> "FLAC LOSSLESS"
-        "OPUS" -> "OPUS"
-        "OGG" -> "VORBIS"
-        "WAV" -> "WAV"
-        "M4A", "AAC" -> "AAC"
-        "MP3" -> "MP3"
-        else -> ext.ifBlank { "AUDIO" }
-    }
-}
+internal fun formatAudioMetaLabel(song: Song): String = AudioMetaUtils.formatAudioMetaLabel(song)
 
 @Composable
 fun DesktopLandscapeHeroPlayer(

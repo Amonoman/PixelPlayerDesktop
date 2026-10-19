@@ -67,6 +67,7 @@ import com.kayoi.pixelplayerdesktop.data.metadata.CoverArtUpdate
 import com.kayoi.pixelplayerdesktop.data.metadata.EditableSongMetadata
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
+import com.kayoi.pixelplayerdesktop.utils.AudioMetaUtils
 import com.kayoi.pixelplayerdesktop.utils.DirectoryPicker
 import kotlinx.coroutines.launch
 import org.jetbrains.skia.Image as SkiaImage
@@ -333,21 +334,26 @@ fun EditSongMetadataDialog(
                             Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 val details = audioDetails
                                 val ext = File(song.path).extension.uppercase()
+                                val formatLabel = details?.format?.ifBlank { null }
+                                    ?: AudioMetaUtils.mimeTypeToFormat(song.mimeType).takeIf { it != "-" }?.uppercase(Locale.getDefault())
+                                    ?: ext.ifBlank { "AUDIO" }
                                 Text(
-                                    text = "Format: ${details?.format ?: ext}",
+                                    text = "Format: $formatLabel",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = colors.onSurfaceVariant
                                 )
-                                if (details?.bitrate != null && details.bitrate > 0) {
+                                val bitrateText = AudioMetaUtils.formatBitrate(details?.bitrate ?: song.bitrate)
+                                if (bitrateText != null) {
                                     Text(
-                                        text = "Bitrate: ${details.bitrate / 1000} kbps",
+                                        text = "Bitrate: $bitrateText",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = colors.onSurfaceVariant
                                     )
                                 }
-                                if (details?.sampleRate != null && details.sampleRate > 0) {
+                                val sampleRateText = AudioMetaUtils.formatSampleRate(details?.sampleRate ?: song.sampleRate)
+                                if (sampleRateText != null) {
                                     Text(
-                                        text = "Sample Rate: ${details.sampleRate / 1000.0} kHz",
+                                        text = "Sample Rate: $sampleRateText",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = colors.onSurfaceVariant
                                     )

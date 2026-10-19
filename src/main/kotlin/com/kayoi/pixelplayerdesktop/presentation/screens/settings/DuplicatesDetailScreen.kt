@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
+import com.kayoi.pixelplayerdesktop.utils.AudioMetaUtils
 import com.kayoi.pixelplayerdesktop.utils.DuplicateFinder
 
 @Composable
@@ -252,7 +253,7 @@ private fun DuplicateSongRow(
 
                 val durationSec = song.duration / 1000
                 val durationText = "${durationSec / 60}:${(durationSec % 60).toString().padStart(2, '0')}"
-                val bitrateText = song.bitrate?.let { " • ${it / 1000} kbps" }.orEmpty()
+                val bitrateText = AudioMetaUtils.formatBitrate(song.bitrate)?.let { " • $it" }.orEmpty()
                 val extText = song.path.substringAfterLast(".", "").uppercase().ifBlank {
                     song.mimeType?.substringAfterLast("/")?.uppercase() ?: "AUDIO"
                 }
