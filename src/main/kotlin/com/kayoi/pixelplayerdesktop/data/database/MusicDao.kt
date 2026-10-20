@@ -120,9 +120,12 @@ class MusicDao(
                     ON CONFLICT(path) DO UPDATE SET
                         title = excluded.title,
                         artist = excluded.artist,
+                        artist_id = excluded.artist_id,
                         artists_json = excluded.artists_json,
                         album = excluded.album,
+                        album_id = excluded.album_id,
                         album_artist = excluded.album_artist,
+                        content_uri_string = excluded.content_uri_string,
                         album_art_uri_string = excluded.album_art_uri_string,
                         duration = excluded.duration,
                         genre = excluded.genre,

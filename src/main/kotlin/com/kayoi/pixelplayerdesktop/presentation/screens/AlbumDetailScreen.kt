@@ -138,7 +138,7 @@ fun AlbumDetailScreen(
         val albumSongs = remember(album, songs) {
             songs.filter {
                 (it.albumId != 0L && it.albumId == album.id) ||
-                it.album.equals(album.title, ignoreCase = true)
+                (it.album.equals(album.title, ignoreCase = true) && (album.artist.isBlank() || it.artist.equals(album.artist, ignoreCase = true)))
             }.sortedWith(
                 compareBy<Song> { it.discNumber ?: 1 }
                     .thenBy { if (it.trackNumber > 0) it.trackNumber else Int.MAX_VALUE }

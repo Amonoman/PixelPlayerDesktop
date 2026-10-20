@@ -158,7 +158,7 @@ fun AlbumsTab(
                             contentType = { "album_list_item" }
                         ) { album ->
                             val albumSongs = remember(album, songs) {
-                                songs.filter { (it.albumId != 0L && it.albumId == album.id) || it.album.equals(album.title, ignoreCase = true) }
+                                songs.filter { (it.albumId != 0L && it.albumId == album.id) || (it.album.equals(album.title, ignoreCase = true) && (album.artist.isBlank() || it.artist.equals(album.artist, ignoreCase = true))) }
                             }
                             val artist = remember(album.artist, allArtists) {
                                 allArtists.find { it.name.equals(album.artist, ignoreCase = true) }
@@ -198,7 +198,7 @@ fun AlbumsTab(
                             contentType = { "album_grid_item" }
                         ) { album ->
                             val albumSongs = remember(album, songs) {
-                                songs.filter { (it.albumId != 0L && it.albumId == album.id) || it.album.equals(album.title, ignoreCase = true) }
+                                songs.filter { (it.albumId != 0L && it.albumId == album.id) || (it.album.equals(album.title, ignoreCase = true) && (album.artist.isBlank() || it.artist.equals(album.artist, ignoreCase = true))) }
                             }
                             val artist = remember(album.artist, allArtists) {
                                 allArtists.find { it.name.equals(album.artist, ignoreCase = true) }
