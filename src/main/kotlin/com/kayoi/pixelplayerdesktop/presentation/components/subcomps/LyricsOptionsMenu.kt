@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveSwitch
@@ -60,7 +61,8 @@ fun LyricsOptionsMenu(
     onSaveLyrics: () -> Unit,
     onResetLyrics: () -> Unit,
     modifier: Modifier = Modifier,
-    menuWidth: Dp = 310.dp
+    menuWidth: Dp = 310.dp,
+    offset: DpOffset = DpOffset(x = -(menuWidth - 32.dp), y = 8.dp)
 ) {
     val colors = MaterialTheme.colorScheme
 
@@ -70,6 +72,7 @@ fun LyricsOptionsMenu(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = onDismissRequest,
+            offset = offset,
             modifier = modifier
                 .width(menuWidth)
                 .clip(RoundedCornerShape(24.dp))

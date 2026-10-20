@@ -1,6 +1,7 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -33,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
@@ -52,7 +54,8 @@ fun SongOptionsDropdownMenu(
     onRemoveFromQueue: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
     customItems: (@Composable ColumnScope.() -> Unit)? = null,
-    menuWidth: androidx.compose.ui.unit.Dp = 250.dp,
+    menuWidth: Dp = 250.dp,
+    offset: DpOffset = DpOffset(0.dp, 8.dp),
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -63,9 +66,11 @@ fun SongOptionsDropdownMenu(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = onDismissRequest,
+            offset = offset,
             modifier = modifier
                 .width(menuWidth)
                 .background(colors.surfaceContainerHigh, RoundedCornerShape(20.dp))
+                .border(1.dp, colors.outlineVariant.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
         ) {
             Row(
                 modifier = Modifier

@@ -81,6 +81,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
@@ -463,6 +464,7 @@ fun LibraryActionRow(
                                 }
                                 isSortMenuExpanded = false
                             },
+                            offset = DpOffset(0.dp, 8.dp),
                             modifier = Modifier
                                 .width(285.dp)
                                 .background(colors.surfaceContainerHigh, RoundedCornerShape(20.dp))

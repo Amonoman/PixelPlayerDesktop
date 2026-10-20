@@ -221,6 +221,22 @@ class QueueManager(
         }
     }
 
+    fun playNextInQueue(songs: List<Song>) {
+        synchronized(lock) {
+            if (songs.isEmpty()) return
+            val currentList = _queue.value.toMutableList()
+            val currIdx = _currentIndex.value
+            val insertIdx = if (currIdx in currentList.indices) currIdx + 1 else currentList.size
+            currentList.addAll(insertIdx, songs)
+            _queue.value = currentList.toList()
+            val origIdx = originalQueue.indexOfFirst { it.id == _currentSong.value?.id }
+            val origInsert = if (origIdx >= 0) origIdx + 1 else originalQueue.size
+            val mutableOrig = originalQueue.toMutableList()
+            mutableOrig.addAll(origInsert, songs)
+            originalQueue = mutableOrig.toList()
+        }
+    }
+
     fun removeFromQueue(index: Int): Song? = synchronized(lock) {
         val currentList = _queue.value.toMutableList()
         if (index !in currentList.indices) return _currentSong.value

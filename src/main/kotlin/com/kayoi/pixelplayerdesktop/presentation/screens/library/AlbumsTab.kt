@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kayoi.pixelplayerdesktop.data.model.Album
+import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
 import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
@@ -55,6 +56,8 @@ fun AlbumsTab(
     viewModel: PlayerViewModel,
     filteredAlbums: List<Album> = albums,
     onAddToPlaylist: ((Song) -> Unit)? = null,
+    onAddSongsToPlaylist: ((List<Song>) -> Unit)? = null,
+    onNavigateToArtist: ((Artist) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
     onEditMetadata: ((Song) -> Unit)? = null,
     onBatchEditMetadata: ((List<Song>) -> Unit)? = null,
@@ -74,6 +77,7 @@ fun AlbumsTab(
         )
     } else {
         val colors = MaterialTheme.colorScheme
+        val allArtists by viewModel.artists.collectAsState()
         val currentAlbumSortOption by viewModel.libraryStateHolder.albumSortOption.collectAsState()
         val isAlbumsListView by viewModel.isAlbumsListView.collectAsState()
         val storageFilter by viewModel.storageFilter.collectAsState()
@@ -153,10 +157,29 @@ fun AlbumsTab(
                             key = { it.title + it.artist },
                             contentType = { "album_list_item" }
                         ) { album ->
+                            val albumSongs = remember(album, songs) {
+                                songs.filter { (it.albumId != 0L && it.albumId == album.id) || it.album.equals(album.title, ignoreCase = true) }
+                            }
+                            val artist = remember(album.artist, allArtists) {
+                                allArtists.find { it.name.equals(album.artist, ignoreCase = true) }
+                            }
                             AlbumListItem(
                                 album = album,
                                 isDarkTheme = isDarkTheme,
-                                onClick = { onSelectAlbum(album) }
+                                onClick = { onSelectAlbum(album) },
+                                onPlay = { viewModel.playSongs(albumSongs, 0) },
+                                onPlayNext = { viewModel.playSongsNext(albumSongs) },
+                                onAddToQueue = { viewModel.addSongsToQueue(albumSongs) },
+                                onAddToPlaylist = {
+                                    if (onAddSongsToPlaylist != null) {
+                                        onAddSongsToPlaylist(albumSongs)
+                                    } else if (onAddToPlaylist != null && albumSongs.isNotEmpty()) {
+                                        onAddToPlaylist(albumSongs.first())
+                                    }
+                                },
+                                onNavigateToArtist = if (artist != null && onNavigateToArtist != null) {
+                                    { onNavigateToArtist(artist) }
+                                } else null
                             )
                         }
                     }
@@ -174,10 +197,29 @@ fun AlbumsTab(
                             key = { it.title + it.artist },
                             contentType = { "album_grid_item" }
                         ) { album ->
+                            val albumSongs = remember(album, songs) {
+                                songs.filter { (it.albumId != 0L && it.albumId == album.id) || it.album.equals(album.title, ignoreCase = true) }
+                            }
+                            val artist = remember(album.artist, allArtists) {
+                                allArtists.find { it.name.equals(album.artist, ignoreCase = true) }
+                            }
                             AlbumGridItem(
                                 album = album,
                                 isDarkTheme = isDarkTheme,
-                                onClick = { onSelectAlbum(album) }
+                                onClick = { onSelectAlbum(album) },
+                                onPlay = { viewModel.playSongs(albumSongs, 0) },
+                                onPlayNext = { viewModel.playSongsNext(albumSongs) },
+                                onAddToQueue = { viewModel.addSongsToQueue(albumSongs) },
+                                onAddToPlaylist = {
+                                    if (onAddSongsToPlaylist != null) {
+                                        onAddSongsToPlaylist(albumSongs)
+                                    } else if (onAddToPlaylist != null && albumSongs.isNotEmpty()) {
+                                        onAddToPlaylist(albumSongs.first())
+                                    }
+                                },
+                                onNavigateToArtist = if (artist != null && onNavigateToArtist != null) {
+                                    { onNavigateToArtist(artist) }
+                                } else null
                             )
                         }
                     }

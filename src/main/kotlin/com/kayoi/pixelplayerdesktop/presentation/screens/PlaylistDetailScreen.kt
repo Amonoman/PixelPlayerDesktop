@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -64,6 +65,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Song
@@ -720,30 +722,48 @@ private fun PlaylistHeaderActions(
                 )
             }
 
-            DropdownMenu(
-                expanded = isMenuExpanded,
-                onDismissRequest = { isMenuExpanded = false }
+            MaterialTheme(
+                shapes = MaterialTheme.shapes.copy(extraSmall = RoundedCornerShape(20.dp))
             ) {
-                DropdownMenuItem(
-                    text = { Text("Rename Playlist") },
-                    leadingIcon = {
-                        Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-                    },
-                    onClick = {
-                        isMenuExpanded = false
-                        onRename()
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("Delete Playlist", color = colors.error) },
-                    leadingIcon = {
-                        Icon(Icons.Rounded.Delete, contentDescription = null, tint = colors.error, modifier = Modifier.size(18.dp))
-                    },
-                    onClick = {
-                        isMenuExpanded = false
-                        onDelete()
-                    }
-                )
+                DropdownMenu(
+                    expanded = isMenuExpanded,
+                    onDismissRequest = { isMenuExpanded = false },
+                    offset = DpOffset(0.dp, 8.dp),
+                    modifier = Modifier
+                        .width(200.dp)
+                        .background(colors.surfaceContainerHigh, RoundedCornerShape(20.dp))
+                        .border(1.dp, colors.outlineVariant.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
+                        .padding(horizontal = 4.dp, vertical = 4.dp)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Rename Playlist", fontWeight = FontWeight.Medium) },
+                        leadingIcon = {
+                            Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        onClick = {
+                            isMenuExpanded = false
+                            onRename()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Delete Playlist", fontWeight = FontWeight.Medium, color = colors.error) },
+                        leadingIcon = {
+                            Icon(Icons.Rounded.Delete, contentDescription = null, tint = colors.error, modifier = Modifier.size(18.dp))
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        onClick = {
+                            isMenuExpanded = false
+                            onDelete()
+                        }
+                    )
+                }
             }
         }
     }

@@ -106,7 +106,9 @@ class PlayerViewModel(
     fun clearQueue() = playbackStateHolder.clearQueue()
     fun playSongAtIndex(index: Int) = playbackStateHolder.playSongAtIndex(index)
     fun addSongToQueue(song: Song) = playbackStateHolder.addSongToQueue(song)
+    fun addSongsToQueue(songs: List<Song>) = playbackStateHolder.addSongsToQueue(songs)
     fun playSongNext(song: Song) = playbackStateHolder.playSongNext(song)
+    fun playSongsNext(songs: List<Song>) = playbackStateHolder.playSongsNext(songs)
 
     val replayGainEnabled = playbackStateHolder.replayGainEnabled
     val replayGainMode = playbackStateHolder.replayGainMode

@@ -1,11 +1,15 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.PointerMatcher
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,14 +47,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Playlist
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.components.PlaylistCover
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PlaylistListItem(
     playlist: Playlist,
@@ -79,7 +86,11 @@ fun PlaylistListItem(
             .height(80.dp)
             .clip(cardShape)
             .hoverable(interactionSource)
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .onClick(
+                matcher = PointerMatcher.mouse(PointerButton.Secondary),
+                onClick = { isMenuExpanded = true }
+            ),
         shape = cardShape,
         colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
@@ -160,30 +171,48 @@ fun PlaylistListItem(
                     )
                 }
 
-                DropdownMenu(
-                    expanded = isMenuExpanded,
-                    onDismissRequest = { isMenuExpanded = false }
+                MaterialTheme(
+                    shapes = MaterialTheme.shapes.copy(extraSmall = RoundedCornerShape(20.dp))
                 ) {
-                    DropdownMenuItem(
-                        text = { Text("Rename") },
-                        leadingIcon = {
-                            Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-                        },
-                        onClick = {
-                            isMenuExpanded = false
-                            onRenameClick()
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Delete", color = colors.error) },
-                        leadingIcon = {
-                            Icon(Icons.Rounded.Delete, contentDescription = null, tint = colors.error, modifier = Modifier.size(18.dp))
-                        },
-                        onClick = {
-                            isMenuExpanded = false
-                            onDeleteClick()
-                        }
-                    )
+                    DropdownMenu(
+                        expanded = isMenuExpanded,
+                        onDismissRequest = { isMenuExpanded = false },
+                        offset = DpOffset(0.dp, 8.dp),
+                        modifier = Modifier
+                            .width(180.dp)
+                            .background(colors.surfaceContainerHigh, RoundedCornerShape(20.dp))
+                            .border(1.dp, colors.outlineVariant.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 4.dp, vertical = 4.dp)
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Rename", fontWeight = FontWeight.Medium) },
+                            leadingIcon = {
+                                Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            onClick = {
+                                isMenuExpanded = false
+                                onRenameClick()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Delete", fontWeight = FontWeight.Medium, color = colors.error) },
+                            leadingIcon = {
+                                Icon(Icons.Rounded.Delete, contentDescription = null, tint = colors.error, modifier = Modifier.size(18.dp))
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            onClick = {
+                                isMenuExpanded = false
+                                onDeleteClick()
+                            }
+                        )
+                    }
                 }
             }
         }

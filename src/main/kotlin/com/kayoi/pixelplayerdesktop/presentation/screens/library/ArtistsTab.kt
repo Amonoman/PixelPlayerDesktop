@@ -56,6 +56,7 @@ fun ArtistsTab(
     viewModel: PlayerViewModel,
     filteredArtists: List<Artist> = artists,
     onAddToPlaylist: ((Song) -> Unit)? = null,
+    onAddSongsToPlaylist: ((List<Song>) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
     onEditMetadata: ((Song) -> Unit)? = null,
     modifier: Modifier = Modifier
@@ -141,6 +142,16 @@ fun ArtistsTab(
                 )
             } else {
                 Box(modifier = Modifier.fillMaxSize()) {
+                    val songsForArtist: (Artist) -> List<Song> = remember(songs) {
+                        { artist ->
+                            songs.filter { song ->
+                                (song.artistId != 0L && song.artistId == artist.id) ||
+                                song.artists.any { it.id == artist.id || it.name.equals(artist.name, ignoreCase = true) } ||
+                                song.artist.contains(artist.name, ignoreCase = true)
+                            }
+                        }
+                    }
+
                     if (isArtistsListView) {
                         LazyColumn(
                             state = artistsListState,
@@ -153,10 +164,21 @@ fun ArtistsTab(
                                 key = { it.name },
                                 contentType = { "artist_list_item" }
                             ) { artist ->
+                                val artistSongs = remember(artist, songs) { songsForArtist(artist) }
                                 ArtistListItem(
                                     artist = artist,
                                     fetchDeezerImages = fetchDeezerImages,
-                                    onClick = { onSelectArtist(artist) }
+                                    onClick = { onSelectArtist(artist) },
+                                    onPlay = { viewModel.playSongs(artistSongs, 0) },
+                                    onPlayNext = { viewModel.playSongsNext(artistSongs) },
+                                    onAddToQueue = { viewModel.addSongsToQueue(artistSongs) },
+                                    onAddToPlaylist = {
+                                        if (onAddSongsToPlaylist != null) {
+                                            onAddSongsToPlaylist(artistSongs)
+                                        } else if (onAddToPlaylist != null && artistSongs.isNotEmpty()) {
+                                            onAddToPlaylist(artistSongs.first())
+                                        }
+                                    }
                                 )
                             }
                         }
@@ -174,10 +196,21 @@ fun ArtistsTab(
                                 key = { it.name },
                                 contentType = { "artist_grid_item" }
                             ) { artist ->
+                                val artistSongs = remember(artist, songs) { songsForArtist(artist) }
                                 ArtistGridItem(
                                     artist = artist,
                                     fetchDeezerImages = fetchDeezerImages,
-                                    onClick = { onSelectArtist(artist) }
+                                    onClick = { onSelectArtist(artist) },
+                                    onPlay = { viewModel.playSongs(artistSongs, 0) },
+                                    onPlayNext = { viewModel.playSongsNext(artistSongs) },
+                                    onAddToQueue = { viewModel.addSongsToQueue(artistSongs) },
+                                    onAddToPlaylist = {
+                                        if (onAddSongsToPlaylist != null) {
+                                            onAddSongsToPlaylist(artistSongs)
+                                        } else if (onAddToPlaylist != null && artistSongs.isNotEmpty()) {
+                                            onAddToPlaylist(artistSongs.first())
+                                        }
+                                    }
                                 )
                             }
                         }

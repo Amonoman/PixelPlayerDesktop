@@ -740,8 +740,16 @@ class PlaybackStateHolder(
         queueManager.addToQueue(listOf(song))
     }
 
+    fun addSongsToQueue(songs: List<Song>) {
+        queueManager.addToQueue(songs)
+    }
+
     fun playSongNext(song: Song) {
         queueManager.playNextInQueue(song)
+    }
+
+    fun playSongsNext(songs: List<Song>) {
+        queueManager.playNextInQueue(songs)
     }
 
     fun playSongAtIndex(index: Int) {

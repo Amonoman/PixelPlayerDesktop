@@ -54,7 +54,7 @@ import com.kayoi.pixelplayerdesktop.data.model.Song
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddToPlaylistDialog(
-    song: Song,
+    songs: List<Song>,
     playlists: List<Playlist>,
     onDismiss: () -> Unit,
     onPlaylistSelected: (Playlist) -> Unit,
@@ -113,8 +113,13 @@ fun AddToPlaylistDialog(
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
                         )
+                        val subtitleText = if (songs.size == 1) {
+                            songs.first().title
+                        } else {
+                            "${songs.size} songs"
+                        }
                         Text(
-                            text = song.title,
+                            text = subtitleText,
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.onSurfaceVariant,
                             maxLines = 1,
@@ -279,3 +284,18 @@ fun AddToPlaylistDialog(
         }
     }
 }
+
+@Composable
+fun AddToPlaylistDialog(
+    song: Song,
+    playlists: List<Playlist>,
+    onDismiss: () -> Unit,
+    onPlaylistSelected: (Playlist) -> Unit,
+    onCreatePlaylist: (String) -> Unit
+) = AddToPlaylistDialog(
+    songs = listOf(song),
+    playlists = playlists,
+    onDismiss = onDismiss,
+    onPlaylistSelected = onPlaylistSelected,
+    onCreatePlaylist = onCreatePlaylist
+)

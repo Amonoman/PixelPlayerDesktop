@@ -3,6 +3,8 @@ package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.PointerMatcher
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,12 +18,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.onClick
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -46,14 +56,21 @@ import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AlbumListItem(
     album: Album,
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onPlay: (() -> Unit)? = null,
+    onPlayNext: (() -> Unit)? = null,
+    onAddToQueue: (() -> Unit)? = null,
+    onAddToPlaylist: (() -> Unit)? = null,
+    onNavigateToArtist: (() -> Unit)? = null
 ) {
     val currentMaterialColorScheme = MaterialTheme.colorScheme
+    var isMenuExpanded by remember { mutableStateOf(false) }
 
     var colorSchemePair by remember(
         album.albumArtUriString,
@@ -106,7 +123,11 @@ fun AlbumListItem(
             .fillMaxWidth()
             .height(80.dp)
             .clip(cardShape)
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .onClick(
+                matcher = PointerMatcher.mouse(PointerButton.Secondary),
+                onClick = { isMenuExpanded = true }
+            ),
         shape = cardShape,
         colors = CardDefaults.cardColors(
             containerColor = gradientBaseColor
@@ -155,7 +176,7 @@ fun AlbumListItem(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(end = 16.dp),
+                    .padding(end = 12.dp),
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
@@ -188,6 +209,35 @@ fun AlbumListItem(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+            }
+
+            Box(modifier = Modifier.padding(end = 8.dp)) {
+                FilledTonalIconButton(
+                    onClick = { isMenuExpanded = true },
+                    shape = CircleShape,
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = onGradientColor.copy(alpha = 0.85f)
+                    ),
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.MoreVert,
+                        contentDescription = "Album options",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                AlbumOptionsDropdownMenu(
+                    expanded = isMenuExpanded,
+                    onDismissRequest = { isMenuExpanded = false },
+                    album = album,
+                    onPlay = onPlay,
+                    onPlayNext = onPlayNext,
+                    onAddToQueue = onAddToQueue,
+                    onAddToPlaylist = onAddToPlaylist,
+                    onNavigateToArtist = onNavigateToArtist
+                )
             }
         }
     }

@@ -173,6 +173,7 @@ fun MainAppScaffold(
     var isExpandedPlayerOpen by remember { mutableStateOf(false) }
     var initialExpandedTab by remember { mutableStateOf(ExpandedTab.LYRICS) }
     var songToAddToPlaylist by remember { mutableStateOf<Song?>(null) }
+    var songsToAddToPlaylist by remember { mutableStateOf<List<Song>?>(null) }
     var songToDelete by remember { mutableStateOf<Song?>(null) }
     var songToEditMetadata by remember { mutableStateOf<Song?>(null) }
     var batchSongsToEdit by remember { mutableStateOf<List<Song>?>(null) }
@@ -390,6 +391,8 @@ fun MainAppScaffold(
                                     viewModel = viewModel,
                                     filteredAlbums = filteredAlbums,
                                     onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                    onAddSongsToPlaylist = { albumSongs -> songsToAddToPlaylist = albumSongs },
+                                    onNavigateToArtist = { artist -> nav.navigate(DesktopNavTarget.ArtistDetail(artist)) },
                                     onDelete = { song -> songToDelete = song },
                                     onEditMetadata = { song -> songToEditMetadata = song },
                                     onBatchEditMetadata = { batchSongs -> batchSongsToEdit = batchSongs }
@@ -413,6 +416,7 @@ fun MainAppScaffold(
                                     viewModel = viewModel,
                                     filteredArtists = filteredArtists,
                                     onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                    onAddSongsToPlaylist = { artistSongs -> songsToAddToPlaylist = artistSongs },
                                     onDelete = { song -> songToDelete = song },
                                     onEditMetadata = { song -> songToEditMetadata = song }
                                 )
@@ -667,6 +671,20 @@ fun MainAppScaffold(
                 },
                 onCreatePlaylist = { name ->
                     viewModel.createPlaylist(name, listOf(songToAddToPlaylist!!.id))
+                }
+            )
+        }
+
+        if (songsToAddToPlaylist != null) {
+            AddToPlaylistDialog(
+                songs = songsToAddToPlaylist!!,
+                playlists = playlists,
+                onDismiss = { songsToAddToPlaylist = null },
+                onPlaylistSelected = { playlist ->
+                    viewModel.addSongsToPlaylist(playlist.id, songsToAddToPlaylist!!.map { it.id })
+                },
+                onCreatePlaylist = { name ->
+                    viewModel.createPlaylist(name, songsToAddToPlaylist!!.map { it.id })
                 }
             )
         }
