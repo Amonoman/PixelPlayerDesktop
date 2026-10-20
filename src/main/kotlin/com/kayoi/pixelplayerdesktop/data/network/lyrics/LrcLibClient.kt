@@ -20,7 +20,8 @@ data class LrcLibResponse(
     val albumName: String? = null,
     val duration: Double? = null,
     val plainLyrics: String? = null,
-    val syncedLyrics: String? = null
+    val syncedLyrics: String? = null,
+    val lyricsfile: String? = null
 )
 
 data class LyricsSearchResultItem(
@@ -69,7 +70,7 @@ class LrcLibClient(
                     artistName = resp.artistName.orEmpty(),
                     albumName = resp.albumName,
                     durationSeconds = resp.duration,
-                    isSynced = !resp.syncedLyrics.isNullOrBlank(),
+                    isSynced = !resp.lyricsfile.isNullOrBlank() || !resp.syncedLyrics.isNullOrBlank(),
                     lyrics = lyrics.copy(areFromRemote = true)
                 )
             }
@@ -133,6 +134,14 @@ class LrcLibClient(
     }
 
     private fun parseResponse(response: LrcLibResponse): Lyrics? {
+        val enhancedFromLyricsfile = LyricsfileParser.toEnhancedLrc(response.lyricsfile)
+        if (!enhancedFromLyricsfile.isNullOrBlank()) {
+            val parsed = LrcParser.parse(enhancedFromLyricsfile)
+            if (!parsed.synced.isNullOrEmpty() || !parsed.plain.isNullOrEmpty()) {
+                return parsed
+            }
+        }
+
         val synced = response.syncedLyrics?.trim()
         if (!synced.isNullOrBlank()) {
             val parsed = LrcParser.parse(synced)

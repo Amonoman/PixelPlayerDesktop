@@ -40,6 +40,7 @@ dependencies {
 
     // Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    implementation("org.yaml:snakeyaml:2.4")
 
     // HTTP Client (OkHttp)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

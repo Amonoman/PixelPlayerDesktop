@@ -44,6 +44,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.runtime.key
+import androidx.compose.ui.graphics.Color
+import com.kayoi.pixelplayerdesktop.data.model.SyncedLine
+import com.kayoi.pixelplayerdesktop.data.model.SyncedWord
+import com.kayoi.pixelplayerdesktop.presentation.components.LocalWindowMinimized
 import com.kayoi.pixelplayerdesktop.data.model.Lyrics
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.BubblesLine
 import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
@@ -145,6 +152,15 @@ fun LyricsView(
 
     if (!lyrics.synced.isNullOrEmpty()) {
         val syncedLines = lyrics.synced
+        val isMinimized = LocalWindowMinimized.current
+        val hasWordTimings = remember(syncedLines) { syncedLines.any { !it.words.isNullOrEmpty() } }
+        val rawPosition = (positionMsState?.value ?: currentPositionMs) + syncOffsetMs
+        val interpolatedPosition = rememberInterpolatedPlaybackPosition(
+            sampledPositionMs = rawPosition,
+            isPlaying = isPlaying,
+            enabled = hasWordTimings && !isMinimized
+        )
+
         val activeIndex by remember(syncedLines, positionMsState, syncOffsetMs) {
             derivedStateOf {
                 val currentPos = (positionMsState?.value ?: currentPositionMs) + syncOffsetMs
@@ -230,14 +246,28 @@ fun LyricsView(
                             },
                         horizontalAlignment = horizontalAlignment
                     ) {
-                        Text(
-                            text = line.line,
-                            fontSize = 23.sp,
-                            fontWeight = if (isActive) FontWeight.ExtraBold else FontWeight.Medium,
-                            color = textColor,
-                            textAlign = lyricTextAlign,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        if (line.words.isNullOrEmpty()) {
+                            Text(
+                                text = line.line,
+                                fontSize = 23.sp,
+                                fontWeight = if (isActive) FontWeight.ExtraBold else FontWeight.Medium,
+                                color = textColor,
+                                textAlign = lyricTextAlign,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        } else {
+                            WordSyncedLineContent(
+                                line = line,
+                                isActive = isActive,
+                                isPast = isPast,
+                                positionMs = if (isActive) interpolatedPosition else line.time.toLong(),
+                                nextLineStartMs = syncedLines.getOrNull(index + 1)?.time ?: 0,
+                                alignment = alignment,
+                                activeColor = colors.primary,
+                                inactiveColor = colors.onSurfaceVariant.copy(alpha = 0.55f),
+                                pastColor = colors.onSurface
+                            )
+                        }
 
                         if (showRomanization && !romanization.isNullOrBlank()) {
                             Text(
@@ -302,5 +332,119 @@ fun LyricsView(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun WordSyncedLineContent(
+    line: SyncedLine,
+    isActive: Boolean,
+    isPast: Boolean,
+    positionMs: Long,
+    nextLineStartMs: Int,
+    alignment: String,
+    activeColor: Color,
+    inactiveColor: Color,
+    pastColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val words = line.words ?: return
+    val clusters = remember(words) { clusterSyncedWords(words) }
+    val lineEndTime = remember(line, nextLineStartMs) {
+        resolveLineEndTimeMs(line, nextLineStartMs)
+    }
+
+    val visualStates = if (isActive) {
+        resolveWordVisualStates(
+            words = words,
+            positionMs = positionMs,
+            lineStartTimeMs = line.time.toLong(),
+            lineEndTimeMs = lineEndTime
+        )
+    } else {
+        null
+    }
+
+    FlowRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = when (alignment.lowercase()) {
+            "center" -> Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
+            "right" -> Arrangement.spacedBy(4.dp, Alignment.End)
+            else -> Arrangement.spacedBy(4.dp, Alignment.Start)
+        },
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        clusters.forEach { cluster ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
+            ) {
+                cluster.words.forEachIndexed { clusterOffset, word ->
+                    val wordIndex = cluster.startIndex + clusterOffset
+                    val visualState = visualStates?.getOrNull(wordIndex)
+                    key("${line.time}_${word.time}_${word.word}_$wordIndex") {
+                        LyricWordSpan(
+                            word = word,
+                            visualState = visualState,
+                            isActive = isActive,
+                            isPast = isPast,
+                            activeColor = activeColor,
+                            inactiveColor = inactiveColor,
+                            pastColor = pastColor
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LyricWordSpan(
+    word: SyncedWord,
+    visualState: LyricWordVisualState?,
+    isActive: Boolean,
+    isPast: Boolean,
+    activeColor: Color,
+    inactiveColor: Color,
+    pastColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val isHighlighted = if (isActive) {
+        visualState?.phase != LyricWordPhase.Future
+    } else {
+        isPast
+    }
+    val scale = if (isActive && visualState != null) {
+        resolveWordScale(visualState, motionEnabled = true)
+    } else 1f
+
+    val textColor = when {
+        isHighlighted && isActive -> activeColor
+        isPast -> pastColor
+        else -> inactiveColor
+    }
+
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = word.word,
+            fontSize = 23.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color.Transparent
+        )
+        Text(
+            text = word.word,
+            fontSize = 23.sp,
+            fontWeight = if (isHighlighted) FontWeight.ExtraBold else FontWeight.Medium,
+            color = textColor,
+            modifier = Modifier.graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                transformOrigin = TransformOrigin(0.5f, 0.5f)
+            }
+        )
     }
 }

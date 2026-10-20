@@ -408,7 +408,8 @@ class VlcjAudioEngine(
             _playbackState.value = PlaybackState.BUFFERING
             val targetVol = getEffectiveVolume()
             player.audio().setVolume(targetVol)
-            player.media().play(validPath)
+            val mediaOptions = getMediaOptions(validPath)
+            player.media().play(validPath, *mediaOptions)
         } catch (e: Exception) {
             _playbackState.value = PlaybackState.ERROR
             _errorEvents.tryEmit(e.message ?: "Failed to play media")
@@ -460,7 +461,8 @@ class VlcjAudioEngine(
             playerPair.set(PlayerPair(active = incomingPlayer, standby = outgoingPlayer))
 
             incomingPlayer.audio().setVolume(0)
-            incomingPlayer.media().play(validPath)
+            val mediaOptions = getMediaOptions(validPath)
+            incomingPlayer.media().play(validPath, *mediaOptions)
 
             val clampedDuration = durationMs.coerceIn(500L, 12000L)
             val stepMs = 50L
@@ -738,6 +740,10 @@ class VlcjAudioEngine(
             return
         }
         try {
+            val wasPlaying = _playbackState.value == PlaybackState.PLAYING
+            if (wasPlaying) {
+                _playbackState.value = PlaybackState.BUFFERING
+            }
             player.controls().setTime(positionMs)
             _currentPositionMs.value = positionMs
         } catch (e: Exception) {
@@ -827,6 +833,14 @@ class VlcjAudioEngine(
     private fun stopPositionTicker() {
         positionTickerJob?.cancel()
         positionTickerJob = null
+    }
+
+    private fun getMediaOptions(mediaPath: String): Array<String> {
+        return if (mediaPath.endsWith(".mp3", ignoreCase = true)) {
+            arrayOf(":demux=avformat")
+        } else {
+            emptyArray()
+        }
     }
 
     internal fun getActivePlayerForTest(): MediaPlayer? = playerPair.get().active
