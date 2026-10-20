@@ -276,6 +276,11 @@ class MusicRepositoryImpl(
         )
     }
 
+    override suspend fun updateSongLyrics(song: Song, lyricsText: String): MetadataEditResult {
+        val editor = metadataEditor ?: DesktopMetadataEditor(musicDao, ioDispatcher = ioDispatcher)
+        return editor.writeSongLyrics(song, lyricsText)
+    }
+
     override suspend fun readSongMetadataDetails(file: File): Result<AudioMetadataDetails> {
         val editor = metadataEditor ?: DesktopMetadataEditor(musicDao, ioDispatcher = ioDispatcher)
         return editor.readMetadata(file)

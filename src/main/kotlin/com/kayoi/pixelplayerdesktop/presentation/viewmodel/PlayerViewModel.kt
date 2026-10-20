@@ -19,8 +19,11 @@ import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
 import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
 import com.kayoi.pixelplayerdesktop.platform.mediasession.MediaSessionBridge
 import java.io.File
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class PlayerViewModel(
@@ -45,6 +48,9 @@ class PlayerViewModel(
     private val _showShortcutsDialog = MutableStateFlow(false)
     val showShortcutsDialog: StateFlow<Boolean> = _showShortcutsDialog.asStateFlow()
 
+    private val _controlActionEvent = MutableSharedFlow<String>(extraBufferCapacity = 64)
+    val controlActionEvent: SharedFlow<String> = _controlActionEvent.asSharedFlow()
+
     fun showShortcutsDialog() {
         _showShortcutsDialog.value = true
     }
@@ -64,14 +70,25 @@ class PlayerViewModel(
     fun resetCurrentSongLyrics() = playbackStateHolder.resetCurrentSongLyrics()
     fun saveLyricsBesideCurrentSong(preferSynced: Boolean = true) = playbackStateHolder.saveLyricsBesideCurrentSong(preferSynced)
     fun exportLyricsToFile(targetFile: File, preferSynced: Boolean = true) = playbackStateHolder.exportLyricsToFile(targetFile, preferSynced)
+    suspend fun saveLyricsToEmbeddedMetadata(preferSynced: Boolean = true): Boolean =
+        playbackStateHolder.saveLyricsToEmbeddedMetadata(preferSynced)
     fun setLyricsSyncOffset(offsetMs: Int) = playbackStateHolder.setLyricsSyncOffset(offsetMs)
 
     fun playSong(song: Song) = playbackStateHolder.playSong(song)
     fun playSongs(songs: List<Song>, startIndex: Int = 0) = playbackStateHolder.playSongs(songs, startIndex)
     fun shuffleSongs(songs: List<Song>) = playbackStateHolder.shuffleSongs(songs)
-    fun togglePlayPause() = playbackStateHolder.togglePlayPause()
-    fun playNext() = playbackStateHolder.playNext()
-    fun playPrevious() = playbackStateHolder.playPrevious()
+    fun togglePlayPause() {
+        _controlActionEvent.tryEmit("PLAY_PAUSE")
+        playbackStateHolder.togglePlayPause()
+    }
+    fun playNext() {
+        _controlActionEvent.tryEmit("NEXT")
+        playbackStateHolder.playNext()
+    }
+    fun playPrevious() {
+        _controlActionEvent.tryEmit("PREVIOUS")
+        playbackStateHolder.playPrevious()
+    }
     fun seekTo(positionMs: Long) = playbackStateHolder.seekTo(positionMs)
     fun seekRelative(deltaMs: Long) = playbackStateHolder.seekRelative(deltaMs)
     fun seekForward(stepMs: Long = 5000L) = playbackStateHolder.seekRelative(stepMs)

@@ -57,8 +57,7 @@ fun LyricsOptionsMenu(
     onToggleRomanization: () -> Unit = {},
     showSyncControls: Boolean = false,
     onToggleSyncControls: () -> Unit = {},
-    onSaveToSongFolder: () -> Unit,
-    onExportFile: () -> Unit,
+    onSaveLyrics: () -> Unit,
     onResetLyrics: () -> Unit,
     modifier: Modifier = Modifier,
     menuWidth: Dp = 310.dp
@@ -190,25 +189,11 @@ fun LyricsOptionsMenu(
                     icon = Icons.Rounded.Save,
                     iconContainerColor = colors.primaryContainer,
                     iconColor = colors.onPrimaryContainer,
-                    title = "Save to Song Folder",
-                    subtitle = "Saves .lrc alongside audio file",
+                    title = "Save Lyrics...",
+                    subtitle = "Save to folder, export, or embed tag",
                     onClick = {
                         onDismissRequest()
-                        onSaveToSongFolder()
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                ExpressiveMenuItem(
-                    icon = Icons.Rounded.FileDownload,
-                    iconContainerColor = colors.surfaceContainerHighest,
-                    iconColor = colors.primary,
-                    title = "Export .lrc File...",
-                    subtitle = "Save to custom directory",
-                    onClick = {
-                        onDismissRequest()
-                        onExportFile()
+                        onSaveLyrics()
                     }
                 )
 

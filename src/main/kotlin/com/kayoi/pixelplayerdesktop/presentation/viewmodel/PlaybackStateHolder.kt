@@ -295,6 +295,19 @@ class PlaybackStateHolder(
         }.getOrDefault(false)
     }
 
+    suspend fun saveLyricsToEmbeddedMetadata(preferSynced: Boolean = true): Boolean {
+        val song = queueManager.currentSong.value ?: return false
+        val lyrics = _playerInfo.value.lyrics ?: return false
+        val content = LrcParser.toLrcString(lyrics, preferSynced)
+        if (content.isBlank()) return false
+        val result = musicRepository.updateSongLyrics(song, content)
+        if (result.success && result.updatedSong != null) {
+            onSongMetadataUpdated(result.updatedSong)
+            return true
+        }
+        return false
+    }
+
     fun onSongMetadataUpdated(updatedSong: Song) {
         queueManager.updateSong(updatedSong)
         val current = queueManager.currentSong.value

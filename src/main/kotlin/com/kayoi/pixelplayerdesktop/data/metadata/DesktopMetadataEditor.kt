@@ -338,6 +338,117 @@ class DesktopMetadataEditor(
         )
     }
 
+    suspend fun writeSongLyrics(song: Song, lyricsText: String): MetadataEditResult = withContext(ioDispatcher) {
+        val targetFile = File(song.path)
+        if (!targetFile.exists()) {
+            return@withContext MetadataEditResult(success = false, error = "File not found: ${song.path}")
+        }
+        if (!targetFile.canWrite()) {
+            return@withContext MetadataEditResult(success = false, error = "Permission denied or file is read-only: ${song.path}")
+        }
+
+        val writeSuccess = if (isOpusFile(targetFile)) {
+            writeOpusLyrics(targetFile, lyricsText)
+        } else {
+            writeJAudioTaggerLyrics(targetFile, lyricsText)
+        }
+
+        if (!writeSuccess) {
+            return@withContext MetadataEditResult(success = false, error = "Failed to write lyrics to audio file")
+        }
+
+        val updatedSong = song.copy(
+            lyrics = lyricsText.trim().ifBlank { null },
+            dateModified = targetFile.lastModified()
+        )
+
+        try {
+            musicDao.upsertSongs(listOf(updatedSong))
+        } catch (e: Exception) {
+            return@withContext MetadataEditResult(
+                success = false,
+                updatedSong = updatedSong,
+                error = "Lyrics saved to file but database update failed: ${e.message}"
+            )
+        }
+
+        MetadataEditResult(
+            success = true,
+            updatedSong = updatedSong
+        )
+    }
+
+    private fun writeJAudioTaggerLyrics(audioFile: File, lyricsText: String): Boolean {
+        return try {
+            java.util.logging.Logger.getLogger("org.jaudiotagger").level = java.util.logging.Level.OFF
+            val fileObj = AudioFileIO.read(audioFile)
+            val tag = fileObj.tag ?: fileObj.createDefaultTag()
+            if (lyricsText.isNotBlank()) {
+                tag.setField(FieldKey.LYRICS, lyricsText)
+            } else {
+                tag.deleteField(FieldKey.LYRICS)
+            }
+            fileObj.commit()
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun writeOpusLyrics(audioFile: File, lyricsText: String): Boolean {
+        var opusFile: OpusFile? = null
+        var tempFile: File? = null
+        return try {
+            val sourceOpusFile = OpusFile(audioFile)
+            opusFile = sourceOpusFile
+            val tags = sourceOpusFile.tags ?: OpusTags()
+            tags.replaceSingleComment("LYRICS", lyricsText.takeIf { it.isNotBlank() })
+
+            val cacheDir = DesktopPathProvider.cacheDir
+            tempFile = File(cacheDir, "metadata_edit_opus_${System.nanoTime()}.opus")
+            FileOutputStream(tempFile).use { fos ->
+                OpusFile(fos, sourceOpusFile.info, tags).use { newOpusFile ->
+                    var packet = sourceOpusFile.nextAudioPacket
+                    while (packet != null) {
+                        newOpusFile.writeAudioData(packet)
+                        packet = sourceOpusFile.nextAudioPacket
+                    }
+                }
+            }
+            sourceOpusFile.close()
+            opusFile = null
+
+            if (!tempFile.exists() || tempFile.length() == 0L) {
+                return false
+            }
+
+            try {
+                Files.move(
+                    tempFile.toPath(),
+                    audioFile.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING,
+                    StandardCopyOption.ATOMIC_MOVE
+                )
+            } catch (_: Exception) {
+                Files.move(
+                    tempFile.toPath(),
+                    audioFile.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING
+                )
+            }
+            true
+        } catch (_: Exception) {
+            false
+        } finally {
+            try { opusFile?.close() } catch (_: Exception) {}
+            try {
+                if (tempFile != null && tempFile.exists()) {
+                    tempFile.delete()
+                }
+            } catch (_: Exception) {}
+        }
+    }
+
     suspend fun batchUpdateMetadata(
         songs: List<Song>,
         update: BatchSongMetadataUpdate,

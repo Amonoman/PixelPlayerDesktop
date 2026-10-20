@@ -4,6 +4,10 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -65,7 +69,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -144,55 +151,70 @@ fun MiniPlayerBar(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
 
+                    val narrowInteractionSource = remember { MutableInteractionSource() }
+                    val isNarrowHovered by narrowInteractionSource.collectIsHoveredAsState()
+
                     Row(
-                        modifier = Modifier.weight(1f).padding(end = 8.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        AsyncArtworkImage(
-                            artworkUri = currentSong.albumArtUriString,
-                            modifier = Modifier.size(52.dp),
-                            shape = CircleShape,
-                            placeholderIcon = Icons.Rounded.MusicNote,
-                            placeholderIconSize = 26.dp,
-                            containerColor = colors.surfaceVariant,
-                            contentColor = colors.onSurfaceVariant,
-                            contentDescription = "${currentSong.title} cover"
-                        )
-
-                        Spacer(modifier = Modifier.width(12.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = currentSong.title,
-                                style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp),
-                                fontWeight = FontWeight.Bold,
-                                color = colors.onPrimaryContainer,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = currentSong.displayArtist,
-                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
-                                color = colors.onPrimaryContainer.copy(alpha = 0.75f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(6.dp))
-
-                        AppTooltip(if (isFavorite) "Remove from favorites" else "Add to favorites") {
-                            IconButton(
-                                onClick = onToggleFavorite,
-                                modifier = Modifier.size(36.dp)
+                        AppTooltip("Expand Player", modifier = Modifier.weight(1f)) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .pointerHoverIcon(PointerIcon.Hand)
+                                    .clickable(
+                                        interactionSource = narrowInteractionSource,
+                                        indication = null,
+                                        onClick = onExpandClick
+                                    ),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                                    contentDescription = "Favorite",
-                                    tint = if (isFavorite) colors.primary else colors.onPrimaryContainer.copy(alpha = 0.6f),
-                                    modifier = Modifier.size(20.dp)
+                                AsyncArtworkImage(
+                                    artworkUri = currentSong.albumArtUriString,
+                                    modifier = Modifier.size(52.dp),
+                                    shape = CircleShape,
+                                    placeholderIcon = Icons.Rounded.MusicNote,
+                                    placeholderIconSize = 26.dp,
+                                    containerColor = colors.surfaceVariant,
+                                    contentColor = colors.onSurfaceVariant,
+                                    contentDescription = "${currentSong.title} cover"
                                 )
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = currentSong.title,
+                                        style = MaterialTheme.typography.titleSmall.copy(
+                                            fontSize = 15.sp,
+                                            textDecoration = if (isNarrowHovered) TextDecoration.Underline else TextDecoration.None
+                                        ),
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.onPrimaryContainer,
+                                        maxLines = 1,
+                                        overflow = if (isPlaying) TextOverflow.Clip else TextOverflow.Ellipsis,
+                                        modifier = Modifier.then(
+                                            if (isPlaying) {
+                                                Modifier.basicMarquee(
+                                                    iterations = Int.MAX_VALUE,
+                                                    initialDelayMillis = 1500,
+                                                    repeatDelayMillis = 2000
+                                                )
+                                            } else Modifier
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = currentSong.displayArtist,
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
+                                        color = colors.onPrimaryContainer.copy(alpha = if (isNarrowHovered) 0.95f else 0.75f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
                         }
                     }
@@ -290,43 +312,66 @@ fun MiniPlayerBar(
                     val actionButtonSize = if (isMedium) 34.dp else 38.dp
                     val actionIconSize = if (isMedium) 19.dp else 22.dp
 
-                    Row(
-                        modifier = Modifier
-                            .weight(leftWeight)
-                            .padding(end = if (isMedium) 4.dp else 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        AsyncArtworkImage(
-                            artworkUri = currentSong.albumArtUriString,
-                            modifier = Modifier.size(artworkSize),
-                            shape = CircleShape,
-                            placeholderIcon = Icons.Rounded.MusicNote,
-                            placeholderIconSize = if (isMedium) 24.dp else 30.dp,
-                            containerColor = colors.surfaceVariant,
-                            contentColor = colors.onSurfaceVariant,
-                            contentDescription = "${currentSong.title} cover"
-                        )
+                    val infoInteractionSource = remember { MutableInteractionSource() }
+                    val isInfoHovered by infoInteractionSource.collectIsHoveredAsState()
 
-                        Spacer(modifier = Modifier.width(artworkSpacing))
+                    AppTooltip("Expand Player", modifier = Modifier.weight(leftWeight)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(end = if (isMedium) 4.dp else 8.dp)
+                                .pointerHoverIcon(PointerIcon.Hand)
+                                .clickable(
+                                    interactionSource = infoInteractionSource,
+                                    indication = null,
+                                    onClick = onExpandClick
+                                ),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            AsyncArtworkImage(
+                                artworkUri = currentSong.albumArtUriString,
+                                modifier = Modifier.size(artworkSize),
+                                shape = CircleShape,
+                                placeholderIcon = Icons.Rounded.MusicNote,
+                                placeholderIconSize = if (isMedium) 24.dp else 30.dp,
+                                containerColor = colors.surfaceVariant,
+                                contentColor = colors.onSurfaceVariant,
+                                contentDescription = "${currentSong.title} cover"
+                            )
 
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = currentSong.title,
-                                style = MaterialTheme.typography.titleMedium.copy(fontSize = if (isMedium) 15.sp else 16.sp),
-                                fontWeight = FontWeight.Bold,
-                                color = colors.onPrimaryContainer,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = currentSong.displayArtist,
-                                style = MaterialTheme.typography.bodySmall.copy(fontSize = if (isMedium) 12.5.sp else 13.5.sp),
-                                color = colors.onPrimaryContainer.copy(alpha = 0.75f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            Spacer(modifier = Modifier.width(artworkSpacing))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = currentSong.title,
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontSize = if (isMedium) 15.sp else 16.sp,
+                                        textDecoration = if (isInfoHovered) TextDecoration.Underline else TextDecoration.None
+                                    ),
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.onPrimaryContainer,
+                                    maxLines = 1,
+                                    overflow = if (isPlaying) TextOverflow.Clip else TextOverflow.Ellipsis,
+                                    modifier = Modifier.then(
+                                        if (isPlaying) {
+                                            Modifier.basicMarquee(
+                                                iterations = Int.MAX_VALUE,
+                                                initialDelayMillis = 1500,
+                                                repeatDelayMillis = 2000
+                                            )
+                                        } else Modifier
+                                    )
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = currentSong.displayArtist,
+                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = if (isMedium) 12.5.sp else 13.5.sp),
+                                    color = colors.onPrimaryContainer.copy(alpha = if (isInfoHovered) 0.95f else 0.75f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     }
 

@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,6 +53,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -85,6 +87,7 @@ import com.kayoi.pixelplayerdesktop.presentation.components.formatTime
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
 import com.kayoi.pixelplayerdesktop.utils.AudioMetaUtils
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 internal fun formatAudioMetaLabel(song: Song): String = AudioMetaUtils.formatAudioMetaLabel(song)
@@ -96,6 +99,7 @@ fun DesktopLandscapeHeroPlayer(
     isBuffering: Boolean = false,
     totalDurationMs: Long,
     currentPositionFlow: StateFlow<Long>? = null,
+    controlActionFlow: SharedFlow<String>? = null,
     isShuffle: Boolean,
     repeatMode: Int,
     isFavorite: Boolean,
@@ -182,7 +186,16 @@ fun DesktopLandscapeHeroPlayer(
                                     ),
                                     color = colors.onPrimaryContainer,
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = if (isPlaying) TextOverflow.Clip else TextOverflow.Ellipsis,
+                                    modifier = Modifier.then(
+                                        if (isPlaying) {
+                                            Modifier.basicMarquee(
+                                                iterations = Int.MAX_VALUE,
+                                                initialDelayMillis = 1500,
+                                                repeatDelayMillis = 2000
+                                            )
+                                        } else Modifier
+                                    )
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 InteractiveArtistNames(
@@ -296,6 +309,7 @@ fun DesktopLandscapeHeroPlayer(
                     onNext = onNext,
                     onToggleShuffle = onToggleShuffle,
                     onCycleRepeat = onCycleRepeat,
+                    controlActionFlow = controlActionFlow,
                     buttonHeight = 52.dp,
                     shuffleRepeatSize = 40.dp,
                     colors = colors
@@ -396,7 +410,16 @@ fun DesktopLandscapeHeroPlayer(
                                     ),
                                     color = colors.onPrimaryContainer,
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = if (isPlaying) TextOverflow.Clip else TextOverflow.Ellipsis,
+                                    modifier = Modifier.then(
+                                        if (isPlaying) {
+                                            Modifier.basicMarquee(
+                                                iterations = Int.MAX_VALUE,
+                                                initialDelayMillis = 1500,
+                                                repeatDelayMillis = 2000
+                                            )
+                                        } else Modifier
+                                    )
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 InteractiveArtistNames(
@@ -453,6 +476,7 @@ fun DesktopLandscapeHeroPlayer(
                             onNext = onNext,
                             onToggleShuffle = onToggleShuffle,
                             onCycleRepeat = onCycleRepeat,
+                            controlActionFlow = controlActionFlow,
                             buttonHeight = controlButtonHeight,
                             shuffleRepeatSize = shuffleRepeatSize,
                             colors = colors
@@ -557,13 +581,23 @@ fun PlaybackControlsRow(
     onNext: () -> Unit,
     onToggleShuffle: () -> Unit,
     onCycleRepeat: () -> Unit,
+    controlActionFlow: SharedFlow<String>? = null,
     buttonHeight: Dp = 56.dp,
     shuffleRepeatSize: Dp = 42.dp,
     colors: ColorScheme,
     modifier: Modifier = Modifier
 ) {
     var lastClickedButton by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(lastClickedButton) {
+    var triggerCount by remember { mutableLongStateOf(0L) }
+
+    LaunchedEffect(controlActionFlow) {
+        controlActionFlow?.collect { action ->
+            lastClickedButton = action
+            triggerCount++
+        }
+    }
+
+    LaunchedEffect(triggerCount) {
         if (lastClickedButton != null) {
             delay(220L)
             lastClickedButton = null
@@ -636,6 +670,7 @@ fun PlaybackControlsRow(
                         .background(colors.onPrimary)
                         .clickable {
                             lastClickedButton = "PREVIOUS"
+                            triggerCount++
                             onPrev()
                         },
                     contentAlignment = Alignment.Center
@@ -657,6 +692,7 @@ fun PlaybackControlsRow(
                         .background(colors.primary)
                         .clickable {
                             lastClickedButton = "PLAY_PAUSE"
+                            triggerCount++
                             onPlayPause()
                         },
                     contentAlignment = Alignment.Center
@@ -686,6 +722,7 @@ fun PlaybackControlsRow(
                         .background(colors.onPrimary)
                         .clickable {
                             lastClickedButton = "NEXT"
+                            triggerCount++
                             onNext()
                         },
                     contentAlignment = Alignment.Center

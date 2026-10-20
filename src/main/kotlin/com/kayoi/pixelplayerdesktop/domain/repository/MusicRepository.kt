@@ -78,6 +78,8 @@ interface MusicRepository {
         extractArtistFromTitle: Boolean = true
     ): MetadataEditResult
 
+    suspend fun updateSongLyrics(song: Song, lyricsText: String): MetadataEditResult
+
     suspend fun readSongMetadataDetails(file: File): Result<AudioMetadataDetails>
     suspend fun batchUpdateMetadata(
         songs: List<Song>,

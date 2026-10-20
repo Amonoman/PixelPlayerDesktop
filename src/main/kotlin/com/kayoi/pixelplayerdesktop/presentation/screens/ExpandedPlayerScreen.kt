@@ -55,6 +55,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,6 +76,7 @@ import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.components.LyricsSearchDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueSidePanel
+import com.kayoi.pixelplayerdesktop.presentation.components.SaveLyricsDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LyricsOptionsMenu
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LyricsSyncControls
@@ -90,6 +92,7 @@ import com.kayoi.pixelplayerdesktop.utils.MultiLangRomanizer
 import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 enum class ExpandedTab {
@@ -128,8 +131,10 @@ fun ExpandedPlayerScreen(
     val lyricsAlignment by viewModel.lyricsAlignment.collectAsState()
     val showLyricsRomanization by viewModel.showLyricsRomanization.collectAsState()
     val equalizerEnabled by viewModel.equalizerEnabled.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
     var showEqualizerDialog by remember { mutableStateOf(false) }
     var showLyricsSearchDialog by remember { mutableStateOf(false) }
+    var showSaveLyricsDialog by remember { mutableStateOf(false) }
     var showLyricsMenu by remember { mutableStateOf(false) }
     var showResetConfirmDialog by remember { mutableStateOf(false) }
     var showLyricsSyncControls by remember { mutableStateOf(false) }
@@ -316,6 +321,7 @@ fun ExpandedPlayerScreen(
                                     isBuffering = playerInfo.isBuffering,
                                     totalDurationMs = playerInfo.totalDurationMs,
                                     currentPositionFlow = viewModel.currentPositionMs,
+                                    controlActionFlow = viewModel.controlActionEvent,
                                     isShuffle = playerInfo.isShuffleEnabled,
                                     repeatMode = playerInfo.repeatMode,
                                     isFavorite = playerInfo.isFavorite,
@@ -490,21 +496,8 @@ fun ExpandedPlayerScreen(
                                                     onToggleRomanization = { viewModel.setShowLyricsRomanization(!showLyricsRomanization) },
                                                     showSyncControls = showLyricsSyncControls,
                                                     onToggleSyncControls = { showLyricsSyncControls = !showLyricsSyncControls },
-                                                    onSaveToSongFolder = {
-                                                        val saved = viewModel.saveLyricsBesideCurrentSong()
-                                                        lyricsStatusMessage = if (saved != null) "Saved ${saved.name}" else "Failed to save .lrc"
-                                                    },
-                                                    onExportFile = {
-                                                        val current = currentSong
-                                                        val defaultName = current?.let { File(it.path).nameWithoutExtension } ?: "lyrics"
-                                                        val initialDir = current?.let { File(it.path).parentFile }
-                                                        DirectoryPicker.saveLrcFile(
-                                                            defaultFileName = defaultName,
-                                                            initialDir = initialDir
-                                                        ) { file ->
-                                                            val ok = viewModel.exportLyricsToFile(file)
-                                                            lyricsStatusMessage = if (ok) "Exported ${file.name}" else "Failed to export .lrc"
-                                                        }
+                                                    onSaveLyrics = {
+                                                        showSaveLyricsDialog = true
                                                     },
                                                     onResetLyrics = {
                                                         showResetConfirmDialog = true
@@ -623,6 +616,40 @@ fun ExpandedPlayerScreen(
                 onDismiss = {
                     showLyricsSearchDialog = false
                     viewModel.resetLyricsSearchState()
+                }
+            )
+        }
+
+        if (showSaveLyricsDialog && currentSong != null) {
+            SaveLyricsDialog(
+                song = currentSong!!,
+                onSaveToSongFolder = {
+                    showSaveLyricsDialog = false
+                    val saved = viewModel.saveLyricsBesideCurrentSong()
+                    lyricsStatusMessage = if (saved != null) "Saved ${saved.name}" else "Failed to save .lrc"
+                },
+                onExportFile = {
+                    showSaveLyricsDialog = false
+                    val current = currentSong
+                    val defaultName = current?.let { File(it.path).nameWithoutExtension } ?: "lyrics"
+                    val initialDir = current?.let { File(it.path).parentFile }
+                    DirectoryPicker.saveLrcFile(
+                        defaultFileName = defaultName,
+                        initialDir = initialDir
+                    ) { file ->
+                        val ok = viewModel.exportLyricsToFile(file)
+                        lyricsStatusMessage = if (ok) "Exported ${file.name}" else "Failed to export .lrc"
+                    }
+                },
+                onEmbedToAudioFile = {
+                    showSaveLyricsDialog = false
+                    coroutineScope.launch {
+                        val ok = viewModel.saveLyricsToEmbeddedMetadata()
+                        lyricsStatusMessage = if (ok) "Embedded lyrics into audio file" else "Failed to embed lyrics"
+                    }
+                },
+                onDismiss = {
+                    showSaveLyricsDialog = false
                 }
             )
         }
