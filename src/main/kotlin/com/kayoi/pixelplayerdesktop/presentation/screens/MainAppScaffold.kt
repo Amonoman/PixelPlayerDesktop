@@ -199,6 +199,10 @@ fun MainAppScaffold(
         songToAddToPlaylist = null
         true
     }
+    DesktopBackHandler(enabled = showShortcutsDialog, dispatcher = backDispatcher) {
+        viewModel.hideShortcutsDialog()
+        true
+    }
     DesktopBackHandler(enabled = isExpandedPlayerOpen, dispatcher = backDispatcher) {
         isExpandedPlayerOpen = false
         true

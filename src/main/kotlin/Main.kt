@@ -30,6 +30,9 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import androidx.navigationevent.NavigationEventHandler
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.kayoi.pixelplayerdesktop.di.appModules
 import com.kayoi.pixelplayerdesktop.presentation.components.InputFocusTracker
 import com.kayoi.pixelplayerdesktop.presentation.components.LocalInputFocusTracker
@@ -342,25 +345,12 @@ fun main(args: Array<String> = emptyArray()) {
                         playerViewModel.toggleShortcutsDialog()
                         true
                     }
-                    keyEvent.key == Key.Back -> {
-                        triggerBack()
-                        true
-                    }
-                    keyEvent.key == Key.Escape -> {
-                        if (playerViewModel.showShortcutsDialog.value) {
-                            playerViewModel.hideShortcutsDialog()
-                        } else {
-                            triggerBack()
-                        }
-                        true
-                    }
                     else -> false
                 }
             } else if (keyEvent.type == KeyEventType.KeyUp) {
                 when {
                     (isModifier && keyEvent.key == Key.Slash) || keyEvent.key == Key.F1 -> true
                     keyEvent.isAltPressed && (keyEvent.key == Key.DirectionLeft || keyEvent.key == Key.DirectionRight) -> true
-                    keyEvent.key == Key.Back || keyEvent.key == Key.Escape -> true
                     isModifier && (keyEvent.key == Key.K || (!isInputActive && (keyEvent.key == Key.DirectionRight || keyEvent.key == Key.DirectionLeft)) || keyEvent.key == Key.DirectionUp || keyEvent.key == Key.DirectionDown || keyEvent.key == Key.S || keyEvent.key == Key.R || keyEvent.key == Key.Q) -> true
                     !isModifier && !keyEvent.isAltPressed && !isInputActive && (keyEvent.key == Key.DirectionRight || keyEvent.key == Key.DirectionLeft) -> true
                     keyEvent.isAltPressed && keyEvent.key == Key.Q -> true
@@ -371,7 +361,7 @@ fun main(args: Array<String> = emptyArray()) {
             } else {
                 false
             }
-        }
+         }
     ) {
         window.minimumSize = Dimension(760, 560)
 
@@ -402,6 +392,23 @@ fun main(args: Array<String> = emptyArray()) {
 
             onDispose {
                 window.removeComponentListener(listener)
+            }
+        }
+
+        val navDispatcherOwner = LocalNavigationEventDispatcherOwner.current
+        DisposableEffect(navDispatcherOwner, triggerBack) {
+            val dispatcher = navDispatcherOwner?.navigationEventDispatcher ?: return@DisposableEffect onDispose {}
+            val handler = object : NavigationEventHandler<NavigationEventInfo>(
+                object : NavigationEventInfo() {},
+                true
+            ) {
+                override fun onBackCompleted() {
+                    triggerBack()
+                }
+            }
+            dispatcher.addHandler(handler)
+            onDispose {
+                handler.remove()
             }
         }
 
