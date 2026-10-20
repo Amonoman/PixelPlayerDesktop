@@ -49,7 +49,6 @@ sealed class SortOption(
     companion object {
         val SONGS: List<SortOption> by lazy {
             listOf(
-                SongDefaultOrder,
                 SongTitleAZ,
                 SongTitleZA,
                 SongArtist,

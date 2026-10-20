@@ -3,17 +3,28 @@ package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -25,30 +36,50 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.automirrored.rounded.ViewList
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.ArrowDownward
+import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.Computer
 import androidx.compose.material.icons.rounded.Dataset
+import androidx.compose.material.icons.rounded.DateRange
+import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.MyLocation
+import androidx.compose.material.icons.rounded.Numbers
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.SortByAlpha
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -402,37 +433,203 @@ fun LibraryActionRow(
                         }
                     }
 
-                    DropdownMenu(
-                        expanded = isSortMenuExpanded,
-                        onDismissRequest = { isSortMenuExpanded = false },
-                        modifier = Modifier.padding(vertical = 4.dp)
+                    val scope = rememberCoroutineScope()
+                    var pendingSortJob by remember { mutableStateOf<Job?>(null) }
+                    var localSortOption by remember(currentSortOption) { mutableStateOf(currentSortOption) }
+
+                    val isCurrentAscending = localSortOption.isAscending()
+                    val canToggleOrder = localSortOption != localSortOption.toggleOrder()
+                    val categories = remember(availableSortOptions) {
+                        availableSortOptions.map { it.category() }.distinct()
+                    }
+                    val iconRotation by animateFloatAsState(
+                        targetValue = if (isCurrentAscending) 0f else -180f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        ),
+                        label = "SortArrowRotation"
+                    )
+
+                    MaterialTheme(
+                        shapes = MaterialTheme.shapes.copy(extraSmall = RoundedCornerShape(20.dp))
                     ) {
-                        availableSortOptions.forEach { option ->
-                            val isSelected = option.storageKey == currentSortOption.storageKey
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = option.displayName,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) colors.primary else colors.onSurface
-                                    )
-                                },
-                                trailingIcon = if (isSelected) {
-                                    {
+                        DropdownMenu(
+                            expanded = isSortMenuExpanded,
+                            onDismissRequest = {
+                                pendingSortJob?.cancel()
+                                if (localSortOption != currentSortOption) {
+                                    onSortOptionSelect(localSortOption)
+                                }
+                                isSortMenuExpanded = false
+                            },
+                            modifier = Modifier
+                                .width(285.dp)
+                                .background(colors.surfaceContainerHigh, RoundedCornerShape(20.dp))
+                                .border(1.dp, colors.outlineVariant.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
+                                .padding(horizontal = 6.dp, vertical = 6.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 14.dp, end = 6.dp, top = 6.dp, bottom = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Sort by",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = colors.onSurface,
+                                    fontWeight = FontWeight.Bold
+                                )
+
+                                if (canToggleOrder) {
+                                    Surface(
+                                        onClick = {
+                                            val toggled = localSortOption.toggleOrder()
+                                            localSortOption = toggled
+                                            pendingSortJob?.cancel()
+                                            pendingSortJob = scope.launch {
+                                                delay(240L)
+                                                onSortOptionSelect(toggled)
+                                            }
+                                        },
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = colors.secondaryContainer,
+                                        contentColor = colors.onSecondaryContainer,
+                                        modifier = Modifier
+                                            .width(114.dp)
+                                            .height(28.dp)
+                                    ) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier.fillMaxSize()
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.ArrowUpward,
+                                                    contentDescription = "Toggle sort order",
+                                                    tint = colors.onSecondaryContainer,
+                                                    modifier = Modifier
+                                                        .size(14.dp)
+                                                        .graphicsLayer { rotationZ = iconRotation }
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                AnimatedContent(
+                                                    targetState = isCurrentAscending,
+                                                    transitionSpec = {
+                                                        val slideOffset = if (targetState) 1 else -1
+                                                        (slideInVertically(
+                                                            animationSpec = spring(
+                                                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                                                stiffness = Spring.StiffnessMediumLow
+                                                            ),
+                                                            initialOffsetY = { height -> slideOffset * height }
+                                                        ) + fadeIn(animationSpec = tween(200, easing = FastOutSlowInEasing)))
+                                                            .togetherWith(
+                                                                slideOutVertically(
+                                                                    animationSpec = spring(
+                                                                        dampingRatio = Spring.DampingRatioNoBouncy,
+                                                                        stiffness = Spring.StiffnessMediumLow
+                                                                    ),
+                                                                    targetOffsetY = { height -> -slideOffset * height }
+                                                                ) + fadeOut(animationSpec = tween(160, easing = FastOutSlowInEasing))
+                                                            )
+                                                    },
+                                                    label = "SortOrderText"
+                                                ) { ascending ->
+                                                    Text(
+                                                        text = if (ascending) "Ascending" else "Descending",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = colors.onSecondaryContainer
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            HorizontalDivider(
+                                color = colors.outlineVariant.copy(alpha = 0.3f),
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
+                            )
+
+                            categories.forEach { category ->
+                                val isCategoryActive = localSortOption.category() == category
+                                val itemBackground = if (isCategoryActive) colors.secondaryContainer else Color.Transparent
+                                val itemTextColor = if (isCategoryActive) colors.onSecondaryContainer else colors.onSurface
+                                val itemIconColor = if (isCategoryActive) colors.onSecondaryContainer else colors.onSurfaceVariant
+
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = category.displayName,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = if (isCategoryActive) FontWeight.SemiBold else FontWeight.Normal
+                                        )
+                                    },
+                                    leadingIcon = {
                                         Icon(
-                                            imageVector = Icons.Rounded.Check,
+                                            imageVector = category.icon,
                                             contentDescription = null,
-                                            tint = colors.primary,
                                             modifier = Modifier.size(18.dp)
                                         )
+                                    },
+                                    trailingIcon = if (isCategoryActive) {
+                                        {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                if (canToggleOrder) {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.ArrowUpward,
+                                                        contentDescription = null,
+                                                        tint = itemIconColor,
+                                                        modifier = Modifier
+                                                            .size(15.dp)
+                                                            .graphicsLayer { rotationZ = iconRotation }
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                }
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Check,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                        }
+                                    } else null,
+                                    colors = MenuDefaults.itemColors(
+                                        textColor = itemTextColor,
+                                        leadingIconColor = itemIconColor,
+                                        trailingIconColor = itemTextColor
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(itemBackground),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                    onClick = {
+                                        pendingSortJob?.cancel()
+                                        val optionsForCategory = availableSortOptions.filter { it.category() == category }
+                                        if (optionsForCategory.isNotEmpty()) {
+                                            val target = if (isCategoryActive && canToggleOrder) {
+                                                localSortOption.toggleOrder()
+                                            } else {
+                                                optionsForCategory.firstOrNull { it.isAscending() == isCurrentAscending }
+                                                    ?: optionsForCategory.first()
+                                            }
+                                            localSortOption = target
+                                            onSortOptionSelect(target)
+                                        }
+                                        isSortMenuExpanded = false
                                     }
-                                } else null,
-                                onClick = {
-                                    onSortOptionSelect(option)
-                                    isSortMenuExpanded = false
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                 }
@@ -440,3 +637,122 @@ fun LibraryActionRow(
         }
     }
 }
+
+private enum class SortCategory(val displayName: String, val icon: ImageVector) {
+    TITLE("Title", Icons.Rounded.SortByAlpha),
+    NAME("Name", Icons.Rounded.SortByAlpha),
+    ARTIST("Artist", Icons.Rounded.Person),
+    ALBUM("Album", Icons.Rounded.Album),
+    DATE_ADDED("Date Added", Icons.Rounded.CalendarToday),
+    DATE_CREATED("Date Created", Icons.Rounded.CalendarToday),
+    DURATION("Duration", Icons.Rounded.Schedule),
+    RELEASE_YEAR("Release Year", Icons.Rounded.DateRange),
+    SONG_COUNT("Song Count", Icons.Rounded.Numbers),
+    SUBFOLDER_COUNT("Subfolder Count", Icons.Rounded.Folder)
+}
+
+private fun SortOption.category(): SortCategory = when (this) {
+    SortOption.SongDefaultOrder,
+    SortOption.SongTitleAZ,
+    SortOption.SongTitleZA -> SortCategory.TITLE
+    SortOption.AlbumTitleAZ, SortOption.AlbumTitleZA -> SortCategory.TITLE
+    SortOption.ArtistNameAZ, SortOption.ArtistNameZA -> SortCategory.NAME
+    SortOption.PlaylistNameAZ, SortOption.PlaylistNameZA -> SortCategory.NAME
+    SortOption.FolderNameAZ, SortOption.FolderNameZA -> SortCategory.NAME
+    SortOption.SongArtist, SortOption.SongArtistDesc -> SortCategory.ARTIST
+    SortOption.AlbumArtist, SortOption.AlbumArtistDesc -> SortCategory.ARTIST
+    SortOption.SongAlbum, SortOption.SongAlbumDesc -> SortCategory.ALBUM
+    SortOption.SongDateAdded, SortOption.SongDateAddedAsc -> SortCategory.DATE_ADDED
+    SortOption.AlbumDateAdded -> SortCategory.DATE_ADDED
+    SortOption.PlaylistDateCreated, SortOption.PlaylistDateCreatedAsc -> SortCategory.DATE_CREATED
+    SortOption.SongDuration, SortOption.SongDurationAsc -> SortCategory.DURATION
+    SortOption.AlbumReleaseYear, SortOption.AlbumReleaseYearAsc -> SortCategory.RELEASE_YEAR
+    SortOption.AlbumSizeAsc, SortOption.AlbumSizeDesc,
+    SortOption.ArtistNumSongsAsc, SortOption.ArtistNumSongsDesc,
+    SortOption.FolderSongCountAsc, SortOption.FolderSongCountDesc -> SortCategory.SONG_COUNT
+    SortOption.FolderSubdirCountAsc, SortOption.FolderSubdirCountDesc -> SortCategory.SUBFOLDER_COUNT
+}
+
+private fun SortOption.isAscending(): Boolean = when (this) {
+    SortOption.SongDefaultOrder,
+    SortOption.SongTitleAZ,
+    SortOption.AlbumTitleAZ,
+    SortOption.ArtistNameAZ,
+    SortOption.PlaylistNameAZ,
+    SortOption.FolderNameAZ,
+    SortOption.SongArtist,
+    SortOption.AlbumArtist,
+    SortOption.SongAlbum,
+    SortOption.SongDateAddedAsc,
+    SortOption.PlaylistDateCreatedAsc,
+    SortOption.SongDurationAsc,
+    SortOption.AlbumReleaseYearAsc,
+    SortOption.AlbumSizeAsc,
+    SortOption.ArtistNumSongsAsc,
+    SortOption.FolderSongCountAsc,
+    SortOption.FolderSubdirCountAsc -> true
+
+    SortOption.SongTitleZA,
+    SortOption.AlbumTitleZA,
+    SortOption.ArtistNameZA,
+    SortOption.PlaylistNameZA,
+    SortOption.FolderNameZA,
+    SortOption.SongArtistDesc,
+    SortOption.AlbumArtistDesc,
+    SortOption.SongAlbumDesc,
+    SortOption.SongDateAdded,
+    SortOption.AlbumDateAdded,
+    SortOption.PlaylistDateCreated,
+    SortOption.SongDuration,
+    SortOption.AlbumReleaseYear,
+    SortOption.AlbumSizeDesc,
+    SortOption.ArtistNumSongsDesc,
+    SortOption.FolderSongCountDesc,
+    SortOption.FolderSubdirCountDesc -> false
+}
+
+private fun SortOption.toggleOrder(): SortOption = when (this) {
+    SortOption.SongDefaultOrder -> SortOption.SongTitleZA
+    SortOption.SongTitleAZ -> SortOption.SongTitleZA
+    SortOption.SongTitleZA -> SortOption.SongTitleAZ
+    SortOption.AlbumTitleAZ -> SortOption.AlbumTitleZA
+    SortOption.AlbumTitleZA -> SortOption.AlbumTitleAZ
+    SortOption.ArtistNameAZ -> SortOption.ArtistNameZA
+    SortOption.ArtistNameZA -> SortOption.ArtistNameAZ
+    SortOption.PlaylistNameAZ -> SortOption.PlaylistNameZA
+    SortOption.PlaylistNameZA -> SortOption.PlaylistNameAZ
+    SortOption.FolderNameAZ -> SortOption.FolderNameZA
+    SortOption.FolderNameZA -> SortOption.FolderNameAZ
+
+    SortOption.SongArtist -> SortOption.SongArtistDesc
+    SortOption.SongArtistDesc -> SortOption.SongArtist
+    SortOption.AlbumArtist -> SortOption.AlbumArtistDesc
+    SortOption.AlbumArtistDesc -> SortOption.AlbumArtist
+
+    SortOption.SongAlbum -> SortOption.SongAlbumDesc
+    SortOption.SongAlbumDesc -> SortOption.SongAlbum
+
+    SortOption.SongDateAdded -> SortOption.SongDateAddedAsc
+    SortOption.SongDateAddedAsc -> SortOption.SongDateAdded
+    SortOption.AlbumDateAdded -> SortOption.AlbumDateAdded
+
+    SortOption.PlaylistDateCreated -> SortOption.PlaylistDateCreatedAsc
+    SortOption.PlaylistDateCreatedAsc -> SortOption.PlaylistDateCreated
+
+    SortOption.SongDuration -> SortOption.SongDurationAsc
+    SortOption.SongDurationAsc -> SortOption.SongDuration
+
+    SortOption.AlbumReleaseYear -> SortOption.AlbumReleaseYearAsc
+    SortOption.AlbumReleaseYearAsc -> SortOption.AlbumReleaseYear
+
+    SortOption.AlbumSizeAsc -> SortOption.AlbumSizeDesc
+    SortOption.AlbumSizeDesc -> SortOption.AlbumSizeAsc
+    SortOption.ArtistNumSongsAsc -> SortOption.ArtistNumSongsDesc
+    SortOption.ArtistNumSongsDesc -> SortOption.ArtistNumSongsAsc
+    SortOption.FolderSongCountAsc -> SortOption.FolderSongCountDesc
+    SortOption.FolderSongCountDesc -> SortOption.FolderSongCountAsc
+
+    SortOption.FolderSubdirCountAsc -> SortOption.FolderSubdirCountDesc
+    SortOption.FolderSubdirCountDesc -> SortOption.FolderSubdirCountAsc
+}
+
