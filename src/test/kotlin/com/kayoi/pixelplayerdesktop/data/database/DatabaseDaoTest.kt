@@ -97,4 +97,67 @@ class DatabaseDaoTest {
         val searchResults = musicDao.search("Alpha")
         assertEquals(1, searchResults.size)
     }
+
+    @Test
+    fun testAlbumsAndArtistsMinDurationFiltering() = runTest {
+        val tempDb = File.createTempFile("test_duration_filter_db", ".db")
+        tempDb.deleteOnExit()
+        val db = PixelPlayerDatabase(tempDb)
+        val musicDao = MusicDao(db)
+
+        val validSong = Song(
+            id = "valid_1",
+            title = "Valid Song",
+            artist = "Unknown Artist",
+            artistId = 101L,
+            album = "Unknown Album",
+            albumId = 201L,
+            path = "/music/valid.mp3",
+            contentUriString = "file:///music/valid.mp3",
+            duration = 180000L,
+            dateAdded = 1000L
+        )
+
+        val shortSong1 = Song(
+            id = "short_1",
+            title = "Sound Effect 1",
+            artist = "Unknown Artist",
+            artistId = 101L,
+            album = "Unknown Album",
+            albumId = 201L,
+            path = "/music/se1.mp3",
+            contentUriString = "file:///music/se1.mp3",
+            duration = 3000L,
+            dateAdded = 1001L
+        )
+
+        val shortSong2 = Song(
+            id = "short_2",
+            title = "Sound Effect 2",
+            artist = "Unknown Artist",
+            artistId = 101L,
+            album = "Unknown Album",
+            albumId = 201L,
+            path = "/music/se2.mp3",
+            contentUriString = "file:///music/se2.mp3",
+            duration = 5000L,
+            dateAdded = 1002L
+        )
+
+        musicDao.upsertSongs(listOf(validSong, shortSong1, shortSong2))
+
+        val unfilteredAlbums = musicDao.getAllAlbums(minDurationMs = 0L)
+        assertEquals(3, unfilteredAlbums[0].songCount)
+
+        val filteredAlbums = musicDao.getAllAlbums(minDurationMs = 10000L)
+        assertEquals(1, filteredAlbums.size)
+        assertEquals(1, filteredAlbums[0].songCount)
+
+        val unfilteredArtists = musicDao.getAllArtists(minDurationMs = 0L)
+        assertEquals(3, unfilteredArtists[0].songCount)
+
+        val filteredArtists = musicDao.getAllArtists(minDurationMs = 10000L)
+        assertEquals(1, filteredArtists.size)
+        assertEquals(1, filteredArtists[0].songCount)
+    }
 }

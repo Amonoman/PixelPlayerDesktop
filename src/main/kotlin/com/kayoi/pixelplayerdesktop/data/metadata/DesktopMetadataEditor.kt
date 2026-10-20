@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.gagravarr.opus.OpusFile
 import org.gagravarr.opus.OpusTags
+import com.kayoi.pixelplayerdesktop.utils.AudioFileReaderUtils
 import org.jaudiotagger.audio.AudioFileIO
 import org.jaudiotagger.tag.FieldKey
 import org.jaudiotagger.tag.images.ArtworkFactory
@@ -189,7 +190,7 @@ class DesktopMetadataEditor(
 
         try {
             java.util.logging.Logger.getLogger("org.jaudiotagger").level = java.util.logging.Level.OFF
-            val audioFile = AudioFileIO.read(file)
+            val audioFile = AudioFileReaderUtils.readAudioFile(file)
             val tag = audioFile.tag
             val header = audioFile.audioHeader
 
@@ -381,7 +382,7 @@ class DesktopMetadataEditor(
     private fun writeJAudioTaggerLyrics(audioFile: File, lyricsText: String): Boolean {
         return try {
             java.util.logging.Logger.getLogger("org.jaudiotagger").level = java.util.logging.Level.OFF
-            val fileObj = AudioFileIO.read(audioFile)
+            val fileObj = AudioFileReaderUtils.readAudioFile(audioFile)
             val tag = fileObj.tag ?: fileObj.createDefaultTag()
             if (lyricsText.isNotBlank()) {
                 tag.setField(FieldKey.LYRICS, lyricsText)
@@ -765,7 +766,7 @@ class DesktopMetadataEditor(
     ): Boolean {
         return try {
             java.util.logging.Logger.getLogger("org.jaudiotagger").level = java.util.logging.Level.OFF
-            val fileObj = AudioFileIO.read(audioFile)
+            val fileObj = AudioFileReaderUtils.readAudioFile(audioFile)
             val tag = fileObj.tag ?: fileObj.createDefaultTag()
 
             tag.setField(FieldKey.TITLE, metadata.title)

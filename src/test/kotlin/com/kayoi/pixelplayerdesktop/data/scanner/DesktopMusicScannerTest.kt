@@ -103,4 +103,52 @@ class DesktopMusicScannerTest {
         val songs = musicDao.getAllSongs()
         assertEquals(1, songs.size)
     }
+
+    @Test
+    fun testScanAudioFileWithMismatchedContainerExtension() = runTest {
+        val tempDb = File.createTempFile("test_diag_db", ".db")
+        tempDb.deleteOnExit()
+        val db = PixelPlayerDatabase(tempDb)
+        val musicDao = MusicDao(db)
+
+        val tempMusicDir = File(System.getProperty("java.io.tmpdir"), "test_mismatched_${System.currentTimeMillis()}")
+        tempMusicDir.mkdirs()
+        tempMusicDir.deleteOnExit()
+
+        val sampleRate = 8000
+        val durationSeconds = 12
+        val dataSize = sampleRate * durationSeconds
+        val chunkSize = 36 + dataSize
+        val buffer = java.nio.ByteBuffer.allocate(44 + dataSize).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+        buffer.put("RIFF".toByteArray())
+        buffer.putInt(chunkSize)
+        buffer.put("WAVE".toByteArray())
+        buffer.put("fmt ".toByteArray())
+        buffer.putInt(16)
+        buffer.putShort(1)
+        buffer.putShort(1)
+        buffer.putInt(sampleRate)
+        buffer.putInt(sampleRate)
+        buffer.putShort(1)
+        buffer.putShort(8)
+        buffer.put("data".toByteArray())
+        buffer.putInt(dataSize)
+        buffer.put(ByteArray(dataSize))
+
+        val target = File(tempMusicDir, "mismatched.mp3")
+        target.deleteOnExit()
+        target.writeBytes(buffer.array())
+
+        val scanner = DesktopMusicScanner(
+            musicDao = musicDao,
+            artworkCacheDir = tempMusicDir
+        )
+
+        val res = scanner.scanDirectories(listOf(tempMusicDir.absolutePath))
+        assertTrue(res is ScanProgress.Completed)
+        val songs = musicDao.getAllSongs(minDurationMs = 10000L)
+        val song = songs.find { it.path == target.absolutePath }
+        assertTrue(song != null, "Song should be indexed and pass minDuration filter")
+        assertTrue(song.duration >= 12000L, "Song duration should be at least 12000ms, but was ${song.duration}")
+    }
 }

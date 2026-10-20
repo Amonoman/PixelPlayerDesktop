@@ -74,42 +74,46 @@ class MusicRepositoryImpl(
         musicDao.clearLibrary()
     }
 
-    override fun getAllAlbumsFlow(sortOption: SortOption, minTracks: Int): Flow<List<Album>> = flow {
-        emit(musicDao.getAllAlbums(sortOption, minTracks))
+    override fun getAllAlbumsFlow(sortOption: SortOption, minTracks: Int, minDurationMs: Long): Flow<List<Album>> = flow {
+        emit(musicDao.getAllAlbums(sortOption, minTracks, minDurationMs))
         database.tableInvalidationFlow.collect { table ->
             if (table == "songs") {
-                emit(musicDao.getAllAlbums(sortOption, minTracks))
+                emit(musicDao.getAllAlbums(sortOption, minTracks, minDurationMs))
             }
         }
     }.flowOn(ioDispatcher)
 
-    override suspend fun getAllAlbums(sortOption: SortOption, minTracks: Int): List<Album> {
-        return musicDao.getAllAlbums(sortOption, minTracks)
+    override suspend fun getAllAlbums(sortOption: SortOption, minTracks: Int, minDurationMs: Long): List<Album> {
+        return musicDao.getAllAlbums(sortOption, minTracks, minDurationMs)
     }
 
-    override suspend fun getAlbumById(id: Long): Album? {
-        return musicDao.getAlbumById(id)
+    override suspend fun getAlbumById(id: Long, minDurationMs: Long): Album? {
+        return musicDao.getAlbumById(id, minDurationMs)
     }
 
-    override suspend fun getSongsByAlbum(albumId: Long): List<Song> {
-        return musicDao.getSongsByAlbum(albumId)
+    override suspend fun getSongsByAlbum(albumId: Long, minDurationMs: Long): List<Song> {
+        return musicDao.getSongsByAlbum(albumId, minDurationMs)
     }
 
-    override fun getAllArtistsFlow(sortOption: SortOption): Flow<List<Artist>> = flow {
-        emit(musicDao.getAllArtists(sortOption))
+    override fun getAllArtistsFlow(sortOption: SortOption, minDurationMs: Long): Flow<List<Artist>> = flow {
+        emit(musicDao.getAllArtists(sortOption, minDurationMs))
         database.tableInvalidationFlow.collect { table ->
             if (table == "songs" || table == "artists") {
-                emit(musicDao.getAllArtists(sortOption))
+                emit(musicDao.getAllArtists(sortOption, minDurationMs))
             }
         }
     }.flowOn(ioDispatcher)
 
-    override suspend fun getArtistById(id: Long): Artist? {
-        return musicDao.getArtistById(id)
+    override suspend fun getAllArtists(sortOption: SortOption, minDurationMs: Long): List<Artist> {
+        return musicDao.getAllArtists(sortOption, minDurationMs)
     }
 
-    override suspend fun getSongsByArtist(artistId: Long): List<Song> {
-        return musicDao.getSongsByArtist(artistId)
+    override suspend fun getArtistById(id: Long, minDurationMs: Long): Artist? {
+        return musicDao.getArtistById(id, minDurationMs)
+    }
+
+    override suspend fun getSongsByArtist(artistId: Long, minDurationMs: Long): List<Song> {
+        return musicDao.getSongsByArtist(artistId, minDurationMs)
     }
 
     override fun getAllGenresFlow(): Flow<List<Genre>> = flow {

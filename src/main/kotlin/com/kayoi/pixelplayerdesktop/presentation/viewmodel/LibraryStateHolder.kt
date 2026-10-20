@@ -167,15 +167,21 @@ class LibraryStateHolder(
 
     val albums: StateFlow<List<Album>> = combine(
         _albumSortOption,
-        minTracksPerAlbum
-    ) { sort, minTracks ->
-        sort to minTracks
-    }.flatMapLatest { (sort, minTracks) ->
-        musicRepository.getAllAlbumsFlow(sort, minTracks)
+        minTracksPerAlbum,
+        minSongDurationMs
+    ) { sort, minTracks, minDur ->
+        Triple(sort, minTracks, minDur)
+    }.flatMapLatest { (sort, minTracks, minDur) ->
+        musicRepository.getAllAlbumsFlow(sort, minTracks, minDur.toLong())
     }.stateIn(coroutineScope, SharingStarted.Lazily, emptyList())
 
-    val artists: StateFlow<List<Artist>> = _artistSortOption.flatMapLatest { sort ->
-        musicRepository.getAllArtistsFlow(sort)
+    val artists: StateFlow<List<Artist>> = combine(
+        _artistSortOption,
+        minSongDurationMs
+    ) { sort, minDur ->
+        sort to minDur
+    }.flatMapLatest { (sort, minDur) ->
+        musicRepository.getAllArtistsFlow(sort, minDur.toLong())
     }.stateIn(coroutineScope, SharingStarted.Lazily, emptyList())
 
     val playlists: StateFlow<List<Playlist>> = _playlistSortOption.flatMapLatest { sort ->

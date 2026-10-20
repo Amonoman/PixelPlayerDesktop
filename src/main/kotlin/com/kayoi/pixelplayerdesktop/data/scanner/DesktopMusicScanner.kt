@@ -5,6 +5,7 @@ import com.kayoi.pixelplayerdesktop.data.database.MusicDao
 import com.kayoi.pixelplayerdesktop.data.model.ArtistRef
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_ARTIST_DELIMITERS
+import com.kayoi.pixelplayerdesktop.utils.AudioFileReaderUtils
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_WORD_DELIMITERS
 import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
 import com.kayoi.pixelplayerdesktop.utils.LrcParser
@@ -336,7 +337,7 @@ class DesktopMusicScanner(
         extractArtistFromTitle: Boolean
     ): Song? {
         return try {
-            val audioFile = AudioFileIO.read(file)
+            val audioFile = AudioFileReaderUtils.readAudioFile(file)
             val tag = audioFile.tag
             val header = audioFile.audioHeader
 

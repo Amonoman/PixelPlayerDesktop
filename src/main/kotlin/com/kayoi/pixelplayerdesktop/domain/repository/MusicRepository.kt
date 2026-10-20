@@ -30,14 +30,15 @@ interface MusicRepository {
     suspend fun deleteSong(song: Song)
     suspend fun clearLibrary()
 
-    fun getAllAlbumsFlow(sortOption: SortOption = SortOption.AlbumTitleAZ, minTracks: Int = 1): Flow<List<Album>>
-    suspend fun getAllAlbums(sortOption: SortOption = SortOption.AlbumTitleAZ, minTracks: Int = 1): List<Album>
-    suspend fun getAlbumById(id: Long): Album?
-    suspend fun getSongsByAlbum(albumId: Long): List<Song>
+    fun getAllAlbumsFlow(sortOption: SortOption = SortOption.AlbumTitleAZ, minTracks: Int = 1, minDurationMs: Long = 0L): Flow<List<Album>>
+    suspend fun getAllAlbums(sortOption: SortOption = SortOption.AlbumTitleAZ, minTracks: Int = 1, minDurationMs: Long = 0L): List<Album>
+    suspend fun getAlbumById(id: Long, minDurationMs: Long = 0L): Album?
+    suspend fun getSongsByAlbum(albumId: Long, minDurationMs: Long = 0L): List<Song>
 
-    fun getAllArtistsFlow(sortOption: SortOption = SortOption.ArtistNameAZ): Flow<List<Artist>>
-    suspend fun getArtistById(id: Long): Artist?
-    suspend fun getSongsByArtist(artistId: Long): List<Song>
+    fun getAllArtistsFlow(sortOption: SortOption = SortOption.ArtistNameAZ, minDurationMs: Long = 0L): Flow<List<Artist>>
+    suspend fun getAllArtists(sortOption: SortOption = SortOption.ArtistNameAZ, minDurationMs: Long = 0L): List<Artist>
+    suspend fun getArtistById(id: Long, minDurationMs: Long = 0L): Artist?
+    suspend fun getSongsByArtist(artistId: Long, minDurationMs: Long = 0L): List<Song>
 
     fun getAllGenresFlow(): Flow<List<Genre>>
     suspend fun getSongsByGenre(genreName: String): List<Song>

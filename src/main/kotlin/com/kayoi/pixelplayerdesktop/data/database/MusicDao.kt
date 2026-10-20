@@ -410,7 +410,8 @@ class MusicDao(
 
     suspend fun getAllAlbums(
         sortOption: SortOption = SortOption.AlbumTitleAZ,
-        minTracks: Int = 1
+        minTracks: Int = 1,
+        minDurationMs: Long = 0L
     ): List<Album> = withContext(ioDispatcher) {
         val orderByClause = when (sortOption) {
             SortOption.AlbumTitleAZ -> "album COLLATE NOCASE ASC"
@@ -426,6 +427,7 @@ class MusicDao(
         }
 
         database.withConnection(readOnly = true) { conn ->
+            val durationFilter = if (minDurationMs > 0L) "AND duration >= ?" else ""
             val sql = """
                 SELECT
                     album_id,
@@ -437,14 +439,18 @@ class MusicDao(
                     MAX(album_art_uri_string) as album_art_uri_string,
                     COUNT(*) as song_count
                 FROM songs
-                WHERE album != ''
+                WHERE album != '' $durationFilter
                 GROUP BY album, artist
                 HAVING COUNT(*) >= ?
                 ORDER BY $orderByClause
             """.trimIndent()
 
             conn.prepareStatement(sql).use { stmt ->
-                stmt.setInt(1, minTracks)
+                var paramIndex = 1
+                if (minDurationMs > 0L) {
+                    stmt.setLong(paramIndex++, minDurationMs)
+                }
+                stmt.setInt(paramIndex, minTracks)
                 stmt.executeQuery().use { rs ->
                     val albums = mutableListOf<Album>()
                     while (rs.next()) {
@@ -467,8 +473,9 @@ class MusicDao(
         }
     }
 
-    suspend fun getAlbumById(albumId: Long): Album? = withContext(ioDispatcher) {
+    suspend fun getAlbumById(albumId: Long, minDurationMs: Long = 0L): Album? = withContext(ioDispatcher) {
         database.withConnection(readOnly = true) { conn ->
+            val durationFilter = if (minDurationMs > 0L) "AND duration >= ?" else ""
             val sql = """
                 SELECT
                     album_id,
@@ -480,13 +487,16 @@ class MusicDao(
                     MAX(album_art_uri_string) as album_art_uri_string,
                     COUNT(*) as song_count
                 FROM songs
-                WHERE album_id = ?
+                WHERE album_id = ? $durationFilter
                 GROUP BY album, artist
                 LIMIT 1
             """.trimIndent()
 
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setLong(1, albumId)
+                if (minDurationMs > 0L) {
+                    stmt.setLong(2, minDurationMs)
+                }
                 stmt.executeQuery().use { rs ->
                     if (rs.next()) {
                         Album(
@@ -505,11 +515,15 @@ class MusicDao(
         }
     }
 
-    suspend fun getSongsByAlbum(albumId: Long): List<Song> = withContext(ioDispatcher) {
+    suspend fun getSongsByAlbum(albumId: Long, minDurationMs: Long = 0L): List<Song> = withContext(ioDispatcher) {
         database.withConnection(readOnly = true) { conn ->
-            val sql = "SELECT * FROM songs WHERE album_id = ? ORDER BY disc_number ASC, track_number ASC, title COLLATE NOCASE ASC"
+            val durationFilter = if (minDurationMs > 0L) "AND duration >= ?" else ""
+            val sql = "SELECT * FROM songs WHERE album_id = ? $durationFilter ORDER BY disc_number ASC, track_number ASC, title COLLATE NOCASE ASC"
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setLong(1, albumId)
+                if (minDurationMs > 0L) {
+                    stmt.setLong(2, minDurationMs)
+                }
                 stmt.executeQuery().use { rs ->
                     val songs = mutableListOf<Song>()
                     while (rs.next()) {
@@ -521,7 +535,10 @@ class MusicDao(
         }
     }
 
-    suspend fun getAllArtists(sortOption: SortOption = SortOption.ArtistNameAZ): List<Artist> = withContext(ioDispatcher) {
+    suspend fun getAllArtists(
+        sortOption: SortOption = SortOption.ArtistNameAZ,
+        minDurationMs: Long = 0L
+    ): List<Artist> = withContext(ioDispatcher) {
         val orderByClause = when (sortOption) {
             SortOption.ArtistNameAZ -> "a.name COLLATE NOCASE ASC"
             SortOption.ArtistNameZA -> "a.name COLLATE NOCASE DESC"
@@ -531,6 +548,7 @@ class MusicDao(
         }
 
         database.withConnection(readOnly = true) { conn ->
+            val durationFilter = if (minDurationMs > 0L) "WHERE s.duration >= ?" else ""
             val sql = """
                 SELECT
                     a.id as artist_id,
@@ -540,12 +558,17 @@ class MusicDao(
                     a.custom_image_uri
                 FROM artists a
                 JOIN song_artists sa ON a.id = sa.artist_id
+                JOIN songs s ON sa.song_id = s.id
+                $durationFilter
                 GROUP BY a.id, a.name
                 HAVING song_count > 0
                 ORDER BY $orderByClause
             """.trimIndent()
 
             conn.prepareStatement(sql).use { stmt ->
+                if (minDurationMs > 0L) {
+                    stmt.setLong(1, minDurationMs)
+                }
                 stmt.executeQuery().use { rs ->
                     val artists = mutableListOf<Artist>()
                     while (rs.next()) {
@@ -566,18 +589,23 @@ class MusicDao(
             }
 
             // Fallback to songs table if artists table hasn't been populated yet
+            val fallbackDurationFilter = if (minDurationMs > 0L) "AND duration >= ?" else ""
             val fallbackSql = """
                 SELECT
                     artist_id,
                     artist,
                     COUNT(*) as song_count
                 FROM songs
-                WHERE artist != ''
+                WHERE artist != '' $fallbackDurationFilter
                 GROUP BY artist
+                HAVING song_count > 0
                 ORDER BY artist COLLATE NOCASE ASC
             """.trimIndent()
 
             conn.prepareStatement(fallbackSql).use { stmt ->
+                if (minDurationMs > 0L) {
+                    stmt.setLong(1, minDurationMs)
+                }
                 stmt.executeQuery().use { rs ->
                     val artists = mutableListOf<Artist>()
                     while (rs.next()) {
@@ -595,8 +623,9 @@ class MusicDao(
         }
     }
 
-    suspend fun getArtistById(artistId: Long): Artist? = withContext(ioDispatcher) {
+    suspend fun getArtistById(artistId: Long, minDurationMs: Long = 0L): Artist? = withContext(ioDispatcher) {
         database.withConnection(readOnly = true) { conn ->
+            val durationFilter = if (minDurationMs > 0L) "AND s.duration >= ?" else ""
             val sql = """
                 SELECT
                     a.id as artist_id,
@@ -606,13 +635,17 @@ class MusicDao(
                     a.custom_image_uri
                 FROM artists a
                 JOIN song_artists sa ON a.id = sa.artist_id
-                WHERE a.id = ?
+                JOIN songs s ON sa.song_id = s.id
+                WHERE a.id = ? $durationFilter
                 GROUP BY a.id, a.name
                 LIMIT 1
             """.trimIndent()
 
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setLong(1, artistId)
+                if (minDurationMs > 0L) {
+                    stmt.setLong(2, minDurationMs)
+                }
                 stmt.executeQuery().use { rs ->
                     if (rs.next()) {
                         return@withContext Artist(
@@ -627,19 +660,23 @@ class MusicDao(
             }
 
             // Fallback to songs table
+            val fallbackDurationFilter = if (minDurationMs > 0L) "AND duration >= ?" else ""
             val fallbackSql = """
                 SELECT
                     artist_id,
                     artist,
                     COUNT(*) as song_count
                 FROM songs
-                WHERE artist_id = ?
+                WHERE artist_id = ? $fallbackDurationFilter
                 GROUP BY artist
                 LIMIT 1
             """.trimIndent()
 
             conn.prepareStatement(fallbackSql).use { stmt ->
                 stmt.setLong(1, artistId)
+                if (minDurationMs > 0L) {
+                    stmt.setLong(2, minDurationMs)
+                }
                 stmt.executeQuery().use { rs ->
                     if (rs.next()) {
                         Artist(
@@ -653,17 +690,21 @@ class MusicDao(
         }
     }
 
-    suspend fun getSongsByArtist(artistId: Long): List<Song> = withContext(ioDispatcher) {
+    suspend fun getSongsByArtist(artistId: Long, minDurationMs: Long = 0L): List<Song> = withContext(ioDispatcher) {
         database.withConnection(readOnly = true) { conn ->
+            val durationFilter = if (minDurationMs > 0L) "AND s.duration >= ?" else ""
             val sql = """
                 SELECT s.* FROM songs s
                 JOIN song_artists sa ON s.id = sa.song_id
-                WHERE sa.artist_id = ?
+                WHERE sa.artist_id = ? $durationFilter
                 ORDER BY s.year DESC, s.album COLLATE NOCASE ASC, s.track_number ASC
             """.trimIndent()
 
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setLong(1, artistId)
+                if (minDurationMs > 0L) {
+                    stmt.setLong(2, minDurationMs)
+                }
                 stmt.executeQuery().use { rs ->
                     val songs = mutableListOf<Song>()
                     while (rs.next()) {
@@ -676,9 +717,13 @@ class MusicDao(
             }
 
             // Fallback for primary artistId
-            val fallbackSql = "SELECT * FROM songs WHERE artist_id = ? ORDER BY year DESC, album COLLATE NOCASE ASC, track_number ASC"
+            val fallbackDurationFilter = if (minDurationMs > 0L) "AND duration >= ?" else ""
+            val fallbackSql = "SELECT * FROM songs WHERE artist_id = ? $fallbackDurationFilter ORDER BY year DESC, album COLLATE NOCASE ASC, track_number ASC"
             conn.prepareStatement(fallbackSql).use { stmt ->
                 stmt.setLong(1, artistId)
+                if (minDurationMs > 0L) {
+                    stmt.setLong(2, minDurationMs)
+                }
                 stmt.executeQuery().use { rs ->
                     val songs = mutableListOf<Song>()
                     while (rs.next()) {

@@ -11,7 +11,7 @@ import com.kayoi.pixelplayerdesktop.utils.MultiLangRomanizer
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jaudiotagger.audio.AudioFileIO
+import com.kayoi.pixelplayerdesktop.utils.AudioFileReaderUtils
 import org.jaudiotagger.tag.FieldKey
 import java.io.File
 
@@ -89,7 +89,7 @@ class LyricsRepositoryImpl(
     private fun fetchEmbedded(file: File): Lyrics? {
         if (!file.exists()) return null
         return runCatching {
-            val audioFile = AudioFileIO.read(file)
+            val audioFile = AudioFileReaderUtils.readAudioFile(file)
             val lyricsTag = audioFile.tag?.getFirst(FieldKey.LYRICS)
             if (!lyricsTag.isNullOrBlank()) {
                 LrcParser.parse(lyricsTag).copy(areFromRemote = false)

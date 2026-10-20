@@ -1,6 +1,6 @@
 package com.kayoi.pixelplayerdesktop.data.player
 
-import org.jaudiotagger.audio.AudioFileIO
+import com.kayoi.pixelplayerdesktop.utils.AudioFileReaderUtils
 import org.jaudiotagger.tag.Tag
 import java.io.File
 import kotlin.math.pow
@@ -45,7 +45,7 @@ class ReplayGainManager {
         if (!file.exists() || !file.canRead()) return null
 
         return try {
-            val audioFile = AudioFileIO.read(file)
+            val audioFile = AudioFileReaderUtils.readAudioFile(file)
             val tag = audioFile.tag ?: return null
 
             val trackGain = extractGainValue(tag, TRACK_GAIN_KEYS)
