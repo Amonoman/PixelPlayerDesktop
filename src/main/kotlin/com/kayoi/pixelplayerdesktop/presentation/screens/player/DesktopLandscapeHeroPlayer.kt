@@ -776,16 +776,33 @@ private fun HeroPlayerProgressTrack(
 ) {
     val colors = MaterialTheme.colorScheme
     val positionState = currentPositionFlow?.collectAsState()
+    var scrubFraction by remember { mutableStateOf<Float?>(null) }
     val effectiveDuration = if (totalDurationMs > 0) totalDurationMs else song.duration
     val progress = if (effectiveDuration > 0) {
         val pos = positionState?.value ?: 0L
         (pos.toFloat() / effectiveDuration.toFloat()).coerceIn(0f, 1f)
     } else 0f
 
+    val currentTimeProvider = {
+        val fraction = scrubFraction
+        if (fraction != null && effectiveDuration > 0) {
+            (fraction * effectiveDuration).toLong()
+        } else {
+            positionState?.value ?: 0L
+        }
+    }
+
     Column(modifier = modifier.fillMaxWidth()) {
         WavySliderExpressive(
-            value = progress,
-            onValueChange = onSeek,
+            value = scrubFraction ?: progress,
+            onValueChange = { scrubFraction = it },
+            onValueChangeFinished = {
+                val fraction = scrubFraction
+                scrubFraction = null
+                if (fraction != null) {
+                    onSeek(fraction)
+                }
+            },
             isPlaying = isPlaying,
             activeTrackColor = colors.primary,
             inactiveTrackColor = colors.onPrimaryContainer.copy(alpha = 0.22f),
@@ -802,7 +819,7 @@ private fun HeroPlayerProgressTrack(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 PlaybackCurrentTimeText(
-                    positionMsState = positionState,
+                    positionProvider = currentTimeProvider,
                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
                     fontWeight = FontWeight.SemiBold,
                     color = colors.onPrimaryContainer.copy(alpha = 0.85f)
@@ -826,7 +843,7 @@ private fun HeroPlayerProgressTrack(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     PlaybackCurrentTimeText(
-                        positionMsState = positionState,
+                        positionProvider = currentTimeProvider,
                         style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.5.sp),
                         fontWeight = FontWeight.SemiBold,
                         color = colors.onPrimaryContainer.copy(alpha = 0.85f)

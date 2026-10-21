@@ -7,7 +7,7 @@ import com.kayoi.pixelplayerdesktop.data.database.MusicDao
 import com.kayoi.pixelplayerdesktop.data.database.PixelPlayerDatabase
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.player.QueueManager
-import com.kayoi.pixelplayerdesktop.data.player.VlcjAudioEngine
+import com.kayoi.pixelplayerdesktop.data.player.mpv.MpvAudioEngine
 import com.kayoi.pixelplayerdesktop.data.repository.LyricsRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.repository.MusicRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.repository.SettingsRepositoryImpl
@@ -85,7 +85,7 @@ class MediaSessionBridgeTest {
         val settingsRepo = SettingsRepositoryImpl(settingsFile = tempSettings, ioDispatcher = testDispatcher)
         val lyricsRepo = LyricsRepositoryImpl(lyricsDao, settingsRepository = settingsRepo, ioDispatcher = testDispatcher)
 
-        val audioEngine = VlcjAudioEngine(coroutineScope = backgroundScope)
+        val audioEngine = MpvAudioEngine(coroutineScope = backgroundScope)
         val queueManager = QueueManager()
 
         val testScope = CoroutineScope(SupervisorJob() + testDispatcher)

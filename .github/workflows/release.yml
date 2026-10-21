@@ -72,10 +72,10 @@ jobs:
         with:
           validate-wrappers: false
 
-      - name: Install LibVLC dependencies & RPM tools
+      - name: Install libmpv dependencies & RPM tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y libvlc-dev vlc rpm
+          sudo apt-get install -y libmpv-dev mpv rpm
 
       - name: Build Linux Distribution
         run: ./gradlew packageDeb packageRpm createDistributable "-PAPP_VERSION_NAME=${{ steps.meta.outputs.version }}" --no-daemon

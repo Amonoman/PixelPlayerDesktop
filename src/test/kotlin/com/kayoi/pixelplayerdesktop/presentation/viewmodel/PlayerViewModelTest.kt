@@ -6,7 +6,7 @@ import com.kayoi.pixelplayerdesktop.data.database.LyricsDao
 import com.kayoi.pixelplayerdesktop.data.database.MusicDao
 import com.kayoi.pixelplayerdesktop.data.database.PixelPlayerDatabase
 import com.kayoi.pixelplayerdesktop.data.player.QueueManager
-import com.kayoi.pixelplayerdesktop.data.player.VlcjAudioEngine
+import com.kayoi.pixelplayerdesktop.data.player.mpv.MpvAudioEngine
 import com.kayoi.pixelplayerdesktop.data.repository.LyricsRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.repository.MusicRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.repository.SettingsRepositoryImpl
@@ -43,7 +43,7 @@ class PlayerViewModelTest {
         val lyricsRepo = LyricsRepositoryImpl(lyricsDao, settingsRepository = settingsRepo, ioDispatcher = testDispatcher)
         val scanner = DesktopMusicScanner(musicDao, ioDispatcher = testDispatcher)
 
-        val audioEngine = VlcjAudioEngine(coroutineScope = backgroundScope)
+        val audioEngine = MpvAudioEngine(coroutineScope = backgroundScope)
         val queueManager = QueueManager()
 
         val playbackStateHolder = PlaybackStateHolder(audioEngine, queueManager, musicRepo, lyricsRepo, settingsRepo, coroutineScope = backgroundScope)

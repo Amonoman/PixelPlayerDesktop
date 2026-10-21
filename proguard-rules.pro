@@ -14,9 +14,9 @@
 -keep class kotlin.** { *; }
 -keep class kotlinx.coroutines.** { *; }
 
-# VLCJ & JNA (Native Audio Engine)
--keep class uk.co.caprica.vlcj.** { *; }
--keep interface uk.co.caprica.vlcj.** { *; }
+# libmpv & JNA (Native Audio Engine)
+-keep class com.kayoi.pixelplayerdesktop.data.player.mpv.** { *; }
+-keep interface com.kayoi.pixelplayerdesktop.data.player.mpv.** { *; }
 -keep class com.sun.jna.** { *; }
 -keep interface com.sun.jna.** { *; }
 -keepclassmembers class * extends com.sun.jna.Structure { <fields>; }

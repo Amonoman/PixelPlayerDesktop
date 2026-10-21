@@ -641,6 +641,7 @@ private fun MiniPlayerProgressTrack(
 ) {
     val colors = MaterialTheme.colorScheme
     val positionState = currentPositionFlow?.collectAsState()
+    var scrubFraction by remember { mutableStateOf<Float?>(null) }
     val progress = if (effectiveDuration > 0) {
         val pos = positionState?.value ?: 0L
         (pos.toFloat() / effectiveDuration.toFloat()).coerceIn(0f, 1f)
@@ -651,7 +652,14 @@ private fun MiniPlayerProgressTrack(
         verticalAlignment = Alignment.CenterVertically
     ) {
         PlaybackCurrentTimeText(
-            positionMsState = positionState,
+            positionProvider = {
+                val fraction = scrubFraction
+                if (fraction != null && effectiveDuration > 0) {
+                    (fraction * effectiveDuration).toLong()
+                } else {
+                    positionState?.value ?: 0L
+                }
+            },
             style = MaterialTheme.typography.labelSmall,
             color = colors.onPrimaryContainer.copy(alpha = 0.75f)
         )
@@ -659,8 +667,15 @@ private fun MiniPlayerProgressTrack(
         Spacer(modifier = Modifier.width(if (isMedium) 4.dp else 8.dp))
 
         WavySliderExpressive(
-            value = progress,
-            onValueChange = onSeek,
+            value = scrubFraction ?: progress,
+            onValueChange = { scrubFraction = it },
+            onValueChangeFinished = {
+                val fraction = scrubFraction
+                scrubFraction = null
+                if (fraction != null) {
+                    onSeek(fraction)
+                }
+            },
             isPlaying = isPlaying,
             activeTrackColor = colors.primary,
             inactiveTrackColor = colors.onPrimaryContainer.copy(alpha = 0.20f),

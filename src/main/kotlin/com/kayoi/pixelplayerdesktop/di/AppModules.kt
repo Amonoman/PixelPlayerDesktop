@@ -40,7 +40,7 @@ import com.kayoi.pixelplayerdesktop.domain.repository.NavidromeRepository
 import com.kayoi.pixelplayerdesktop.data.network.RemoteArtworkResolver
 import com.kayoi.pixelplayerdesktop.data.player.PlaybackUriResolver
 import com.kayoi.pixelplayerdesktop.data.player.QueueManager
-import com.kayoi.pixelplayerdesktop.data.player.VlcjAudioEngine
+import com.kayoi.pixelplayerdesktop.data.player.mpv.MpvAudioEngine
 import com.kayoi.pixelplayerdesktop.data.metadata.DesktopMetadataEditor
 import com.kayoi.pixelplayerdesktop.data.network.lyrics.LrcLibClient
 import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.MusicBrainzClient
@@ -137,7 +137,7 @@ val repositoryModule: Module = module {
 }
 
 val playerModule: Module = module {
-    single<AudioEngine> { VlcjAudioEngine(coroutineScope = get()) }
+    single<AudioEngine> { MpvAudioEngine(coroutineScope = get()) }
     single { QueueManager() }
 }
 

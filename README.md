@@ -41,7 +41,7 @@
 **PixelPlayer Desktop** brings the expressive Material 3 (Material You) music experience from mobile to desktop environments. It focuses on high-fidelity offline audio playback, seamless local library management, streaming server synchronization, and an intuitive desktop workflow.
 
 - **Offline-First & Private**: Works completely offline with zero telemetry and no proprietary lock-in.
-- **Native Audio Performance**: Low-latency, gapless audio playback powered by LibVLC (`vlcj`).
+- **Native Audio Performance**: Low-latency, gapless audio playback powered by `libmpv`.
 - **Dynamic Theming**: Fluid Material 3 interface that adapts dynamically to your album art or system accent color.
 - **Package Identifier**: `com.kayoi.pixelplayerdesktop`
 
@@ -51,7 +51,7 @@
 
 | Category | Highlights |
 | --- | --- |
-| **Audio & Playback** | LibVLC engine, gapless playback, 10-band graphic equalizer with presets and preamp, ReplayGain (volume normalization), sleep timer, queue management, and shuffle/repeat modes |
+| **Audio & Playback** | `libmpv` engine, true crossfade, 10-band graphic equalizer with presets and preamp, ReplayGain (volume normalization), sleep timer, queue management, and shuffle/repeat modes |
 | **Format Support** | Native decoding for FLAC, MP3, WAV, OGG Vorbis, AAC, M4A, Opus, and ALAC |
 | **Library Management** | Recursive folder scanner with multi-directory and exclusion support, fast SQLite caching, Songs, Albums, Artists, Folder tree explorer, Playlists, Favorites, and Daily Mix |
 | **Cloud & Streaming** | Account integration with Subsonic / Navidrome and Jellyfin music servers, plus ListenBrainz scrobbling support |
@@ -93,8 +93,8 @@ PixelPlayer Desktop includes full keyboard navigation for seamless playback and 
 | Requirement | Details |
 | --- | --- |
 | **Operating System** | Linux (Ubuntu/Debian, Fedora, Arch, etc.) or Windows 10/11 (64-bit) |
-| **Windows Runtime** | LibVLC is automatically bundled in release installers and portable archives. No separate VLC installation required. |
-| **Linux Runtime** | LibVLC runtime libraries (`sudo apt install vlc libvlc-dev` on Debian/Ubuntu, `sudo dnf install vlc-devel` on Fedora, or distro equivalent) |
+| **Windows Runtime** | `libmpv` is automatically bundled in release installers and portable archives. No separate installation required. |
+| **Linux Runtime** | `libmpv` runtime libraries (`sudo apt install libmpv2 mpv` on Debian/Ubuntu, `sudo dnf install mpv-libs` on Fedora, or distro equivalent) |
 | **Build Toolchain** | JDK 21 (for building from source) |
 
 ---
@@ -167,7 +167,7 @@ src/main/kotlin/
 ├── Main.kt                                    # Desktop window entrypoint, hotkey router, and life-cycle
 └── com/kayoi/pixelplayerdesktop/
     ├── cli/                                   # Standalone CLI diagnostic runner
-    ├── data/                                  # SQLite database, DAOs, repositories, audio scanner, LibVLC engine, preferences
+    ├── data/                                  # SQLite database, DAOs, repositories, audio scanner, libmpv engine, preferences
     ├── di/                                    # Koin dependency injection configuration
     ├── domain/                                # Core domain models, contracts, and repository interfaces
     ├── platform/                              # Windows media key session and Linux MPRIS integration
@@ -188,7 +188,7 @@ src/main/kotlin/
 | **Language & Toolchain** | Kotlin 2.1 (JVM Toolchain 21) |
 | **UI Framework** | Compose Multiplatform (Desktop) |
 | **Design System** | Material 3 & MaterialKolor (Dynamic Color Extraction) |
-| **Audio Engine** | LibVLC via `vlcj` |
+| **Audio Engine** | `libmpv` via JNA binding |
 | **Database** | SQLite via `sqlite-jdbc` |
 | **Dependency Injection** | Koin Core & Koin Compose |
 | **Metadata & Audio Tags** | Jaudiotagger & Vorbis Java |

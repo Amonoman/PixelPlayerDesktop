@@ -46,10 +46,10 @@ jobs:
         with:
           validate-wrappers: false
 
-      - name: Install LibVLC dependencies
+      - name: Install libmpv dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libvlc-dev vlc
+          sudo apt-get install -y libmpv-dev mpv
 
       - name: Run Checks and Tests
         run: ./gradlew check --no-daemon

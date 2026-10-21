@@ -18,4 +18,4 @@ hs_err_pid*
 
 # Bundled native binaries
 src/main/resources-packaged/
-vlc/
+/mpv/

@@ -40,6 +40,7 @@ fun WavySliderExpressive(
     value: Float,
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    onValueChangeFinished: (() -> Unit)? = null,
     isPlaying: Boolean = true,
     isMinimized: Boolean = LocalWindowMinimized.current,
     enabled: Boolean = true,
@@ -52,6 +53,7 @@ fun WavySliderExpressive(
     trackEdgePadding: Dp = 6.dp
 ) {
     var isDragging by remember { mutableStateOf(false) }
+    var dragFraction by remember { mutableStateOf<Float?>(null) }
 
     val targetAmplitude = if (enabled && isPlaying && !isDragging) 1f else 0f
     var isPhaseRunning by remember { mutableStateOf(targetAmplitude > 0f) }
@@ -106,19 +108,35 @@ fun WavySliderExpressive(
                     val trackWidth = (size.width - 2f * edgePadPx).coerceAtLeast(1f)
                     val progress = ((offset.x - edgePadPx) / trackWidth).coerceIn(0f, 1f)
                     onValueChange(progress)
+                    onValueChangeFinished?.invoke()
                 }
             }
             .pointerInput(enabled) {
                 if (!enabled) return@pointerInput
                 detectDragGestures(
-                    onDragStart = { isDragging = true },
-                    onDragEnd = { isDragging = false },
-                    onDragCancel = { isDragging = false },
+                    onDragStart = { offset ->
+                        isDragging = true
+                        val edgePadPx = trackEdgePadding.toPx()
+                        val trackWidth = (size.width - 2f * edgePadPx).coerceAtLeast(1f)
+                        val progress = ((offset.x - edgePadPx) / trackWidth).coerceIn(0f, 1f)
+                        dragFraction = progress
+                        onValueChange(progress)
+                    },
+                    onDragEnd = {
+                        isDragging = false
+                        dragFraction = null
+                        onValueChangeFinished?.invoke()
+                    },
+                    onDragCancel = {
+                        isDragging = false
+                        dragFraction = null
+                    },
                     onDrag = { change, _ ->
                         change.consume()
                         val edgePadPx = trackEdgePadding.toPx()
                         val trackWidth = (size.width - 2f * edgePadPx).coerceAtLeast(1f)
                         val progress = ((change.position.x - edgePadPx) / trackWidth).coerceIn(0f, 1f)
+                        dragFraction = progress
                         onValueChange(progress)
                     }
                 )
@@ -137,7 +155,8 @@ fun WavySliderExpressive(
         val trackEnd = width - edgePaddingPx
         val trackWidth = (trackEnd - trackStart).coerceAtLeast(0f)
 
-        val progressX = (trackStart + value.coerceIn(0f, 1f) * trackWidth).coerceIn(trackStart, trackEnd)
+        val displayValue = dragFraction ?: value
+        val progressX = (trackStart + displayValue.coerceIn(0f, 1f) * trackWidth).coerceIn(trackStart, trackEnd)
 
         // Draw inactive background track from current progress thumb to end boundary
         if (progressX < trackEnd) {
