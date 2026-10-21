@@ -16,6 +16,7 @@ import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.SettingsBackupRestore
 import androidx.compose.material.icons.rounded.Tab
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.ViewWeek
@@ -272,6 +273,15 @@ object SettingsSearchCatalog {
             section = SettingsSection.ABOUT,
             keywords = listOf("about", "version", "update", "github", "license", "credits"),
             icon = Icons.Rounded.Info
+        ),
+
+        // --- BACKUP & RESTORE ---
+        SettingSearchItem(
+            title = "Backup & Restore",
+            description = "Export and restore playlists, favorites, lyrics, and settings with .pxpl files",
+            section = SettingsSection.BACKUP,
+            keywords = listOf("backup", "restore", "export", "import", "pxpl", "data", "playlists", "favorites", "migration"),
+            icon = Icons.Rounded.SettingsBackupRestore
         )
     )
 

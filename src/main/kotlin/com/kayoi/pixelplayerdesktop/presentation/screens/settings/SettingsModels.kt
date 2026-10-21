@@ -9,6 +9,7 @@ import androidx.compose.material.icons.rounded.Keyboard
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.SettingsBackupRestore
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -56,6 +57,12 @@ enum class SettingsSection(
         subtitle = "Hotkeys, playback controls, and navigation cheatsheet",
         icon = Icons.Rounded.Keyboard
     ),
+    BACKUP(
+        id = "backup",
+        title = "Backup & Restore",
+        subtitle = "Export and recover your personal data",
+        icon = Icons.Rounded.SettingsBackupRestore
+    ),
     ABOUT(
         id = "about",
         title = "About",
@@ -73,6 +80,7 @@ fun getCategoryColors(category: SettingsSection, isDark: Boolean): Pair<Color, C
             SettingsSection.EQUALIZER -> Color(0xFF6E4E13) to Color(0xFFFFDEAC)
             SettingsSection.ACCOUNTS -> Color(0xFF37474F) to Color(0xFFBBD9E8)
             SettingsSection.SHORTCUTS -> Color(0xFF2E4369) to Color(0xFFBFD2F8)
+            SettingsSection.BACKUP -> Color(0xFF3B4869) to Color(0xFFD9E2FF)
             SettingsSection.ABOUT -> Color(0xFF3F474D) to Color(0xFFDEE3EB)
         }
     } else {
@@ -83,6 +91,7 @@ fun getCategoryColors(category: SettingsSection, isDark: Boolean): Pair<Color, C
             SettingsSection.EQUALIZER -> Color(0xFFFFDEAC) to Color(0xFF281900)
             SettingsSection.ACCOUNTS -> Color(0xFFD6EAF5) to Color(0xFF103548)
             SettingsSection.SHORTCUTS -> Color(0xFFD6E3FF) to Color(0xFF285EA7)
+            SettingsSection.BACKUP -> Color(0xFFD9E2FF) to Color(0xFF27304E)
             SettingsSection.ABOUT -> Color(0xFFEFF1F7) to Color(0xFF44474F)
         }
     }

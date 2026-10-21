@@ -6,6 +6,27 @@ import com.kayoi.pixelplayerdesktop.data.database.LocalPlaylistDao
 import com.kayoi.pixelplayerdesktop.data.database.LyricsDao
 import com.kayoi.pixelplayerdesktop.data.database.MusicDao
 import com.kayoi.pixelplayerdesktop.data.database.PixelPlayerDatabase
+import com.kayoi.pixelplayerdesktop.data.backup.BackupManager
+import com.kayoi.pixelplayerdesktop.data.backup.format.BackupFormatDetector
+import com.kayoi.pixelplayerdesktop.data.backup.format.BackupReader
+import com.kayoi.pixelplayerdesktop.data.backup.format.BackupWriter
+import com.kayoi.pixelplayerdesktop.data.backup.model.BackupSection
+import com.kayoi.pixelplayerdesktop.data.backup.module.ArtistImagesModuleHandler
+import com.kayoi.pixelplayerdesktop.data.backup.module.BackupModuleHandler
+import com.kayoi.pixelplayerdesktop.data.backup.module.BackupSongResolver
+import com.kayoi.pixelplayerdesktop.data.backup.module.EngagementStatsModuleHandler
+import com.kayoi.pixelplayerdesktop.data.backup.module.EqualizerModuleHandler
+import com.kayoi.pixelplayerdesktop.data.backup.module.FavoritesModuleHandler
+import com.kayoi.pixelplayerdesktop.data.backup.module.GlobalSettingsModuleHandler
+import com.kayoi.pixelplayerdesktop.data.backup.module.LyricsModuleHandler
+import com.kayoi.pixelplayerdesktop.data.backup.module.PlaybackHistoryModuleHandler
+import com.kayoi.pixelplayerdesktop.data.backup.module.PlaylistsModuleHandler
+import com.kayoi.pixelplayerdesktop.data.backup.restore.RestoreExecutor
+import com.kayoi.pixelplayerdesktop.data.backup.restore.RestorePlanner
+import com.kayoi.pixelplayerdesktop.data.backup.validation.BackupFileValidator
+import com.kayoi.pixelplayerdesktop.data.backup.validation.ManifestValidator
+import com.kayoi.pixelplayerdesktop.data.backup.validation.ModuleSchemaValidator
+import com.kayoi.pixelplayerdesktop.data.backup.validation.ValidationPipeline
 import com.kayoi.pixelplayerdesktop.data.network.jellyfin.JellyfinApiClient
 import com.kayoi.pixelplayerdesktop.data.network.jellyfin.JellyfinRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.network.listenbrainz.ListenBrainzApiClient
@@ -172,11 +193,91 @@ val stateModule: Module = module {
     }
 }
 
+val backupModule: Module = module {
+    single { BackupFormatDetector() }
+    single { BackupWriter(json = get()) }
+    single { BackupReader(formatDetector = get(), json = get()) }
+    single { BackupSongResolver(musicDao = get()) }
+    single { BackupFileValidator(formatDetector = get()) }
+    single { ManifestValidator() }
+    single { ModuleSchemaValidator(json = get()) }
+    single {
+        ValidationPipeline(
+            fileValidator = get(),
+            manifestValidator = get(),
+            moduleSchemaValidator = get()
+        )
+    }
+    single { RestorePlanner(backupReader = get()) }
+    single<Map<BackupSection, BackupModuleHandler>> {
+        mapOf(
+            BackupSection.PLAYLISTS to PlaylistsModuleHandler(
+                localPlaylistDao = get(),
+                database = get(),
+                songResolver = get(),
+                json = get()
+            ),
+            BackupSection.GLOBAL_SETTINGS to GlobalSettingsModuleHandler(
+                settingsRepository = get(),
+                json = get()
+            ),
+            BackupSection.FAVORITES to FavoritesModuleHandler(
+                favoritesDao = get(),
+                database = get(),
+                songResolver = get(),
+                json = get()
+            ),
+            BackupSection.LYRICS to LyricsModuleHandler(
+                database = get(),
+                songResolver = get(),
+                json = get()
+            ),
+            BackupSection.EQUALIZER to EqualizerModuleHandler(
+                settingsRepository = get(),
+                json = get()
+            ),
+            BackupSection.PLAYBACK_HISTORY to PlaybackHistoryModuleHandler(
+                database = get(),
+                songResolver = get(),
+                json = get()
+            ),
+            BackupSection.ENGAGEMENT_STATS to EngagementStatsModuleHandler(
+                database = get(),
+                songResolver = get(),
+                json = get()
+            ),
+            BackupSection.ARTIST_IMAGES to ArtistImagesModuleHandler(
+                database = get(),
+                json = get()
+            )
+        )
+    }
+    single {
+        RestoreExecutor(
+            backupReader = get(),
+            validationPipeline = get(),
+            handlers = get()
+        )
+    }
+    single {
+        BackupManager(
+            backupWriter = get(),
+            backupReader = get(),
+            restorePlanner = get(),
+            restoreExecutor = get(),
+            validationPipeline = get(),
+            handlers = get()
+        )
+    }
+}
+
 val appModules: List<Module> = listOf(
     coreModule,
     settingsModule,
     databaseModule,
     repositoryModule,
     playerModule,
-    stateModule
+    stateModule,
+    backupModule
 )
+

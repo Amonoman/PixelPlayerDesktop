@@ -997,6 +997,12 @@ fun SettingsCategoryDetail(
                     AboutSectionContent()
                 }
             }
+
+            SettingsSection.BACKUP -> {
+                item {
+                    BackupRestoreContent()
+                }
+            }
         }
     }
 }

@@ -91,4 +91,45 @@ object DirectoryPicker {
             }
         }
     }
+
+    fun chooseBackupFile(
+        title: String = "Select .pxpl Backup File",
+        onSelected: (File) -> Unit
+    ) {
+        scope.launch {
+            val file = FileKit.openFilePicker(
+                type = FileKitType.File("pxpl"),
+                dialogSettings = FileKitDialogSettings(title = title)
+            )
+            if (file != null) {
+                onSelected(file.file)
+            }
+        }
+    }
+
+    fun saveBackupFile(
+        defaultFileName: String = "PixelPlayer_Backup.pxpl",
+        initialDir: File? = null,
+        title: String = "Export Backup File",
+        onSelected: (File) -> Unit
+    ) {
+        scope.launch {
+            val baseName = defaultFileName.removeSuffix(".pxpl")
+            val file = FileKit.openFileSaver(
+                suggestedName = baseName,
+                defaultExtension = "pxpl",
+                directory = initialDir?.let { PlatformFile(it) },
+                dialogSettings = FileKitDialogSettings(title = title)
+            )
+            if (file != null) {
+                val finalFile = if (file.file.name.endsWith(".pxpl", ignoreCase = true)) {
+                    file.file
+                } else {
+                    File(file.file.parentFile, "${file.file.name}.pxpl")
+                }
+                onSelected(finalFile)
+            }
+        }
+    }
 }
+
