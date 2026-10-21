@@ -6,7 +6,9 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -31,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import com.kayoi.pixelplayerdesktop.data.model.Album
@@ -71,15 +74,11 @@ import kotlinx.coroutines.withContext
 @Composable
 fun MainAppScaffold(
     viewModel: PlayerViewModel,
-    isMaximized: Boolean = false,
-    onMinimize: () -> Unit = {},
-    onMaximizeRestore: () -> Unit = {},
-    onClose: () -> Unit = {},
-    topBarWrapper: @Composable (@Composable () -> Unit) -> Unit = { it() },
     searchFocusRequester: FocusRequester = remember { FocusRequester() },
     onSearchFocusChange: (Boolean) -> Unit = {},
     isQueueSidePanelOpen: Boolean = true,
     onToggleQueueSidePanel: () -> Unit = {},
+    onCloseQueueSidePanel: () -> Unit = onToggleQueueSidePanel,
     navigator: DesktopNavigator? = null,
     backDispatcher: DesktopBackDispatcher = LocalBackDispatcher.current,
     modifier: Modifier = Modifier
@@ -229,8 +228,21 @@ fun MainAppScaffold(
     }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val isNarrowWindow = maxWidth < 800.dp
         val isQueueVisible = isQueueSidePanelOpen && (currentSong != null || queue.isNotEmpty())
-        val isSidebarCompact = navBarCompactMode || (maxWidth < 960.dp && isQueueVisible) || (maxWidth < 740.dp)
+        val isCompactQueueMode = isNarrowWindow && isQueueVisible
+        val isSidebarCompact = navBarCompactMode
+
+        LaunchedEffect(isNarrowWindow) {
+            if (isNarrowWindow && isQueueSidePanelOpen) {
+                onCloseQueueSidePanel()
+            }
+        }
+
+        DesktopBackHandler(enabled = isCompactQueueMode, dispatcher = backDispatcher) {
+            onCloseQueueSidePanel()
+            true
+        }
 
         Row(modifier = Modifier.fillMaxSize()) {
             AppSidebar(
@@ -248,255 +260,301 @@ fun MainAppScaffold(
                     .fillMaxHeight()
                     .background(colors.background)
             ) {
-                topBarWrapper {
-                    AppTopBar(
-                        currentDestination = currentDestination,
-                        searchQuery = searchQuery,
-                        onSearchQueryChange = handleSearchQueryChange,
-                        showQueueToggle = true,
-                        isQueueOpen = isQueueSidePanelOpen,
-                        queueCount = queue.size,
-                        onToggleQueue = onToggleQueueSidePanel,
-                        isMaximized = isMaximized,
-                        onMinimize = onMinimize,
-                        onMaximizeRestore = onMaximizeRestore,
-                        onClose = onClose,
-                        searchFocusRequester = searchFocusRequester,
-                        onSearchFocusChange = onSearchFocusChange,
-                        canGoBack = nav.canGoBack || isExpandedPlayerOpen || songToAddToPlaylist != null || songToDelete != null || songToEditMetadata != null || batchSongsToEdit != null,
-                        canGoForward = nav.canGoForward && !isExpandedPlayerOpen,
-                        onGoBack = { backDispatcher.dispatchBack() },
-                        onGoForward = { backDispatcher.dispatchForward() }
-                    )
-                }
+                AppTopBar(
+                    currentDestination = currentDestination,
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = handleSearchQueryChange,
+                    showQueueToggle = true,
+                    isQueueOpen = isQueueSidePanelOpen,
+                    queueCount = queue.size,
+                    onToggleQueue = onToggleQueueSidePanel,
+                    searchFocusRequester = searchFocusRequester,
+                    onSearchFocusChange = onSearchFocusChange,
+                    canGoBack = nav.canGoBack || isExpandedPlayerOpen || isCompactQueueMode || songToAddToPlaylist != null || songToDelete != null || songToEditMetadata != null || batchSongsToEdit != null,
+                    canGoForward = nav.canGoForward && !isExpandedPlayerOpen,
+                    onGoBack = { backDispatcher.dispatchBack() },
+                    onGoForward = { backDispatcher.dispatchForward() }
+                )
 
-                Row(
+                Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
+                        .clipToBounds()
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                    ) {
-                        when (currentDestination) {
-                            DesktopNavDestination.HOME -> {
-                                when (currentTarget) {
-                                    is DesktopNavTarget.DailyMix -> {
-                                        DailyMixScreen(
-                                            songs = songs,
-                                            favoriteSongs = favoriteSongs,
-                                            currentSong = currentSong,
-                                            isPlaying = playerInfo.isPlaying,
-                                            viewModel = viewModel,
-                                            onBack = { nav.goBack() },
-                                            onAddToPlaylist = { song -> songToAddToPlaylist = song },
-                                            onDelete = { song -> songToDelete = song },
-                                            onEditMetadata = { song -> songToEditMetadata = song }
-                                        )
-                                    }
-                                    is DesktopNavTarget.RecentlyPlayed -> {
-                                        RecentlyPlayedScreen(
-                                            recentlyPlayedSongs = recentlyPlayedSongs,
-                                            currentSong = currentSong,
-                                            isPlaying = playerInfo.isPlaying,
-                                            viewModel = viewModel,
-                                            onBack = { nav.goBack() },
-                                            onAddToPlaylist = { song -> songToAddToPlaylist = song },
-                                            onDelete = { song -> songToDelete = song },
-                                            onEditMetadata = { song -> songToEditMetadata = song }
-                                        )
-                                    }
-                                    is DesktopNavTarget.Stats -> {
-                                        StatsScreen(
-                                            viewModel = viewModel,
-                                            songs = songs,
-                                            onBack = { nav.goBack() }
-                                        )
-                                    }
-                                    else -> {
-                                        HomeScreen(
-                                            songs = songs,
-                                            favoriteSongs = favoriteSongs,
-                                            recentlyPlayedSongs = recentlyPlayedSongs,
-                                            homeStatsOverview = homeStatsOverview,
-                                            currentSong = currentSong,
-                                            isPlaying = playerInfo.isPlaying,
-                                            onSongSelect = { song ->
-                                                val idx = songs.indexOfFirst { it.id == song.id }
-                                                if (idx != -1) {
-                                                    viewModel.playSongs(songs.drop(idx), 0)
-                                                } else {
-                                                    viewModel.playSong(song)
-                                                }
-                                            },
-                                            onPlaySongs = { songList, startIndex ->
-                                                viewModel.playSongs(songList, startIndex)
-                                            },
-                                            onShuffleAll = { viewModel.playSongs(songs.shuffled()) },
-                                            onNavigateToLibrary = { nav.navigate(DesktopNavTarget.Songs) },
-                                            onNavigateToDailyMix = { nav.navigate(DesktopNavTarget.DailyMix) },
-                                            onNavigateToRecentlyPlayed = { nav.navigate(DesktopNavTarget.RecentlyPlayed) },
-                                            onNavigateToStats = { nav.navigate(DesktopNavTarget.Stats) },
-                                            onNavigateToFolders = {
-                                                nav.navigate(
-                                                    DesktopNavTarget.Settings(
-                                                        SettingsSection.LIBRARY,
-                                                        LibrarySubDetail.FOLDERS
+                    Row(modifier = Modifier.fillMaxSize()) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        ) {
+                            when (currentDestination) {
+                                DesktopNavDestination.HOME -> {
+                                    when (currentTarget) {
+                                        is DesktopNavTarget.DailyMix -> {
+                                            DailyMixScreen(
+                                                songs = songs,
+                                                favoriteSongs = favoriteSongs,
+                                                currentSong = currentSong,
+                                                isPlaying = playerInfo.isPlaying,
+                                                viewModel = viewModel,
+                                                onBack = { nav.goBack() },
+                                                onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                                onDelete = { song -> songToDelete = song },
+                                                onEditMetadata = { song -> songToEditMetadata = song }
+                                            )
+                                        }
+                                        is DesktopNavTarget.RecentlyPlayed -> {
+                                            RecentlyPlayedScreen(
+                                                recentlyPlayedSongs = recentlyPlayedSongs,
+                                                currentSong = currentSong,
+                                                isPlaying = playerInfo.isPlaying,
+                                                viewModel = viewModel,
+                                                onBack = { nav.goBack() },
+                                                onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                                onDelete = { song -> songToDelete = song },
+                                                onEditMetadata = { song -> songToEditMetadata = song }
+                                            )
+                                        }
+                                        is DesktopNavTarget.Stats -> {
+                                            StatsScreen(
+                                                viewModel = viewModel,
+                                                songs = songs,
+                                                onBack = { nav.goBack() }
+                                            )
+                                        }
+                                        else -> {
+                                            HomeScreen(
+                                                songs = songs,
+                                                favoriteSongs = favoriteSongs,
+                                                recentlyPlayedSongs = recentlyPlayedSongs,
+                                                homeStatsOverview = homeStatsOverview,
+                                                currentSong = currentSong,
+                                                isPlaying = playerInfo.isPlaying,
+                                                onSongSelect = { song ->
+                                                    val idx = songs.indexOfFirst { it.id == song.id }
+                                                    if (idx != -1) {
+                                                        viewModel.playSongs(songs.drop(idx), 0)
+                                                    } else {
+                                                        viewModel.playSong(song)
+                                                    }
+                                                },
+                                                onPlaySongs = { songList, startIndex ->
+                                                    viewModel.playSongs(songList, startIndex)
+                                                },
+                                                onShuffleAll = { viewModel.playSongs(songs.shuffled()) },
+                                                onNavigateToLibrary = { nav.navigate(DesktopNavTarget.Songs) },
+                                                onNavigateToDailyMix = { nav.navigate(DesktopNavTarget.DailyMix) },
+                                                onNavigateToRecentlyPlayed = { nav.navigate(DesktopNavTarget.RecentlyPlayed) },
+                                                onNavigateToStats = { nav.navigate(DesktopNavTarget.Stats) },
+                                                onNavigateToFolders = {
+                                                    nav.navigate(
+                                                        DesktopNavTarget.Settings(
+                                                            SettingsSection.LIBRARY,
+                                                            LibrarySubDetail.FOLDERS
+                                                        )
                                                     )
-                                                )
-                                            },
-                                            onRescanLibrary = { viewModel.rescanLibrary() },
-                                            onPlayNext = { song -> viewModel.playSongNext(song) },
-                                            onAddToQueue = { song -> viewModel.addSongToQueue(song) },
-                                            onAddToPlaylist = { song -> songToAddToPlaylist = song },
-                                            onDelete = { song -> songToDelete = song },
-                                            onToggleFavorite = { song -> viewModel.toggleFavorite(song) },
-                                            onEditMetadata = { song -> songToEditMetadata = song }
-                                        )
+                                                },
+                                                onRescanLibrary = { viewModel.rescanLibrary() },
+                                                onPlayNext = { song -> viewModel.playSongNext(song) },
+                                                onAddToQueue = { song -> viewModel.addSongToQueue(song) },
+                                                onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                                onDelete = { song -> songToDelete = song },
+                                                onToggleFavorite = { song -> viewModel.toggleFavorite(song) },
+                                                onEditMetadata = { song -> songToEditMetadata = song }
+                                            )
+                                        }
                                     }
                                 }
-                            }
 
-                            DesktopNavDestination.SONGS, DesktopNavDestination.LIKED -> {
-                                SongsTab(
-                                    filteredSongs = displayedSongs,
-                                    currentSong = currentSong,
-                                    isPlaying = playerInfo.isPlaying,
-                                    searchQuery = searchQuery,
-                                    viewModel = viewModel,
-                                    isLikedTab = currentDestination == DesktopNavDestination.LIKED,
-                                    onAddToPlaylist = { song -> songToAddToPlaylist = song },
-                                    onDelete = { song -> songToDelete = song },
-                                    onEditMetadata = { song -> songToEditMetadata = song }
-                                )
-                            }
+                                DesktopNavDestination.SONGS, DesktopNavDestination.LIKED -> {
+                                    SongsTab(
+                                        filteredSongs = displayedSongs,
+                                        currentSong = currentSong,
+                                        isPlaying = playerInfo.isPlaying,
+                                        searchQuery = searchQuery,
+                                        viewModel = viewModel,
+                                        isLikedTab = currentDestination == DesktopNavDestination.LIKED,
+                                        onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                        onDelete = { song -> songToDelete = song },
+                                        onEditMetadata = { song -> songToEditMetadata = song }
+                                    )
+                                }
 
-                            DesktopNavDestination.ALBUMS -> {
-                                val selectedAlbum = (currentTarget as? DesktopNavTarget.AlbumDetail)?.album
-                                AlbumsTab(
-                                    albums = albums,
-                                    songs = songs,
-                                    isDarkTheme = isDarkTheme,
-                                    searchQuery = searchQuery,
-                                    selectedAlbum = selectedAlbum,
-                                    onSelectAlbum = { album ->
-                                        if (album != null) {
-                                            nav.navigate(DesktopNavTarget.AlbumDetail(album))
-                                        } else {
-                                            nav.goBack()
-                                        }
-                                    },
-                                    viewModel = viewModel,
-                                    filteredAlbums = filteredAlbums,
-                                    onAddToPlaylist = { song -> songToAddToPlaylist = song },
-                                    onAddSongsToPlaylist = { albumSongs -> songsToAddToPlaylist = albumSongs },
-                                    onNavigateToArtist = { artist -> nav.navigate(DesktopNavTarget.ArtistDetail(artist)) },
-                                    onDelete = { song -> songToDelete = song },
-                                    onEditMetadata = { song -> songToEditMetadata = song },
-                                    onBatchEditMetadata = { batchSongs -> batchSongsToEdit = batchSongs }
-                                )
-                            }
+                                DesktopNavDestination.ALBUMS -> {
+                                    val selectedAlbum = (currentTarget as? DesktopNavTarget.AlbumDetail)?.album
+                                    AlbumsTab(
+                                        albums = albums,
+                                        songs = songs,
+                                        isDarkTheme = isDarkTheme,
+                                        searchQuery = searchQuery,
+                                        selectedAlbum = selectedAlbum,
+                                        onSelectAlbum = { album ->
+                                            if (album != null) {
+                                                nav.navigate(DesktopNavTarget.AlbumDetail(album))
+                                            } else {
+                                                nav.goBack()
+                                            }
+                                        },
+                                        viewModel = viewModel,
+                                        filteredAlbums = filteredAlbums,
+                                        onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                        onAddSongsToPlaylist = { albumSongs -> songsToAddToPlaylist = albumSongs },
+                                        onNavigateToArtist = { artist -> nav.navigate(DesktopNavTarget.ArtistDetail(artist)) },
+                                        onDelete = { song -> songToDelete = song },
+                                        onEditMetadata = { song -> songToEditMetadata = song },
+                                        onBatchEditMetadata = { batchSongs -> batchSongsToEdit = batchSongs }
+                                    )
+                                }
 
-                            DesktopNavDestination.ARTISTS -> {
-                                val selectedArtist = (currentTarget as? DesktopNavTarget.ArtistDetail)?.artist
-                                ArtistsTab(
-                                    artists = artists,
-                                    songs = songs,
-                                    searchQuery = searchQuery,
-                                    selectedArtist = selectedArtist,
-                                    onSelectArtist = { artist ->
-                                        if (artist != null) {
-                                            nav.navigate(DesktopNavTarget.ArtistDetail(artist))
-                                        } else {
-                                            nav.goBack()
-                                        }
-                                    },
-                                    viewModel = viewModel,
-                                    filteredArtists = filteredArtists,
-                                    onAddToPlaylist = { song -> songToAddToPlaylist = song },
-                                    onAddSongsToPlaylist = { artistSongs -> songsToAddToPlaylist = artistSongs },
-                                    onDelete = { song -> songToDelete = song },
-                                    onEditMetadata = { song -> songToEditMetadata = song }
-                                )
-                            }
+                                DesktopNavDestination.ARTISTS -> {
+                                    val selectedArtist = (currentTarget as? DesktopNavTarget.ArtistDetail)?.artist
+                                    ArtistsTab(
+                                        artists = artists,
+                                        songs = songs,
+                                        searchQuery = searchQuery,
+                                        selectedArtist = selectedArtist,
+                                        onSelectArtist = { artist ->
+                                            if (artist != null) {
+                                                nav.navigate(DesktopNavTarget.ArtistDetail(artist))
+                                            } else {
+                                                nav.goBack()
+                                            }
+                                        },
+                                        viewModel = viewModel,
+                                        filteredArtists = filteredArtists,
+                                        onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                        onAddSongsToPlaylist = { artistSongs -> songsToAddToPlaylist = artistSongs },
+                                        onDelete = { song -> songToDelete = song },
+                                        onEditMetadata = { song -> songToEditMetadata = song }
+                                    )
+                                }
 
-                            DesktopNavDestination.PLAYLISTS -> {
-                                val selectedPlaylistId = (currentTarget as? DesktopNavTarget.PlaylistDetail)?.playlistId
-                                PlaylistsTab(
-                                    playlists = playlists,
-                                    songs = songs,
-                                    searchQuery = searchQuery,
-                                    selectedPlaylistId = selectedPlaylistId,
-                                    onSelectPlaylist = { playlistId ->
-                                        if (playlistId != null) {
-                                            nav.navigate(DesktopNavTarget.PlaylistDetail(playlistId))
-                                        } else {
-                                            nav.goBack()
-                                        }
-                                    },
-                                    viewModel = viewModel,
-                                    onAddToPlaylist = { song -> songToAddToPlaylist = song },
-                                    onDelete = { song -> songToDelete = song },
-                                    onEditMetadata = { song -> songToEditMetadata = song }
-                                )
-                            }
+                                DesktopNavDestination.PLAYLISTS -> {
+                                    val selectedPlaylistId = (currentTarget as? DesktopNavTarget.PlaylistDetail)?.playlistId
+                                    PlaylistsTab(
+                                        playlists = playlists,
+                                        songs = songs,
+                                        searchQuery = searchQuery,
+                                        selectedPlaylistId = selectedPlaylistId,
+                                        onSelectPlaylist = { playlistId ->
+                                            if (playlistId != null) {
+                                                nav.navigate(DesktopNavTarget.PlaylistDetail(playlistId))
+                                            } else {
+                                                nav.goBack()
+                                            }
+                                        },
+                                        viewModel = viewModel,
+                                        onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                        onDelete = { song -> songToDelete = song },
+                                        onEditMetadata = { song -> songToEditMetadata = song }
+                                    )
+                                }
 
-                            DesktopNavDestination.FOLDERS -> {
-                                val selectedFolderDetail = (currentTarget as? DesktopNavTarget.FolderDetail)?.folder
-                                val currentFolderTreePath = (currentTarget as? DesktopNavTarget.Folders)?.treePath
-                                FoldersTab(
-                                    songs = songs,
-                                    musicDirectories = musicDirectories,
-                                    currentSong = currentSong,
-                                    isPlaying = playerInfo.isPlaying,
-                                    favoriteSongs = favoriteSongs,
-                                    searchQuery = searchQuery,
-                                    selectedFolderDetail = selectedFolderDetail,
-                                    onSelectFolderDetail = { folder ->
-                                        if (folder != null) {
-                                            nav.navigate(DesktopNavTarget.FolderDetail(folder))
-                                        } else {
-                                            nav.goBack()
-                                        }
-                                    },
-                                    currentFolderTreePath = currentFolderTreePath,
-                                    onFolderTreePathChange = { path -> nav.navigate(DesktopNavTarget.Folders(path)) },
-                                    viewModel = viewModel,
-                                    onAddToPlaylist = { song -> songToAddToPlaylist = song },
-                                    onDelete = { song -> songToDelete = song },
-                                    onEditMetadata = { song -> songToEditMetadata = song },
-                                    onBatchEditMetadata = { batchSongs -> batchSongsToEdit = batchSongs }
-                                )
-                            }
+                                DesktopNavDestination.FOLDERS -> {
+                                    val selectedFolderDetail = (currentTarget as? DesktopNavTarget.FolderDetail)?.folder
+                                    val currentFolderTreePath = (currentTarget as? DesktopNavTarget.Folders)?.treePath
+                                    FoldersTab(
+                                        songs = songs,
+                                        musicDirectories = musicDirectories,
+                                        currentSong = currentSong,
+                                        isPlaying = playerInfo.isPlaying,
+                                        favoriteSongs = favoriteSongs,
+                                        searchQuery = searchQuery,
+                                        selectedFolderDetail = selectedFolderDetail,
+                                        onSelectFolderDetail = { folder ->
+                                            if (folder != null) {
+                                                nav.navigate(DesktopNavTarget.FolderDetail(folder))
+                                            } else {
+                                                nav.goBack()
+                                            }
+                                        },
+                                        currentFolderTreePath = currentFolderTreePath,
+                                        onFolderTreePathChange = { path -> nav.navigate(DesktopNavTarget.Folders(path)) },
+                                        viewModel = viewModel,
+                                        onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                        onDelete = { song -> songToDelete = song },
+                                        onEditMetadata = { song -> songToEditMetadata = song },
+                                        onBatchEditMetadata = { batchSongs -> batchSongsToEdit = batchSongs }
+                                    )
+                                }
 
-                            DesktopNavDestination.SETTINGS -> {
-                                val settingsTarget = currentTarget as? DesktopNavTarget.Settings
-                                SettingsScreen(
-                                    viewModel = viewModel,
-                                    isDarkTheme = isDarkTheme,
-                                    isDynamicColor = isDynamicColor,
-                                    onToggleDarkTheme = { viewModel.toggleDarkMode() },
-                                    onToggleDynamicColor = { viewModel.toggleDynamicColor() },
-                                    onRescanLibrary = { viewModel.rescanLibrary() },
-                                    activeSection = settingsTarget?.section,
-                                    activeSubDetail = settingsTarget?.subDetail ?: LibrarySubDetail.NONE,
-                                    searchQuery = searchQuery,
-                                    onClearSearch = { handleSearchQueryChange("") },
-                                    onNavigate = { section, subDetail ->
-                                        nav.navigate(DesktopNavTarget.Settings(section, subDetail))
-                                    },
-                                    onBack = { nav.goBack() }
-                                )
+                                DesktopNavDestination.SETTINGS -> {
+                                    val settingsTarget = currentTarget as? DesktopNavTarget.Settings
+                                    SettingsScreen(
+                                        viewModel = viewModel,
+                                        isDarkTheme = isDarkTheme,
+                                        isDynamicColor = isDynamicColor,
+                                        onToggleDarkTheme = { viewModel.toggleDarkMode() },
+                                        onToggleDynamicColor = { viewModel.toggleDynamicColor() },
+                                        onRescanLibrary = { viewModel.rescanLibrary() },
+                                        activeSection = settingsTarget?.section,
+                                        activeSubDetail = settingsTarget?.subDetail ?: LibrarySubDetail.NONE,
+                                        searchQuery = searchQuery,
+                                        onClearSearch = { handleSearchQueryChange("") },
+                                        onNavigate = { section, subDetail ->
+                                            nav.navigate(DesktopNavTarget.Settings(section, subDetail))
+                                        },
+                                        onBack = { nav.goBack() }
+                                    )
+                                }
                             }
+                        }
+
+                        AnimatedVisibility(
+                            visible = isQueueVisible && !isCompactQueueMode,
+                            enter = expandHorizontally(expandFrom = Alignment.End) + fadeIn(tween(250)),
+                            exit = shrinkHorizontally(shrinkTowards = Alignment.End) + fadeOut(tween(200))
+                        ) {
+                            QueueSidePanel(
+                                queue = queue,
+                                currentSong = currentSong,
+                                isPlaying = playerInfo.isPlaying,
+                                isShuffleOn = playerInfo.isShuffleEnabled,
+                                repeatMode = playerInfo.repeatMode,
+                                showQueueHistory = showQueueHistory,
+                                onSongClick = { song, index ->
+                                    viewModel.playSongAtIndex(index)
+                                },
+                                onToggleShuffle = {
+                                    viewModel.toggleShuffle()
+                                },
+                                onCycleRepeat = {
+                                    viewModel.cycleRepeatMode()
+                                },
+                                onClearQueue = {
+                                    viewModel.clearQueue()
+                                },
+                                onMoveItem = { from, to ->
+                                    viewModel.moveQueueItem(from, to)
+                                },
+                                onRemoveItem = { index ->
+                                    viewModel.removeFromQueue(index)
+                                },
+                                onPlayNext = { song ->
+                                    viewModel.playSongNext(song)
+                                },
+                                onAddToPlaylist = { song ->
+                                    songToAddToPlaylist = song
+                                },
+                                onDelete = { song ->
+                                    songToDelete = song
+                                },
+                                onToggleFavorite = { song ->
+                                    viewModel.toggleFavorite(song)
+                                },
+                                onEditMetadata = { song ->
+                                    songToEditMetadata = song
+                                },
+                                favoriteSongIds = remember(favoriteSongs) { favoriteSongs.map { it.id }.toSet() }
+                            )
                         }
                     }
 
-                    AnimatedVisibility(
-                        visible = isQueueSidePanelOpen && (currentSong != null || queue.isNotEmpty()),
-                        enter = expandHorizontally(expandFrom = Alignment.End) + fadeIn(tween(250)),
-                        exit = shrinkHorizontally(shrinkTowards = Alignment.End) + fadeOut(tween(200))
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = isCompactQueueMode,
+                        enter = slideInHorizontally(animationSpec = tween(320)) { it } + fadeIn(tween(200)),
+                        exit = slideOutHorizontally(animationSpec = tween(260)) { it } + fadeOut(tween(180))
                     ) {
                         QueueSidePanel(
                             queue = queue,
@@ -538,7 +596,11 @@ fun MainAppScaffold(
                             onEditMetadata = { song ->
                                 songToEditMetadata = song
                             },
-                            favoriteSongIds = remember(favoriteSongs) { favoriteSongs.map { it.id }.toSet() }
+                            favoriteSongIds = remember(favoriteSongs) { favoriteSongs.map { it.id }.toSet() },
+                            isFullPanel = true,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(colors.background)
                         )
                     }
                 }
@@ -642,10 +704,6 @@ fun MainAppScaffold(
                 viewModel = viewModel,
                 initialTab = initialExpandedTab,
                 onClose = { isExpandedPlayerOpen = false },
-                isMaximized = isMaximized,
-                onMinimize = onMinimize,
-                onMaximizeRestore = onMaximizeRestore,
-                onCloseWindow = onClose,
                 onEditMetadata = { song -> songToEditMetadata = song },
                 onAddToPlaylist = { song -> songToAddToPlaylist = song },
                 onDelete = { song -> songToDelete = song },
@@ -656,8 +714,7 @@ fun MainAppScaffold(
                 onNavigateToAlbum = { album ->
                     isExpandedPlayerOpen = false
                     nav.navigate(DesktopNavTarget.AlbumDetail(album))
-                },
-                topBarWrapper = topBarWrapper
+                }
             )
         }
 

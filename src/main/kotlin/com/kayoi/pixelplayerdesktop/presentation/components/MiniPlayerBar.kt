@@ -132,16 +132,19 @@ fun MiniPlayerBar(
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 6.dp)
         ) {
-            val isNarrow = maxWidth < 580.dp
-            val isMedium = maxWidth < 850.dp
-            val isWide = maxWidth >= 850.dp
+            val barWidth = maxWidth
+            val isNarrow = barWidth < 580.dp
+            val isMedium = barWidth < 800.dp
+            val isWide = barWidth >= 800.dp
             val centerMaxWidth = when {
-                maxWidth >= 1100.dp -> 460.dp
-                maxWidth >= 850.dp -> 340.dp
-                maxWidth >= 700.dp -> 240.dp
-                else -> 190.dp
+                barWidth >= 1150.dp -> 460.dp
+                barWidth >= 950.dp -> 380.dp
+                barWidth >= 800.dp -> 300.dp
+                barWidth >= 680.dp -> 250.dp
+                else -> 200.dp
             }
             val centerMinWidth = if (isMedium) 160.dp else 220.dp
+            val sideMaxWidth = ((barWidth - centerMaxWidth) / 2 - 6.dp).coerceAtLeast(0.dp)
 
             if (isNarrow) {
 
@@ -302,11 +305,10 @@ fun MiniPlayerBar(
                 }
             } else {
 
-                Row(
+                Box(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    contentAlignment = Alignment.Center
                 ) {
-                    val leftWeight = if (isMedium) 1.35f else 1f
                     val artworkSize = if (isMedium) 50.dp else 60.dp
                     val artworkSpacing = if (isMedium) 10.dp else 14.dp
                     val actionButtonSize = if (isMedium) 34.dp else 38.dp
@@ -315,10 +317,10 @@ fun MiniPlayerBar(
                     val infoInteractionSource = remember { MutableInteractionSource() }
                     val isInfoHovered by infoInteractionSource.collectIsHoveredAsState()
 
-                    AppTooltip("Expand Player", modifier = Modifier.weight(leftWeight)) {
+                    AppTooltip("Expand Player", modifier = Modifier.align(Alignment.CenterStart)) {
                         Row(
                             modifier = Modifier
-                                .fillMaxWidth()
+                                .widthIn(max = sideMaxWidth)
                                 .padding(end = if (isMedium) 4.dp else 8.dp)
                                 .pointerHoverIcon(PointerIcon.Hand)
                                 .clickable(
@@ -342,7 +344,7 @@ fun MiniPlayerBar(
 
                             Spacer(modifier = Modifier.width(artworkSpacing))
 
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.weight(1f, fill = false)) {
                                 Text(
                                     text = currentSong.title,
                                     style = MaterialTheme.typography.titleMedium.copy(
@@ -377,6 +379,7 @@ fun MiniPlayerBar(
 
                     Column(
                         modifier = Modifier
+                            .align(Alignment.Center)
                             .widthIn(min = centerMinWidth, max = centerMaxWidth)
                             .padding(horizontal = if (isMedium) 4.dp else 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -386,23 +389,21 @@ fun MiniPlayerBar(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(if (isMedium) 4.dp else 8.dp)
                         ) {
-                            if (isWide) {
-                                AppTooltip(if (isShuffle) "Shuffle: On" else "Shuffle: Off") {
-                                    FilledIconButton(
-                                        onClick = onToggleShuffle,
-                                        modifier = Modifier.size(36.dp),
-                                        shape = CircleShape,
-                                        colors = IconButtonDefaults.filledIconButtonColors(
-                                            containerColor = if (isShuffle) colors.primary else Color.Transparent,
-                                            contentColor = if (isShuffle) colors.onPrimary else colors.onPrimaryContainer.copy(alpha = 0.6f)
-                                        )
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Shuffle,
-                                            contentDescription = "Shuffle",
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
+                            AppTooltip(if (isShuffle) "Shuffle: On" else "Shuffle: Off") {
+                                FilledIconButton(
+                                    onClick = onToggleShuffle,
+                                    modifier = Modifier.size(if (isMedium) 32.dp else 36.dp),
+                                    shape = CircleShape,
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = if (isShuffle) colors.primary else Color.Transparent,
+                                        contentColor = if (isShuffle) colors.onPrimary else colors.onPrimaryContainer.copy(alpha = 0.6f)
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Shuffle,
+                                        contentDescription = "Shuffle",
+                                        modifier = Modifier.size(if (isMedium) 18.dp else 20.dp)
+                                    )
                                 }
                             }
 
@@ -468,29 +469,27 @@ fun MiniPlayerBar(
                                 }
                             }
 
-                            if (isWide) {
-                                val repeatLabel = when (repeatMode) {
-                                    1 -> "Repeat: All"
-                                    2 -> "Repeat: One"
-                                    else -> "Repeat: Off"
-                                }
-                                AppTooltip(repeatLabel) {
-                                    FilledIconButton(
-                                        onClick = onCycleRepeat,
-                                        modifier = Modifier.size(36.dp),
-                                        shape = CircleShape,
-                                        colors = IconButtonDefaults.filledIconButtonColors(
-                                            containerColor = if (repeatMode > 0) colors.primary else Color.Transparent,
-                                            contentColor = if (repeatMode > 0) colors.onPrimary else colors.onPrimaryContainer.copy(alpha = 0.6f)
-                                        )
-                                    ) {
-                                        val repIcon = if (repeatMode == 2) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat
-                                        Icon(
-                                            imageVector = repIcon,
-                                            contentDescription = "Repeat",
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
+                            val repeatLabel = when (repeatMode) {
+                                1 -> "Repeat: All"
+                                2 -> "Repeat: One"
+                                else -> "Repeat: Off"
+                            }
+                            AppTooltip(repeatLabel) {
+                                FilledIconButton(
+                                    onClick = onCycleRepeat,
+                                    modifier = Modifier.size(if (isMedium) 32.dp else 36.dp),
+                                    shape = CircleShape,
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = if (repeatMode > 0) colors.primary else Color.Transparent,
+                                        contentColor = if (repeatMode > 0) colors.onPrimary else colors.onPrimaryContainer.copy(alpha = 0.6f)
+                                    )
+                                ) {
+                                    val repIcon = if (repeatMode == 2) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat
+                                    Icon(
+                                        imageVector = repIcon,
+                                        contentDescription = "Repeat",
+                                        modifier = Modifier.size(if (isMedium) 18.dp else 20.dp)
+                                    )
                                 }
                             }
                         }
@@ -510,7 +509,8 @@ fun MiniPlayerBar(
 
                     Row(
                         modifier = Modifier
-                            .weight(1f)
+                            .align(Alignment.CenterEnd)
+                            .widthIn(max = sideMaxWidth)
                             .padding(start = if (isMedium) 4.dp else 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.End
@@ -566,10 +566,12 @@ fun MiniPlayerBar(
                             }
                         }
 
-                        if (isWide) {
+                        val showVolumeSlider = isWide && barWidth >= 840.dp
+                        if (showVolumeSlider) {
                             var isDraggingVolume by remember { mutableStateOf(false) }
                             var localVolume by remember(volume) { mutableFloatStateOf(volume) }
                             val displayVolume = if (isMuted) 0f else if (isDraggingVolume) localVolume else volume
+                            val volumeSliderWidth = if (barWidth >= 1050.dp) 96.dp else 72.dp
 
                             Slider(
                                 value = displayVolume.coerceIn(0f, 1f),
@@ -588,7 +590,7 @@ fun MiniPlayerBar(
                                     activeTrackColor = colors.primary,
                                     inactiveTrackColor = colors.onPrimaryContainer.copy(alpha = 0.20f)
                                 ),
-                                modifier = Modifier.width(96.dp)
+                                modifier = Modifier.width(volumeSliderWidth)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                         }

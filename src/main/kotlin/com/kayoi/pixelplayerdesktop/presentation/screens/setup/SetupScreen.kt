@@ -18,8 +18,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -49,12 +47,9 @@ import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.CropSquare
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Folder
-import androidx.compose.material.icons.rounded.FullscreenExit
 import androidx.compose.material.icons.rounded.LightMode
-import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -67,7 +62,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -114,12 +108,7 @@ private enum class SetupStep(val index: Int, val title: String) {
 @Composable
 fun SetupScreen(
     viewModel: PlayerViewModel,
-    isMaximized: Boolean = false,
-    onMinimize: () -> Unit = {},
-    onMaximizeRestore: () -> Unit = {},
-    onClose: () -> Unit = {},
     onSetupComplete: () -> Unit,
-    topBarWrapper: @Composable (@Composable () -> Unit) -> Unit = { it() },
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -159,70 +148,46 @@ fun SetupScreen(
             .background(colors.surfaceContainerLowest)
             .background(backgroundBrush)
     ) {
-        topBarWrapper {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .padding(horizontal = 20.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .padding(horizontal = 20.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = colors.surfaceContainerLow,
+                border = BorderStroke(1.dp, colors.outlineVariant.copy(alpha = 0.25f))
             ) {
-                Surface(
-                    shape = CircleShape,
-                    color = colors.surfaceContainerLow,
-                    border = BorderStroke(1.dp, colors.outlineVariant.copy(alpha = 0.25f))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = PixelPlayerIcons.AppLogo,
-                            contentDescription = null,
-                            tint = colors.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = "PixelPlayer",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface
-                        )
-                        Text(
-                            text = "•",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = colors.outline
-                        )
-                        Text(
-                            text = "Setup Wizard",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Medium,
-                            color = colors.onSurfaceVariant
-                        )
-                    }
-                }
-
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    SetupWindowButton(
-                        onClick = onMinimize,
-                        icon = Icons.Rounded.Remove,
-                        contentDescription = "Minimize"
+                    Icon(
+                        imageVector = PixelPlayerIcons.AppLogo,
+                        contentDescription = null,
+                        tint = colors.primary,
+                        modifier = Modifier.size(18.dp)
                     )
-                    SetupWindowButton(
-                        onClick = onMaximizeRestore,
-                        icon = if (isMaximized) Icons.Rounded.FullscreenExit else Icons.Rounded.CropSquare,
-                        contentDescription = if (isMaximized) "Restore" else "Maximize"
+                    Text(
+                        text = "PixelPlayer",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.onSurface
                     )
-                    SetupWindowButton(
-                        onClick = onClose,
-                        icon = Icons.Rounded.Close,
-                        contentDescription = "Close",
-                        isClose = true
+                    Text(
+                        text = "•",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = colors.outline
+                    )
+                    Text(
+                        text = "Setup Wizard",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = colors.onSurfaceVariant
                     )
                 }
             }
@@ -1146,61 +1111,6 @@ private fun SetupSineWaveLine(
             path = path,
             color = color,
             style = Stroke(width = strokePx, cap = StrokeCap.Round)
-        )
-    }
-}
-
-@Composable
-private fun SetupWindowButton(
-    onClick: () -> Unit,
-    icon: ImageVector,
-    contentDescription: String,
-    buttonSize: Dp = 34.dp,
-    iconSize: Dp = 18.dp,
-    isClose: Boolean = false
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val colors = MaterialTheme.colorScheme
-
-    val bgColor by animateColorAsState(
-        targetValue = when {
-            isHovered && isClose -> colors.errorContainer
-            isHovered -> colors.surfaceContainerHighest
-            else -> colors.surfaceContainerLow
-        },
-        animationSpec = tween(120),
-        label = "winBtnBg"
-    )
-
-    val contentColor by animateColorAsState(
-        targetValue = when {
-            isHovered && isClose -> colors.onErrorContainer
-            isHovered -> colors.onSurface
-            else -> colors.onSurfaceVariant
-        },
-        animationSpec = tween(120),
-        label = "winBtnColor"
-    )
-
-    Box(
-        modifier = Modifier
-            .size(buttonSize)
-            .clip(CircleShape)
-            .background(bgColor)
-            .border(1.dp, colors.outlineVariant.copy(alpha = 0.25f), CircleShape)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = ripple(bounded = true, radius = buttonSize / 2),
-                onClick = onClick
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = contentDescription,
-            tint = contentColor,
-            modifier = Modifier.size(iconSize)
         )
     }
 }

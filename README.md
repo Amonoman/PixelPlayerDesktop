@@ -58,7 +58,7 @@
 | **Metadata & Tagging** | Single and batch ID3 tag editor (Jaudiotagger), online metadata and cover art fetching via MusicBrainz, multi-artist delimiter parsing |
 | **Interactive Lyrics** | Embedded and synced LRC support, real-time sync offset adjustment, interactive line-by-line jumping, online lyrics search via LRCLIB, file import/export, and romanization (Pinyin, Romaji, Furigana, Hangul) |
 | **Expressive Theming** | Material 3 dynamic color extraction with customizable palette styles (Vibrant, Expressive, Muted, etc.), light and dark modes, and compact sidebar option |
-| **Desktop Experience** | Frameless window with custom title bar, system media key / MPRIS integration, responsive queue side panel, mini player bar, and fullscreen expanded view |
+| **Desktop Experience** | Native OS window frame (snapping, tiling, edge resize), themed title bar, system media key / MPRIS integration, responsive queue side panel, mini player bar, and fullscreen expanded view |
 
 ---
 

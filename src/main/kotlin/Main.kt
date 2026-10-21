@@ -1,6 +1,5 @@
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -48,21 +47,30 @@ import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.PixelPlayerTheme
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.SystemAccentColorProvider
+import com.kayoi.pixelplayerdesktop.utils.applyNativeWindowAppearance
 import io.github.vinceglb.filekit.FileKit
 import java.awt.AWTEvent
 import java.awt.Dimension
+import java.awt.Frame
+import java.awt.Insets
 import java.awt.Rectangle
 import java.awt.Toolkit
 import java.awt.event.AWTEventListener
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.MouseEvent
+import java.awt.event.WindowStateListener
 import javax.swing.SwingUtilities
+import kotlin.math.roundToInt
 import kotlin.system.exitProcess
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 import com.kayoi.pixelplayerdesktop.domain.player.AudioEngine
 import com.kayoi.pixelplayerdesktop.lifecycle.AppShutdownCoordinator
+
+// 600 x 400 keeps the window inside a half-screen snap zone on a 1280-dp-wide display.
+private const val MIN_CONTENT_WIDTH_DP = 600
+private const val MIN_CONTENT_HEIGHT_DP = 400
 
 fun main(args: Array<String> = emptyArray()) {
     val appStartTime = System.currentTimeMillis()
@@ -197,7 +205,9 @@ fun main(args: Array<String> = emptyArray()) {
 
     LaunchedEffect(currentSong?.id) {
         if (currentSong != null && queue.isNotEmpty()) {
-            isQueueSidePanelOpen = true
+            if (windowState.size.width >= 800.dp) {
+                isQueueSidePanelOpen = true
+            }
         }
     }
 
@@ -258,7 +268,6 @@ fun main(args: Array<String> = emptyArray()) {
         title = "PixelPlayer",
         icon = painterResource("icons/icon.png"),
         state = windowState,
-        undecorated = true,
         onPreviewKeyEvent = { keyEvent ->
             val isModifier = keyEvent.isCtrlPressed || keyEvent.isMetaPressed
             if (keyEvent.type == KeyEventType.KeyDown) {
@@ -267,7 +276,7 @@ fun main(args: Array<String> = emptyArray()) {
                         searchFocusRequester.requestFocus()
                         true
                     }
-                    isModifier && keyEvent.key == Key.DirectionRight -> {
+                    keyEvent.isCtrlPressed && keyEvent.key == Key.DirectionRight -> {
                         if (!isInputActive) {
                             playerViewModel.playNext()
                             true
@@ -275,7 +284,7 @@ fun main(args: Array<String> = emptyArray()) {
                             false
                         }
                     }
-                    isModifier && keyEvent.key == Key.DirectionLeft -> {
+                    keyEvent.isCtrlPressed && keyEvent.key == Key.DirectionLeft -> {
                         if (!isInputActive) {
                             playerViewModel.playPrevious()
                             true
@@ -291,12 +300,12 @@ fun main(args: Array<String> = emptyArray()) {
                         playerViewModel.seekBackward(5000L)
                         true
                     }
-                    isModifier && keyEvent.key == Key.DirectionUp -> {
+                    keyEvent.isCtrlPressed && keyEvent.key == Key.DirectionUp -> {
                         val currentVol = playerViewModel.playerInfo.value.volume
                         playerViewModel.setVolume((currentVol + 0.05f).coerceIn(0f, 1f))
                         true
                     }
-                    isModifier && keyEvent.key == Key.DirectionDown -> {
+                    keyEvent.isCtrlPressed && keyEvent.key == Key.DirectionDown -> {
                         val currentVol = playerViewModel.playerInfo.value.volume
                         playerViewModel.setVolume((currentVol - 0.05f).coerceIn(0f, 1f))
                         true
@@ -351,7 +360,8 @@ fun main(args: Array<String> = emptyArray()) {
                 when {
                     (isModifier && keyEvent.key == Key.Slash) || keyEvent.key == Key.F1 -> true
                     keyEvent.isAltPressed && (keyEvent.key == Key.DirectionLeft || keyEvent.key == Key.DirectionRight) -> true
-                    isModifier && (keyEvent.key == Key.K || (!isInputActive && (keyEvent.key == Key.DirectionRight || keyEvent.key == Key.DirectionLeft)) || keyEvent.key == Key.DirectionUp || keyEvent.key == Key.DirectionDown || keyEvent.key == Key.S || keyEvent.key == Key.R || keyEvent.key == Key.Q) -> true
+                    isModifier && (keyEvent.key == Key.K || keyEvent.key == Key.S || keyEvent.key == Key.R || keyEvent.key == Key.Q) -> true
+                    keyEvent.isCtrlPressed && !isInputActive && (keyEvent.key == Key.DirectionRight || keyEvent.key == Key.DirectionLeft || keyEvent.key == Key.DirectionUp || keyEvent.key == Key.DirectionDown) -> true
                     !isModifier && !keyEvent.isAltPressed && !isInputActive && (keyEvent.key == Key.DirectionRight || keyEvent.key == Key.DirectionLeft) -> true
                     keyEvent.isAltPressed && keyEvent.key == Key.Q -> true
                     keyEvent.key == Key.F11 -> true
@@ -363,14 +373,36 @@ fun main(args: Array<String> = emptyArray()) {
             }
          }
     ) {
-        window.minimumSize = Dimension(760, 560)
-
         DisposableEffect(window) {
-            fun updateMaximizedBounds() {
-                val config = window.graphicsConfiguration ?: return
+            // minimumSize is in physical pixels on Windows; insets use logical units.
+            fun applyMinimumContentSize() {
+                val insets = window.insets ?: Insets(0, 0, 0, 0)
+                val dpiScale = if (isWindows) {
+                    window.graphicsConfiguration?.defaultTransform?.scaleX ?: 1.0
+                } else {
+                    1.0
+                }
+                val target = Dimension(
+                    (MIN_CONTENT_WIDTH_DP * dpiScale).roundToInt() +
+                        (insets.left * dpiScale).roundToInt() +
+                        (insets.right * dpiScale).roundToInt(),
+                    (MIN_CONTENT_HEIGHT_DP * dpiScale).roundToInt() +
+                        (insets.top * dpiScale).roundToInt() +
+                        (insets.bottom * dpiScale).roundToInt()
+                )
+                if (window.minimumSize != target) {
+                    window.minimumSize = target
+                }
+            }
+            applyMinimumContentSize()
+            // Insets can be zero before the window is displayable.
+            SwingUtilities.invokeLater(::applyMinimumContentSize)
+
+            fun availableScreenBounds(): Rectangle? {
+                val config = window.graphicsConfiguration ?: return null
                 val insets = Toolkit.getDefaultToolkit().getScreenInsets(config)
                 val bounds = config.bounds
-                window.maximizedBounds = Rectangle(
+                return Rectangle(
                     bounds.x + insets.left,
                     bounds.y + insets.top,
                     bounds.width - insets.left - insets.right,
@@ -378,21 +410,56 @@ fun main(args: Array<String> = emptyArray()) {
                 )
             }
 
+            fun updateMaximizedBounds() {
+                window.maximizedBounds = availableScreenBounds() ?: return
+            }
+
             updateMaximizedBounds()
 
-            val listener = object : ComponentAdapter() {
+            // Restoring from maximized should not shrink back to the previous floating
+            // height; stretch the window to the full available height of its monitor.
+            val windowStateListener = WindowStateListener { event ->
+                val wasMaximized = (event.oldState and Frame.MAXIMIZED_BOTH) != 0
+                val isMaximized = (event.newState and Frame.MAXIMIZED_BOTH) != 0
+                if (wasMaximized && !isMaximized) {
+                    SwingUtilities.invokeLater {
+                        if ((window.extendedState and Frame.MAXIMIZED_BOTH) != 0 || !window.isShowing) {
+                            return@invokeLater
+                        }
+                        val available = availableScreenBounds() ?: return@invokeLater
+                        val current = window.bounds
+                        val width = current.width.coerceAtMost(available.width)
+                        val x = current.x.coerceIn(available.x, available.x + available.width - width)
+                        val target = Rectangle(x, available.y, width, available.height)
+                        if (window.bounds != target) {
+                            window.bounds = target
+                        }
+                    }
+                }
+            }
+            window.addWindowStateListener(windowStateListener)
+
+            val componentListener = object : ComponentAdapter() {
                 override fun componentMoved(e: ComponentEvent?) {
                     updateMaximizedBounds()
+                    // Keep the minimum size in sync with the monitor's DPI.
+                    applyMinimumContentSize()
                 }
                 override fun componentResized(e: ComponentEvent?) {
                     updateMaximizedBounds()
                 }
             }
-            window.addComponentListener(listener)
+            window.addComponentListener(componentListener)
 
             onDispose {
-                window.removeComponentListener(listener)
+                window.removeComponentListener(componentListener)
+                window.removeWindowStateListener(windowStateListener)
             }
+        }
+
+        DisposableEffect(window, isDarkTheme) {
+            applyNativeWindowAppearance(window, isDarkTheme)
+            onDispose {}
         }
 
         val navDispatcherOwner = LocalNavigationEventDispatcherOwner.current
@@ -427,54 +494,19 @@ fun main(args: Array<String> = emptyArray()) {
                     if (!initialSetupDone) {
                         SetupScreen(
                             viewModel = playerViewModel,
-                            isMaximized = windowState.placement == WindowPlacement.Maximized,
-                            onMinimize = { windowState.isMinimized = true },
-                            onMaximizeRestore = {
-                                windowState.placement = if (windowState.placement == WindowPlacement.Maximized) {
-                                    WindowPlacement.Floating
-                                } else {
-                                    WindowPlacement.Maximized
-                                }
-                            },
-                            onClose = exitApp,
                             onSetupComplete = {
                                 playerViewModel.setInitialSetupDone(true)
                                 playerViewModel.scanLibrary(forceRescan = true)
-                            },
-                            topBarWrapper = { content ->
-                                WindowDraggableArea {
-                                    content()
-                                }
                             }
                         )
                     } else {
                         MainAppScaffold(
                             viewModel = playerViewModel,
-                            isMaximized = windowState.placement == WindowPlacement.Maximized,
-                            onMinimize = { windowState.isMinimized = true },
-                            onMaximizeRestore = {
-                                windowState.placement = if (windowState.placement == WindowPlacement.Maximized) {
-                                    WindowPlacement.Floating
-                                } else {
-                                    WindowPlacement.Maximized
-                                }
-                            },
-                            onClose = {
-                                if (closeToTray) {
-                                    isWindowVisible = false
-                                } else {
-                                    exitApp()
-                                }
-                            },
-                            topBarWrapper = { content ->
-                                WindowDraggableArea {
-                                    content()
-                                }
-                            },
                             searchFocusRequester = searchFocusRequester,
                             onSearchFocusChange = { inputFocusTracker.onFocusChanged(it) },
                             isQueueSidePanelOpen = isQueueSidePanelOpen,
                             onToggleQueueSidePanel = { isQueueSidePanelOpen = !isQueueSidePanelOpen },
+                            onCloseQueueSidePanel = { isQueueSidePanelOpen = false },
                             navigator = navigator,
                             backDispatcher = backDispatcher
                         )

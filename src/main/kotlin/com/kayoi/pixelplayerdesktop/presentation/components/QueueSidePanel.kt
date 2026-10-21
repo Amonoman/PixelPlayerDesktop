@@ -70,6 +70,7 @@ import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.EnhancedSongListItem
+import kotlin.math.abs
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -96,6 +97,7 @@ fun QueueSidePanel(
     onToggleFavorite: ((Song) -> Unit)? = null,
     onEditMetadata: ((Song) -> Unit)? = null,
     favoriteSongIds: Set<String> = emptySet(),
+    isFullPanel: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -158,7 +160,7 @@ fun QueueSidePanel(
             val isVisible = visibleItems.any { it.index == currentSongDisplayIndex }
             if (!isVisible) {
                 val firstVisible = listState.firstVisibleItemIndex
-                val distance = kotlin.math.abs(currentSongDisplayIndex - firstVisible)
+                val distance = abs(currentSongDisplayIndex - firstVisible)
                 if (distance > 15) {
                     val preScrollIndex = if (currentSongDisplayIndex > firstVisible) {
                         (currentSongDisplayIndex - 8).coerceAtLeast(0)
@@ -191,7 +193,7 @@ fun QueueSidePanel(
     Row(
         modifier = modifier
             .fillMaxHeight()
-            .width(panelWidth)
+            .then(if (isFullPanel) Modifier.fillMaxWidth() else Modifier.width(panelWidth))
     ) {
 
         VerticalDivider(
@@ -263,7 +265,7 @@ fun QueueSidePanel(
                                     if (currentSongDisplayIndex >= 0) {
                                         coroutineScope.launch {
                                             val firstVisible = listState.firstVisibleItemIndex
-                                            val distance = kotlin.math.abs(currentSongDisplayIndex - firstVisible)
+                                            val distance = abs(currentSongDisplayIndex - firstVisible)
                                             if (distance > 15) {
                                                 val preScrollIndex = if (currentSongDisplayIndex > firstVisible) {
                                                     (currentSongDisplayIndex - 8).coerceAtLeast(0)
