@@ -72,13 +72,13 @@ jobs:
         with:
           validate-wrappers: false
 
-      - name: Install LibVLC dependencies
+      - name: Install LibVLC dependencies & RPM tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y libvlc-dev vlc
+          sudo apt-get install -y libvlc-dev vlc rpm
 
       - name: Build Linux Distribution
-        run: ./gradlew packageDeb createDistributable "-PAPP_VERSION_NAME=${{ steps.meta.outputs.version }}" --no-daemon
+        run: ./gradlew packageDeb packageRpm createDistributable "-PAPP_VERSION_NAME=${{ steps.meta.outputs.version }}" --no-daemon
 
       - name: Archive Portable Linux Binary
         run: |
@@ -87,7 +87,7 @@ jobs:
       - name: Stage Linux Artifacts
         run: |
           mkdir -p dist-linux
-          find build/compose/binaries/main -type f \( -name "*.deb" -o -name "*.tar.gz" \) -exec cp {} dist-linux/ \;
+          find build/compose/binaries/main -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.tar.gz" \) -exec cp {} dist-linux/ \;
 
       - name: Upload Linux Artifacts
         uses: actions/upload-artifact@v4

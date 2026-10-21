@@ -94,7 +94,7 @@ PixelPlayer Desktop includes full keyboard navigation for seamless playback and 
 | --- | --- |
 | **Operating System** | Linux (Ubuntu/Debian, Fedora, Arch, etc.) or Windows 10/11 (64-bit) |
 | **Windows Runtime** | LibVLC is automatically bundled in release installers and portable archives. No separate VLC installation required. |
-| **Linux Runtime** | LibVLC runtime libraries (`sudo apt install vlc libvlc-dev` on Debian/Ubuntu, or distro equivalent) |
+| **Linux Runtime** | LibVLC runtime libraries (`sudo apt install vlc libvlc-dev` on Debian/Ubuntu, `sudo dnf install vlc-devel` on Fedora, or distro equivalent) |
 | **Build Toolchain** | JDK 21 (for building from source) |
 
 ---
@@ -108,6 +108,7 @@ Pre-built binaries and release installers are available on the [GitHub Releases 
   - Portable: `.zip` archive (extract and launch `PixelPlayer.exe`).
 - **Linux**:
   - Debian/Ubuntu: `.deb` package (`sudo dpkg -i pixelplayer-desktop_*.deb`).
+  - Fedora/RHEL/openSUSE: `.rpm` package (`sudo dnf install ./pixelplayer-*.rpm`).
   - Portable: `.tar.gz` archive.
 
 ---
@@ -137,6 +138,12 @@ Build Debian installer package (`.deb`):
 
 ```sh
 ./gradlew packageDeb
+```
+
+Build RPM installer package (`.rpm`):
+
+```sh
+./gradlew packageRpm
 ```
 
 Build Windows installers (`.msi` and `.exe` on a Windows host):

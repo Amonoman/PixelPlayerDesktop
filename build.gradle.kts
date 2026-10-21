@@ -18,6 +18,14 @@ val windowsVersion: String = run {
         else -> "0.1.0"
     }
 }
+val rpmRelease: String = run {
+    if (appVersionName.contains("-")) {
+        val suffix = appVersionName.substringAfter("-").replace("-", ".")
+        "0.1.$suffix"
+    } else {
+        "1"
+    }
+}
 
 group = "com.kayoi.pixelplayerdesktop"
 version = appVersionName
@@ -169,6 +177,7 @@ compose.desktop {
 
             targetFormats(
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb,
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Rpm,
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi,
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Exe
             )
@@ -182,9 +191,12 @@ compose.desktop {
             linux {
                 iconFile.set(project.file("src/main/resources/icons/icon.png"))
                 debPackageVersion = appVersionName
+                rpmPackageVersion = windowsVersion
+                appRelease = rpmRelease
                 debMaintainer = "Kayoi <adlifarizi>"
                 menuGroup = "AudioVideo;Player;Audio;"
                 appCategory = "AudioVideo"
+                rpmLicenseType = "GPL-3.0"
             }
 
             windows {
