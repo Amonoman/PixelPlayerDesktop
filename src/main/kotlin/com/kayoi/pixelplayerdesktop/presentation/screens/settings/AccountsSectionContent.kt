@@ -52,6 +52,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -276,6 +278,10 @@ private fun ServerAccountCard(
 ) {
     val colors = MaterialTheme.colorScheme
 
+    val windowInfo = LocalWindowInfo.current
+    val density = LocalDensity.current
+    val isSmallScreen = with(density) { windowInfo.containerSize.width.toDp() } < 800.dp
+
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = colors.surfaceContainer,
@@ -283,16 +289,16 @@ private fun ServerAccountCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                val isCompact = maxWidth < 640.dp
+                val isCompact = isSmallScreen || maxWidth < 640.dp
 
                 if (isCompact) {
                     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
+                            verticalAlignment = Alignment.Top,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Box(
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(24.dp).padding(top = 2.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -306,17 +312,15 @@ private fun ServerAccountCard(
                             Spacer(modifier = Modifier.width(16.dp))
 
                             Column(modifier = Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = title,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = colors.onSurface
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    StatusBadge(isConnected = isConnected)
-                                }
-                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = title,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                StatusBadge(isConnected = isConnected)
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = subtitle,
                                     style = MaterialTheme.typography.bodyMedium,
@@ -325,19 +329,14 @@ private fun ServerAccountCard(
                             }
                         }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            ServerActionButtons(
-                                isConnected = isConnected,
-                                syncProgress = syncProgress,
-                                onConnectClick = onConnectClick,
-                                onDisconnectClick = onDisconnectClick,
-                                onSyncClick = onSyncClick
-                            )
-                        }
+                        ServerActionButtons(
+                            isConnected = isConnected,
+                            syncProgress = syncProgress,
+                            onConnectClick = onConnectClick,
+                            onDisconnectClick = onDisconnectClick,
+                            onSyncClick = onSyncClick,
+                            isVertical = true
+                        )
                     }
                 } else {
                     Row(
@@ -429,35 +428,68 @@ private fun ServerActionButtons(
     syncProgress: Pair<Float, String>?,
     onConnectClick: () -> Unit,
     onDisconnectClick: () -> Unit,
-    onSyncClick: () -> Unit
+    onSyncClick: () -> Unit,
+    isVertical: Boolean = false
 ) {
     if (isConnected) {
-        OutlinedButton(
-            onClick = onDisconnectClick,
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Icon(imageVector = Icons.AutoMirrored.Rounded.Logout, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(6.dp))
-            Text("Disconnect")
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        Button(
-            onClick = onSyncClick,
-            enabled = syncProgress == null,
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            if (syncProgress != null) {
-                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-            } else {
-                Icon(imageVector = Icons.Rounded.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
+        if (isVertical) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = onSyncClick,
+                    enabled = syncProgress == null,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (syncProgress != null) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    } else {
+                        Icon(imageVector = Icons.Rounded.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(if (syncProgress != null) "Syncing…" else "Sync Library")
+                }
+                OutlinedButton(
+                    onClick = onDisconnectClick,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(imageVector = Icons.AutoMirrored.Rounded.Logout, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Disconnect")
+                }
             }
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(if (syncProgress != null) "Syncing…" else "Sync Library")
+        } else {
+            OutlinedButton(
+                onClick = onDisconnectClick,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(imageVector = Icons.AutoMirrored.Rounded.Logout, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Disconnect")
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(
+                onClick = onSyncClick,
+                enabled = syncProgress == null,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                if (syncProgress != null) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                } else {
+                    Icon(imageVector = Icons.Rounded.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
+                }
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(if (syncProgress != null) "Syncing…" else "Sync Library")
+            }
         }
     } else {
         Button(
             onClick = onConnectClick,
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            modifier = if (isVertical) Modifier.fillMaxWidth() else Modifier
         ) {
             Text("Connect Server")
         }
@@ -482,6 +514,10 @@ private fun ListenBrainzCard(
     val colors = MaterialTheme.colorScheme
     val isConnected = accountState.isConnected
 
+    val windowInfo = LocalWindowInfo.current
+    val density = LocalDensity.current
+    val isSmallScreen = with(density) { windowInfo.containerSize.width.toDp() } < 800.dp
+
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = colors.surfaceContainer,
@@ -489,16 +525,16 @@ private fun ListenBrainzCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                val isCompact = maxWidth < 640.dp
+                val isCompact = isSmallScreen || maxWidth < 640.dp
 
                 if (isCompact) {
                     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
+                            verticalAlignment = Alignment.Top,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Box(
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(24.dp).padding(top = 2.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -512,17 +548,15 @@ private fun ListenBrainzCard(
                             Spacer(modifier = Modifier.width(16.dp))
 
                             Column(modifier = Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = "ListenBrainz",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = colors.onSurface
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    StatusBadge(isConnected = isConnected)
-                                }
-                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "ListenBrainz",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                StatusBadge(isConnected = isConnected)
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = if (isConnected) {
                                         val pendingPart = if (accountState.pendingCount > 0) " • ${accountState.pendingCount} pending" else ""
@@ -536,19 +570,14 @@ private fun ListenBrainzCard(
                             }
                         }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            ListenBrainzActionButtons(
-                                isConnected = isConnected,
-                                pendingCount = accountState.pendingCount,
-                                onConnectClick = onConnectClick,
-                                onDisconnectClick = onDisconnectClick,
-                                onFlushClick = onFlushClick
-                            )
-                        }
+                        ListenBrainzActionButtons(
+                            isConnected = isConnected,
+                            pendingCount = accountState.pendingCount,
+                            onConnectClick = onConnectClick,
+                            onDisconnectClick = onDisconnectClick,
+                            onFlushClick = onFlushClick,
+                            isVertical = true
+                        )
                     }
                 } else {
                     Row(
@@ -697,30 +726,58 @@ private fun ListenBrainzActionButtons(
     pendingCount: Int,
     onConnectClick: () -> Unit,
     onDisconnectClick: () -> Unit,
-    onFlushClick: () -> Unit
+    onFlushClick: () -> Unit,
+    isVertical: Boolean = false
 ) {
     if (isConnected) {
-        OutlinedButton(
-            onClick = onDisconnectClick,
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Icon(imageVector = Icons.AutoMirrored.Rounded.Logout, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(6.dp))
-            Text("Disconnect")
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        FilledTonalButton(
-            onClick = onFlushClick,
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(if (pendingCount > 0) "Flush Queue ($pendingCount)" else "Flush Queue")
+        if (isVertical) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilledTonalButton(
+                    onClick = onFlushClick,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(if (pendingCount > 0) "Flush Queue ($pendingCount)" else "Flush Queue")
+                }
+                OutlinedButton(
+                    onClick = onDisconnectClick,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(imageVector = Icons.AutoMirrored.Rounded.Logout, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Disconnect")
+                }
+            }
+        } else {
+            OutlinedButton(
+                onClick = onDisconnectClick,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(imageVector = Icons.AutoMirrored.Rounded.Logout, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Disconnect")
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            FilledTonalButton(
+                onClick = onFlushClick,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(if (pendingCount > 0) "Flush Queue ($pendingCount)" else "Flush Queue")
+            }
         }
     } else {
         Button(
             onClick = onConnectClick,
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            modifier = if (isVertical) Modifier.fillMaxWidth() else Modifier
         ) {
             Text("Connect ListenBrainz")
         }

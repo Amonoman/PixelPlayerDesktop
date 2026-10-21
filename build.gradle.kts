@@ -94,8 +94,37 @@ configurations.all {
     }
 }
 
+val generateBuildConfig = tasks.register("generateBuildConfig") {
+    val outputDir = layout.buildDirectory.dir("generated/sources/buildConfig/main")
+    val vName = appVersionName
+    val vCode = providers.gradleProperty("APP_VERSION_CODE").map { it.toIntOrNull() ?: 1 }.getOrElse(1)
+
+    inputs.property("versionName", vName)
+    inputs.property("versionCode", vCode)
+    outputs.dir(outputDir)
+
+    doLast {
+        val dir = outputDir.get().asFile
+        val file = File(dir, "com/kayoi/pixelplayerdesktop/BuildConfig.kt")
+        file.parentFile.mkdirs()
+        file.writeText(
+            """
+            package com.kayoi.pixelplayerdesktop
+
+            object BuildConfig {
+                const val APP_NAME: String = "PixelPlayerDesktop"
+                const val APP_VERSION_NAME: String = "$vName"
+                const val APP_VERSION_CODE: Int = $vCode
+                const val APPLICATION_ID: String = "com.kayoi.pixelplayerdesktop"
+            }
+            """.trimIndent() + "\n"
+        )
+    }
+}
+
 kotlin {
     jvmToolchain(21)
+    sourceSets.getByName("main").kotlin.srcDir(generateBuildConfig)
 }
 
 tasks.test {

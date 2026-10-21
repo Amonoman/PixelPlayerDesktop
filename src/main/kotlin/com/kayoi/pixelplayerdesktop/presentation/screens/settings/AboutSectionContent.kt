@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
+import com.kayoi.pixelplayerdesktop.BuildConfig
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -214,7 +215,7 @@ fun AboutSectionContent(modifier: Modifier = Modifier) {
                     color = colors.tertiaryContainer
                 ) {
                     Text(
-                        text = "Version v0.1.0",
+                        text = "Version ${BuildConfig.APP_VERSION_NAME}",
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,

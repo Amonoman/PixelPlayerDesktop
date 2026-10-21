@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.data.backup
 
+import com.kayoi.pixelplayerdesktop.BuildConfig
 import com.kayoi.pixelplayerdesktop.data.backup.format.BackupFormatDetector
 import com.kayoi.pixelplayerdesktop.data.backup.format.BackupReader
 import com.kayoi.pixelplayerdesktop.data.backup.format.BackupWriter
@@ -49,7 +50,8 @@ class BackupManager(
 
             val manifest = BackupManifest(
                 schemaVersion = BackupManifest.CURRENT_SCHEMA_VERSION,
-                appVersion = "0.1.0",
+                appVersion = BuildConfig.APP_VERSION_NAME,
+                appVersionCode = BuildConfig.APP_VERSION_CODE,
                 createdAt = System.currentTimeMillis(),
                 deviceInfo = DeviceInfo(
                     manufacturer = System.getProperty("os.name") ?: "Desktop",

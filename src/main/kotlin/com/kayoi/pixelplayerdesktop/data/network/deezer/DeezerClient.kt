@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.data.network.deezer
 
+import com.kayoi.pixelplayerdesktop.BuildConfig
 import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -65,7 +66,7 @@ object DeezerClient {
             connection.requestMethod = "GET"
             connection.connectTimeout = 5000
             connection.readTimeout = 5000
-            connection.setRequestProperty("User-Agent", "PixelPlayerDesktop/1.0")
+            connection.setRequestProperty("User-Agent", "PixelPlayerDesktop/${BuildConfig.APP_VERSION_NAME}")
 
             if (connection.responseCode == HttpURLConnection.HTTP_OK) {
                 val responseText = connection.inputStream.bufferedReader().use { it.readText() }
@@ -101,7 +102,7 @@ object DeezerClient {
                     val imgConnection = imgUri.toURL().openConnection() as HttpURLConnection
                     imgConnection.connectTimeout = 8000
                     imgConnection.readTimeout = 8000
-                    imgConnection.setRequestProperty("User-Agent", "PixelPlayerDesktop/1.0")
+                    imgConnection.setRequestProperty("User-Agent", "PixelPlayerDesktop/${BuildConfig.APP_VERSION_NAME}")
 
                     if (imgConnection.responseCode == HttpURLConnection.HTTP_OK) {
                         val bytes = imgConnection.inputStream.use { it.readBytes() }

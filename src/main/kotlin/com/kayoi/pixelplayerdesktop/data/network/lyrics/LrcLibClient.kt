@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.data.network.lyrics
 
+import com.kayoi.pixelplayerdesktop.BuildConfig
 import com.kayoi.pixelplayerdesktop.data.model.Lyrics
 import com.kayoi.pixelplayerdesktop.utils.LrcParser
 import kotlinx.coroutines.CoroutineDispatcher
@@ -123,7 +124,7 @@ class LrcLibClient(
             connection.requestMethod = "GET"
             connection.connectTimeout = 5000
             connection.readTimeout = 5000
-            connection.setRequestProperty("User-Agent", "PixelPlayerDesktop/1.0 (https://github.com/adlifarizi/PixelPlayerDesktop)")
+            connection.setRequestProperty("User-Agent", "PixelPlayerDesktop/${BuildConfig.APP_VERSION_NAME} (https://github.com/adlifarizi/PixelPlayerDesktop)")
 
             if (connection.responseCode == HttpURLConnection.HTTP_OK) {
                 connection.inputStream.bufferedReader().use { it.readText() }

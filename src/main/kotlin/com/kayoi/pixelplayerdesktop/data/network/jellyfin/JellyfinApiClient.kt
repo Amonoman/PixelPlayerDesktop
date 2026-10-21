@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.data.network.jellyfin
 
+import com.kayoi.pixelplayerdesktop.BuildConfig
 import com.kayoi.pixelplayerdesktop.data.network.jellyfin.model.JellyfinCredentials
 import com.kayoi.pixelplayerdesktop.data.network.jellyfin.model.JellyfinPlaylist
 import com.kayoi.pixelplayerdesktop.data.network.jellyfin.model.JellyfinSong
@@ -26,8 +27,8 @@ class JellyfinApiClient(
 ) {
 
     companion object {
-        private const val CLIENT_NAME = "PixelPlayerDesktop"
-        private const val CLIENT_VERSION = "1.0.0"
+        private const val CLIENT_NAME = BuildConfig.APP_NAME
+        private const val CLIENT_VERSION = BuildConfig.APP_VERSION_NAME
         private const val DEVICE_NAME = "Desktop"
         private const val DEVICE_ID = "PixelPlayerDesktop-PC"
     }

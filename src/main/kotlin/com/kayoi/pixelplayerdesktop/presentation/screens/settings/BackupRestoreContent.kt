@@ -24,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -49,6 +51,10 @@ fun BackupRestoreContent(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val colors = MaterialTheme.colorScheme
+
+    val windowInfo = LocalWindowInfo.current
+    val density = LocalDensity.current
+    val isSmallScreen = with(density) { windowInfo.containerSize.width.toDp() } < 800.dp
 
     val progressUpdate by backupManager.progressFlow.collectAsState()
 
@@ -158,130 +164,210 @@ fun BackupRestoreContent(
                 color = colors.surfaceContainer,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    Button(
-                        onClick = {
-                            DirectoryPicker.saveBackupFile(
-                                defaultFileName = "PixelPlayer_Backup_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.pxpl"
-                            ) { targetFile ->
-                                coroutineScope.launch {
-                                    isProcessing = true
-                                    val passphrase = if (isPasswordEnabled && exportPassword.isNotBlank()) exportPassword else null
-                                    val result = backupManager.export(targetFile, exportSections, passphrase)
-                                    isProcessing = false
-                                    if (result.isSuccess) {
-                                        statusMessage = Pair(true, "Backup saved to: ${targetFile.name}")
-                                    } else {
-                                        statusMessage = Pair(false, "Export failed: ${result.exceptionOrNull()?.message}")
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val isCompact = isSmallScreen || maxWidth < 640.dp
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = if (isCompact) Arrangement.Center else Arrangement.End
+                    ) {
+                        Button(
+                            onClick = {
+                                DirectoryPicker.saveBackupFile(
+                                    defaultFileName = "PixelPlayer_Backup_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.pxpl"
+                                ) { targetFile ->
+                                    coroutineScope.launch {
+                                        isProcessing = true
+                                        val passphrase = if (isPasswordEnabled && exportPassword.isNotBlank()) exportPassword else null
+                                        val result = backupManager.export(targetFile, exportSections, passphrase)
+                                        isProcessing = false
+                                        if (result.isSuccess) {
+                                            statusMessage = Pair(true, "Backup saved to: ${targetFile.name}")
+                                        } else {
+                                            statusMessage = Pair(false, "Export failed: ${result.exceptionOrNull()?.message}")
+                                        }
                                     }
                                 }
-                            }
-                        },
-                        enabled = canExport,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.primary,
-                            contentColor = colors.onPrimary,
-                            disabledContainerColor = colors.surfaceContainerHighest,
-                            disabledContentColor = colors.onSurfaceVariant.copy(alpha = 0.38f)
-                        )
-                    ) {
-                        Icon(
-                            Icons.Outlined.FileUpload,
-                            null,
-                            modifier = Modifier.size(18.dp),
-                            tint = if (canExport) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text("Export .pxpl File")
+                            },
+                            enabled = canExport,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = if (isCompact) Modifier.fillMaxWidth() else Modifier,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colors.primary,
+                                contentColor = colors.onPrimary,
+                                disabledContainerColor = colors.surfaceContainerHighest,
+                                disabledContentColor = colors.onSurfaceVariant.copy(alpha = 0.38f)
+                            )
+                        ) {
+                            Icon(
+                                Icons.Outlined.FileUpload,
+                                null,
+                                modifier = Modifier.size(18.dp),
+                                tint = if (canExport) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text("Export .pxpl File")
+                        }
                     }
                 }
             }
         }
 
         SettingsSubsection(title = "RESTORE BACKUP") {
+
+            val onSelectBackupFile = {
+                DirectoryPicker.chooseBackupFile { selectedFile ->
+                    coroutineScope.launch {
+                        pendingRestoreFile = selectedFile
+                        if (backupManager.isBackupEncrypted(selectedFile)) {
+                            showPasswordPromptDialog = true
+                        } else {
+                            isProcessing = true
+                            val inspect = backupManager.inspectBackup(selectedFile, null)
+                            isProcessing = false
+                            if (inspect.isSuccess) {
+                                currentRestorePlan = inspect.getOrThrow()
+                            } else {
+                                statusMessage = Pair(false, "Failed to read backup: ${inspect.exceptionOrNull()?.message}")
+                            }
+                        }
+                    }
+                }
+            }
+
             Surface(
                 shape = getGroupShape(0, 1),
                 color = colors.surfaceContainer,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Box(
-                        modifier = Modifier.size(24.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Outlined.FileDownload,
-                            contentDescription = null,
-                            tint = colors.secondary,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val isCompact = isSmallScreen || maxWidth < 640.dp
 
-                    Spacer(modifier = Modifier.width(16.dp))
+                    if (isCompact) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.Top,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Box(
+                                    modifier = Modifier.size(24.dp).padding(top = 2.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.FileDownload,
+                                        contentDescription = null,
+                                        tint = colors.secondary,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
 
-                    Column(
-                        modifier = Modifier.weight(1f).padding(end = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        Text(
-                            text = "Restore from .pxpl File",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.onSurface
-                        )
-                        Text(
-                            text = "Import playlists, favorites, lyrics, and settings",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colors.onSurfaceVariant
-                        )
-                    }
+                                Spacer(modifier = Modifier.width(16.dp))
 
-                    Button(
-                        onClick = {
-                            DirectoryPicker.chooseBackupFile { selectedFile ->
-                                coroutineScope.launch {
-                                    pendingRestoreFile = selectedFile
-                                    if (backupManager.isBackupEncrypted(selectedFile)) {
-                                        showPasswordPromptDialog = true
-                                    } else {
-                                        isProcessing = true
-                                        val inspect = backupManager.inspectBackup(selectedFile, null)
-                                        isProcessing = false
-                                        if (inspect.isSuccess) {
-                                            currentRestorePlan = inspect.getOrThrow()
-                                        } else {
-                                            statusMessage = Pair(false, "Failed to read backup: ${inspect.exceptionOrNull()?.message}")
-                                        }
-                                    }
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    Text(
+                                        text = "Restore from .pxpl File",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.onSurface
+                                    )
+                                    Text(
+                                        text = "Import playlists, favorites, lyrics, and settings",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = colors.onSurfaceVariant
+                                    )
                                 }
                             }
-                        },
-                        enabled = !isProcessing,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.primary,
-                            contentColor = colors.onPrimary,
-                            disabledContainerColor = colors.surfaceContainerHighest,
-                            disabledContentColor = colors.onSurfaceVariant.copy(alpha = 0.38f)
-                        )
-                    ) {
-                        Icon(
-                            Icons.Outlined.FileDownload,
-                            null,
-                            modifier = Modifier.size(18.dp),
-                            tint = if (!isProcessing) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text("Select .pxpl File")
+
+                            Button(
+                                onClick = onSelectBackupFile,
+                                enabled = !isProcessing,
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = colors.primary,
+                                    contentColor = colors.onPrimary,
+                                    disabledContainerColor = colors.surfaceContainerHighest,
+                                    disabledContentColor = colors.onSurfaceVariant.copy(alpha = 0.38f)
+                                )
+                            ) {
+                                Icon(
+                                    Icons.Outlined.FileDownload,
+                                    null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = if (!isProcessing) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text("Select .pxpl File")
+                            }
+                        }
+                    } else {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier.size(24.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Outlined.FileDownload,
+                                    contentDescription = null,
+                                    tint = colors.secondary,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(
+                                modifier = Modifier.weight(1f).padding(end = 16.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Text(
+                                    text = "Restore from .pxpl File",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.onSurface
+                                )
+                                Text(
+                                    text = "Import playlists, favorites, lyrics, and settings",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = colors.onSurfaceVariant
+                                )
+                            }
+
+                            Button(
+                                onClick = onSelectBackupFile,
+                                enabled = !isProcessing,
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = colors.primary,
+                                    contentColor = colors.onPrimary,
+                                    disabledContainerColor = colors.surfaceContainerHighest,
+                                    disabledContentColor = colors.onSurfaceVariant.copy(alpha = 0.38f)
+                                )
+                            ) {
+                                Icon(
+                                    Icons.Outlined.FileDownload,
+                                    null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = if (!isProcessing) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text("Select .pxpl File")
+                            }
+                        }
                     }
                 }
             }

@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.data.network.musicbrainz
 
+import com.kayoi.pixelplayerdesktop.BuildConfig
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -272,6 +273,6 @@ class MusicBrainzClient(
     }
 
     companion object {
-        private const val USER_AGENT = "PixelPlayerDesktop/0.1.0 ( https://github.com/kayoi/pixelplayer-desktop )"
+        private val USER_AGENT = "PixelPlayerDesktop/${BuildConfig.APP_VERSION_NAME} ( https://github.com/kayoi/pixelplayer-desktop )"
     }
 }
