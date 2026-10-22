@@ -611,6 +611,7 @@ fun ExpandedPlayerScreen(
                                         viewModel.toggleFavorite(song)
                                     },
                                     favoriteSongIds = remember(favoriteSongs) { favoriteSongs.map { it.id }.toSet() },
+                                    itemContainerColor = colors.surfaceContainer,
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }
@@ -665,6 +666,7 @@ fun ExpandedPlayerScreen(
                                 },
                                 favoriteSongIds = remember(favoriteSongs) { favoriteSongs.map { it.id }.toSet() },
                                 isFullPanel = true,
+                                itemContainerColor = colors.surfaceContainer,
                                 modifier = Modifier.fillMaxSize()
                             )
                         }

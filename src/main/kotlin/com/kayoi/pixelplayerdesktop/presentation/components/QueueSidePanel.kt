@@ -58,6 +58,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -98,6 +99,7 @@ fun QueueSidePanel(
     onEditMetadata: ((Song) -> Unit)? = null,
     favoriteSongIds: Set<String> = emptySet(),
     isFullPanel: Boolean = false,
+    itemContainerColor: Color? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -492,6 +494,7 @@ fun QueueSidePanel(
                                     isCurrentSong = isSelected,
                                     isPlaying = isPlaying && isSelected,
                                     showDuration = false,
+                                    containerColorOverride = itemContainerColor,
                                     isDragging = isDragging,
                                     isDragHandleVisible = true,
                                     dragHandle = {
