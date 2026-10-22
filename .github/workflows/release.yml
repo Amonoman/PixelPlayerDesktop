@@ -188,6 +188,78 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate Release Notes
+        env:
+          RELEASE_TAG: ${{ needs.build-linux.outputs.tag }}
+        run: |
+          python3 -c '
+          import subprocess, os
+
+          prev_tag = ""
+          try:
+              tags = subprocess.check_output(["git", "tag", "--sort=-creatordate"]).decode("utf-8").strip().splitlines()
+              current_tag = os.environ.get("RELEASE_TAG", "")
+              for t in tags:
+                  if t != current_tag:
+                      prev_tag = t
+                      break
+          except Exception:
+              pass
+
+          cmd = ["git", "log"]
+          if prev_tag:
+              cmd.append(f"{prev_tag}..HEAD")
+          cmd.append("--pretty=format:%h|%s")
+
+          try:
+              out = subprocess.check_output(cmd).decode("utf-8")
+          except Exception:
+              out = ""
+
+          features, fixes, maintenance = [], [], []
+          repo_url = os.environ.get("GITHUB_SERVER_URL", "https://github.com") + "/" + os.environ.get("GITHUB_REPOSITORY", "adlifarizi/PixelPlayerDesktop")
+
+          for line in out.strip().split("\n"):
+              if not line: continue
+              parts = line.split("|", 1)
+              if len(parts) != 2: continue
+              h, s = parts[0].strip(), parts[1].strip()
+              link = f"[{h}]({repo_url}/commit/{h})"
+
+              lower = s.lower()
+              if lower.startswith("feat"):
+                  clean = s.split(":", 1)[1].strip() if ":" in s else s
+                  features.append(f"- **{clean}** ({link})")
+              elif lower.startswith("fix"):
+                  clean = s.split(":", 1)[1].strip() if ":" in s else s
+                  fixes.append(f"- {clean} ({link})")
+              elif lower.startswith("refactor") or lower.startswith("build") or lower.startswith("perf") or lower.startswith("chore") or lower.startswith("docs"):
+                  clean = s.split(":", 1)[1].strip() if ":" in s else s
+                  maintenance.append(f"- {clean} ({link})")
+              else:
+                  maintenance.append(f"- {s} ({link})")
+
+          body_parts = []
+          if features:
+              body_parts.append("### Features & Enhancements\n" + "\n".join(features))
+          if fixes:
+              body_parts.append("### Bug Fixes\n" + "\n".join(fixes))
+          if maintenance:
+              body_parts.append("### Build & Maintenance\n" + "\n".join(maintenance))
+
+          if not body_parts:
+              body_parts.append("### Changes\n" + (out if out else "- Maintenance and bug fixes"))
+
+          full_body = "\n\n".join(body_parts) + "\n"
+          with open("release-notes.md", "w") as f:
+              f.write(full_body)
+          '
+
       - name: Download Linux Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -214,7 +286,8 @@ jobs:
         with:
           tag_name: ${{ needs.build-linux.outputs.tag }}
           name: "PixelPlayer Desktop ${{ needs.build-linux.outputs.version }}"
+          body_path: release-notes.md
           prerelease: ${{ needs.build-linux.outputs.is_prerelease == 'true' }}
           draft: false
-          generate_release_notes: true
+          generate_release_notes: false
           files: release-assets/*
