@@ -3,7 +3,6 @@ package com.kayoi.pixelplayerdesktop.presentation.components
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -14,11 +13,9 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,7 +23,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.automirrored.rounded.VolumeDown
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
@@ -35,7 +31,6 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Fullscreen
-import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -44,8 +39,6 @@ import androidx.compose.material.icons.rounded.RepeatOne
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -67,7 +60,6 @@ import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -78,7 +70,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
-import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 
 @Composable
 fun MiniPlayerBar(
@@ -144,7 +135,6 @@ fun MiniPlayerBar(
                 else -> 200.dp
             }
             val centerMinWidth = if (isMedium) 160.dp else 220.dp
-            val sideMaxWidth = ((barWidth - centerMaxWidth) / 2 - 6.dp).coerceAtLeast(0.dp)
 
             if (isNarrow) {
 
@@ -305,9 +295,9 @@ fun MiniPlayerBar(
                 }
             } else {
 
-                Box(
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     val artworkSize = if (isMedium) 50.dp else 60.dp
                     val artworkSpacing = if (isMedium) 10.dp else 14.dp
@@ -316,70 +306,76 @@ fun MiniPlayerBar(
 
                     val infoInteractionSource = remember { MutableInteractionSource() }
                     val isInfoHovered by infoInteractionSource.collectIsHoveredAsState()
+                    val actionGapInteractionSource = remember { MutableInteractionSource() }
 
-                    AppTooltip("Expand Player", modifier = Modifier.align(Alignment.CenterStart)) {
-                        Row(
-                            modifier = Modifier
-                                .widthIn(max = sideMaxWidth)
-                                .padding(end = if (isMedium) 4.dp else 8.dp)
-                                .pointerHoverIcon(PointerIcon.Hand)
-                                .clickable(
-                                    interactionSource = infoInteractionSource,
-                                    indication = null,
-                                    onClick = onExpandClick
-                                ),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start
-                        ) {
-                            AsyncArtworkImage(
-                                artworkUri = currentSong.albumArtUriString,
-                                modifier = Modifier.size(artworkSize),
-                                shape = CircleShape,
-                                placeholderIcon = Icons.Rounded.MusicNote,
-                                placeholderIconSize = if (isMedium) 24.dp else 30.dp,
-                                containerColor = colors.surfaceVariant,
-                                contentColor = colors.onSurfaceVariant,
-                                contentDescription = "${currentSong.title} cover"
-                            )
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .pointerHoverIcon(PointerIcon.Hand)
+                            .clickable(
+                                interactionSource = infoInteractionSource,
+                                indication = null,
+                                onClick = onExpandClick
+                            ),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        AppTooltip("Expand Player") {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(end = if (isMedium) 4.dp else 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                AsyncArtworkImage(
+                                    artworkUri = currentSong.albumArtUriString,
+                                    modifier = Modifier.size(artworkSize),
+                                    shape = CircleShape,
+                                    placeholderIcon = Icons.Rounded.MusicNote,
+                                    placeholderIconSize = if (isMedium) 24.dp else 30.dp,
+                                    containerColor = colors.surfaceVariant,
+                                    contentColor = colors.onSurfaceVariant,
+                                    contentDescription = "${currentSong.title} cover"
+                                )
 
-                            Spacer(modifier = Modifier.width(artworkSpacing))
+                                Spacer(modifier = Modifier.width(artworkSpacing))
 
-                            Column(modifier = Modifier.weight(1f, fill = false)) {
-                                Text(
-                                    text = currentSong.title,
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontSize = if (isMedium) 15.sp else 16.sp,
-                                        textDecoration = if (isInfoHovered) TextDecoration.Underline else TextDecoration.None
-                                    ),
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.onPrimaryContainer,
-                                    maxLines = 1,
-                                    overflow = if (isPlaying) TextOverflow.Clip else TextOverflow.Ellipsis,
-                                    modifier = Modifier.then(
-                                        if (isPlaying) {
-                                            Modifier.basicMarquee(
-                                                iterations = Int.MAX_VALUE,
-                                                initialDelayMillis = 1500,
-                                                repeatDelayMillis = 2000
-                                            )
-                                        } else Modifier
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = currentSong.title,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontSize = if (isMedium) 15.sp else 16.sp,
+                                            textDecoration = if (isInfoHovered) TextDecoration.Underline else TextDecoration.None
+                                        ),
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.onPrimaryContainer,
+                                        maxLines = 1,
+                                        overflow = if (isPlaying) TextOverflow.Clip else TextOverflow.Ellipsis,
+                                        modifier = Modifier.then(
+                                            if (isPlaying) {
+                                                Modifier.basicMarquee(
+                                                    iterations = Int.MAX_VALUE,
+                                                    initialDelayMillis = 1500,
+                                                    repeatDelayMillis = 2000
+                                                )
+                                            } else Modifier
+                                        )
                                     )
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = currentSong.displayArtist,
-                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = if (isMedium) 12.5.sp else 13.5.sp),
-                                    color = colors.onPrimaryContainer.copy(alpha = if (isInfoHovered) 0.95f else 0.75f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = currentSong.displayArtist,
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = if (isMedium) 12.5.sp else 13.5.sp),
+                                        color = colors.onPrimaryContainer.copy(alpha = if (isInfoHovered) 0.95f else 0.75f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
                         }
                     }
 
                     Column(
                         modifier = Modifier
-                            .align(Alignment.Center)
                             .widthIn(min = centerMinWidth, max = centerMaxWidth)
                             .padding(horizontal = if (isMedium) 4.dp else 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -509,8 +505,14 @@ fun MiniPlayerBar(
 
                     Row(
                         modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .widthIn(max = sideMaxWidth)
+                            .weight(1f)
+                            .heightIn(min = artworkSize)
+                            .pointerHoverIcon(PointerIcon.Hand)
+                            .clickable(
+                                interactionSource = actionGapInteractionSource,
+                                indication = null,
+                                onClick = onExpandClick
+                            )
                             .padding(start = if (isMedium) 4.dp else 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.End

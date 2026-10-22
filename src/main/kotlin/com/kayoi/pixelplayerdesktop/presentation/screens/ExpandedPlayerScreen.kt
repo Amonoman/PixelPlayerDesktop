@@ -1,5 +1,17 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
+import java.io.File
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -20,28 +32,17 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
-import com.kayoi.pixelplayerdesktop.presentation.components.TrackDialogInput
-import com.kayoi.pixelplayerdesktop.presentation.screens.settings.EqualizerDialog
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -67,6 +68,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.Song
@@ -74,22 +80,24 @@ import com.kayoi.pixelplayerdesktop.presentation.components.LyricsSearchDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueSidePanel
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueToggleButton
 import com.kayoi.pixelplayerdesktop.presentation.components.SaveLyricsDialog
+import com.kayoi.pixelplayerdesktop.presentation.components.TrackDialogInput
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LyricsOptionsMenu
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LyricsSyncControls
 import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.presentation.screens.player.DesktopLandscapeHeroPlayer
 import com.kayoi.pixelplayerdesktop.presentation.screens.player.LyricsView
+import com.kayoi.pixelplayerdesktop.presentation.screens.settings.EqualizerDialog
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.PixelPlayerTheme
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
 import com.kayoi.pixelplayerdesktop.utils.DirectoryPicker
 import com.kayoi.pixelplayerdesktop.utils.MultiLangRomanizer
-import java.io.File
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+
+private val outerCorner = 26.dp
+private val innerCorner = 4.dp
+private val buttonGap = 2.dp
+private val buttonSize = 42.dp
 
 enum class ExpandedTab {
     LYRICS,
@@ -403,47 +411,80 @@ fun ExpandedPlayerScreen(
                                         }
 
                                         Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
+                                            val equalizerContainerColor = if (equalizerEnabled) colors.primary else colors.surfaceContainerHighest.copy(alpha = 0.6f)
+                                            val equalizerContentColor = if (equalizerEnabled) colors.onPrimary else colors.onSurfaceVariant
+
                                             AppTooltip("Equalizer") {
-                                                IconButton(
+                                                FilledIconButton(
                                                     onClick = { showEqualizerDialog = true },
-                                                    modifier = Modifier.size(32.dp)
+                                                    shape = RoundedCornerShape(
+                                                        topStart = outerCorner,
+                                                        bottomStart = outerCorner,
+                                                        topEnd = innerCorner,
+                                                        bottomEnd = innerCorner
+                                                    ),
+                                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                                        containerColor = equalizerContainerColor,
+                                                        contentColor = equalizerContentColor
+                                                    ),
+                                                    modifier = Modifier.size(buttonSize)
                                                 ) {
                                                     Icon(
                                                         imageVector = Icons.Rounded.GraphicEq,
                                                         contentDescription = "Equalizer",
-                                                        tint = if (equalizerEnabled) colors.primary else colors.onSurfaceVariant,
                                                         modifier = Modifier.size(20.dp)
                                                     )
                                                 }
                                             }
 
+                                            Spacer(modifier = Modifier.width(buttonGap))
+
                                             AppTooltip("Search / Change Lyrics") {
-                                                IconButton(
+                                                FilledIconButton(
                                                     onClick = { showLyricsSearchDialog = true },
-                                                    modifier = Modifier.size(32.dp)
+                                                    shape = RoundedCornerShape(
+                                                        topStart = innerCorner,
+                                                        bottomStart = innerCorner,
+                                                        topEnd = innerCorner,
+                                                        bottomEnd = innerCorner
+                                                    ),
+                                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                                        containerColor = colors.surfaceContainerHighest.copy(alpha = 0.6f),
+                                                        contentColor = colors.onSurfaceVariant
+                                                    ),
+                                                    modifier = Modifier.size(buttonSize)
                                                 ) {
                                                     Icon(
                                                         imageVector = Icons.Rounded.Search,
                                                         contentDescription = "Search Lyrics",
-                                                        tint = colors.onSurfaceVariant,
                                                         modifier = Modifier.size(20.dp)
                                                     )
                                                 }
                                             }
 
+                                            Spacer(modifier = Modifier.width(buttonGap))
+
                                             Box {
                                                 AppTooltip("Lyrics Options") {
-                                                    IconButton(
+                                                    FilledIconButton(
                                                         onClick = { showLyricsMenu = true },
-                                                        modifier = Modifier.size(32.dp)
+                                                        shape = RoundedCornerShape(
+                                                            topStart = innerCorner,
+                                                            bottomStart = innerCorner,
+                                                            topEnd = outerCorner,
+                                                            bottomEnd = outerCorner
+                                                        ),
+                                                        colors = IconButtonDefaults.filledIconButtonColors(
+                                                            containerColor = colors.surfaceContainerHighest.copy(alpha = 0.6f),
+                                                            contentColor = colors.onSurfaceVariant
+                                                        ),
+                                                        modifier = Modifier.size(buttonSize)
                                                     ) {
                                                         Icon(
                                                             imageVector = Icons.Rounded.MoreVert,
                                                             contentDescription = "Lyrics Options",
-                                                            tint = colors.onSurfaceVariant,
                                                             modifier = Modifier.size(20.dp)
                                                         )
                                                     }

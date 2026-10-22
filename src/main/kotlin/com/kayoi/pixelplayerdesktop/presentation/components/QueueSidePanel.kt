@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import kotlin.math.abs
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -7,10 +8,9 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,22 +58,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kayoi.pixelplayerdesktop.data.model.Song
-import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
-import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.EnhancedSongListItem
-import kotlin.math.abs
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
+import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.EnhancedSongListItem
+
+private val outerCorner = 26.dp
+private val innerCorner = 4.dp
+private val buttonGap = 2.dp
 
 private data class QueueUiItem(val stableKey: String, val song: Song)
 
@@ -185,6 +185,18 @@ fun QueueSidePanel(
         }
     }
 
+    val showLocateButton = !isCurrentSongVisible && currentSongDisplayIndex >= 0
+
+    val shuffleStartCorner by animateDpAsState(
+        targetValue = if (showLocateButton) innerCorner else outerCorner,
+        label = "ShuffleStartCorner"
+    )
+
+    val gapBetweenLocateAndNext by animateDpAsState(
+        targetValue = if (showLocateButton) buttonGap else 0.dp,
+        label = "GapBetweenLocateAndNext"
+    )
+
     val windowInfo = LocalWindowInfo.current
     val density = LocalDensity.current
     val screenWidth = with(density) { windowInfo.containerSize.width.toDp() }
@@ -250,14 +262,12 @@ fun QueueSidePanel(
                 }
 
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Smooth pre-scroll to minimize UI jumping across large index gaps
                     AnimatedVisibility(
-                        visible = !isCurrentSongVisible && currentSongDisplayIndex >= 0,
-                        enter = fadeIn() + scaleIn(),
-                        exit = fadeOut() + scaleOut()
+                        visible = showLocateButton,
+                        enter = slideInHorizontally(initialOffsetX = { it / 2 }) + fadeIn(),
+                        exit = slideOutHorizontally(targetOffsetX = { it / 2 }) + fadeOut()
                     ) {
                         AppTooltip("Locate playing song") {
                             FilledTonalIconButton(
@@ -278,6 +288,12 @@ fun QueueSidePanel(
                                         }
                                     }
                                 },
+                                shape = RoundedCornerShape(
+                                    topStart = outerCorner,
+                                    bottomStart = outerCorner,
+                                    topEnd = innerCorner,
+                                    bottomEnd = innerCorner
+                                ),
                                 colors = IconButtonDefaults.filledTonalIconButtonColors(
                                     containerColor = colors.surfaceContainerHighest.copy(alpha = 0.6f),
                                     contentColor = colors.primary
@@ -293,12 +309,20 @@ fun QueueSidePanel(
                         }
                     }
 
+                    Spacer(modifier = Modifier.width(gapBetweenLocateAndNext))
+
                     val shuffleContainerColor = if (isShuffleOn) colors.primary else colors.surfaceContainerHighest.copy(alpha = 0.6f)
                     val shuffleContentColor = if (isShuffleOn) colors.onPrimary else colors.onSurfaceVariant
 
                     AppTooltip(if (isShuffleOn) "Shuffle: On" else "Shuffle: Off") {
                         FilledIconButton(
                             onClick = onToggleShuffle,
+                            shape = RoundedCornerShape(
+                                topStart = shuffleStartCorner,
+                                bottomStart = shuffleStartCorner,
+                                topEnd = innerCorner,
+                                bottomEnd = innerCorner
+                            ),
                             colors = IconButtonDefaults.filledIconButtonColors(
                                 containerColor = shuffleContainerColor,
                                 contentColor = shuffleContentColor
@@ -313,6 +337,8 @@ fun QueueSidePanel(
                         }
                     }
 
+                    Spacer(modifier = Modifier.width(buttonGap))
+
                     val repeatContainerColor = if (repeatMode > 0) colors.primary else colors.surfaceContainerHighest.copy(alpha = 0.6f)
                     val repeatContentColor = if (repeatMode > 0) colors.onPrimary else colors.onSurfaceVariant
                     val repeatIcon = if (repeatMode == 2) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat
@@ -325,6 +351,12 @@ fun QueueSidePanel(
                     AppTooltip(repeatLabel) {
                         FilledIconButton(
                             onClick = onCycleRepeat,
+                            shape = RoundedCornerShape(
+                                topStart = innerCorner,
+                                bottomStart = innerCorner,
+                                topEnd = innerCorner,
+                                bottomEnd = innerCorner
+                            ),
                             colors = IconButtonDefaults.filledIconButtonColors(
                                 containerColor = repeatContainerColor,
                                 contentColor = repeatContentColor
@@ -339,10 +371,18 @@ fun QueueSidePanel(
                         }
                     }
 
+                    Spacer(modifier = Modifier.width(buttonGap))
+
                     AppTooltip("Clear Queue") {
                         FilledIconButton(
                             onClick = { showClearDialog = true },
                             enabled = queue.isNotEmpty(),
+                            shape = RoundedCornerShape(
+                                topStart = innerCorner,
+                                bottomStart = innerCorner,
+                                topEnd = outerCorner,
+                                bottomEnd = outerCorner
+                            ),
                             colors = IconButtonDefaults.filledIconButtonColors(
                                 containerColor = colors.surfaceContainerHighest.copy(alpha = 0.6f),
                                 contentColor = colors.onSurfaceVariant,
