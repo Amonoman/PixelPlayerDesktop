@@ -8,20 +8,27 @@ plugins {
 }
 
 val appVersionName: String = providers.gradleProperty("APP_VERSION_NAME").getOrElse("0.1.0")
+val appVersionCode: Int = providers.gradleProperty("APP_VERSION_CODE").map { it.toIntOrNull() ?: 1 }.getOrElse(1)
+
+// Windows & macOS: Compose Desktop strictly enforces "MAJOR.MINOR.BUILD" numeric format (max 3 parts)
 val windowsVersion: String = run {
     val base = appVersionName.substringBefore("-").trim()
     val parts = base.split(".").mapNotNull { it.toIntOrNull() }
-    when {
-        parts.size >= 3 -> "${parts[0]}.${parts[1]}.${parts[2]}"
-        parts.size == 2 -> "${parts[0]}.${parts[1]}.0"
-        parts.size == 1 -> "${parts[0]}.0.0"
-        else -> "0.1.0"
-    }
+    val major = parts.getOrElse(0) { 0 }
+    val minor = parts.getOrElse(1) { 1 }
+    val patch = parts.getOrElse(2) { 0 }
+    "$major.$minor.$patch"
 }
+
+// Debian: Pre-releases use tilde notation (e.g. 0.1.0~alpha.1) per Debian Policy Manual §5.6.12
+val debianPackageVersion: String = appVersionName.replace("-", "~")
+
+// RPM: Base version is strictly numeric; pre-release tags are placed in the Release field
+val rpmVersion: String = windowsVersion
 val rpmRelease: String = run {
     if (appVersionName.contains("-")) {
         val suffix = appVersionName.substringAfter("-").replace("-", ".")
-        "0.1.$suffix"
+        "0.$appVersionCode.$suffix"
     } else {
         "1"
     }
@@ -106,7 +113,7 @@ configurations.all {
 val generateBuildConfig = tasks.register("generateBuildConfig") {
     val outputDir = layout.buildDirectory.dir("generated/sources/buildConfig/main")
     val vName = appVersionName
-    val vCode = providers.gradleProperty("APP_VERSION_CODE").map { it.toIntOrNull() ?: 1 }.getOrElse(1)
+    val vCode = appVersionCode
 
     inputs.property("versionName", vName)
     inputs.property("versionCode", vCode)
@@ -156,10 +163,14 @@ compose.desktop {
             "-Dfile.encoding=UTF-8",
             "-Dsun.jnu.encoding=UTF-8",
             "-Djna.encoding=UTF-8",
-            "-Xms128m",
-            "-Xmx512m",
+            "-Xms48m",
+            "-Xmx384m",
             "-XX:+UseG1GC",
-            "-XX:G1HeapRegionSize=4m"
+            "-XX:G1HeapRegionSize=4m",
+            "-XX:MinHeapFreeRatio=20",
+            "-XX:MaxHeapFreeRatio=40",
+            "-XX:G1PeriodicGCInterval=3000",
+            "-XX:+UseStringDeduplication"
         )
 
         buildTypes.release.proguard {
@@ -182,24 +193,22 @@ compose.desktop {
             targetFormats(
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb,
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Rpm,
-                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi,
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Exe,
-                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg,
-                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Pkg
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg
             )
 
             packageName = "pixelplayer"
             packageVersion = windowsVersion
             description = "PixelPlayer Desktop - Modern Material 3 Music Player"
-            vendor = "Kayoi"
+            vendor = "PixelPlayer"
             copyright = "Copyright (C) 2026 Theo Vilardo"
 
             linux {
                 iconFile.set(project.file("src/main/resources/icons/icon.png"))
-                debPackageVersion = appVersionName
-                rpmPackageVersion = windowsVersion
+                debPackageVersion = debianPackageVersion
+                rpmPackageVersion = rpmVersion
                 appRelease = rpmRelease
-                debMaintainer = "Kayoi <adlifarizi>"
+                debMaintainer = "adlifarizi <adlifarizi@users.noreply.github.com>"
                 menuGroup = "AudioVideo;Player;Audio;"
                 appCategory = "AudioVideo"
                 rpmLicenseType = "GPL-3.0"
@@ -208,9 +217,8 @@ compose.desktop {
             windows {
                 iconFile.set(project.file("src/main/resources/icons/icon.ico"))
                 packageVersion = windowsVersion
-                msiPackageVersion = windowsVersion
                 exePackageVersion = windowsVersion
-                menuGroup = "Kayoi"
+                menuGroup = "PixelPlayer"
                 upgradeUuid = "d7bfb9d0-6243-4f9e-a81d-e4b5efc4e723"
             }
 
@@ -236,7 +244,7 @@ tasks.register("setupMpvWindows") {
 
     outputs.dir(targetDir)
     onlyIf {
-        !targetDir.resolve("libmpv-2.dll").exists() && !targetDir.resolve("mpv-2.dll").exists()
+        !targetDir.resolve("libmpv-2.dll").exists()
     }
 
     doLast {
@@ -279,11 +287,6 @@ tasks.register("setupMpvWindows") {
             throw GradleException("Failed to extract libmpv archive with 7z (exit code $exitCode):\n$output")
         }
 
-        val libmpvDll = targetDir.resolve("libmpv-2.dll")
-        val mpvDll = targetDir.resolve("mpv-2.dll")
-        if (libmpvDll.exists() && !mpvDll.exists()) {
-            libmpvDll.copyTo(mpvDll)
-        }
         println("libmpv Windows bundled successfully.")
     }
 }
@@ -322,11 +325,6 @@ tasks.register("setupMpvLinux") {
             into(targetDir)
         }
 
-        val mpvSo2 = targetDir.resolve("libmpv.so.2")
-        val mpvSo = targetDir.resolve("libmpv.so")
-        if (mpvSo2.exists() && !mpvSo.exists()) {
-            mpvSo2.copyTo(mpvSo)
-        }
         println("libmpv Linux bundled successfully.")
     }
 }
@@ -365,11 +363,6 @@ tasks.register("setupMpvMacos") {
             into(targetDir)
         }
 
-        val mpvDylib2 = targetDir.resolve("libmpv.2.dylib")
-        val mpvDylib = targetDir.resolve("libmpv.dylib")
-        if (mpvDylib2.exists() && !mpvDylib.exists()) {
-            mpvDylib2.copyTo(mpvDylib)
-        }
         println("libmpv macOS bundled successfully.")
     }
 }

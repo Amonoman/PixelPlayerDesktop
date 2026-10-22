@@ -117,7 +117,7 @@ jobs:
           validate-wrappers: false
 
       - name: Build Windows Distribution
-        run: .\gradlew.bat packageMsi packageExe createDistributable "-PAPP_VERSION_NAME=${{ needs.build-linux.outputs.version }}" --no-daemon
+        run: .\gradlew.bat packageExe createDistributable "-PAPP_VERSION_NAME=${{ needs.build-linux.outputs.version }}" --no-daemon
 
       - name: Archive Portable Windows Binary
         shell: pwsh
@@ -128,7 +128,6 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "dist-windows"
-          Copy-Item "build/compose/binaries/main/msi/*.msi" "dist-windows/"
           Copy-Item "build/compose/binaries/main/exe/*.exe" "dist-windows/"
           Copy-Item "build/compose/binaries/main/pixelplayer-windows-portable.zip" "dist-windows/"
 
@@ -163,7 +162,7 @@ jobs:
         run: brew install mpv
 
       - name: Build macOS Distribution
-        run: ./gradlew packageDmg packagePkg createDistributable "-PAPP_VERSION_NAME=${{ needs.build-linux.outputs.version }}" --no-daemon
+        run: ./gradlew packageDmg createDistributable "-PAPP_VERSION_NAME=${{ needs.build-linux.outputs.version }}" --no-daemon
 
       - name: Archive Portable macOS Binary
         run: |
@@ -173,7 +172,7 @@ jobs:
       - name: Stage macOS Artifacts
         run: |
           mkdir -p dist-macos
-          find build/compose/binaries/main -type f \( -name "*.dmg" -o -name "*.pkg" -o -name "*macos-portable.tar.gz" \) -exec cp {} dist-macos/ \;
+          find build/compose/binaries/main -type f \( -name "*.dmg" -o -name "*macos-portable.tar.gz" \) -exec cp {} dist-macos/ \;
 
       - name: Upload macOS Artifacts
         uses: actions/upload-artifact@v4

@@ -150,16 +150,16 @@ Build RPM installer package (`.rpm`):
 ./gradlew packageRpm
 ```
 
-Build macOS disk image and installer (`.dmg` and `.pkg` on a macOS host):
+Build macOS disk image (`.dmg` on a macOS host):
 
 ```sh
-./gradlew packageDmg packagePkg
+./gradlew packageDmg
 ```
 
-Build Windows installers (`.msi` and `.exe` on a Windows host):
+Build Windows installer (`.exe` on a Windows host):
 
 ```cmd
-gradlew.bat packageMsi packageExe
+gradlew.bat packageExe
 ```
 
 Run unit tests and verification suite:
