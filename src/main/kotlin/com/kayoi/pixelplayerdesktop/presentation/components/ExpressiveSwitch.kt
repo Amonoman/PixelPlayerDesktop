@@ -1,5 +1,8 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_check
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -43,7 +44,7 @@ fun ExpressiveSwitch(
         thumbContent = if (checked) {
             {
                 Icon(
-                    imageVector = Icons.Rounded.Check,
+                    painter = painterResource(Res.drawable.ic_rounded_check),
                     contentDescription = null,
                     modifier = Modifier.size(SwitchDefaults.IconSize)
                 )

@@ -1,5 +1,9 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.library
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_playlist_play
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_add
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,9 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -134,7 +135,7 @@ fun PlaylistsTab(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.PlaylistPlay,
+                            painter = painterResource(Res.drawable.ic_automirrored_rounded_playlist_play),
                             contentDescription = null,
                             tint = colors.onSurfaceVariant.copy(alpha = 0.4f),
                             modifier = Modifier.size(54.dp)
@@ -154,7 +155,7 @@ fun PlaylistsTab(
                                     contentColor = colors.onPrimary
                                 )
                             ) {
-                                Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Icon(painterResource(Res.drawable.ic_rounded_add), contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text("Create Playlist", fontWeight = FontWeight.Bold)
                             }

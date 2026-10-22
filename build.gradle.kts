@@ -46,7 +46,7 @@ repositories {
 dependencies {
     implementation(compose.desktop.currentOs)
     implementation(compose.material3)
-    implementation(compose.materialIconsExtended)
+    implementation(compose.components.resources)
     implementation("androidx.navigationevent:navigationevent-compose:1.1.1")
 
     // Coroutines
@@ -383,4 +383,10 @@ tasks.matching {
         }
     }
 }
+
+compose.resources {
+    packageOfResClass = "com.kayoi.pixelplayerdesktop.generated.resources"
+    generateResClass = always
+}
+
 

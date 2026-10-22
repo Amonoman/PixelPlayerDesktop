@@ -1,5 +1,9 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.player
 
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_lyrics
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_search
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -21,8 +25,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
@@ -55,7 +57,6 @@ import com.kayoi.pixelplayerdesktop.data.model.SyncedWord
 import com.kayoi.pixelplayerdesktop.presentation.components.LocalWindowMinimized
 import com.kayoi.pixelplayerdesktop.data.model.Lyrics
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.BubblesLine
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.utils.MultiLangRomanizer
 
 @Composable
@@ -120,7 +121,7 @@ fun LyricsView(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(
-                    imageVector = PixelPlayerIcons.Lyrics,
+                    painter = painterResource(Res.drawable.ic_lyrics),
                     contentDescription = null,
                     tint = colors.onSurfaceVariant.copy(alpha = 0.35f),
                     modifier = Modifier.size(56.dp)
@@ -139,7 +140,7 @@ fun LyricsView(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Search,
+                            painter = painterResource(Res.drawable.ic_rounded_search),
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )

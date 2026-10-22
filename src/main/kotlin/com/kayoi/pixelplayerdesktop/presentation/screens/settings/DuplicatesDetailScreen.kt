@@ -1,5 +1,10 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_check_circle
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_delete
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_play_arrow
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,11 +23,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -103,7 +103,7 @@ fun DuplicatesDetailScreen(
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    imageVector = Icons.Outlined.CheckCircle,
+                                    painter = painterResource(Res.drawable.ic_outlined_check_circle),
                                     contentDescription = null,
                                     tint = colors.onSecondaryContainer,
                                     modifier = Modifier.size(36.dp)
@@ -280,7 +280,7 @@ private fun DuplicateSongRow(
                 colors = IconButtonDefaults.iconButtonColors(contentColor = colors.primary),
                 modifier = Modifier.size(36.dp)
             ) {
-                Icon(Icons.Outlined.PlayArrow, contentDescription = "Play song", modifier = Modifier.size(20.dp))
+                Icon(painterResource(Res.drawable.ic_outlined_play_arrow), contentDescription = "Play song", modifier = Modifier.size(20.dp))
             }
 
             IconButton(
@@ -288,7 +288,7 @@ private fun DuplicateSongRow(
                 colors = IconButtonDefaults.iconButtonColors(contentColor = colors.error),
                 modifier = Modifier.size(36.dp)
             ) {
-                Icon(Icons.Outlined.Delete, contentDescription = "Delete song", modifier = Modifier.size(20.dp))
+                Icon(painterResource(Res.drawable.ic_outlined_delete), contentDescription = "Delete song", modifier = Modifier.size(20.dp))
             }
         }
     }

@@ -1,5 +1,12 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_playlist_add
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_queue_music
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_album
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_person
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
@@ -11,12 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
-import androidx.compose.material.icons.rounded.Album
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -74,7 +75,7 @@ fun AlbumOptionsDropdownMenu(
                     artworkUri = album.albumArtUriString,
                     modifier = Modifier.size(40.dp),
                     shape = RoundedCornerShape(10.dp),
-                    placeholderIcon = Icons.Rounded.Album,
+                    placeholderIcon = Res.drawable.ic_rounded_album,
                     placeholderIconSize = 20.dp
                 )
                 Spacer(modifier = Modifier.width(10.dp))
@@ -114,7 +115,7 @@ fun AlbumOptionsDropdownMenu(
                     text = { Text("Play", fontWeight = FontWeight.Medium) },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Rounded.PlayArrow,
+                            painter = painterResource(Res.drawable.ic_rounded_play_arrow),
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(20.dp)
@@ -136,7 +137,7 @@ fun AlbumOptionsDropdownMenu(
                     text = { Text("Play Next", fontWeight = FontWeight.Medium) },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                            painter = painterResource(Res.drawable.ic_automirrored_rounded_queue_music),
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(20.dp)
@@ -158,7 +159,7 @@ fun AlbumOptionsDropdownMenu(
                     text = { Text("Add to Queue", fontWeight = FontWeight.Medium) },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                            painter = painterResource(Res.drawable.ic_automirrored_rounded_queue_music),
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(20.dp)
@@ -180,7 +181,7 @@ fun AlbumOptionsDropdownMenu(
                     text = { Text("Add to Playlist", fontWeight = FontWeight.Medium) },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.PlaylistAdd,
+                            painter = painterResource(Res.drawable.ic_automirrored_rounded_playlist_add),
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(20.dp)
@@ -202,7 +203,7 @@ fun AlbumOptionsDropdownMenu(
                     text = { Text("Go to Artist", fontWeight = FontWeight.Medium) },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Rounded.Person,
+                            painter = painterResource(Res.drawable.ic_rounded_person),
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(20.dp)

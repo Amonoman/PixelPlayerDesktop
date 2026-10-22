@@ -1,5 +1,8 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_app_logo
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
@@ -47,7 +50,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavDestination
 import com.kayoi.pixelplayerdesktop.presentation.navigation.NavSection
 
@@ -91,7 +93,7 @@ fun AppSidebar(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = PixelPlayerIcons.AppLogo,
+                        painter = painterResource(Res.drawable.ic_app_logo),
                         contentDescription = "PixelPlayer",
                         tint = colors.primary,
                         modifier = Modifier.size(24.dp)
@@ -224,7 +226,7 @@ private fun SidebarNavItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = destination.icon,
+                painter = painterResource(destination.icon),
                 contentDescription = destination.title,
                 tint = iconColor,
                 modifier = Modifier.size(22.dp)

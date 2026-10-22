@@ -1,6 +1,18 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
 
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_artist
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_auto_graph
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_bolt
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_calendar_month
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_hearing
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_history
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_music_note
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_play_circle_outline
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_refresh
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -30,18 +42,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Album
-import androidx.compose.material.icons.outlined.AutoGraph
-import androidx.compose.material.icons.outlined.Bolt
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Hearing
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.MusicNote
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.PlayCircleOutline
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalIconButton
@@ -65,7 +65,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -77,7 +76,6 @@ import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.StatsTimeRange
 import com.kayoi.pixelplayerdesktop.data.model.TimelineEntry
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 import com.kayoi.pixelplayerdesktop.utils.formatListeningDurationCompact
@@ -187,7 +185,7 @@ fun StatsScreen(
                             modifier = Modifier.size(40.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.Refresh,
+                                painter = painterResource(Res.drawable.ic_rounded_refresh),
                                 contentDescription = "Refresh Stats",
                                 modifier = Modifier
                                     .size(20.dp)
@@ -846,7 +844,7 @@ private fun TopSpotlightCard(
                     AsyncArtworkImage(
                         artworkUri = item.artworkUri,
                         shape = artShape,
-                        placeholderIcon = if (item.isArtist) PixelPlayerIcons.Artist else Icons.Outlined.MusicNote,
+                        placeholderIcon = if (item.isArtist) Res.drawable.ic_artist else Res.drawable.ic_outlined_music_note,
                         modifier = Modifier
                             .size(72.dp)
                             .clip(artShape)
@@ -917,7 +915,7 @@ private fun CategoryRankItem(
             AsyncArtworkImage(
                 artworkUri = item.artworkUri,
                 shape = artShape,
-                placeholderIcon = if (item.isArtist) PixelPlayerIcons.Artist else Icons.Outlined.MusicNote,
+                placeholderIcon = if (item.isArtist) Res.drawable.ic_artist else Res.drawable.ic_outlined_music_note,
                 modifier = Modifier
                     .size(46.dp)
                     .clip(artShape)
@@ -1010,19 +1008,19 @@ private fun ListeningHabitsCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 HabitTile(
-                    icon = Icons.Outlined.History,
+                    icon = Res.drawable.ic_outlined_history,
                     label = "Sessions",
                     value = summary.totalSessions.toString(),
                     modifier = Modifier.weight(1f)
                 )
                 HabitTile(
-                    icon = Icons.Outlined.Hearing,
+                    icon = Res.drawable.ic_outlined_hearing,
                     label = "Avg Session",
                     value = formatListeningDurationCompact(summary.averageSessionDurationMs),
                     modifier = Modifier.weight(1f)
                 )
                 HabitTile(
-                    icon = Icons.Outlined.Bolt,
+                    icon = Res.drawable.ic_outlined_bolt,
                     label = "Longest",
                     value = formatListeningDurationCompact(summary.longestSessionDurationMs),
                     modifier = Modifier.weight(1f)
@@ -1033,7 +1031,7 @@ private fun ListeningHabitsCard(
 
             if (!summary.peakDayLabel.isNullOrBlank()) {
                 HabitHighlightRow(
-                    icon = Icons.Outlined.CalendarMonth,
+                    icon = Res.drawable.ic_outlined_calendar_month,
                     title = "Most Active Day",
                     value = summary.peakDayLabel,
                     supporting = formatListeningDurationCompact(summary.peakDayDurationMs)
@@ -1041,7 +1039,7 @@ private fun ListeningHabitsCard(
             }
 
             HabitHighlightRow(
-                icon = Icons.Outlined.AutoGraph,
+                icon = Res.drawable.ic_outlined_auto_graph,
                 title = "Active Days & Streak",
                 value = "${summary.activeDays} days",
                 supporting = "Longest streak: ${summary.longestStreakDays} days"
@@ -1052,7 +1050,7 @@ private fun ListeningHabitsCard(
 
 @Composable
 private fun HabitTile(
-    icon: ImageVector,
+    icon: DrawableResource,
     label: String,
     value: String,
     modifier: Modifier = Modifier
@@ -1066,7 +1064,7 @@ private fun HabitTile(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Icon(
-            imageVector = icon,
+            painter = painterResource(icon),
             contentDescription = null,
             tint = colors.primary,
             modifier = Modifier.size(20.dp)
@@ -1087,7 +1085,7 @@ private fun HabitTile(
 
 @Composable
 private fun HabitHighlightRow(
-    icon: ImageVector,
+    icon: DrawableResource,
     title: String,
     value: String,
     supporting: String,
@@ -1107,7 +1105,7 @@ private fun HabitHighlightRow(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = icon,
+                painter = painterResource(icon),
                 contentDescription = null,
                 tint = colors.primary,
                 modifier = Modifier.size(20.dp)
@@ -1267,7 +1265,7 @@ private fun StatsEmptyState(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.PlayCircleOutline,
+                        painter = painterResource(Res.drawable.ic_outlined_play_circle_outline),
                         contentDescription = null,
                         tint = colors.primary,
                         modifier = Modifier.size(36.dp)

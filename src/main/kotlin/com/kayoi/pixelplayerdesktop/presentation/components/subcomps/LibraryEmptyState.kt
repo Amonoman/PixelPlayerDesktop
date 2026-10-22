@@ -1,30 +1,34 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_artist
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_album
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_cloud
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_cloud_off
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_computer
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_favorite
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_favorite_border
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_search
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_search_off
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Album
-import androidx.compose.material.icons.rounded.CloudOff
-import androidx.compose.material.icons.rounded.Computer
-import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 
 enum class LibraryTabKind {
     SONGS,
@@ -42,12 +46,12 @@ fun LibraryEmptyState(
 ) {
     val colors = MaterialTheme.colorScheme
 
-    val icon: ImageVector
+    val icon: DrawableResource
     val title: String
     val subtitle: String
 
     if (searchQuery.isNotBlank()) {
-        icon = Icons.Rounded.SearchOff
+        icon = Res.drawable.ic_rounded_search_off
         title = when (tabKind) {
             LibraryTabKind.SONGS -> "No songs matching \"$searchQuery\""
             LibraryTabKind.LIKED -> "No liked songs matching \"$searchQuery\""
@@ -60,29 +64,29 @@ fun LibraryEmptyState(
             StorageFilter.ALL -> {
                 when (tabKind) {
                     LibraryTabKind.SONGS -> {
-                        icon = Icons.Rounded.MusicNote
+                        icon = Res.drawable.ic_rounded_music_note
                         title = "No songs in library"
                         subtitle = "Add music directories in Settings to scan"
                     }
                     LibraryTabKind.LIKED -> {
-                        icon = Icons.Rounded.FavoriteBorder
+                        icon = Res.drawable.ic_rounded_favorite_border
                         title = "No liked songs yet"
                         subtitle = "Favorite tracks by clicking the heart icon to see them here"
                     }
                     LibraryTabKind.ALBUMS -> {
-                        icon = Icons.Rounded.Album
+                        icon = Res.drawable.ic_rounded_album
                         title = "No albums in library"
                         subtitle = "Add music directories in Settings to scan"
                     }
                     LibraryTabKind.ARTISTS -> {
-                        icon = PixelPlayerIcons.Artist
+                        icon = Res.drawable.ic_artist
                         title = "No artists in library"
                         subtitle = "Add music directories in Settings to scan"
                     }
                 }
             }
             StorageFilter.ONLINE -> {
-                icon = Icons.Rounded.CloudOff
+                icon = Res.drawable.ic_rounded_cloud_off
                 when (tabKind) {
                     LibraryTabKind.SONGS -> {
                         title = "No cloud songs"
@@ -105,22 +109,22 @@ fun LibraryEmptyState(
             StorageFilter.OFFLINE -> {
                 when (tabKind) {
                     LibraryTabKind.SONGS -> {
-                        icon = Icons.Rounded.Computer
+                        icon = Res.drawable.ic_rounded_computer
                         title = "No local songs"
                         subtitle = "Add local music directories in Settings to scan"
                     }
                     LibraryTabKind.LIKED -> {
-                        icon = Icons.Rounded.FavoriteBorder
+                        icon = Res.drawable.ic_rounded_favorite_border
                         title = "No local liked songs"
                         subtitle = "Favorite your offline local songs to see them here"
                     }
                     LibraryTabKind.ALBUMS -> {
-                        icon = Icons.Rounded.Computer
+                        icon = Res.drawable.ic_rounded_computer
                         title = "No local albums"
                         subtitle = "Add local music directories in Settings to scan"
                     }
                     LibraryTabKind.ARTISTS -> {
-                        icon = Icons.Rounded.Computer
+                        icon = Res.drawable.ic_rounded_computer
                         title = "No local artists"
                         subtitle = "Add local music directories in Settings to scan"
                     }
@@ -140,7 +144,7 @@ fun LibraryEmptyState(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Icon(
-                imageVector = icon,
+                painter = painterResource(icon),
                 contentDescription = null,
                 tint = colors.onSurfaceVariant.copy(alpha = 0.45f),
                 modifier = Modifier.size(54.dp)

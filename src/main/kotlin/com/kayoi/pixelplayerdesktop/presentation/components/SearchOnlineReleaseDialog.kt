@@ -1,5 +1,14 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_album
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_check
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_check_circle
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_close
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_cloud
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_cloud_download
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_search
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,12 +32,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.rememberScrollbarAdapter
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Album
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.CloudDownload
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -130,7 +133,7 @@ fun SearchOnlineReleaseDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.CloudDownload,
+                        painter = painterResource(Res.drawable.ic_rounded_cloud_download),
                         contentDescription = null,
                         tint = colors.primary,
                         modifier = Modifier.size(24.dp)
@@ -150,7 +153,7 @@ fun SearchOnlineReleaseDialog(
                         )
                     }
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = colors.onSurfaceVariant)
+                        Icon(painterResource(Res.drawable.ic_rounded_close), contentDescription = "Close", tint = colors.onSurfaceVariant)
                     }
                 }
 
@@ -178,7 +181,7 @@ fun SearchOnlineReleaseDialog(
                         enabled = !isSearching && searchQuery.isNotBlank(),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Icon(Icons.Rounded.Search, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(painterResource(Res.drawable.ic_rounded_search), contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("Search")
                     }
@@ -355,11 +358,10 @@ fun SearchOnlineReleaseDialog(
                                                     contentScale = ContentScale.Crop
                                                 )
                                             } else {
-                                                Icon(Icons.Rounded.Album, contentDescription = null, tint = colors.onSurfaceVariant, modifier = Modifier.size(42.dp))
+                                                Icon(painterResource(Res.drawable.ic_rounded_album), contentDescription = null, tint = colors.onSurfaceVariant, modifier = Modifier.size(42.dp))
                                             }
                                         }
-                                        else -> Icon(
-                                            Icons.Rounded.Album,
+                                        else -> Icon(painterResource(Res.drawable.ic_rounded_album),
                                             contentDescription = null,
                                             tint = colors.onSurfaceVariant.copy(alpha = 0.5f),
                                             modifier = Modifier.size(42.dp)
@@ -438,7 +440,7 @@ fun SearchOnlineReleaseDialog(
                         enabled = selectedRelease != null,
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Icon(Icons.Rounded.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(painterResource(Res.drawable.ic_rounded_check_circle), contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("Apply to Selected Songs")
                     }

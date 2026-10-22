@@ -1,5 +1,16 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_lyrics
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_format_align_left
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_format_align_right
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_abc
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_format_align_center
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_restart_alt
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_save
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_tune
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -16,15 +27,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.FormatAlignLeft
-import androidx.compose.material.icons.automirrored.rounded.FormatAlignRight
-import androidx.compose.material.icons.rounded.Abc
-import androidx.compose.material.icons.rounded.FileDownload
-import androidx.compose.material.icons.rounded.FormatAlignCenter
-import androidx.compose.material.icons.rounded.RestartAlt
-import androidx.compose.material.icons.rounded.Save
-import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -36,14 +38,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveSwitch
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 
 @Composable
 fun LyricsOptionsMenu(
@@ -91,7 +91,7 @@ fun LyricsOptionsMenu(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = PixelPlayerIcons.Lyrics,
+                    painter = painterResource(Res.drawable.ic_lyrics),
                     contentDescription = null,
                     tint = colors.primary,
                     modifier = Modifier.size(20.dp)
@@ -127,21 +127,21 @@ fun LyricsOptionsMenu(
             ) {
                 AlignmentSegment(
                     label = "Left",
-                    icon = Icons.AutoMirrored.Rounded.FormatAlignLeft,
+                    icon = Res.drawable.ic_automirrored_rounded_format_align_left,
                     selected = currentAlignment == "left",
                     modifier = Modifier.weight(1f),
                     onClick = { onAlignmentChange("left") }
                 )
                 AlignmentSegment(
                     label = "Center",
-                    icon = Icons.Rounded.FormatAlignCenter,
+                    icon = Res.drawable.ic_rounded_format_align_center,
                     selected = currentAlignment == "center",
                     modifier = Modifier.weight(1f),
                     onClick = { onAlignmentChange("center") }
                 )
                 AlignmentSegment(
                     label = "Right",
-                    icon = Icons.AutoMirrored.Rounded.FormatAlignRight,
+                    icon = Res.drawable.ic_automirrored_rounded_format_align_right,
                     selected = currentAlignment == "right",
                     modifier = Modifier.weight(1f),
                     onClick = { onAlignmentChange("right") }
@@ -159,7 +159,7 @@ fun LyricsOptionsMenu(
 
             if (hasSyncedLyrics) {
                 ExpressiveMenuItem(
-                    icon = Icons.Rounded.Tune,
+                    icon = Res.drawable.ic_rounded_tune,
                     iconContainerColor = if (showSyncControls) colors.primaryContainer else colors.surfaceContainerHighest,
                     iconColor = if (showSyncControls) colors.onPrimaryContainer else colors.primary,
                     title = if (showSyncControls) "Hide Sync Tuning" else "Adjust Lyrics Sync",
@@ -175,7 +175,7 @@ fun LyricsOptionsMenu(
 
             if (hasRomanizedLyrics) {
                 ExpressiveToggleMenuItem(
-                    icon = Icons.Rounded.Abc,
+                    icon = Res.drawable.ic_rounded_abc,
                     iconContainerColor = if (showRomanization) colors.primaryContainer else colors.surfaceContainerHighest,
                     iconColor = if (showRomanization) colors.onPrimaryContainer else colors.onSurfaceVariant,
                     title = "Show Romanization",
@@ -189,7 +189,7 @@ fun LyricsOptionsMenu(
 
             if (hasLyrics) {
                 ExpressiveMenuItem(
-                    icon = Icons.Rounded.Save,
+                    icon = Res.drawable.ic_rounded_save,
                     iconContainerColor = colors.primaryContainer,
                     iconColor = colors.onPrimaryContainer,
                     title = "Save Lyrics...",
@@ -204,7 +204,7 @@ fun LyricsOptionsMenu(
             }
 
             ExpressiveMenuItem(
-                icon = Icons.Rounded.RestartAlt,
+                icon = Res.drawable.ic_rounded_restart_alt,
                 iconContainerColor = colors.errorContainer.copy(alpha = 0.7f),
                 iconColor = colors.onErrorContainer,
                 title = "Reset Lyrics",
@@ -223,7 +223,7 @@ fun LyricsOptionsMenu(
 @Composable
 private fun AlignmentSegment(
     label: String,
-    icon: ImageVector,
+    icon: DrawableResource,
     selected: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
@@ -250,7 +250,7 @@ private fun AlignmentSegment(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = icon,
+            painter = painterResource(icon),
             contentDescription = label,
             tint = contentColor,
             modifier = Modifier.size(17.dp)
@@ -267,7 +267,7 @@ private fun AlignmentSegment(
 
 @Composable
 private fun ExpressiveMenuItem(
-    icon: ImageVector,
+    icon: DrawableResource,
     iconContainerColor: Color,
     iconColor: Color,
     title: String,
@@ -292,7 +292,7 @@ private fun ExpressiveMenuItem(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = icon,
+                painter = painterResource(icon),
                 contentDescription = null,
                 tint = iconColor,
                 modifier = Modifier.size(19.dp)
@@ -317,7 +317,7 @@ private fun ExpressiveMenuItem(
 
 @Composable
 private fun ExpressiveToggleMenuItem(
-    icon: ImageVector,
+    icon: DrawableResource,
     iconContainerColor: Color,
     iconColor: Color,
     title: String,
@@ -343,7 +343,7 @@ private fun ExpressiveToggleMenuItem(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = icon,
+                painter = painterResource(icon),
                 contentDescription = null,
                 tint = iconColor,
                 modifier = Modifier.size(20.dp)

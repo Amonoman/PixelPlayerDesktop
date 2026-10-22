@@ -1,5 +1,28 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_align_justify_space_even
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_lyrics
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_queue_music
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_volume_down
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_clear_all
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_content_copy
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_delete
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_delete_forever
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_folder
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_person
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_sync
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_attach_file
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_auto_awesome
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_chevron_right
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_dark_mode
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_layers
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_light_mode
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_palette
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_refresh
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_tab
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_view_week
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.expandVertically
@@ -27,28 +50,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.outlined.ClearAll
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.DeleteForever
-import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Sync
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
-import androidx.compose.material.icons.automirrored.rounded.VolumeDown
-import androidx.compose.material.icons.rounded.AttachFile
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.Layers
-import androidx.compose.material.icons.rounded.Brush
-import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.DarkMode
-import androidx.compose.material.icons.rounded.LightMode
-import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Tab
-import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material.icons.rounded.ViewWeek
 import com.kayoi.pixelplayerdesktop.presentation.components.TrackDialogInput
 import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavDestination
 import androidx.compose.material3.AlertDialog
@@ -86,7 +87,6 @@ import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
 import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
 import com.kayoi.pixelplayerdesktop.data.scanner.ScanProgress
 import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveSwitchRow
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import kotlin.math.roundToInt
 
@@ -145,10 +145,10 @@ fun SettingsCategoryDetail(
                             title = "Music Folders",
                             subtitle = folderSubtitle,
                             leadingIcon = {
-                                Icon(Icons.Outlined.Folder, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_outlined_folder), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             trailingIcon = {
-                                Icon(Icons.Rounded.ChevronRight, null, tint = colors.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_rounded_chevron_right), null, tint = colors.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(22.dp))
                             },
                             shape = getGroupShape(0, 2),
                             onClick = onOpenFoldersDetail
@@ -158,10 +158,10 @@ fun SettingsCategoryDetail(
                             title = "Artists",
                             subtitle = artistSubtitle,
                             leadingIcon = {
-                                Icon(Icons.Outlined.Person, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_outlined_person), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             trailingIcon = {
-                                Icon(Icons.Rounded.ChevronRight, null, tint = colors.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_rounded_chevron_right), null, tint = colors.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(22.dp))
                             },
                             shape = getGroupShape(1, 2),
                             onClick = onOpenArtistsDetail
@@ -247,7 +247,7 @@ fun SettingsCategoryDetail(
                             onDismissRequest = { showRebuildDialog = false },
                             icon = {
                                 Icon(
-                                    imageVector = Icons.Outlined.DeleteForever,
+                                    painter = painterResource(Res.drawable.ic_outlined_delete_forever),
                                     contentDescription = null,
                                     tint = colors.error
                                 )
@@ -305,7 +305,7 @@ fun SettingsCategoryDetail(
                                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Icon(Icons.Outlined.Sync, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                    Icon(painterResource(Res.drawable.ic_outlined_sync), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
 
                                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                         Text(
@@ -336,7 +336,7 @@ fun SettingsCategoryDetail(
                                                 shape = RoundedCornerShape(14.dp),
                                                 modifier = Modifier.fillMaxWidth().height(42.dp)
                                             ) {
-                                                Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                                                Icon(painterResource(Res.drawable.ic_rounded_refresh), contentDescription = null, modifier = Modifier.size(18.dp))
                                                 Spacer(modifier = Modifier.width(8.dp))
                                                 Text("Full Rescan", textAlign = TextAlign.Center)
                                             }
@@ -351,7 +351,7 @@ fun SettingsCategoryDetail(
                                                 border = BorderStroke(1.dp, colors.error.copy(alpha = 0.5f)),
                                                 modifier = Modifier.fillMaxWidth().height(42.dp)
                                             ) {
-                                                Icon(Icons.Outlined.DeleteForever, contentDescription = null, modifier = Modifier.size(18.dp))
+                                                Icon(painterResource(Res.drawable.ic_outlined_delete_forever), contentDescription = null, modifier = Modifier.size(18.dp))
                                                 Spacer(modifier = Modifier.width(8.dp))
                                                 Text("Rebuild Database", textAlign = TextAlign.Center)
                                             }
@@ -367,7 +367,7 @@ fun SettingsCategoryDetail(
                                                 shape = RoundedCornerShape(14.dp),
                                                 modifier = Modifier.weight(1f).height(42.dp)
                                             ) {
-                                                Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                                                Icon(painterResource(Res.drawable.ic_rounded_refresh), contentDescription = null, modifier = Modifier.size(18.dp))
                                                 Spacer(modifier = Modifier.width(8.dp))
                                                 Text("Full Rescan", textAlign = TextAlign.Center)
                                             }
@@ -382,7 +382,7 @@ fun SettingsCategoryDetail(
                                                 border = BorderStroke(1.dp, colors.error.copy(alpha = 0.5f)),
                                                 modifier = Modifier.weight(1f).height(42.dp)
                                             ) {
-                                                Icon(Icons.Outlined.DeleteForever, contentDescription = null, modifier = Modifier.size(18.dp))
+                                                Icon(painterResource(Res.drawable.ic_outlined_delete_forever), contentDescription = null, modifier = Modifier.size(18.dp))
                                                 Spacer(modifier = Modifier.width(8.dp))
                                                 Text("Rebuild Database", textAlign = TextAlign.Center)
                                             }
@@ -418,7 +418,7 @@ fun SettingsCategoryDetail(
                             checked = autoScanLrcFiles,
                             onCheckedChange = { viewModel.setAutoScanLrcFiles(it) },
                             leadingIcon = {
-                                Icon(Icons.Outlined.Folder, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_outlined_folder), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             shape = getGroupShape(1, 3)
                         )
@@ -427,10 +427,10 @@ fun SettingsCategoryDetail(
                             title = "Find duplicate songs",
                             subtitle = "Scan your library for songs that appear more than once.",
                             leadingIcon = {
-                                Icon(Icons.Outlined.ContentCopy, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_outlined_content_copy), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             trailingIcon = {
-                                Icon(Icons.Rounded.ChevronRight, null, tint = colors.onSurfaceVariant, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_rounded_chevron_right), null, tint = colors.onSurfaceVariant, modifier = Modifier.size(22.dp))
                             },
                             shape = getGroupShape(2, 3),
                             onClick = onOpenDuplicatesDetail
@@ -449,7 +449,7 @@ fun SettingsCategoryDetail(
                             checked = fetchDeezerImages,
                             onCheckedChange = { viewModel.setFetchDeezerArtistImages(it) },
                             leadingIcon = {
-                                Icon(Icons.Outlined.Person, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_outlined_person), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             shape = getGroupShape(0, 2)
                         )
@@ -460,7 +460,7 @@ fun SettingsCategoryDetail(
                             checked = fetchOnlineLyrics,
                             onCheckedChange = { viewModel.setFetchOnlineLyrics(it) },
                             leadingIcon = {
-                                Icon(Icons.Outlined.Sync, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_outlined_sync), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             shape = getGroupShape(1, 2)
                         )
@@ -477,7 +477,7 @@ fun SettingsCategoryDetail(
                             onDismissRequest = { showResetLyricsDialog = false },
                             icon = {
                                 Icon(
-                                    imageVector = Icons.Outlined.ClearAll,
+                                    painter = painterResource(Res.drawable.ic_outlined_clear_all),
                                     contentDescription = null,
                                     tint = colors.error
                                 )
@@ -536,7 +536,7 @@ fun SettingsCategoryDetail(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Icon(
-                                        imageVector = PixelPlayerIcons.Lyrics,
+                                        painter = painterResource(Res.drawable.ic_lyrics),
                                         contentDescription = null,
                                         tint = colors.secondary,
                                         modifier = Modifier.size(22.dp)
@@ -603,10 +603,10 @@ fun SettingsCategoryDetail(
                             title = "Reset Imported Lyrics",
                             subtitle = "Remove all imported lyrics from the database",
                             leadingIcon = {
-                                Icon(Icons.Outlined.ClearAll, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_outlined_clear_all), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             trailingIcon = {
-                                Icon(Icons.Rounded.ChevronRight, null, tint = colors.onSurfaceVariant, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_rounded_chevron_right), null, tint = colors.onSurfaceVariant, modifier = Modifier.size(22.dp))
                             },
                             shape = getGroupShape(1, 2),
                             onClick = { showResetLyricsDialog = true }
@@ -624,7 +624,7 @@ fun SettingsCategoryDetail(
                             checked = isDarkTheme,
                             onCheckedChange = { onToggleDarkTheme() },
                             leadingIcon = {
-                                Icon(if (isDarkTheme) Icons.Rounded.DarkMode else Icons.Rounded.LightMode, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(if (isDarkTheme) Res.drawable.ic_rounded_dark_mode else Res.drawable.ic_rounded_light_mode), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             shape = getGroupShape(0, 1)
                         )
@@ -642,7 +642,7 @@ fun SettingsCategoryDetail(
                             checked = isDynamicColor,
                             onCheckedChange = { onToggleDynamicColor() },
                             leadingIcon = {
-                                Icon(Icons.Rounded.AutoAwesome, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_rounded_auto_awesome), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             shape = if (isDynamicColor) getGroupShape(0, 3) else getGroupShape(0, 2)
                         )
@@ -656,10 +656,10 @@ fun SettingsCategoryDetail(
                                 title = "Album Art Palette Style",
                                 subtitle = "Current: ${currentPaletteStyle.label}. Open live preview and choose style.",
                                 leadingIcon = {
-                                    Icon(Icons.Rounded.Palette, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                    Icon(painterResource(Res.drawable.ic_rounded_palette), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                                 },
                                 trailingIcon = {
-                                    Icon(Icons.Rounded.ChevronRight, null, tint = colors.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(22.dp))
+                                    Icon(painterResource(Res.drawable.ic_rounded_chevron_right), null, tint = colors.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(22.dp))
                                 },
                                 shape = getGroupShape(1, 3),
                                 onClick = onOpenPaletteStyleDetail
@@ -672,7 +672,7 @@ fun SettingsCategoryDetail(
                             checked = showPlayerFileInfo,
                             onCheckedChange = { viewModel.setShowPlayerFileInfo(it) },
                             leadingIcon = {
-                                Icon(Icons.Rounded.AttachFile, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_rounded_attach_file), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             shape = if (isDynamicColor) getGroupShape(2, 3) else getGroupShape(1, 2)
                         )
@@ -697,7 +697,7 @@ fun SettingsCategoryDetail(
                             onDismissRequest = { showDefaultTabDialog = false },
                             icon = {
                                 Icon(
-                                    imageVector = Icons.Rounded.Tab,
+                                    painter = painterResource(Res.drawable.ic_rounded_tab),
                                     contentDescription = null,
                                     tint = colors.primary
                                 )
@@ -732,7 +732,7 @@ fun SettingsCategoryDetail(
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 Icon(
-                                                    imageVector = destination.icon,
+                                                    painter = painterResource(destination.icon),
                                                     contentDescription = null,
                                                     tint = if (isSelected) colors.onPrimaryContainer else colors.onSurfaceVariant,
                                                     modifier = Modifier.size(20.dp)
@@ -764,7 +764,7 @@ fun SettingsCategoryDetail(
                             checked = navBarCompactMode,
                             onCheckedChange = { viewModel.setNavBarCompactMode(it) },
                             leadingIcon = {
-                                Icon(Icons.Rounded.ViewWeek, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_rounded_view_week), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             shape = getGroupShape(0, 2)
                         )
@@ -773,10 +773,10 @@ fun SettingsCategoryDetail(
                             title = "Default Tab",
                             subtitle = "Choose the default launch destination (Current: ${currentSelectedTab.title})",
                             leadingIcon = {
-                                Icon(Icons.Rounded.Tab, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_rounded_tab), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             trailingIcon = {
-                                Icon(Icons.Rounded.ChevronRight, null, tint = colors.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_rounded_chevron_right), null, tint = colors.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(22.dp))
                             },
                             shape = getGroupShape(1, 2),
                             onClick = { showDefaultTabDialog = true }
@@ -797,7 +797,7 @@ fun SettingsCategoryDetail(
                             checked = replayGainEnabled,
                             onCheckedChange = { viewModel.setReplayGainEnabled(it) },
                             leadingIcon = {
-                                Icon(Icons.AutoMirrored.Rounded.VolumeDown, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_automirrored_rounded_volume_down), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             shape = if (replayGainEnabled) getGroupShape(0, 2) else getGroupShape(0, 1)
                         )
@@ -824,7 +824,7 @@ fun SettingsCategoryDetail(
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Icon(
-                                            imageVector = Icons.AutoMirrored.Rounded.VolumeDown,
+                                            painter = painterResource(Res.drawable.ic_automirrored_rounded_volume_down),
                                             contentDescription = null,
                                             tint = colors.secondary,
                                             modifier = Modifier.size(22.dp)
@@ -911,7 +911,7 @@ fun SettingsCategoryDetail(
                             checked = crossfadeEnabled,
                             onCheckedChange = { viewModel.setCrossfadeEnabled(it) },
                             leadingIcon = {
-                                Icon(PixelPlayerIcons.AlignJustifySpaceEven, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_align_justify_space_even), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             shape = crossfadeShape
                         )
@@ -949,7 +949,7 @@ fun SettingsCategoryDetail(
                             checked = showQueueHistory,
                             onCheckedChange = { viewModel.setShowQueueHistory(it) },
                             leadingIcon = {
-                                Icon(Icons.AutoMirrored.Rounded.QueueMusic, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_automirrored_rounded_queue_music), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             shape = queueHistoryShape
                         )
@@ -966,7 +966,7 @@ fun SettingsCategoryDetail(
                             checked = closeToTray,
                             onCheckedChange = { viewModel.setCloseToTray(it) },
                             leadingIcon = {
-                                Icon(Icons.Rounded.Layers, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_rounded_layers), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                             },
                             shape = getGroupShape(0, 1)
                         )

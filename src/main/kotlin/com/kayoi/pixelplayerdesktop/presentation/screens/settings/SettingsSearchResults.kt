@@ -1,5 +1,9 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_chevron_right
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_search
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,9 +23,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -90,7 +91,7 @@ fun SettingsSearchResults(
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Search,
+                                    painter = painterResource(Res.drawable.ic_rounded_search),
                                     contentDescription = null,
                                     tint = colors.onSurfaceVariant.copy(alpha = 0.5f),
                                     modifier = Modifier.size(32.dp)
@@ -169,7 +170,7 @@ private fun SettingSearchResultCard(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = item.icon ?: item.section.icon,
+                        painter = painterResource(item.icon ?: item.section.icon),
                         contentDescription = null,
                         tint = categoryFg,
                         modifier = Modifier.size(22.dp)
@@ -220,7 +221,7 @@ private fun SettingSearchResultCard(
             Spacer(modifier = Modifier.width(12.dp))
 
             Icon(
-                imageVector = Icons.Rounded.ChevronRight,
+                painter = painterResource(Res.drawable.ic_rounded_chevron_right),
                 contentDescription = null,
                 tint = colors.onSurfaceVariant.copy(alpha = 0.4f),
                 modifier = Modifier.size(20.dp)

@@ -1,5 +1,9 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_close
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_keyboard
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,9 +21,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Keyboard
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -82,7 +83,7 @@ fun KeyboardShortcutsDialog(
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Keyboard,
+                                    painter = painterResource(Res.drawable.ic_rounded_keyboard),
                                     contentDescription = null,
                                     tint = colors.onPrimaryContainer,
                                     modifier = Modifier.size(24.dp)
@@ -112,7 +113,7 @@ fun KeyboardShortcutsDialog(
                         )
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Close,
+                            painter = painterResource(Res.drawable.ic_rounded_close),
                             contentDescription = "Close",
                             modifier = Modifier.size(18.dp)
                         )

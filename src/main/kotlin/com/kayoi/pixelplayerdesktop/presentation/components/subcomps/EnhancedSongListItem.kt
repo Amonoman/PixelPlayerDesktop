@@ -1,5 +1,10 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_close
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_more_vert
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -32,10 +37,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -225,7 +226,7 @@ fun EnhancedSongListItem(
                         artworkUri = song.albumArtUriString,
                         modifier = Modifier.size(albumArtSize),
                         shape = albumShape,
-                        placeholderIcon = Icons.Rounded.MusicNote,
+                        placeholderIcon = Res.drawable.ic_rounded_music_note,
                         placeholderIconSize = 22.dp,
                         containerColor = if (isHighlighted) colors.onPrimaryContainer.copy(alpha = 0.12f) else colors.surfaceContainerHighest,
                         contentColor = if (isHighlighted) colors.onPrimaryContainer else colors.onSurfaceVariant,
@@ -298,7 +299,7 @@ fun EnhancedSongListItem(
                         modifier = Modifier.size(34.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.MoreVert,
+                            painter = painterResource(Res.drawable.ic_rounded_more_vert),
                             contentDescription = "Options for ${song.title}",
                             modifier = Modifier.size(20.dp)
                         )
@@ -342,7 +343,7 @@ fun EnhancedSongListItem(
                         modifier = Modifier.size(34.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Close,
+                            painter = painterResource(Res.drawable.ic_rounded_close),
                             contentDescription = "Remove from playlist",
                             modifier = Modifier.size(18.dp)
                         )

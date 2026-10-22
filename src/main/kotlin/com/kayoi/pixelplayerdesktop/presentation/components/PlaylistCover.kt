@@ -1,20 +1,22 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_queue_music
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_album
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_favorite
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_headphones
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_mic_external_on
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_piano
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_speaker
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
-import androidx.compose.material.icons.rounded.Album
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.Headphones
-import androidx.compose.material.icons.rounded.MicExternalOn
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.Piano
-import androidx.compose.material.icons.rounded.Speaker
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -23,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.kayoi.pixelplayerdesktop.data.model.Playlist
@@ -64,7 +65,7 @@ fun PlaylistCover(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = getPlaylistIconByName(playlist.coverIconName),
+                    painter = painterResource(getPlaylistIconByName(playlist.coverIconName)),
                     contentDescription = null,
                     tint = iconTint,
                     modifier = Modifier.size(size / 2)
@@ -84,16 +85,16 @@ private fun isColorDark(color: Color): Boolean {
     return luminance < 0.5
 }
 
-private fun getPlaylistIconByName(name: String?): ImageVector {
+private fun getPlaylistIconByName(name: String?): DrawableResource {
     return when (name) {
-        "MusicNote" -> Icons.Rounded.MusicNote
-        "Headphones" -> Icons.Rounded.Headphones
-        "Album" -> Icons.Rounded.Album
-        "Mic" -> Icons.Rounded.MicExternalOn
-        "Speaker" -> Icons.Rounded.Speaker
-        "Favorite" -> Icons.Rounded.Favorite
-        "Piano" -> Icons.Rounded.Piano
-        "Queue" -> Icons.AutoMirrored.Rounded.QueueMusic
-        else -> Icons.Rounded.MusicNote
+        "MusicNote" -> Res.drawable.ic_rounded_music_note
+        "Headphones" -> Res.drawable.ic_rounded_headphones
+        "Album" -> Res.drawable.ic_rounded_album
+        "Mic" -> Res.drawable.ic_rounded_mic_external_on
+        "Speaker" -> Res.drawable.ic_rounded_speaker
+        "Favorite" -> Res.drawable.ic_rounded_favorite
+        "Piano" -> Res.drawable.ic_rounded_piano
+        "Queue" -> Res.drawable.ic_automirrored_rounded_queue_music
+        else -> Res.drawable.ic_rounded_music_note
     }
 }

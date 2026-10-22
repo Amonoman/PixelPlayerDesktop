@@ -1,5 +1,24 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.setup
 
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_app_logo
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_arrow_back
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_arrow_forward
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_check_circle
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_cloud_download
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_folder
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_library_music
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_palette
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_person
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_security
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_add
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_check
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_close
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_dark_mode
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_folder
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_light_mode
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
@@ -34,22 +53,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.CloudDownload
-import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.LibraryMusic
-import androidx.compose.material.icons.outlined.Palette
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Security
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.DarkMode
-import androidx.compose.material.icons.rounded.Folder
-import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -78,7 +81,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -86,7 +88,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.countAudioFilesDeep
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.RoundedSans
@@ -167,7 +168,7 @@ fun SetupScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        imageVector = PixelPlayerIcons.AppLogo,
+                        painter = painterResource(Res.drawable.ic_app_logo),
                         contentDescription = null,
                         tint = colors.primary,
                         modifier = Modifier.size(18.dp)
@@ -288,7 +289,7 @@ fun SetupScreen(
                                 },
                                 shape = RoundedCornerShape(16.dp)
                             ) {
-                                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Icon(painterResource(Res.drawable.ic_automirrored_rounded_arrow_back), contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text("Back")
                             }
@@ -321,13 +322,13 @@ fun SetupScreen(
                             modifier = Modifier.height(44.dp)
                         ) {
                             if (currentStep == SetupStep.ALL_SET) {
-                                Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Icon(painterResource(Res.drawable.ic_rounded_check), contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text("Start Playing", fontWeight = FontWeight.Bold)
                             } else {
                                 Text(if (currentStep == SetupStep.WELCOME) "Get Started" else "Continue", fontWeight = FontWeight.SemiBold)
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Icon(painterResource(Res.drawable.ic_automirrored_rounded_arrow_forward), contentDescription = null, modifier = Modifier.size(18.dp))
                             }
                         }
                     }
@@ -393,7 +394,7 @@ private fun SetupStepProgressIndicator(
                     ) {
                         if (isCompleted) {
                             Icon(
-                                imageVector = Icons.Rounded.Check,
+                                painter = painterResource(Res.drawable.ic_rounded_check),
                                 contentDescription = null,
                                 modifier = Modifier.size(14.dp)
                             )
@@ -459,7 +460,7 @@ private fun WelcomeStepContent() {
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
-                                imageVector = PixelPlayerIcons.AppLogo,
+                                painter = painterResource(Res.drawable.ic_app_logo),
                                 contentDescription = null,
                                 tint = colors.onPrimaryContainer,
                                 modifier = Modifier.size(42.dp)
@@ -510,19 +511,19 @@ private fun WelcomeStepContent() {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             FeatureHighlightCard(
-                icon = Icons.Outlined.LibraryMusic,
+                icon = Res.drawable.ic_outlined_library_music,
                 title = "Local Audio",
                 description = "Local indexing for FLAC, MP3, Opus, Ogg, and metadata tags.",
                 modifier = Modifier.weight(1f)
             )
             FeatureHighlightCard(
-                icon = Icons.Outlined.Palette,
+                icon = Res.drawable.ic_outlined_palette,
                 title = "Material You",
                 description = "Adaptive dynamic theming matching album art and your desktop palette.",
                 modifier = Modifier.weight(1f)
             )
             FeatureHighlightCard(
-                icon = Icons.Outlined.Security,
+                icon = Res.drawable.ic_outlined_security,
                 title = "Offline First",
                 description = "Offline-first design without unsolicited remote data tracking.",
                 modifier = Modifier.weight(1f)
@@ -533,7 +534,7 @@ private fun WelcomeStepContent() {
 
 @Composable
 private fun FeatureHighlightCard(
-    icon: ImageVector,
+    icon: DrawableResource,
     title: String,
     description: String,
     modifier: Modifier = Modifier
@@ -556,7 +557,7 @@ private fun FeatureHighlightCard(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = icon,
+                        painter = painterResource(icon),
                         contentDescription = null,
                         tint = colors.onPrimaryContainer,
                         modifier = Modifier.size(20.dp)
@@ -628,7 +629,7 @@ private fun FoldersStepContent(
                 },
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                Icon(painterResource(Res.drawable.ic_rounded_add), contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("Add Folder")
             }
@@ -648,7 +649,7 @@ private fun FoldersStepContent(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.Folder,
+                        painter = painterResource(Res.drawable.ic_outlined_folder),
                         contentDescription = null,
                         tint = colors.onSurfaceVariant.copy(alpha = 0.5f),
                         modifier = Modifier.size(40.dp)
@@ -696,7 +697,7 @@ private fun FoldersStepContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.CheckCircle,
+                    painter = painterResource(Res.drawable.ic_outlined_check_circle),
                     contentDescription = null,
                     tint = colors.secondary,
                     modifier = Modifier.size(16.dp)
@@ -744,7 +745,7 @@ private fun DirectoryItemCard(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = Icons.Rounded.Folder,
+                        painter = painterResource(Res.drawable.ic_rounded_folder),
                         contentDescription = null,
                         tint = colors.onPrimaryContainer,
                         modifier = Modifier.size(22.dp)
@@ -782,7 +783,7 @@ private fun DirectoryItemCard(
                 modifier = Modifier.size(32.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Close,
+                    painter = painterResource(Res.drawable.ic_rounded_close),
                     contentDescription = "Remove",
                     tint = colors.onSurfaceVariant,
                     modifier = Modifier.size(18.dp)
@@ -850,7 +851,7 @@ private fun PreferencesStepContent(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = if (isDarkTheme) Icons.Rounded.DarkMode else Icons.Rounded.LightMode,
+                            painter = painterResource(if (isDarkTheme) Res.drawable.ic_rounded_dark_mode else Res.drawable.ic_rounded_light_mode),
                             contentDescription = null,
                             tint = colors.onSecondaryContainer,
                             modifier = Modifier.size(20.dp)
@@ -910,7 +911,7 @@ private fun PreferencesStepContent(
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
-                                imageVector = Icons.Outlined.Person,
+                                painter = painterResource(Res.drawable.ic_outlined_person),
                                 contentDescription = null,
                                 tint = colors.onSecondaryContainer,
                                 modifier = Modifier.size(20.dp)
@@ -959,7 +960,7 @@ private fun PreferencesStepContent(
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
-                                imageVector = Icons.Outlined.CloudDownload,
+                                painter = painterResource(Res.drawable.ic_outlined_cloud_download),
                                 contentDescription = null,
                                 tint = colors.onSecondaryContainer,
                                 modifier = Modifier.size(20.dp)
@@ -1001,7 +1002,7 @@ private fun PreferencesStepContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.CheckCircle,
+                    painter = painterResource(Res.drawable.ic_outlined_check_circle),
                     contentDescription = null,
                     tint = colors.secondary,
                     modifier = Modifier.size(16.dp)
@@ -1033,7 +1034,7 @@ private fun AllSetStepContent() {
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
-                    imageVector = Icons.Rounded.Check,
+                    painter = painterResource(Res.drawable.ic_rounded_check),
                     contentDescription = null,
                     tint = colors.onPrimaryContainer,
                     modifier = Modifier.size(40.dp)

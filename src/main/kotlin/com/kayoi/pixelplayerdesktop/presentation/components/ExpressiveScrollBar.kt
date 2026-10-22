@@ -1,5 +1,8 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_unfold_more
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -17,8 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.UnfoldMore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -78,7 +79,7 @@ fun ExpressiveScrollBar(
 
     val primaryColor = thumbColor ?: MaterialTheme.colorScheme.primary
     val surfaceVariantColor = trackColor ?: MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f)
-    val innerIcon = Icons.Rounded.UnfoldMore
+    val innerIcon = Res.drawable.ic_rounded_unfold_more
     val expandedIndicatorWidth = (indicatorExpandedWidth + indicatorExpandedWidthBoost).coerceAtLeast(thickness)
 
     val isInteracting = isPressed || isDragging
@@ -369,7 +370,7 @@ fun ExpressiveScrollBar(
                         }
                 ) {
                     Icon(
-                        imageVector = innerIcon,
+                        painter = painterResource(innerIcon),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.fillMaxSize()

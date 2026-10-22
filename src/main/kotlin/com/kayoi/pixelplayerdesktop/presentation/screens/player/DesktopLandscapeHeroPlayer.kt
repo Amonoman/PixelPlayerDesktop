@@ -1,5 +1,20 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.player
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_volume_down
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_volume_off
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_volume_up
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_favorite
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_favorite_border
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_pause
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_repeat
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_repeat_one
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_skip_next
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_skip_previous
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
@@ -25,20 +40,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.VolumeDown
-import androidx.compose.material.icons.automirrored.rounded.VolumeOff
-import androidx.compose.material.icons.automirrored.rounded.VolumeUp
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material.icons.rounded.RepeatOne
-import androidx.compose.material.icons.rounded.Shuffle
-import androidx.compose.material.icons.rounded.SkipNext
-import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
@@ -158,7 +159,7 @@ fun DesktopLandscapeHeroPlayer(
                             AsyncArtworkImage(
                                 artworkUri = song.albumArtUriString,
                                 modifier = Modifier.fillMaxSize(),
-                                placeholderIcon = Icons.Rounded.MusicNote,
+                                placeholderIcon = Res.drawable.ic_rounded_music_note,
                                 placeholderIconSize = 36.dp,
                                 containerColor = colors.primaryContainer,
                                 contentColor = colors.onPrimaryContainer,
@@ -259,7 +260,7 @@ fun DesktopLandscapeHeroPlayer(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
-                                            imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                                            painter = painterResource(if (isFavorite) Res.drawable.ic_rounded_favorite else Res.drawable.ic_rounded_favorite_border),
                                             contentDescription = "Favorite",
                                             tint = stackedFavTint,
                                             modifier = Modifier.size(18.dp)
@@ -273,12 +274,12 @@ fun DesktopLandscapeHeroPlayer(
                                         modifier = Modifier.size(32.dp)
                                     ) {
                                         val volIcon = when {
-                                            isMuted || volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
-                                            volume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
-                                            else -> Icons.AutoMirrored.Rounded.VolumeUp
+                                            isMuted || volume == 0f -> Res.drawable.ic_automirrored_rounded_volume_off
+                                            volume < 0.5f -> Res.drawable.ic_automirrored_rounded_volume_down
+                                            else -> Res.drawable.ic_automirrored_rounded_volume_up
                                         }
                                         Icon(
-                                            imageVector = volIcon,
+                                            painter = painterResource(volIcon),
                                             contentDescription = "Volume",
                                             tint = if (isMuted) colors.error else colors.onPrimaryContainer.copy(alpha = 0.75f),
                                             modifier = Modifier.size(19.dp)
@@ -379,7 +380,7 @@ fun DesktopLandscapeHeroPlayer(
                                 artworkUri = song.albumArtUriString,
                                 targetSize = ArtworkSize.LARGE,
                                 modifier = Modifier.fillMaxSize(),
-                                placeholderIcon = Icons.Rounded.MusicNote,
+                                placeholderIcon = Res.drawable.ic_rounded_music_note,
                                 placeholderIconSize = if (isCompactHero) 40.dp else 56.dp,
                                 containerColor = colors.primaryContainer,
                                 contentColor = colors.onPrimaryContainer,
@@ -443,7 +444,7 @@ fun DesktopLandscapeHeroPlayer(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                                        painter = painterResource(if (isFavorite) Res.drawable.ic_rounded_favorite else Res.drawable.ic_rounded_favorite_border),
                                         contentDescription = "Favorite",
                                         tint = favTint,
                                         modifier = Modifier.size(if (isCompactHero) 20.dp else 24.dp)
@@ -555,12 +556,12 @@ fun VerticalVolumeBar(
                 modifier = Modifier.size(36.dp)
             ) {
                 val volIcon = when {
-                    isMuted || displayVolume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
-                    displayVolume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
-                    else -> Icons.AutoMirrored.Rounded.VolumeUp
+                    isMuted || displayVolume == 0f -> Res.drawable.ic_automirrored_rounded_volume_off
+                    displayVolume < 0.5f -> Res.drawable.ic_automirrored_rounded_volume_down
+                    else -> Res.drawable.ic_automirrored_rounded_volume_up
                 }
                 Icon(
-                    imageVector = volIcon,
+                    painter = painterResource(volIcon),
                     contentDescription = "Volume",
                     tint = if (isMuted) colors.error else colors.onPrimaryContainer.copy(alpha = 0.75f),
                     modifier = Modifier.size(22.dp)
@@ -647,7 +648,7 @@ fun PlaybackControlsRow(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Shuffle,
+                    painter = painterResource(Res.drawable.ic_rounded_shuffle),
                     contentDescription = "Shuffle",
                     tint = if (isShuffle) colors.onPrimary else colors.primary,
                     modifier = Modifier.size(if (shuffleRepeatSize < 40.dp) 18.dp else 20.dp)
@@ -676,7 +677,7 @@ fun PlaybackControlsRow(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.SkipPrevious,
+                        painter = painterResource(Res.drawable.ic_rounded_skip_previous),
                         contentDescription = "Previous Song",
                         tint = colors.primary,
                         modifier = Modifier.size(if (buttonHeight < 50.dp) 24.dp else 28.dp)
@@ -705,7 +706,7 @@ fun PlaybackControlsRow(
                         )
                     } else {
                         Icon(
-                            imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                            painter = painterResource(if (isPlaying) Res.drawable.ic_rounded_pause else Res.drawable.ic_rounded_play_arrow),
                             contentDescription = if (isPlaying) "Pause" else "Play",
                             tint = colors.onPrimary,
                             modifier = Modifier.size(if (buttonHeight < 50.dp) 28.dp else 34.dp)
@@ -728,7 +729,7 @@ fun PlaybackControlsRow(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.SkipNext,
+                        painter = painterResource(Res.drawable.ic_rounded_skip_next),
                         contentDescription = "Next Song",
                         tint = colors.primary,
                         modifier = Modifier.size(if (buttonHeight < 50.dp) 24.dp else 28.dp)
@@ -737,7 +738,7 @@ fun PlaybackControlsRow(
             }
         }
 
-        val repIcon = if (repeatMode == 2) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat
+        val repIcon = if (repeatMode == 2) Res.drawable.ic_rounded_repeat_one else Res.drawable.ic_rounded_repeat
         val repLabel = when (repeatMode) {
             1 -> "Repeat: All"
             2 -> "Repeat: One"
@@ -753,7 +754,7 @@ fun PlaybackControlsRow(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = repIcon,
+                    painter = painterResource(repIcon),
                     contentDescription = "Repeat",
                     tint = if (repeatMode > 0) colors.onPrimary else colors.primary,
                     modifier = Modifier.size(if (shuffleRepeatSize < 40.dp) 18.dp else 20.dp)

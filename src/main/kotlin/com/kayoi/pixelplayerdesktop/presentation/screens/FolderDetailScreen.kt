@@ -1,5 +1,11 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_auto_fix_high
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_folder
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,12 +25,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.AutoFixHigh
-import androidx.compose.material.icons.rounded.Folder
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -198,7 +198,7 @@ fun FolderDetailScreen(
                             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.PlayArrow,
+                                painter = painterResource(Res.drawable.ic_rounded_play_arrow),
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -217,7 +217,7 @@ fun FolderDetailScreen(
                             contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.Shuffle,
+                                painter = painterResource(Res.drawable.ic_rounded_shuffle),
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
@@ -232,7 +232,7 @@ fun FolderDetailScreen(
                                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.AutoFixHigh,
+                                    painter = painterResource(Res.drawable.ic_rounded_auto_fix_high),
                                     contentDescription = null,
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -309,7 +309,7 @@ fun FolderDetailScreen(
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(painterResource(Res.drawable.ic_rounded_play_arrow), contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text("Play", fontWeight = FontWeight.Bold)
                         }
@@ -324,7 +324,7 @@ fun FolderDetailScreen(
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Icon(Icons.Rounded.Shuffle, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(painterResource(Res.drawable.ic_rounded_shuffle), contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text("Shuffle", fontWeight = FontWeight.SemiBold)
                         }
@@ -336,7 +336,7 @@ fun FolderDetailScreen(
                                 modifier = Modifier.size(44.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.AutoFixHigh,
+                                    painter = painterResource(Res.drawable.ic_rounded_auto_fix_high),
                                     contentDescription = "Edit Tags",
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -366,7 +366,7 @@ fun FolderDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Folder,
+                        painter = painterResource(Res.drawable.ic_rounded_folder),
                         contentDescription = null,
                         tint = colors.onSurfaceVariant.copy(alpha = 0.4f),
                         modifier = Modifier.size(54.dp)

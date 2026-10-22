@@ -1,5 +1,12 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_close
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_cloud
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_cloud_download
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_edit
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
@@ -22,13 +29,6 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.CloudDownload
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.Image
-import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -177,7 +177,7 @@ fun EditSongMetadataDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Edit,
+                        painter = painterResource(Res.drawable.ic_rounded_edit),
                         contentDescription = null,
                         tint = colors.primary,
                         modifier = Modifier.size(24.dp)
@@ -205,7 +205,7 @@ fun EditSongMetadataDialog(
                         modifier = Modifier.padding(end = 8.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.CloudDownload,
+                            painter = painterResource(Res.drawable.ic_rounded_cloud_download),
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
@@ -214,7 +214,7 @@ fun EditSongMetadataDialog(
                     }
                     IconButton(onClick = onDismiss, enabled = !isSaving) {
                         Icon(
-                            imageVector = Icons.Rounded.Close,
+                            painter = painterResource(Res.drawable.ic_rounded_close),
                             contentDescription = "Close",
                             tint = colors.onSurfaceVariant
                         )
@@ -262,13 +262,13 @@ fun EditSongMetadataDialog(
                                         artworkUri = song.albumArtUriString,
                                         modifier = Modifier.fillMaxSize(),
                                         shape = RoundedCornerShape(18.dp),
-                                        placeholderIcon = Icons.Rounded.MusicNote,
+                                        placeholderIcon = Res.drawable.ic_rounded_music_note,
                                         placeholderIconSize = 48.dp
                                     )
                                 }
                                 else -> {
                                     Icon(
-                                        imageVector = Icons.Rounded.MusicNote,
+                                        painter = painterResource(Res.drawable.ic_rounded_music_note),
                                         contentDescription = null,
                                         modifier = Modifier.size(56.dp),
                                         tint = colors.onSurfaceVariant.copy(alpha = 0.4f)

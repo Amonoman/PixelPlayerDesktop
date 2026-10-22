@@ -1,5 +1,9 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_album
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_more_vert
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -23,9 +27,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Album
-import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalIconButton
@@ -147,7 +148,7 @@ fun AlbumListItem(
             ) {
                 AsyncArtworkImage(
                     artworkUri = album.albumArtUriString,
-                    placeholderIcon = Icons.Rounded.Album,
+                    placeholderIcon = Res.drawable.ic_rounded_album,
                     placeholderIconSize = 36.dp,
                     containerColor = gradientBaseColor.copy(alpha = 0.5f),
                     contentColor = onGradientColor,
@@ -222,7 +223,7 @@ fun AlbumListItem(
                     modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.MoreVert,
+                        painter = painterResource(Res.drawable.ic_rounded_more_vert),
                         contentDescription = "Album options",
                         modifier = Modifier.size(18.dp)
                     )

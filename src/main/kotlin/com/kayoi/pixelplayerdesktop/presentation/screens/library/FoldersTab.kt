@@ -1,5 +1,10 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.library
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_keyboard_arrow_right
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_folder
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_folder_open
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,10 +22,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.rounded.Folder
-import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -202,7 +203,7 @@ fun FoldersTab(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.FolderOpen,
+                                        painter = painterResource(Res.drawable.ic_rounded_folder_open),
                                         contentDescription = null,
                                         tint = colors.primary,
                                         modifier = Modifier.size(16.dp)
@@ -219,7 +220,7 @@ fun FoldersTab(
 
                             breadcrumbs.forEachIndexed { index, crumb ->
                                 Icon(
-                                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                    painter = painterResource(Res.drawable.ic_automirrored_rounded_keyboard_arrow_right),
                                     contentDescription = null,
                                     tint = colors.onSurfaceVariant.copy(alpha = 0.5f),
                                     modifier = Modifier.padding(horizontal = 4.dp).size(16.dp)
@@ -259,7 +260,7 @@ fun FoldersTab(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Folder,
+                            painter = painterResource(Res.drawable.ic_rounded_folder),
                             contentDescription = null,
                             tint = colors.onSurfaceVariant.copy(alpha = 0.4f),
                             modifier = Modifier.size(54.dp)

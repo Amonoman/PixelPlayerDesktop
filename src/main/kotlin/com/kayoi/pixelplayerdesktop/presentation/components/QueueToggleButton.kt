@@ -1,5 +1,8 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_queue_music
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -25,8 +28,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -125,7 +126,7 @@ fun QueueToggleButton(
                 horizontalArrangement = Arrangement.spacedBy(if (showLabel) 6.dp else 4.dp)
             ) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                    painter = painterResource(Res.drawable.ic_automirrored_rounded_queue_music),
                     contentDescription = "Toggle Queue Panel",
                     tint = contentColor,
                     modifier = Modifier.size(17.dp)

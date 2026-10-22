@@ -1,5 +1,27 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
+import org.jetbrains.compose.resources.DrawableResource
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_sort
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_view_list
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_add
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_album
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_arrow_upward
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_calendar_today
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_check
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_cloud
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_computer
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_dataset
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_date_range
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_folder
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_grid_view
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_my_location
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_numbers
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_person
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_schedule
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_sort_by_alpha
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -32,27 +54,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Sort
-import androidx.compose.material.icons.automirrored.rounded.ViewList
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Album
-import androidx.compose.material.icons.rounded.ArrowDownward
-import androidx.compose.material.icons.rounded.ArrowUpward
-import androidx.compose.material.icons.rounded.CalendarToday
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Cloud
-import androidx.compose.material.icons.rounded.Computer
-import androidx.compose.material.icons.rounded.Dataset
-import androidx.compose.material.icons.rounded.DateRange
-import androidx.compose.material.icons.rounded.Folder
-import androidx.compose.material.icons.rounded.GridView
-import androidx.compose.material.icons.rounded.MyLocation
-import androidx.compose.material.icons.rounded.Numbers
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Schedule
-import androidx.compose.material.icons.rounded.Shuffle
-import androidx.compose.material.icons.rounded.SortByAlpha
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -79,7 +80,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
@@ -193,7 +193,7 @@ fun LibraryActionRow(
                             modifier = Modifier.height(genHeight)
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.Add,
+                                painter = painterResource(Res.drawable.ic_rounded_add),
                                 contentDescription = createButtonLabel,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -223,7 +223,7 @@ fun LibraryActionRow(
                             modifier = Modifier.height(genHeight)
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.Shuffle,
+                                painter = painterResource(Res.drawable.ic_rounded_shuffle),
                                 contentDescription = "Shuffle all",
                                 modifier = Modifier.size(20.dp)
                             )
@@ -280,7 +280,7 @@ fun LibraryActionRow(
                             modifier = Modifier.size(genHeight)
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.MyLocation,
+                                painter = painterResource(Res.drawable.ic_rounded_my_location),
                                 contentDescription = "Locate currently playing song",
                                 modifier = Modifier.size(20.dp)
                             )
@@ -308,7 +308,7 @@ fun LibraryActionRow(
                             modifier = Modifier.size(genHeight)
                         ) {
                             Icon(
-                                imageVector = if (isListView) Icons.Rounded.GridView else Icons.AutoMirrored.Rounded.ViewList,
+                                painter = painterResource(if (isListView) Res.drawable.ic_rounded_grid_view else Res.drawable.ic_automirrored_rounded_view_list),
                                 contentDescription = if (isListView) "Switch to Grid view" else "Switch to List view",
                                 modifier = Modifier.size(20.dp)
                             )
@@ -324,9 +324,9 @@ fun LibraryActionRow(
                     exit = slideOutHorizontally(targetOffsetX = { it / 2 }) + fadeOut()
                 ) {
                     val finalIcon = when (currentStorageFilter) {
-                        StorageFilter.ALL -> Icons.Rounded.Dataset
-                        StorageFilter.ONLINE -> Icons.Rounded.Cloud
-                        StorageFilter.OFFLINE -> Icons.Rounded.Computer
+                        StorageFilter.ALL -> Res.drawable.ic_rounded_dataset
+                        StorageFilter.ONLINE -> Res.drawable.ic_rounded_cloud
+                        StorageFilter.OFFLINE -> Res.drawable.ic_rounded_computer
                     }
                     val tooltipText = when (currentStorageFilter) {
                         StorageFilter.ALL -> "Filter: All music"
@@ -364,7 +364,7 @@ fun LibraryActionRow(
                                 label = "StorageFilterIcon"
                             ) { icon ->
                                 Icon(
-                                    imageVector = icon,
+                                    painter = painterResource(icon),
                                     contentDescription = tooltipText,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -393,7 +393,7 @@ fun LibraryActionRow(
                                 modifier = Modifier.size(genHeight)
                             ) {
                                 Icon(
-                                    imageVector = Icons.AutoMirrored.Rounded.Sort,
+                                    painter = painterResource(Res.drawable.ic_automirrored_rounded_sort),
                                     contentDescription = "Sort options (${currentSortOption.displayName})",
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -420,7 +420,7 @@ fun LibraryActionRow(
                             modifier = Modifier.height(genHeight)
                         ) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.Sort,
+                                painter = painterResource(Res.drawable.ic_automirrored_rounded_sort),
                                 contentDescription = "Sort options",
                                 modifier = Modifier.size(20.dp)
                             )
@@ -512,7 +512,7 @@ fun LibraryActionRow(
                                                 horizontalArrangement = Arrangement.Center
                                             ) {
                                                 Icon(
-                                                    imageVector = Icons.Rounded.ArrowUpward,
+                                                    painter = painterResource(Res.drawable.ic_rounded_arrow_upward),
                                                     contentDescription = "Toggle sort order",
                                                     tint = colors.onSecondaryContainer,
                                                     modifier = Modifier
@@ -577,7 +577,7 @@ fun LibraryActionRow(
                                     },
                                     leadingIcon = {
                                         Icon(
-                                            imageVector = category.icon,
+                                            painter = painterResource(category.icon),
                                             contentDescription = null,
                                             modifier = Modifier.size(18.dp)
                                         )
@@ -587,7 +587,7 @@ fun LibraryActionRow(
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 if (canToggleOrder) {
                                                     Icon(
-                                                        imageVector = Icons.Rounded.ArrowUpward,
+                                                        painter = painterResource(Res.drawable.ic_rounded_arrow_upward),
                                                         contentDescription = null,
                                                         tint = itemIconColor,
                                                         modifier = Modifier
@@ -597,7 +597,7 @@ fun LibraryActionRow(
                                                     Spacer(modifier = Modifier.width(4.dp))
                                                 }
                                                 Icon(
-                                                    imageVector = Icons.Rounded.Check,
+                                                    painter = painterResource(Res.drawable.ic_rounded_check),
                                                     contentDescription = null,
                                                     modifier = Modifier.size(18.dp)
                                                 )
@@ -640,17 +640,17 @@ fun LibraryActionRow(
     }
 }
 
-private enum class SortCategory(val displayName: String, val icon: ImageVector) {
-    TITLE("Title", Icons.Rounded.SortByAlpha),
-    NAME("Name", Icons.Rounded.SortByAlpha),
-    ARTIST("Artist", Icons.Rounded.Person),
-    ALBUM("Album", Icons.Rounded.Album),
-    DATE_ADDED("Date Added", Icons.Rounded.CalendarToday),
-    DATE_CREATED("Date Created", Icons.Rounded.CalendarToday),
-    DURATION("Duration", Icons.Rounded.Schedule),
-    RELEASE_YEAR("Release Year", Icons.Rounded.DateRange),
-    SONG_COUNT("Song Count", Icons.Rounded.Numbers),
-    SUBFOLDER_COUNT("Subfolder Count", Icons.Rounded.Folder)
+private enum class SortCategory(val displayName: String, val icon: DrawableResource) {
+    TITLE("Title", Res.drawable.ic_rounded_sort_by_alpha),
+    NAME("Name", Res.drawable.ic_rounded_sort_by_alpha),
+    ARTIST("Artist", Res.drawable.ic_rounded_person),
+    ALBUM("Album", Res.drawable.ic_rounded_album),
+    DATE_ADDED("Date Added", Res.drawable.ic_rounded_calendar_today),
+    DATE_CREATED("Date Created", Res.drawable.ic_rounded_calendar_today),
+    DURATION("Duration", Res.drawable.ic_rounded_schedule),
+    RELEASE_YEAR("Release Year", Res.drawable.ic_rounded_date_range),
+    SONG_COUNT("Song Count", Res.drawable.ic_rounded_numbers),
+    SUBFOLDER_COUNT("Subfolder Count", Res.drawable.ic_rounded_folder)
 }
 
 private fun SortOption.category(): SortCategory = when (this) {

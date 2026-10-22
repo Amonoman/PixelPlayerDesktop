@@ -1,5 +1,9 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_arrow_forward
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -21,9 +25,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledIconButton
@@ -143,7 +144,7 @@ fun RecentlyPlayedSection(
                     onClick = onSeeAllClick
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                        painter = painterResource(Res.drawable.ic_automirrored_rounded_arrow_forward),
                         contentDescription = "See all recently played",
                         modifier = Modifier.size(iconSize)
                     )
@@ -299,7 +300,7 @@ private fun RecentlyPlayedPill(
                     artworkUri = song.albumArtUriString,
                     modifier = Modifier.fillMaxSize(),
                     shape = CircleShape,
-                    placeholderIcon = Icons.Rounded.MusicNote,
+                    placeholderIcon = Res.drawable.ic_rounded_music_note,
                     placeholderIconSize = 26.dp,
                     contentDescription = song.title
                 )

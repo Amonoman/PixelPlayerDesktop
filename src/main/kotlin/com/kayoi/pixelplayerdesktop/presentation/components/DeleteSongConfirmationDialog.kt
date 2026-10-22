@@ -1,7 +1,8 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Delete
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -25,7 +26,7 @@ fun DeleteSongConfirmationDialog(
         onDismissRequest = onDismiss,
         icon = {
             Icon(
-                imageVector = Icons.Rounded.Delete,
+                painter = painterResource(Res.drawable.ic_rounded_delete),
                 contentDescription = null,
                 tint = colors.error
             )

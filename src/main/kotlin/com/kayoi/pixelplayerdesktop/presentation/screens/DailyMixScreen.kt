@@ -1,5 +1,10 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,11 +26,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
@@ -184,7 +184,7 @@ fun DailyMixScreen(
                             )
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.PlayArrow,
+                                painter = painterResource(Res.drawable.ic_rounded_play_arrow),
                                 contentDescription = "Play",
                                 modifier = Modifier.size(if (isVeryCompact) 20.dp else 24.dp)
                             )
@@ -214,7 +214,7 @@ fun DailyMixScreen(
                             )
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.Shuffle,
+                                painter = painterResource(Res.drawable.ic_rounded_shuffle),
                                 contentDescription = "Shuffle",
                                 modifier = Modifier.size(if (isVeryCompact) 18.dp else 22.dp)
                             )
@@ -361,7 +361,7 @@ private fun ExpressiveDailyMixHeader(
                             artworkUri = artUri,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop,
-                            placeholderIcon = Icons.Rounded.MusicNote,
+                            placeholderIcon = Res.drawable.ic_rounded_music_note,
                             placeholderIconSize = if (isVeryCompact) 32.dp else 48.dp,
                             containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,

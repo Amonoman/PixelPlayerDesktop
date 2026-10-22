@@ -1,5 +1,11 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_lyrics
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_file_open
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_close
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_search
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,10 +24,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.FileOpen
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -51,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Lyrics
 import com.kayoi.pixelplayerdesktop.data.model.Song
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.LyricsSearchUiState
 import com.kayoi.pixelplayerdesktop.utils.DirectoryPicker
 import java.io.File
@@ -107,7 +108,7 @@ fun LyricsSearchDialog(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Icon(
-                            imageVector = PixelPlayerIcons.Lyrics,
+                            painter = painterResource(Res.drawable.ic_lyrics),
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(24.dp)
@@ -122,7 +123,7 @@ fun LyricsSearchDialog(
 
                     IconButton(onClick = onDismiss) {
                         Icon(
-                            imageVector = Icons.Rounded.Close,
+                            painter = painterResource(Res.drawable.ic_rounded_close),
                             contentDescription = "Close",
                             tint = colors.onSurfaceVariant
                         )
@@ -158,7 +159,7 @@ fun LyricsSearchDialog(
                         shape = RoundedCornerShape(14.dp),
                         enabled = searchQuery.isNotBlank() && uiState !is LyricsSearchUiState.Loading
                     ) {
-                        Icon(Icons.Rounded.Search, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(painterResource(Res.drawable.ic_rounded_search), contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("Search")
                     }
@@ -303,7 +304,7 @@ fun LyricsSearchDialog(
                         shape = RoundedCornerShape(14.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.FileOpen,
+                            painter = painterResource(Res.drawable.ic_outlined_file_open),
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )

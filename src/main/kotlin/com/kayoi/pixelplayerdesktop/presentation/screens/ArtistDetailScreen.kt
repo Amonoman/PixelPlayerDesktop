@@ -1,5 +1,12 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_artist
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_album
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_expand_more
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -21,12 +28,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Album
-import androidx.compose.material.icons.rounded.ExpandMore
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -62,7 +63,6 @@ import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
 import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveScrollBar
 import com.kayoi.pixelplayerdesktop.presentation.components.songFastScrollLabel
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.EnhancedSongListItem
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.ColorSchemePair
@@ -227,7 +227,7 @@ fun ArtistDetailScreen(
                             .fillMaxSize()
                             .blur(40.dp),
                         contentScale = ContentScale.Crop,
-                        placeholderIcon = PixelPlayerIcons.Artist,
+                        placeholderIcon = Res.drawable.ic_artist,
                         placeholderIconSize = 48.dp,
                         containerColor = colors.surfaceContainerHighest,
                         contentColor = colors.onSurfaceVariant,
@@ -266,7 +266,7 @@ fun ArtistDetailScreen(
                             modifier = Modifier
                                 .size(coverSize)
                                 .clip(ShapeCache.ExpressiveAvatar),
-                            placeholderIcon = PixelPlayerIcons.Artist,
+                            placeholderIcon = Res.drawable.ic_artist,
                             placeholderIconSize = 52.dp,
                             containerColor = colors.surfaceContainerHighest,
                             contentColor = colors.onSurfaceVariant,
@@ -321,7 +321,7 @@ fun ArtistDetailScreen(
                             modifier = Modifier.size(92.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.Shuffle,
+                                painter = painterResource(Res.drawable.ic_rounded_shuffle),
                                 contentDescription = "Shuffle",
                                 modifier = Modifier.size(28.dp)
                             )
@@ -349,7 +349,7 @@ fun ArtistDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Icon(
-                            imageVector = PixelPlayerIcons.Artist,
+                            painter = painterResource(Res.drawable.ic_artist),
                             contentDescription = null,
                             tint = colors.onSurfaceVariant.copy(alpha = 0.4f),
                             modifier = Modifier.size(54.dp)
@@ -499,7 +499,7 @@ private fun CollapsibleAlbumHeader(
             modifier = Modifier
                 .size(52.dp)
                 .clip(RoundedCornerShape(10.dp)),
-            placeholderIcon = Icons.Rounded.Album,
+            placeholderIcon = Res.drawable.ic_rounded_album,
             placeholderIconSize = 28.dp,
             containerColor = colors.surfaceContainerHigh,
             contentColor = colors.onSurfaceVariant,
@@ -538,14 +538,14 @@ private fun CollapsibleAlbumHeader(
             modifier = Modifier.size(40.dp)
         ) {
             Icon(
-                imageVector = Icons.Rounded.PlayArrow,
+                painter = painterResource(Res.drawable.ic_rounded_play_arrow),
                 contentDescription = "Play Album",
                 modifier = Modifier.size(22.dp)
             )
         }
 
         Icon(
-            imageVector = Icons.Rounded.ExpandMore,
+            painter = painterResource(Res.drawable.ic_rounded_expand_more),
             contentDescription = if (isExpanded) "Collapse" else "Expand",
             tint = colors.onSurfaceVariant,
             modifier = Modifier

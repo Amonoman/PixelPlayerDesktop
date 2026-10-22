@@ -1,12 +1,14 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -23,7 +25,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asComposeImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -293,7 +294,7 @@ fun AsyncArtworkImage(
     modifier: Modifier = Modifier,
     targetSize: ArtworkSize = ArtworkSize.SMALL,
     shape: Shape? = null,
-    placeholderIcon: ImageVector = Icons.Rounded.MusicNote,
+    placeholderIcon: DrawableResource = Res.drawable.ic_rounded_music_note,
     placeholderIconSize: Dp = 24.dp,
     containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     contentColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -352,7 +353,7 @@ fun AsyncArtworkImage(
             )
         } else {
             Icon(
-                imageVector = placeholderIcon,
+                painter = painterResource(placeholderIcon),
                 contentDescription = contentDescription,
                 tint = contentColor.copy(alpha = 0.7f),
                 modifier = Modifier.size(placeholderIconSize)

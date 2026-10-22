@@ -1,5 +1,15 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_arrow_forward
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_lightbulb
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_add
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_close
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_library_music
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_refresh
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_restart_alt
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_warning
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -24,16 +34,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.outlined.Lightbulb
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.LibraryMusic
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.RestartAlt
-import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -156,7 +156,7 @@ fun ArtistSettingsDetailScreen(
                                             shape = RoundedCornerShape(12.dp),
                                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                                         ) {
-                                            Icon(Icons.Rounded.RestartAlt, contentDescription = null, modifier = Modifier.size(15.dp))
+                                            Icon(painterResource(Res.drawable.ic_rounded_restart_alt), contentDescription = null, modifier = Modifier.size(15.dp))
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text("Reset", style = MaterialTheme.typography.labelSmall)
                                         }
@@ -193,7 +193,7 @@ fun ArtistSettingsDetailScreen(
                                         shape = RoundedCornerShape(12.dp),
                                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                                     ) {
-                                        Icon(Icons.Rounded.RestartAlt, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Icon(painterResource(Res.drawable.ic_rounded_restart_alt), contentDescription = null, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text("Reset", style = MaterialTheme.typography.labelMedium)
                                     }
@@ -223,7 +223,7 @@ fun ArtistSettingsDetailScreen(
                                     trailingIcon = if (artistDelimiters.size > 1) {
                                         {
                                             Icon(
-                                                imageVector = Icons.Rounded.Close,
+                                                painter = painterResource(Res.drawable.ic_rounded_close),
                                                 contentDescription = "Remove delimiter",
                                                 modifier = Modifier.size(16.dp)
                                             )
@@ -275,7 +275,7 @@ fun ArtistSettingsDetailScreen(
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier.size(48.dp)
                             ) {
-                                Icon(Icons.Rounded.Add, contentDescription = "Add character delimiter")
+                                Icon(painterResource(Res.drawable.ic_rounded_add), contentDescription = "Add character delimiter")
                             }
                         }
                     }
@@ -316,7 +316,7 @@ fun ArtistSettingsDetailScreen(
                                             shape = RoundedCornerShape(12.dp),
                                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                                         ) {
-                                            Icon(Icons.Rounded.RestartAlt, contentDescription = null, modifier = Modifier.size(15.dp))
+                                            Icon(painterResource(Res.drawable.ic_rounded_restart_alt), contentDescription = null, modifier = Modifier.size(15.dp))
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text("Reset", style = MaterialTheme.typography.labelSmall)
                                         }
@@ -353,7 +353,7 @@ fun ArtistSettingsDetailScreen(
                                         shape = RoundedCornerShape(12.dp),
                                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                                     ) {
-                                        Icon(Icons.Rounded.RestartAlt, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Icon(painterResource(Res.drawable.ic_rounded_restart_alt), contentDescription = null, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text("Reset", style = MaterialTheme.typography.labelMedium)
                                     }
@@ -378,7 +378,7 @@ fun ArtistSettingsDetailScreen(
                                     },
                                     trailingIcon = {
                                         Icon(
-                                            imageVector = Icons.Rounded.Close,
+                                            painter = painterResource(Res.drawable.ic_rounded_close),
                                             contentDescription = "Remove delimiter",
                                             modifier = Modifier.size(16.dp)
                                         )
@@ -429,7 +429,7 @@ fun ArtistSettingsDetailScreen(
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier.size(48.dp)
                             ) {
-                                Icon(Icons.Rounded.Add, contentDescription = "Add word delimiter")
+                                Icon(painterResource(Res.drawable.ic_rounded_add), contentDescription = "Add word delimiter")
                             }
                         }
                     }
@@ -442,7 +442,7 @@ fun ArtistSettingsDetailScreen(
                     checked = extractArtistFromTitle,
                     onCheckedChange = { viewModel.setExtractArtistFromTitle(it) },
                     leadingIcon = {
-                        Icon(Icons.Rounded.LibraryMusic, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                        Icon(painterResource(Res.drawable.ic_rounded_library_music), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                     },
                     shape = getGroupShape(2, 3)
                 )
@@ -465,7 +465,7 @@ fun ArtistSettingsDetailScreen(
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.Lightbulb,
+                                painter = painterResource(Res.drawable.ic_outlined_lightbulb),
                                 contentDescription = null,
                                 tint = colors.tertiary,
                                 modifier = Modifier.size(22.dp)
@@ -521,7 +521,7 @@ fun ArtistSettingsDetailScreen(
                                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                                 ) {
                                                     Icon(
-                                                        imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                                        painter = painterResource(Res.drawable.ic_automirrored_rounded_arrow_forward),
                                                         contentDescription = null,
                                                         tint = colors.primary,
                                                         modifier = Modifier.size(13.dp)
@@ -549,7 +549,7 @@ fun ArtistSettingsDetailScreen(
                                                 modifier = Modifier.weight(1f)
                                             )
                                             Icon(
-                                                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                                painter = painterResource(Res.drawable.ic_automirrored_rounded_arrow_forward),
                                                 contentDescription = null,
                                                 tint = colors.onSurfaceVariant.copy(alpha = 0.6f),
                                                 modifier = Modifier.size(16.dp)
@@ -602,7 +602,7 @@ private fun RescanRequiredBanner(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Warning,
+                            painter = painterResource(Res.drawable.ic_rounded_warning),
                             contentDescription = null,
                             tint = colors.onTertiaryContainer,
                             modifier = Modifier.size(24.dp)
@@ -642,7 +642,7 @@ private fun RescanRequiredBanner(
                             )
                         } else {
                             Icon(
-                                imageVector = Icons.Rounded.Refresh,
+                                painter = painterResource(Res.drawable.ic_rounded_refresh),
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp)
                             )
@@ -660,7 +660,7 @@ private fun RescanRequiredBanner(
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Warning,
+                        painter = painterResource(Res.drawable.ic_rounded_warning),
                         contentDescription = null,
                         tint = colors.onTertiaryContainer,
                         modifier = Modifier.size(24.dp)
@@ -702,7 +702,7 @@ private fun RescanRequiredBanner(
                             )
                         } else {
                             Icon(
-                                imageVector = Icons.Rounded.Refresh,
+                                painter = painterResource(Res.drawable.ic_rounded_refresh),
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp)
                             )

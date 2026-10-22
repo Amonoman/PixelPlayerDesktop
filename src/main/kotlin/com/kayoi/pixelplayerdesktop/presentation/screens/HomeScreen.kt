@@ -1,5 +1,15 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_app_logo
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_auto_awesome
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_folder
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_folder_open
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_palette
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_refresh
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,13 +29,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.Folder
-import androidx.compose.material.icons.rounded.FolderOpen
-import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -57,7 +60,6 @@ import com.kayoi.pixelplayerdesktop.presentation.components.CollagePattern
 import com.kayoi.pixelplayerdesktop.presentation.components.DailyMixSection
 import com.kayoi.pixelplayerdesktop.presentation.components.RecentlyPlayedSection
 import com.kayoi.pixelplayerdesktop.presentation.components.StatsOverviewCard
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.utils.shapes.RoundedStarShape
 
 @Composable
@@ -191,7 +193,7 @@ fun HomeScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.Shuffle,
+                                            painter = painterResource(Res.drawable.ic_rounded_shuffle),
                                             contentDescription = "Shuffle Play",
                                             modifier = Modifier.size(38.dp)
                                         )
@@ -268,7 +270,7 @@ fun HomeScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.Shuffle,
+                                            painter = painterResource(Res.drawable.ic_rounded_shuffle),
                                             contentDescription = "Shuffle Play",
                                             modifier = Modifier.size(48.dp)
                                         )
@@ -440,7 +442,7 @@ private fun HomeEmptyState(
                                     )
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.FolderOpen,
+                                        painter = painterResource(Res.drawable.ic_rounded_folder_open),
                                         contentDescription = null,
                                         modifier = Modifier.size(18.dp)
                                     )
@@ -453,7 +455,7 @@ private fun HomeEmptyState(
                                     shape = RoundedCornerShape(16.dp)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Refresh,
+                                        painter = painterResource(Res.drawable.ic_rounded_refresh),
                                         contentDescription = null,
                                         modifier = Modifier.size(18.dp)
                                     )
@@ -517,7 +519,7 @@ private fun HomeEmptyState(
                                         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.FolderOpen,
+                                            painter = painterResource(Res.drawable.ic_rounded_folder_open),
                                             contentDescription = null,
                                             modifier = Modifier.size(20.dp)
                                         )
@@ -531,7 +533,7 @@ private fun HomeEmptyState(
                                         contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.Refresh,
+                                            painter = painterResource(Res.drawable.ic_rounded_refresh),
                                             contentDescription = null,
                                             modifier = Modifier.size(18.dp)
                                         )
@@ -549,7 +551,7 @@ private fun HomeEmptyState(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = PixelPlayerIcons.AppLogo,
+                                    painter = painterResource(Res.drawable.ic_app_logo),
                                     contentDescription = null,
                                     tint = colors.primary,
                                     modifier = Modifier.size(64.dp)
@@ -571,19 +573,19 @@ private fun HomeEmptyState(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         FeatureHighlightCard(
-                            icon = Icons.Rounded.Folder,
+                            icon = Res.drawable.ic_rounded_folder,
                             iconTint = colors.primary,
                             title = "Local Music Library",
                             description = "Plays MP3, FLAC, AAC, WAV, OGG, and OPUS with fast indexing."
                         )
                         FeatureHighlightCard(
-                            icon = Icons.Rounded.Palette,
+                            icon = Res.drawable.ic_rounded_palette,
                             iconTint = colors.secondary,
                             title = "Dynamic Theming",
                             description = "Adapts interface colors dynamically to match your current song artwork."
                         )
                         FeatureHighlightCard(
-                            icon = Icons.Rounded.AutoAwesome,
+                            icon = Res.drawable.ic_rounded_auto_awesome,
                             iconTint = colors.tertiary,
                             title = "Personalized Mixes",
                             description = "Generates Daily Mixes and smart queues as you listen."
@@ -595,21 +597,21 @@ private fun HomeEmptyState(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         FeatureHighlightCard(
-                            icon = Icons.Rounded.Folder,
+                            icon = Res.drawable.ic_rounded_folder,
                             iconTint = colors.primary,
                             title = "Local Music Library",
                             description = "Plays MP3, FLAC, AAC, WAV, OGG, and OPUS with fast indexing.",
                             modifier = Modifier.weight(1f)
                         )
                         FeatureHighlightCard(
-                            icon = Icons.Rounded.Palette,
+                            icon = Res.drawable.ic_rounded_palette,
                             iconTint = colors.secondary,
                             title = "Dynamic Theming",
                             description = "Adapts interface colors dynamically to match your current song artwork.",
                             modifier = Modifier.weight(1f)
                         )
                         FeatureHighlightCard(
-                            icon = Icons.Rounded.AutoAwesome,
+                            icon = Res.drawable.ic_rounded_auto_awesome,
                             iconTint = colors.tertiary,
                             title = "Personalized Mixes",
                             description = "Generates Daily Mixes and smart queues as you listen.",
@@ -624,7 +626,7 @@ private fun HomeEmptyState(
 
 @Composable
 private fun FeatureHighlightCard(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: DrawableResource,
     iconTint: Color,
     title: String,
     description: String,
@@ -651,7 +653,7 @@ private fun FeatureHighlightCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = icon,
+                    painter = painterResource(icon),
                     contentDescription = null,
                     tint = iconTint,
                     modifier = Modifier.size(22.dp)

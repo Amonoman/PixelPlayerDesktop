@@ -1,73 +1,74 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_account_circle
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_graphic_eq
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_info
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_keyboard
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_library_music
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_palette
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_settings
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_settings_backup_restore
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccountCircle
-import androidx.compose.material.icons.rounded.GraphicEq
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.Keyboard
-import androidx.compose.material.icons.rounded.LibraryMusic
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.SettingsBackupRestore
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.DrawableResource
 
 enum class SettingsSection(
     val id: String,
     val title: String,
     val subtitle: String,
-    val icon: ImageVector
+    val icon: DrawableResource
 ) {
     LIBRARY(
         id = "library",
         title = "Music Management",
         subtitle = "Manage folders, refresh library, parsing options",
-        icon = Icons.Rounded.LibraryMusic
+        icon = Res.drawable.ic_rounded_library_music
     ),
     APPEARANCE(
         id = "appearance",
         title = "Appearance",
         subtitle = "Themes, layout, and visual styles",
-        icon = Icons.Rounded.Palette
+        icon = Res.drawable.ic_rounded_palette
     ),
     PLAYBACK(
         id = "playback",
         title = "Playback",
         subtitle = "Audio behavior, crossfade, and background play",
-        icon = Icons.Rounded.MusicNote
+        icon = Res.drawable.ic_rounded_music_note
     ),
     EQUALIZER(
         id = "equalizer",
         title = "Equalizer",
         subtitle = "10-band frequencies, preamp, and audio presets",
-        icon = Icons.Rounded.GraphicEq
+        icon = Res.drawable.ic_rounded_graphic_eq
     ),
     ACCOUNTS(
         id = "accounts",
         title = "Accounts",
         subtitle = "Manage Navidrome and Jellyfin services",
-        icon = Icons.Rounded.AccountCircle
+        icon = Res.drawable.ic_rounded_account_circle
     ),
     SHORTCUTS(
         id = "shortcuts",
         title = "Keyboard Shortcuts",
         subtitle = "Hotkeys, playback controls, and navigation cheatsheet",
-        icon = Icons.Rounded.Keyboard
+        icon = Res.drawable.ic_rounded_keyboard
     ),
     BACKUP(
         id = "backup",
         title = "Backup & Restore",
         subtitle = "Export and recover your personal data",
-        icon = Icons.Rounded.SettingsBackupRestore
+        icon = Res.drawable.ic_rounded_settings_backup_restore
     ),
     ABOUT(
         id = "about",
         title = "About",
         subtitle = "App info, version, and credits",
-        icon = Icons.Rounded.Info
+        icon = Res.drawable.ic_rounded_info
     )
 }
 

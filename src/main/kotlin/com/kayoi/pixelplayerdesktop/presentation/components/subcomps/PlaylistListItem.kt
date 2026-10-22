@@ -1,5 +1,11 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_edit
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_more_vert
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.PointerMatcher
@@ -24,11 +30,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -146,7 +147,7 @@ fun PlaylistListItem(
                     modifier = Modifier.size(38.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.PlayArrow,
+                        painter = painterResource(Res.drawable.ic_rounded_play_arrow),
                         contentDescription = "Play playlist",
                         modifier = Modifier.size(20.dp)
                     )
@@ -165,7 +166,7 @@ fun PlaylistListItem(
                     modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.MoreVert,
+                        painter = painterResource(Res.drawable.ic_rounded_more_vert),
                         contentDescription = "More options",
                         modifier = Modifier.size(18.dp)
                     )
@@ -187,7 +188,7 @@ fun PlaylistListItem(
                         DropdownMenuItem(
                             text = { Text("Rename", fontWeight = FontWeight.Medium) },
                             leadingIcon = {
-                                Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Icon(painterResource(Res.drawable.ic_rounded_edit), contentDescription = null, modifier = Modifier.size(18.dp))
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -201,7 +202,7 @@ fun PlaylistListItem(
                         DropdownMenuItem(
                             text = { Text("Delete", fontWeight = FontWeight.Medium, color = colors.error) },
                             leadingIcon = {
-                                Icon(Icons.Rounded.Delete, contentDescription = null, tint = colors.error, modifier = Modifier.size(18.dp))
+                                Icon(painterResource(Res.drawable.ic_rounded_delete), contentDescription = null, tint = colors.error, modifier = Modifier.size(18.dp))
                             },
                             modifier = Modifier
                                 .fillMaxWidth()

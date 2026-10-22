@@ -1,5 +1,10 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_keyboard_arrow_right
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_folder
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -23,10 +28,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.rounded.Folder
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalIconButton
@@ -88,7 +89,7 @@ fun FolderListItem(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Folder,
+                    painter = painterResource(Res.drawable.ic_rounded_folder),
                     contentDescription = null,
                     tint = colors.onPrimaryContainer,
                     modifier = Modifier.size(26.dp)
@@ -130,7 +131,7 @@ fun FolderListItem(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                    painter = painterResource(Res.drawable.ic_automirrored_rounded_keyboard_arrow_right),
                     contentDescription = null,
                     tint = colors.onSurfaceVariant.copy(alpha = if (isHovered && onPlayClick != null && folder.totalSongCount > 0) 0f else 0.5f),
                     modifier = Modifier.size(22.dp)
@@ -152,7 +153,7 @@ fun FolderListItem(
                             )
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.PlayArrow,
+                                painter = painterResource(Res.drawable.ic_rounded_play_arrow),
                                 contentDescription = "Play folder",
                                 modifier = Modifier.size(20.dp)
                             )

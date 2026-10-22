@@ -1,5 +1,16 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_add
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_drag_indicator
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_edit
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_more_vert
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_remove_circle_outline
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -27,17 +38,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.DragIndicator
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.RemoveCircleOutline
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -367,7 +367,7 @@ fun PlaylistDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.MusicNote,
+                            painter = painterResource(Res.drawable.ic_rounded_music_note),
                             contentDescription = null,
                             tint = colors.onSurfaceVariant.copy(alpha = 0.4f),
                             modifier = Modifier.size(56.dp)
@@ -386,7 +386,7 @@ fun PlaylistDetailScreen(
                                 contentColor = colors.onPrimary
                             )
                         ) {
-                            Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(painterResource(Res.drawable.ic_rounded_add), contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text("Add Songs", fontWeight = FontWeight.Bold)
                         }
@@ -452,7 +452,7 @@ fun PlaylistDetailScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.DragIndicator,
+                                            painter = painterResource(Res.drawable.ic_rounded_drag_indicator),
                                             contentDescription = "Reorder song",
                                             tint = if (isSelected || isDragging) colors.onPrimaryContainer.copy(alpha = 0.85f) else colors.onSurfaceVariant.copy(alpha = 0.45f),
                                             modifier = Modifier.size(20.dp)
@@ -598,7 +598,7 @@ private fun PlaylistHeaderActions(
                 contentPadding = PaddingValues(horizontal = if (isCompact) 14.dp else 18.dp, vertical = 8.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.PlayArrow,
+                    painter = painterResource(Res.drawable.ic_rounded_play_arrow),
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
@@ -616,7 +616,7 @@ private fun PlaylistHeaderActions(
                 modifier = Modifier.size(38.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Shuffle,
+                    painter = painterResource(Res.drawable.ic_rounded_shuffle),
                     contentDescription = "Shuffle",
                     modifier = Modifier.size(18.dp)
                 )
@@ -633,7 +633,7 @@ private fun PlaylistHeaderActions(
             contentPadding = PaddingValues(horizontal = if (isCompact) 12.dp else 16.dp, vertical = 8.dp)
         ) {
             Icon(
-                imageVector = Icons.Rounded.Add,
+                painter = painterResource(Res.drawable.ic_rounded_add),
                 contentDescription = null,
                 modifier = Modifier.size(18.dp)
             )
@@ -665,7 +665,7 @@ private fun PlaylistHeaderActions(
                 contentPadding = PaddingValues(horizontal = if (isCompact) 10.dp else 14.dp, vertical = 8.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.RemoveCircleOutline,
+                    painter = painterResource(Res.drawable.ic_rounded_remove_circle_outline),
                     contentDescription = "Toggle Remove Mode",
                     modifier = Modifier.size(18.dp)
                 )
@@ -696,7 +696,7 @@ private fun PlaylistHeaderActions(
                 contentPadding = PaddingValues(horizontal = if (isCompact) 10.dp else 14.dp, vertical = 8.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.DragIndicator,
+                    painter = painterResource(Res.drawable.ic_rounded_drag_indicator),
                     contentDescription = "Toggle Reorder Mode",
                     modifier = Modifier.size(18.dp)
                 )
@@ -716,7 +716,7 @@ private fun PlaylistHeaderActions(
                 modifier = Modifier.size(38.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.MoreVert,
+                    painter = painterResource(Res.drawable.ic_rounded_more_vert),
                     contentDescription = "Options",
                     modifier = Modifier.size(18.dp)
                 )
@@ -738,7 +738,7 @@ private fun PlaylistHeaderActions(
                     DropdownMenuItem(
                         text = { Text("Rename Playlist", fontWeight = FontWeight.Medium) },
                         leadingIcon = {
-                            Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(painterResource(Res.drawable.ic_rounded_edit), contentDescription = null, modifier = Modifier.size(18.dp))
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -752,7 +752,7 @@ private fun PlaylistHeaderActions(
                     DropdownMenuItem(
                         text = { Text("Delete Playlist", fontWeight = FontWeight.Medium, color = colors.error) },
                         leadingIcon = {
-                            Icon(Icons.Rounded.Delete, contentDescription = null, tint = colors.error, modifier = Modifier.size(18.dp))
+                            Icon(painterResource(Res.drawable.ic_rounded_delete), contentDescription = null, tint = colors.error, modifier = Modifier.size(18.dp))
                         },
                         modifier = Modifier
                             .fillMaxWidth()

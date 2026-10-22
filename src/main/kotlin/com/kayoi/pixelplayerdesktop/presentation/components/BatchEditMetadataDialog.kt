@@ -1,5 +1,14 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_album
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_auto_fix_high
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_close
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_cloud
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_cloud_download
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_drive_file_rename_outline
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_format_list_numbered
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.defaultScrollbarStyle
@@ -24,13 +33,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.rememberScrollbarAdapter
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Album
-import androidx.compose.material.icons.rounded.AutoFixHigh
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.CloudDownload
-import androidx.compose.material.icons.rounded.DriveFileRenameOutline
-import androidx.compose.material.icons.rounded.FormatListNumbered
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -196,7 +198,7 @@ fun BatchEditMetadataDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.AutoFixHigh,
+                        painter = painterResource(Res.drawable.ic_rounded_auto_fix_high),
                         contentDescription = null,
                         tint = colors.primary,
                         modifier = Modifier.size(26.dp)
@@ -222,7 +224,7 @@ fun BatchEditMetadataDialog(
                         modifier = Modifier.padding(end = 8.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.CloudDownload,
+                            painter = painterResource(Res.drawable.ic_rounded_cloud_download),
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
@@ -231,7 +233,7 @@ fun BatchEditMetadataDialog(
                     }
                     IconButton(onClick = onDismiss, enabled = !isSaving) {
                         Icon(
-                            imageVector = Icons.Rounded.Close,
+                            painter = painterResource(Res.drawable.ic_rounded_close),
                             contentDescription = "Close",
                             tint = colors.onSurfaceVariant
                         )
@@ -275,7 +277,7 @@ fun BatchEditMetadataDialog(
                                         verticalArrangement = Arrangement.Center
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.Close,
+                                            painter = painterResource(Res.drawable.ic_rounded_close),
                                             contentDescription = null,
                                             tint = colors.error,
                                             modifier = Modifier.size(36.dp)
@@ -297,12 +299,12 @@ fun BatchEditMetadataDialog(
                                             artworkUri = commonArt,
                                             modifier = Modifier.fillMaxSize(),
                                             contentDescription = "Existing artwork",
-                                            placeholderIcon = Icons.Rounded.Album,
+                                            placeholderIcon = Res.drawable.ic_rounded_album,
                                             placeholderIconSize = 64.dp
                                         )
                                     } else {
                                         Icon(
-                                            imageVector = Icons.Rounded.Album,
+                                            painter = painterResource(Res.drawable.ic_rounded_album),
                                             contentDescription = null,
                                             tint = colors.onSurfaceVariant.copy(alpha = 0.5f),
                                             modifier = Modifier.size(64.dp)
@@ -628,7 +630,7 @@ fun BatchEditMetadataDialog(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.FormatListNumbered,
+                                            painter = painterResource(Res.drawable.ic_rounded_format_list_numbered),
                                             contentDescription = null,
                                             tint = if (autoRenumberTracks) colors.primary else colors.onSurfaceVariant,
                                             modifier = Modifier.size(24.dp)
@@ -786,7 +788,7 @@ fun BatchEditMetadataDialog(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.DriveFileRenameOutline,
+                                            painter = painterResource(Res.drawable.ic_rounded_drive_file_rename_outline),
                                             contentDescription = null,
                                             tint = if (enableFileRename) colors.primary else colors.onSurfaceVariant,
                                             modifier = Modifier.size(24.dp)

@@ -1,5 +1,15 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_jellyfin
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_navidrome
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_logout
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_graphic_eq
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_refresh
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_sync
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_warning
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -20,12 +30,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Logout
-import androidx.compose.material.icons.rounded.GraphicEq
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Sync
-import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -64,7 +68,6 @@ import com.kayoi.pixelplayerdesktop.domain.repository.NavidromeRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
 import com.kayoi.pixelplayerdesktop.presentation.components.TrackDialogInput
 import com.kayoi.pixelplayerdesktop.presentation.components.trackInputFocus
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlaybackStateHolder
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -106,7 +109,7 @@ fun AccountsSectionContent(
             } else {
                 "Connect to your self-hosted music server"
             },
-            icon = PixelPlayerIcons.Navidrome,
+            icon = Res.drawable.ic_navidrome,
             isConnected = isNavidromeLoggedIn,
             syncProgress = navidromeSyncProgress,
             onConnectClick = { showNavidromeDialog = true },
@@ -121,7 +124,7 @@ fun AccountsSectionContent(
             } else {
                 "Connect to your Jellyfin media server"
             },
-            icon = PixelPlayerIcons.Jellyfin,
+            icon = Res.drawable.ic_jellyfin,
             isConnected = isJellyfinLoggedIn,
             syncProgress = jellyfinSyncProgress,
             onConnectClick = { showJellyfinDialog = true },
@@ -206,7 +209,7 @@ fun AccountsSectionContent(
             onDismissRequest = { disconnectConfirmTarget = null },
             icon = {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.Logout,
+                    painter = painterResource(Res.drawable.ic_automirrored_rounded_logout),
                     contentDescription = null,
                     tint = colors.error
                 )
@@ -269,7 +272,7 @@ fun AccountsSectionContent(
 private fun ServerAccountCard(
     title: String,
     subtitle: String,
-    icon: ImageVector,
+    icon: DrawableResource,
     isConnected: Boolean,
     syncProgress: Pair<Float, String>?,
     onConnectClick: () -> Unit,
@@ -302,7 +305,7 @@ private fun ServerAccountCard(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = icon,
+                                    painter = painterResource(icon),
                                     contentDescription = null,
                                     tint = colors.secondary,
                                     modifier = Modifier.size(24.dp)
@@ -353,7 +356,7 @@ private fun ServerAccountCard(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = icon,
+                                    painter = painterResource(icon),
                                     contentDescription = null,
                                     tint = colors.secondary,
                                     modifier = Modifier.size(24.dp)
@@ -446,7 +449,7 @@ private fun ServerActionButtons(
                     if (syncProgress != null) {
                         CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                     } else {
-                        Icon(imageVector = Icons.Rounded.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(painter = painterResource(Res.drawable.ic_rounded_sync), contentDescription = null, modifier = Modifier.size(16.dp))
                     }
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(if (syncProgress != null) "Syncing…" else "Sync Library")
@@ -456,7 +459,7 @@ private fun ServerActionButtons(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(imageVector = Icons.AutoMirrored.Rounded.Logout, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(painter = painterResource(Res.drawable.ic_automirrored_rounded_logout), contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text("Disconnect")
                 }
@@ -466,7 +469,7 @@ private fun ServerActionButtons(
                 onClick = onDisconnectClick,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(imageVector = Icons.AutoMirrored.Rounded.Logout, contentDescription = null, modifier = Modifier.size(16.dp))
+                Icon(painter = painterResource(Res.drawable.ic_automirrored_rounded_logout), contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("Disconnect")
             }
@@ -479,7 +482,7 @@ private fun ServerActionButtons(
                 if (syncProgress != null) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                 } else {
-                    Icon(imageVector = Icons.Rounded.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(painter = painterResource(Res.drawable.ic_rounded_sync), contentDescription = null, modifier = Modifier.size(16.dp))
                 }
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(if (syncProgress != null) "Syncing…" else "Sync Library")
@@ -538,7 +541,7 @@ private fun ListenBrainzCard(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.GraphicEq,
+                                    painter = painterResource(Res.drawable.ic_rounded_graphic_eq),
                                     contentDescription = null,
                                     tint = colors.secondary,
                                     modifier = Modifier.size(24.dp)
@@ -594,7 +597,7 @@ private fun ListenBrainzCard(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.GraphicEq,
+                                    painter = painterResource(Res.drawable.ic_rounded_graphic_eq),
                                     contentDescription = null,
                                     tint = colors.secondary,
                                     modifier = Modifier.size(24.dp)
@@ -659,7 +662,7 @@ private fun ListenBrainzCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Warning,
+                            painter = painterResource(Res.drawable.ic_rounded_warning),
                             contentDescription = null,
                             tint = colors.onErrorContainer,
                             modifier = Modifier.size(20.dp)
@@ -740,7 +743,7 @@ private fun ListenBrainzActionButtons(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(painter = painterResource(Res.drawable.ic_rounded_refresh), contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(if (pendingCount > 0) "Flush Queue ($pendingCount)" else "Flush Queue")
                 }
@@ -749,7 +752,7 @@ private fun ListenBrainzActionButtons(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(imageVector = Icons.AutoMirrored.Rounded.Logout, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(painter = painterResource(Res.drawable.ic_automirrored_rounded_logout), contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text("Disconnect")
                 }
@@ -759,7 +762,7 @@ private fun ListenBrainzActionButtons(
                 onClick = onDisconnectClick,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(imageVector = Icons.AutoMirrored.Rounded.Logout, contentDescription = null, modifier = Modifier.size(16.dp))
+                Icon(painter = painterResource(Res.drawable.ic_automirrored_rounded_logout), contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("Disconnect")
             }
@@ -768,7 +771,7 @@ private fun ListenBrainzActionButtons(
                 onClick = onFlushClick,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(imageVector = Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                Icon(painter = painterResource(Res.drawable.ic_rounded_refresh), contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(if (pendingCount > 0) "Flush Queue ($pendingCount)" else "Flush Queue")
             }

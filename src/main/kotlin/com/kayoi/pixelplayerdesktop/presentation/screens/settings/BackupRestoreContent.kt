@@ -1,5 +1,29 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_artist
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_lyrics
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_queue_music
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_auto_graph
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_check_circle
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_error_outline
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_file_download
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_file_upload
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_lock
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_bookmark
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_check
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_chevron_right
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_close
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_favorite
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_folder
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_graphic_eq
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_history
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_info
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_search
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_settings
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -8,28 +32,17 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
-import androidx.compose.material.icons.outlined.AutoGraph
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.ErrorOutline
-import androidx.compose.material.icons.outlined.FileDownload
-import androidx.compose.material.icons.outlined.FileUpload
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.backup.BackupManager
 import com.kayoi.pixelplayerdesktop.data.backup.model.BackupOperationType
@@ -88,10 +101,10 @@ fun BackupRestoreContent(
                 title = "Backup Sections",
                 subtitle = summaryText,
                 leadingIcon = {
-                    Icon(Icons.Outlined.FileUpload, null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                    Icon(painterResource(Res.drawable.ic_outlined_file_upload), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
                 },
                 trailingIcon = {
-                    Icon(Icons.Rounded.ChevronRight, null, tint = colors.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(22.dp))
+                    Icon(painterResource(Res.drawable.ic_rounded_chevron_right), null, tint = colors.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(22.dp))
                 },
                 shape = getGroupShape(0, 3),
                 onClick = { showExportSectionDialog = true }
@@ -118,7 +131,7 @@ fun BackupRestoreContent(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.Lock,
+                                painter = painterResource(Res.drawable.ic_outlined_lock),
                                 contentDescription = null,
                                 tint = colors.secondary,
                                 modifier = Modifier.size(22.dp)
@@ -200,8 +213,7 @@ fun BackupRestoreContent(
                                 disabledContentColor = colors.onSurfaceVariant.copy(alpha = 0.38f)
                             )
                         ) {
-                            Icon(
-                                Icons.Outlined.FileUpload,
+                            Icon(painterResource(Res.drawable.ic_outlined_file_upload),
                                 null,
                                 modifier = Modifier.size(18.dp),
                                 tint = if (canExport) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
@@ -259,8 +271,7 @@ fun BackupRestoreContent(
                                     modifier = Modifier.size(24.dp).padding(top = 2.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(
-                                        Icons.Outlined.FileDownload,
+                                    Icon(painterResource(Res.drawable.ic_outlined_file_download),
                                         contentDescription = null,
                                         tint = colors.secondary,
                                         modifier = Modifier.size(22.dp)
@@ -299,8 +310,7 @@ fun BackupRestoreContent(
                                     disabledContentColor = colors.onSurfaceVariant.copy(alpha = 0.38f)
                                 )
                             ) {
-                                Icon(
-                                    Icons.Outlined.FileDownload,
+                                Icon(painterResource(Res.drawable.ic_outlined_file_download),
                                     null,
                                     modifier = Modifier.size(18.dp),
                                     tint = if (!isProcessing) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
@@ -320,8 +330,7 @@ fun BackupRestoreContent(
                                 modifier = Modifier.size(24.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    Icons.Outlined.FileDownload,
+                                Icon(painterResource(Res.drawable.ic_outlined_file_download),
                                     contentDescription = null,
                                     tint = colors.secondary,
                                     modifier = Modifier.size(22.dp)
@@ -358,8 +367,7 @@ fun BackupRestoreContent(
                                     disabledContentColor = colors.onSurfaceVariant.copy(alpha = 0.38f)
                                 )
                             ) {
-                                Icon(
-                                    Icons.Outlined.FileDownload,
+                                Icon(painterResource(Res.drawable.ic_outlined_file_download),
                                     null,
                                     modifier = Modifier.size(18.dp),
                                     tint = if (!isProcessing) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
@@ -470,7 +478,7 @@ fun BackupRestoreContent(
             onDismissRequest = { statusMessage = null },
             icon = {
                 Icon(
-                    imageVector = if (isSuccess) Icons.Outlined.CheckCircle else Icons.Outlined.ErrorOutline,
+                    painter = painterResource(if (isSuccess) Res.drawable.ic_outlined_check_circle else Res.drawable.ic_outlined_error_outline),
                     contentDescription = null,
                     tint = if (isSuccess) colors.primary else colors.error,
                     modifier = Modifier.size(32.dp)
@@ -501,7 +509,7 @@ private fun BackupInfoNoticeCard() {
             verticalAlignment = Alignment.Top
         ) {
             Icon(
-                imageVector = Icons.Rounded.Info,
+                painter = painterResource(Res.drawable.ic_rounded_info),
                 contentDescription = null,
                 tint = colors.secondary,
                 modifier = Modifier.size(24.dp).padding(top = 2.dp)
@@ -557,7 +565,7 @@ private fun BackupSectionCard(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = getSectionIcon(section),
+                        painter = painterResource(getSectionIcon(section)),
                         contentDescription = null,
                         tint = iconTint,
                         modifier = Modifier.size(22.dp)
@@ -594,7 +602,7 @@ private fun BackupSectionCard(
                 onCheckedChange = { onToggle() },
                 thumbContent = {
                     Icon(
-                        imageVector = if (selected) Icons.Rounded.Check else Icons.Rounded.Close,
+                        painter = painterResource(if (selected) Res.drawable.ic_rounded_check else Res.drawable.ic_rounded_close),
                         contentDescription = null,
                         modifier = Modifier.size(SwitchDefaults.IconSize)
                     )
@@ -612,19 +620,19 @@ private fun BackupSectionCard(
     }
 }
 
-private fun getSectionIcon(section: BackupSection): ImageVector = when (section) {
-    BackupSection.PLAYLISTS -> Icons.AutoMirrored.Rounded.QueueMusic
-    BackupSection.GLOBAL_SETTINGS -> Icons.Rounded.Settings
-    BackupSection.FAVORITES -> Icons.Rounded.Favorite
-    BackupSection.LYRICS -> PixelPlayerIcons.Lyrics
-    BackupSection.EQUALIZER -> Icons.Rounded.GraphicEq
-    BackupSection.PLAYBACK_HISTORY -> Icons.Rounded.History
-    BackupSection.ARTIST_IMAGES -> PixelPlayerIcons.Artist
-    BackupSection.SEARCH_HISTORY -> Icons.Rounded.Search
-    BackupSection.ENGAGEMENT_STATS -> Icons.Outlined.AutoGraph
-    BackupSection.TRANSITIONS -> Icons.Rounded.Shuffle
-    BackupSection.QUICK_FILL -> Icons.Rounded.Folder
-    BackupSection.AUDIO_BOOKMARKS -> Icons.Rounded.Bookmark
+private fun getSectionIcon(section: BackupSection): DrawableResource = when (section) {
+    BackupSection.PLAYLISTS -> Res.drawable.ic_automirrored_rounded_queue_music
+    BackupSection.GLOBAL_SETTINGS -> Res.drawable.ic_rounded_settings
+    BackupSection.FAVORITES -> Res.drawable.ic_rounded_favorite
+    BackupSection.LYRICS -> Res.drawable.ic_lyrics
+    BackupSection.EQUALIZER -> Res.drawable.ic_rounded_graphic_eq
+    BackupSection.PLAYBACK_HISTORY -> Res.drawable.ic_rounded_history
+    BackupSection.ARTIST_IMAGES -> Res.drawable.ic_artist
+    BackupSection.SEARCH_HISTORY -> Res.drawable.ic_rounded_search
+    BackupSection.ENGAGEMENT_STATS -> Res.drawable.ic_outlined_auto_graph
+    BackupSection.TRANSITIONS -> Res.drawable.ic_rounded_shuffle
+    BackupSection.QUICK_FILL -> Res.drawable.ic_rounded_folder
+    BackupSection.AUDIO_BOOKMARKS -> Res.drawable.ic_rounded_bookmark
 }
 
 @Composable

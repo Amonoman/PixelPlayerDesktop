@@ -1,5 +1,7 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -28,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -45,7 +46,7 @@ fun ToggleSegmentButton(
     activeCornerRadius: Dp = 20.dp,
     inactiveCornerRadius: Dp = 10.dp,
     text: String,
-    imageVector: ImageVector? = null,
+    icon: DrawableResource? = null,
     onClick: () -> Unit
 ) {
     val targetBgColor = if (active) activeColor else inactiveColor
@@ -72,9 +73,9 @@ fun ToggleSegmentButton(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            if (imageVector != null) {
+            if (icon != null) {
                 Icon(
-                    imageVector = imageVector,
+                    painter = painterResource(icon),
                     contentDescription = null,
                     tint = if (active) activeContentColor else inactiveContentColor,
                     modifier = Modifier.size(18.dp)

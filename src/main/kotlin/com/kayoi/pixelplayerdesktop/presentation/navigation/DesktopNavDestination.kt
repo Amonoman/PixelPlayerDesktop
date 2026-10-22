@@ -1,16 +1,15 @@
 package com.kayoi.pixelplayerdesktop.presentation.navigation
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
-import androidx.compose.material.icons.rounded.Album
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.Folder
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.ui.graphics.vector.ImageVector
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
-
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_artist
+import org.jetbrains.compose.resources.DrawableResource
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_playlist_play
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_album
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_favorite
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_folder
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_home
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_settings
 enum class NavSection(val label: String) {
     MENU("Menu"),
     LIBRARY("Library"),
@@ -19,17 +18,17 @@ enum class NavSection(val label: String) {
 
 enum class DesktopNavDestination(
     val title: String,
-    val icon: ImageVector,
+    val icon: DrawableResource,
     val section: NavSection
 ) {
-    HOME("Home", Icons.Rounded.Home, NavSection.MENU),
+    HOME("Home", Res.drawable.ic_rounded_home, NavSection.MENU),
 
-    SONGS("Songs", Icons.Rounded.MusicNote, NavSection.LIBRARY),
-    ALBUMS("Albums", Icons.Rounded.Album, NavSection.LIBRARY),
-    ARTISTS("Artists", PixelPlayerIcons.Artist, NavSection.LIBRARY),
-    PLAYLISTS("Playlists", Icons.AutoMirrored.Rounded.PlaylistPlay, NavSection.LIBRARY),
-    FOLDERS("Folders", Icons.Rounded.Folder, NavSection.LIBRARY),
-    LIKED("Liked", Icons.Rounded.Favorite, NavSection.LIBRARY),
+    SONGS("Songs", Res.drawable.ic_rounded_music_note, NavSection.LIBRARY),
+    ALBUMS("Albums", Res.drawable.ic_rounded_album, NavSection.LIBRARY),
+    ARTISTS("Artists", Res.drawable.ic_artist, NavSection.LIBRARY),
+    PLAYLISTS("Playlists", Res.drawable.ic_automirrored_rounded_playlist_play, NavSection.LIBRARY),
+    FOLDERS("Folders", Res.drawable.ic_rounded_folder, NavSection.LIBRARY),
+    LIKED("Liked", Res.drawable.ic_rounded_favorite, NavSection.LIBRARY),
 
-    SETTINGS("Settings", Icons.Rounded.Settings, NavSection.SYSTEM)
+    SETTINGS("Settings", Res.drawable.ic_rounded_settings, NavSection.SYSTEM)
 }

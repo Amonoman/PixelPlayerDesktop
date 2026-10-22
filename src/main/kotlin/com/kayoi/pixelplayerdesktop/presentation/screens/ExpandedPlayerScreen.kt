@@ -1,5 +1,13 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_lyrics
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_graphic_eq
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_keyboard
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_keyboard_arrow_down
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_more_vert
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_search
+import org.jetbrains.compose.resources.painterResource
 import java.io.File
 
 import androidx.compose.animation.AnimatedVisibility
@@ -32,11 +40,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.GraphicEq
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
-import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.FilledIconButton
@@ -84,7 +87,6 @@ import com.kayoi.pixelplayerdesktop.presentation.components.TrackDialogInput
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LyricsOptionsMenu
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LyricsSyncControls
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.presentation.screens.player.DesktopLandscapeHeroPlayer
 import com.kayoi.pixelplayerdesktop.presentation.screens.player.LyricsView
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.EqualizerDialog
@@ -243,7 +245,7 @@ fun ExpandedPlayerScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.KeyboardArrowDown,
+                                painter = painterResource(Res.drawable.ic_rounded_keyboard_arrow_down),
                                 contentDescription = "Collapse Player (Esc)",
                                 tint = colors.onSurface,
                                 modifier = Modifier.size(26.dp)
@@ -377,7 +379,7 @@ fun ExpandedPlayerScreen(
                                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                                         ) {
                                             Icon(
-                                                imageVector = PixelPlayerIcons.Lyrics,
+                                                painter = painterResource(Res.drawable.ic_lyrics),
                                                 contentDescription = null,
                                                 tint = colors.primary,
                                                 modifier = Modifier.size(22.dp)
@@ -432,7 +434,7 @@ fun ExpandedPlayerScreen(
                                                     modifier = Modifier.size(buttonSize)
                                                 ) {
                                                     Icon(
-                                                        imageVector = Icons.Rounded.GraphicEq,
+                                                        painter = painterResource(Res.drawable.ic_rounded_graphic_eq),
                                                         contentDescription = "Equalizer",
                                                         modifier = Modifier.size(20.dp)
                                                     )
@@ -457,7 +459,7 @@ fun ExpandedPlayerScreen(
                                                     modifier = Modifier.size(buttonSize)
                                                 ) {
                                                     Icon(
-                                                        imageVector = Icons.Rounded.Search,
+                                                        painter = painterResource(Res.drawable.ic_rounded_search),
                                                         contentDescription = "Search Lyrics",
                                                         modifier = Modifier.size(20.dp)
                                                     )
@@ -483,7 +485,7 @@ fun ExpandedPlayerScreen(
                                                         modifier = Modifier.size(buttonSize)
                                                     ) {
                                                         Icon(
-                                                            imageVector = Icons.Rounded.MoreVert,
+                                                            painter = painterResource(Res.drawable.ic_rounded_more_vert),
                                                             contentDescription = "Lyrics Options",
                                                             modifier = Modifier.size(20.dp)
                                                         )

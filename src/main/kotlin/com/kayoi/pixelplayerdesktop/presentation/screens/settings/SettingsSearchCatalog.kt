@@ -1,27 +1,28 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
-import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Sync
-import androidx.compose.material.icons.rounded.AccountCircle
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.Brush
-import androidx.compose.material.icons.rounded.DarkMode
-import androidx.compose.material.icons.rounded.DeleteForever
-import androidx.compose.material.icons.rounded.GraphicEq
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.Layers
-import androidx.compose.material.icons.rounded.LightMode
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.SettingsBackupRestore
-import androidx.compose.material.icons.rounded.Tab
-import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material.icons.rounded.ViewWeek
-import androidx.compose.ui.graphics.vector.ImageVector
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_lyrics
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_queue_music
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_folder
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_person
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_sync
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_account_circle
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_auto_awesome
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_brush
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_dark_mode
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete_forever
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_graphic_eq
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_info
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_layers
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_palette
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_settings
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_settings_backup_restore
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_tab
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_tune
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_view_week
+import org.jetbrains.compose.resources.DrawableResource
 import com.kayoi.pixelplayerdesktop.presentation.screens.LibrarySubDetail
 
 data class SettingSearchItem(
@@ -30,7 +31,7 @@ data class SettingSearchItem(
     val section: SettingsSection,
     val subDetail: LibrarySubDetail = LibrarySubDetail.NONE,
     val keywords: List<String> = emptyList(),
-    val icon: ImageVector? = null
+    val icon: DrawableResource? = null
 )
 
 object SettingsSearchCatalog {
@@ -42,7 +43,7 @@ object SettingsSearchCatalog {
             section = SettingsSection.LIBRARY,
             subDetail = LibrarySubDetail.FOLDERS,
             keywords = listOf("directory", "folder", "scan", "paths", "exclude", "storage"),
-            icon = Icons.Outlined.Folder
+            icon = Res.drawable.ic_outlined_folder
         ),
         SettingSearchItem(
             title = "Artist Delimiters & Formatting",
@@ -50,7 +51,7 @@ object SettingsSearchCatalog {
             section = SettingsSection.LIBRARY,
             subDetail = LibrarySubDetail.ARTISTS,
             keywords = listOf("artist", "delimiters", "feat", "featuring", "split", "separator"),
-            icon = Icons.Outlined.Person
+            icon = Res.drawable.ic_outlined_person
         ),
         SettingSearchItem(
             title = "Duplicate Tracks",
@@ -58,70 +59,70 @@ object SettingsSearchCatalog {
             section = SettingsSection.LIBRARY,
             subDetail = LibrarySubDetail.DUPLICATES,
             keywords = listOf("duplicate", "clean", "clones", "same songs"),
-            icon = Icons.Rounded.DeleteForever
+            icon = Res.drawable.ic_rounded_delete_forever
         ),
         SettingSearchItem(
             title = "Minimum Song Duration",
             description = "Filter out audio files shorter than specified length (e.g. ringtones)",
             section = SettingsSection.LIBRARY,
             keywords = listOf("duration", "short", "filter", "seconds", "ringtone"),
-            icon = Icons.Rounded.Tune
+            icon = Res.drawable.ic_rounded_tune
         ),
         SettingSearchItem(
             title = "Minimum Tracks per Album",
             description = "Hide incomplete albums or singles with fewer tracks than threshold",
             section = SettingsSection.LIBRARY,
             keywords = listOf("album", "tracks", "filter", "threshold", "singles"),
-            icon = Icons.Rounded.Tune
+            icon = Res.drawable.ic_rounded_tune
         ),
         SettingSearchItem(
             title = "Rescan Music Library",
             description = "Scan folders to detect newly added, moved, or deleted audio files",
             section = SettingsSection.LIBRARY,
             keywords = listOf("rescan", "refresh", "scan", "sync", "reload", "library"),
-            icon = Icons.Outlined.Sync
+            icon = Res.drawable.ic_outlined_sync
         ),
         SettingSearchItem(
             title = "Clear Album Art Cache",
             description = "Delete cached image thumbnails from disk to free up storage",
             section = SettingsSection.LIBRARY,
             keywords = listOf("cache", "clear", "artwork", "thumbnails", "storage", "disk"),
-            icon = PixelPlayerIcons.Lyrics
+            icon = Res.drawable.ic_lyrics
         ),
         SettingSearchItem(
             title = "Deezer Artist Images",
             description = "Fetch high-resolution online artist profile pictures from Deezer",
             section = SettingsSection.LIBRARY,
             keywords = listOf("deezer", "artist", "pictures", "photos", "avatar", "online"),
-            icon = Icons.Outlined.Person
+            icon = Res.drawable.ic_outlined_person
         ),
         SettingSearchItem(
             title = "Online Lyrics Fetching",
             description = "Download synchronized and plain lyrics automatically from internet",
             section = SettingsSection.LIBRARY,
             keywords = listOf("lyrics", "online", "download", "lrc", "synced", "internet"),
-            icon = PixelPlayerIcons.Lyrics
+            icon = Res.drawable.ic_lyrics
         ),
         SettingSearchItem(
             title = "Lyrics Source Preference",
             description = "Choose priority between embedded audio tags or online lyrics providers",
             section = SettingsSection.LIBRARY,
             keywords = listOf("lyrics", "priority", "embedded", "source", "provider"),
-            icon = PixelPlayerIcons.Lyrics
+            icon = Res.drawable.ic_lyrics
         ),
         SettingSearchItem(
             title = "Auto-scan .lrc Files",
             description = "Automatically associate external .lrc sidecar files beside audio tracks",
             section = SettingsSection.LIBRARY,
             keywords = listOf("lrc", "sidecar", "lyrics", "external", "files"),
-            icon = PixelPlayerIcons.Lyrics
+            icon = Res.drawable.ic_lyrics
         ),
         SettingSearchItem(
             title = "Lyrics Romanization",
             description = "Show romaji, pinyin, or transliteration for Japanese/CJK text",
             section = SettingsSection.LIBRARY,
             keywords = listOf("romanization", "romaji", "hiragana", "katakana", "kanji", "pinyin", "japanese"),
-            icon = Icons.Rounded.AutoAwesome
+            icon = Res.drawable.ic_rounded_auto_awesome
         ),
 
         // --- APPEARANCE ---
@@ -130,14 +131,14 @@ object SettingsSearchCatalog {
             description = "Toggle dark theme or light theme appearance",
             section = SettingsSection.APPEARANCE,
             keywords = listOf("dark", "light", "theme", "mode", "color", "night"),
-            icon = Icons.Rounded.DarkMode
+            icon = Res.drawable.ic_rounded_dark_mode
         ),
         SettingSearchItem(
             title = "Dynamic Color",
             description = "Extract UI accents and theme colors from the currently playing album art",
             section = SettingsSection.APPEARANCE,
             keywords = listOf("dynamic", "color", "accent", "album art", "monet", "material"),
-            icon = Icons.Rounded.Brush
+            icon = Res.drawable.ic_rounded_brush
         ),
         SettingSearchItem(
             title = "Palette Style & Color Accuracy",
@@ -145,35 +146,35 @@ object SettingsSearchCatalog {
             section = SettingsSection.APPEARANCE,
             subDetail = LibrarySubDetail.PALETTE_STYLE,
             keywords = listOf("palette", "tonal", "vibrant", "expressive", "accuracy", "sampling"),
-            icon = Icons.Rounded.Palette
+            icon = Res.drawable.ic_rounded_palette
         ),
         SettingSearchItem(
             title = "Player File Info",
             description = "Display bitrate, format, sampling rate, and codec on the full-screen player",
             section = SettingsSection.APPEARANCE,
             keywords = listOf("codec", "bitrate", "flac", "mp3", "sample rate", "audio info", "details"),
-            icon = Icons.Rounded.Info
+            icon = Res.drawable.ic_rounded_info
         ),
         SettingSearchItem(
             title = "Lyrics Text Alignment",
             description = "Align lyrics text to left, center, or right on the player screen",
             section = SettingsSection.APPEARANCE,
             keywords = listOf("alignment", "center", "left", "right", "lyrics text"),
-            icon = PixelPlayerIcons.Lyrics
+            icon = Res.drawable.ic_lyrics
         ),
         SettingSearchItem(
             title = "Compact Sidebar",
             description = "Collapse main navigation sidebar into icon-only compact rail",
             section = SettingsSection.APPEARANCE,
             keywords = listOf("sidebar", "compact", "navigation", "rail", "narrow", "bar"),
-            icon = Icons.Rounded.ViewWeek
+            icon = Res.drawable.ic_rounded_view_week
         ),
         SettingSearchItem(
             title = "Default Startup Tab",
             description = "Select default landing page when application starts (Home, Songs, Albums...)",
             section = SettingsSection.APPEARANCE,
             keywords = listOf("default", "startup", "landing", "tab", "initial", "home"),
-            icon = Icons.Rounded.Tab
+            icon = Res.drawable.ic_rounded_tab
         ),
 
         // --- PLAYBACK ---
@@ -182,42 +183,42 @@ object SettingsSearchCatalog {
             description = "Normalize track loudness across different recordings to eliminate volume jumps",
             section = SettingsSection.PLAYBACK,
             keywords = listOf("replaygain", "volume", "normalize", "loudness", "gain", "peak"),
-            icon = Icons.Rounded.Tune
+            icon = Res.drawable.ic_rounded_tune
         ),
         SettingSearchItem(
             title = "ReplayGain Mode",
             description = "Choose between Track Gain (individual track loudness) or Album Gain (album coherence)",
             section = SettingsSection.PLAYBACK,
             keywords = listOf("replaygain", "mode", "track", "album gain"),
-            icon = Icons.Rounded.Tune
+            icon = Res.drawable.ic_rounded_tune
         ),
         SettingSearchItem(
             title = "Track Crossfade",
             description = "Smoothly blend outgoing and incoming songs with an audio crossfade transition",
             section = SettingsSection.PLAYBACK,
             keywords = listOf("crossfade", "fade", "transition", "blend", "gapless", "overlap"),
-            icon = Icons.Rounded.MusicNote
+            icon = Res.drawable.ic_rounded_music_note
         ),
         SettingSearchItem(
             title = "Crossfade Duration",
             description = "Set the crossfade overlap transition time in seconds",
             section = SettingsSection.PLAYBACK,
             keywords = listOf("crossfade", "duration", "seconds", "length", "fade time"),
-            icon = Icons.Rounded.Tune
+            icon = Res.drawable.ic_rounded_tune
         ),
         SettingSearchItem(
             title = "Show Queue History",
             description = "Display previously played tracks at the top of the queue side panel",
             section = SettingsSection.PLAYBACK,
             keywords = listOf("history", "queue", "previous", "played", "tracks"),
-            icon = Icons.AutoMirrored.Rounded.QueueMusic
+            icon = Res.drawable.ic_automirrored_rounded_queue_music
         ),
         SettingSearchItem(
             title = "Close to System Tray",
             description = "Keep music playing in background system tray when window is closed",
             section = SettingsSection.PLAYBACK,
             keywords = listOf("tray", "background", "close", "minimize", "system tray", "exit"),
-            icon = Icons.Rounded.Layers
+            icon = Res.drawable.ic_rounded_layers
         ),
 
         // --- EQUALIZER ---
@@ -226,21 +227,21 @@ object SettingsSearchCatalog {
             description = "10-band audio frequency equalizer with customizable slider levels",
             section = SettingsSection.EQUALIZER,
             keywords = listOf("equalizer", "eq", "frequency", "bands", "audio", "sound", "bass", "treble"),
-            icon = Icons.Rounded.GraphicEq
+            icon = Res.drawable.ic_rounded_graphic_eq
         ),
         SettingSearchItem(
             title = "Equalizer Presets",
             description = "Switch between audio presets (Flat, Bass Boost, Vocal, Rock, Electronic...)",
             section = SettingsSection.EQUALIZER,
             keywords = listOf("presets", "bass boost", "vocal", "rock", "profiles", "sound profiles"),
-            icon = Icons.Rounded.GraphicEq
+            icon = Res.drawable.ic_rounded_graphic_eq
         ),
         SettingSearchItem(
             title = "Equalizer Preamp",
             description = "Adjust global preamp compensation gain in decibels",
             section = SettingsSection.EQUALIZER,
             keywords = listOf("preamp", "gain", "decibels", "db", "boost", "loudness"),
-            icon = Icons.Rounded.Tune
+            icon = Res.drawable.ic_rounded_tune
         ),
 
         // --- ACCOUNTS & STREAMING ---
@@ -249,21 +250,21 @@ object SettingsSearchCatalog {
             description = "Scrobble listened tracks and history to ListenBrainz profile",
             section = SettingsSection.ACCOUNTS,
             keywords = listOf("listenbrainz", "scrobble", "lastfm", "token", "history", "stats"),
-            icon = Icons.Rounded.AccountCircle
+            icon = Res.drawable.ic_rounded_account_circle
         ),
         SettingSearchItem(
             title = "Navidrome Subsonic Server",
             description = "Connect to self-hosted Navidrome or Subsonic server to stream remote library",
             section = SettingsSection.ACCOUNTS,
             keywords = listOf("navidrome", "subsonic", "stream", "server", "remote", "cloud"),
-            icon = Icons.Rounded.AccountCircle
+            icon = Res.drawable.ic_rounded_account_circle
         ),
         SettingSearchItem(
             title = "Jellyfin Media Server",
             description = "Connect to self-hosted Jellyfin server to stream remote music collection",
             section = SettingsSection.ACCOUNTS,
             keywords = listOf("jellyfin", "emby", "stream", "server", "remote", "cloud"),
-            icon = Icons.Rounded.AccountCircle
+            icon = Res.drawable.ic_rounded_account_circle
         ),
 
         // --- ABOUT ---
@@ -272,7 +273,7 @@ object SettingsSearchCatalog {
             description = "Application version, developer links, build details, and open-source licenses",
             section = SettingsSection.ABOUT,
             keywords = listOf("about", "version", "update", "github", "license", "credits"),
-            icon = Icons.Rounded.Info
+            icon = Res.drawable.ic_rounded_info
         ),
 
         // --- BACKUP & RESTORE ---
@@ -281,7 +282,7 @@ object SettingsSearchCatalog {
             description = "Export and restore playlists, favorites, lyrics, and settings with .pxpl files",
             section = SettingsSection.BACKUP,
             keywords = listOf("backup", "restore", "export", "import", "pxpl", "data", "playlists", "favorites", "migration"),
-            icon = Icons.Rounded.SettingsBackupRestore
+            icon = Res.drawable.ic_rounded_settings_backup_restore
         )
     )
 

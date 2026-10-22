@@ -1,5 +1,8 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_chevron_right
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,8 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -88,7 +89,7 @@ fun SettingsOverviewMenu(
                                     .background(customColors.first)
                             ) {
                                 Icon(
-                                    imageVector = section.icon,
+                                    painter = painterResource(section.icon),
                                     contentDescription = null,
                                     tint = customColors.second,
                                     modifier = Modifier.size(24.dp)
@@ -118,7 +119,7 @@ fun SettingsOverviewMenu(
                             Spacer(modifier = Modifier.width(8.dp))
 
                             Icon(
-                                imageVector = Icons.Rounded.ChevronRight,
+                                painter = painterResource(Res.drawable.ic_rounded_chevron_right),
                                 contentDescription = null,
                                 tint = colors.onSurfaceVariant.copy(alpha = 0.5f),
                                 modifier = Modifier.size(24.dp)

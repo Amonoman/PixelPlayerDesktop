@@ -1,5 +1,17 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_show_chart
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_view_quilt
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_add
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_close
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_edit
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_graphic_eq
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_push_pin
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_restart_alt
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_tune
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.expandVertically
@@ -31,19 +43,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ShowChart
-import androidx.compose.material.icons.automirrored.rounded.ViewQuilt
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Bookmark
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.GraphicEq
-import androidx.compose.material.icons.rounded.PushPin
-import androidx.compose.material.icons.rounded.RestartAlt
-import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material.icons.rounded.ViewQuilt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -165,7 +164,7 @@ fun EqualizerContent(
             checked = equalizerEnabled,
             onCheckedChange = { viewModel.setEqualizerEnabled(it) },
             leadingIcon = {
-                Icon(Icons.Rounded.GraphicEq, null, tint = colors.secondary, modifier = Modifier.size(24.dp))
+                Icon(painterResource(Res.drawable.ic_rounded_graphic_eq), null, tint = colors.secondary, modifier = Modifier.size(24.dp))
             },
             shape = RoundedCornerShape(20.dp)
         )
@@ -215,7 +214,7 @@ fun EqualizerContent(
                                         containerColor = colors.surfaceContainerHighest
                                     )
                                 ) {
-                                    Icon(Icons.Rounded.Add, contentDescription = "Save Preset", modifier = Modifier.size(18.dp))
+                                    Icon(painterResource(Res.drawable.ic_rounded_add), contentDescription = "Save Preset", modifier = Modifier.size(18.dp))
                                 }
 
                                 FilledTonalIconButton(
@@ -225,7 +224,7 @@ fun EqualizerContent(
                                         containerColor = colors.surfaceContainerHighest
                                     )
                                 ) {
-                                    Icon(Icons.Rounded.Tune, contentDescription = "Manage Presets", modifier = Modifier.size(18.dp))
+                                    Icon(painterResource(Res.drawable.ic_rounded_tune), contentDescription = "Manage Presets", modifier = Modifier.size(18.dp))
                                 }
                             }
                         }
@@ -304,7 +303,7 @@ fun EqualizerContent(
                                     onClick = { viewModel.setEqualizerPreamp(0f) },
                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                                 ) {
-                                    Icon(Icons.Rounded.RestartAlt, null, modifier = Modifier.size(16.dp))
+                                    Icon(painterResource(Res.drawable.ic_rounded_restart_alt), null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text("Reset 0 dB", style = MaterialTheme.typography.labelSmall)
                                 }
@@ -354,7 +353,7 @@ fun EqualizerContent(
                                     onClick = { viewModel.setEqualizerPreset(EqualizerPreset.FLAT) },
                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                                 ) {
-                                    Icon(Icons.Rounded.RestartAlt, null, modifier = Modifier.size(16.dp))
+                                    Icon(painterResource(Res.drawable.ic_rounded_restart_alt), null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text("Flat Reset", style = MaterialTheme.typography.labelSmall)
                                 }
@@ -411,9 +410,9 @@ private fun ViewModeSelector(
 ) {
     val colors = MaterialTheme.colorScheme
     val modes = listOf(
-        Triple("SLIDERS", Icons.Rounded.GraphicEq, "Sliders"),
-        Triple("GRAPH", Icons.AutoMirrored.Rounded.ShowChart, "Graph"),
-        Triple("HYBRID", Icons.AutoMirrored.Rounded.ViewQuilt, "Hybrid")
+        Triple("SLIDERS", Res.drawable.ic_rounded_graphic_eq, "Sliders"),
+        Triple("GRAPH", Res.drawable.ic_automirrored_rounded_show_chart, "Graph"),
+        Triple("HYBRID", Res.drawable.ic_automirrored_rounded_view_quilt, "Hybrid")
     )
 
     Row(
@@ -436,7 +435,7 @@ private fun ViewModeSelector(
                     .clickable { onModeSelected(modeKey) },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, contentDescription = title, tint = iconColor, modifier = Modifier.size(18.dp))
+                Icon(painter = painterResource(icon), contentDescription = title, tint = iconColor, modifier = Modifier.size(18.dp))
             }
         }
     }
@@ -710,7 +709,7 @@ fun EqualizerDialog(
                             modifier = Modifier.size(40.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Rounded.GraphicEq, null, tint = colors.onPrimaryContainer, modifier = Modifier.size(22.dp))
+                                Icon(painterResource(Res.drawable.ic_rounded_graphic_eq), null, tint = colors.onPrimaryContainer, modifier = Modifier.size(22.dp))
                             }
                         }
                         Text(
@@ -722,7 +721,7 @@ fun EqualizerDialog(
                     }
 
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close")
+                        Icon(painterResource(Res.drawable.ic_rounded_close), contentDescription = "Close")
                     }
                 }
 
@@ -863,8 +862,7 @@ private fun ManagePresetsDialog(
 
                                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                     IconButton(onClick = { onTogglePin(preset.name) }) {
-                                        Icon(
-                                            Icons.Rounded.PushPin,
+                                        Icon(painterResource(Res.drawable.ic_rounded_push_pin),
                                             contentDescription = "Pin",
                                             tint = if (isPinned) colors.primary else colors.onSurfaceVariant.copy(alpha = 0.5f)
                                         )
@@ -873,10 +871,10 @@ private fun ManagePresetsDialog(
                                         renamingTarget = preset
                                         newName = preset.displayName
                                     }) {
-                                        Icon(Icons.Rounded.Edit, contentDescription = "Rename", tint = colors.onSurfaceVariant)
+                                        Icon(painterResource(Res.drawable.ic_rounded_edit), contentDescription = "Rename", tint = colors.onSurfaceVariant)
                                     }
                                     IconButton(onClick = { onDelete(preset.name) }) {
-                                        Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = colors.error)
+                                        Icon(painterResource(Res.drawable.ic_rounded_delete), contentDescription = "Delete", tint = colors.error)
                                     }
                                 }
                             }

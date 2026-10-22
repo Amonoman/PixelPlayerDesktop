@@ -1,5 +1,14 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_add
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_chevron_right
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_create_new_folder
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_folder
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_folder_off
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_home
+import org.jetbrains.compose.resources.painterResource
 import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopBackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,18 +28,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Block
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.CreateNewFolder
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Folder
-import androidx.compose.material.icons.rounded.FolderOff
-import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -248,7 +245,7 @@ fun MusicFoldersDetailScreen(
                             modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.Home,
+                                painter = painterResource(Res.drawable.ic_rounded_home),
                                 contentDescription = "Root directories",
                                 tint = colors.primary,
                                 modifier = Modifier.size(18.dp)
@@ -256,7 +253,7 @@ fun MusicFoldersDetailScreen(
                         }
 
                         Icon(
-                            imageVector = Icons.Rounded.ChevronRight,
+                            painter = painterResource(Res.drawable.ic_rounded_chevron_right),
                             contentDescription = null,
                             tint = colors.onSurfaceVariant.copy(alpha = 0.5f),
                             modifier = Modifier.size(16.dp)
@@ -285,7 +282,7 @@ fun MusicFoldersDetailScreen(
                                 }
                                 if (!isLast) {
                                     Icon(
-                                        imageVector = Icons.Rounded.ChevronRight,
+                                        painter = painterResource(Res.drawable.ic_rounded_chevron_right),
                                         contentDescription = null,
                                         tint = colors.onSurfaceVariant.copy(alpha = 0.4f),
                                         modifier = Modifier.size(14.dp)
@@ -329,7 +326,7 @@ fun MusicFoldersDetailScreen(
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
-                                                imageVector = Icons.Rounded.CreateNewFolder,
+                                                painter = painterResource(Res.drawable.ic_rounded_create_new_folder),
                                                 contentDescription = null,
                                                 tint = colors.onPrimaryContainer,
                                                 modifier = Modifier.size(22.dp)
@@ -363,7 +360,7 @@ fun MusicFoldersDetailScreen(
                                             .fillMaxWidth()
                                             .height(42.dp)
                                     ) {
-                                        Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Icon(painterResource(Res.drawable.ic_rounded_add), contentDescription = null, modifier = Modifier.size(18.dp))
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text("Add Folder", fontWeight = FontWeight.SemiBold)
                                     }
@@ -389,7 +386,7 @@ fun MusicFoldersDetailScreen(
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
-                                                imageVector = Icons.Rounded.CreateNewFolder,
+                                                painter = painterResource(Res.drawable.ic_rounded_create_new_folder),
                                                 contentDescription = null,
                                                 tint = colors.onPrimaryContainer,
                                                 modifier = Modifier.size(22.dp)
@@ -421,7 +418,7 @@ fun MusicFoldersDetailScreen(
                                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
                                         modifier = Modifier.height(42.dp)
                                     ) {
-                                        Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Icon(painterResource(Res.drawable.ic_rounded_add), contentDescription = null, modifier = Modifier.size(18.dp))
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text("Add Folder", fontWeight = FontWeight.SemiBold)
                                     }
@@ -599,7 +596,7 @@ fun FileExplorerDirectoryItem(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (isBlocked) Icons.Rounded.FolderOff else Icons.Rounded.Folder,
+                    painter = painterResource(if (isBlocked) Res.drawable.ic_rounded_folder_off else Res.drawable.ic_rounded_folder),
                     contentDescription = null,
                     tint = if (isBlocked) colors.error else colors.primary,
                     modifier = Modifier.size(22.dp)
@@ -684,7 +681,7 @@ fun FileExplorerDirectoryItem(
                         )
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Delete,
+                            painter = painterResource(Res.drawable.ic_rounded_delete),
                             contentDescription = "Remove directory",
                             modifier = Modifier.size(19.dp)
                         )
@@ -693,7 +690,7 @@ fun FileExplorerDirectoryItem(
 
                 if (canNavigate) {
                     Icon(
-                        imageVector = Icons.Rounded.ChevronRight,
+                        painter = painterResource(Res.drawable.ic_rounded_chevron_right),
                         contentDescription = "Open folder",
                         tint = colors.onSurfaceVariant.copy(alpha = 0.45f),
                         modifier = Modifier.size(20.dp)

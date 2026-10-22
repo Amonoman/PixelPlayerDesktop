@@ -1,6 +1,11 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_history
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -30,10 +35,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -297,7 +298,7 @@ private fun RecentlyPlayedRangeChip(
                 contentAlignment = Alignment.CenterStart
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.History,
+                    painter = painterResource(Res.drawable.ic_outlined_history),
                     contentDescription = null,
                     modifier = Modifier
                         .size(18.dp)
@@ -357,7 +358,7 @@ private fun RecentlyPlayedActions(
             )
         ) {
             Icon(
-                imageVector = Icons.Rounded.PlayArrow,
+                painter = painterResource(Res.drawable.ic_rounded_play_arrow),
                 contentDescription = null,
                 modifier = Modifier.size(if (isVeryCompact) 18.dp else 22.dp)
             )
@@ -382,7 +383,7 @@ private fun RecentlyPlayedActions(
             )
         ) {
             Icon(
-                imageVector = Icons.Rounded.Shuffle,
+                painter = painterResource(Res.drawable.ic_rounded_shuffle),
                 contentDescription = null,
                 modifier = Modifier.size(if (isVeryCompact) 18.dp else 22.dp)
             )

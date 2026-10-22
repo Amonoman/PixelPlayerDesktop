@@ -1,5 +1,9 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_arrow_forward
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,9 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -180,7 +181,7 @@ private fun DailyMixHeader(
                             AsyncArtworkImage(
                                 artworkUri = song.albumArtUriString,
                                 modifier = Modifier.fillMaxSize(),
-                                placeholderIcon = Icons.Rounded.MusicNote,
+                                placeholderIcon = Res.drawable.ic_rounded_music_note,
                                 placeholderIconSize = if (isCompact) 26.dp else 32.dp,
                                 contentDescription = song.title
                             )
@@ -284,7 +285,7 @@ private fun ViewAllDailyMixButton(
                 fontWeight = FontWeight.SemiBold
             )
             Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                painter = painterResource(Res.drawable.ic_automirrored_rounded_arrow_forward),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp)
             )

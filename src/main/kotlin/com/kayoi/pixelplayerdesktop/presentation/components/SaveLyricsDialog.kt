@@ -1,5 +1,12 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_audio_file
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_close
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_file_download
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_folder
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,11 +22,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AudioFile
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.FileDownload
-import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
@@ -34,7 +36,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
@@ -104,14 +105,14 @@ fun SaveLyricsDialog(
                             contentColor = colors.onSurfaceVariant
                         )
                     ) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close")
+                        Icon(painterResource(Res.drawable.ic_rounded_close), contentDescription = "Close")
                     }
                 }
 
                 Spacer(modifier = Modifier.height(18.dp))
 
                 SaveLyricsOptionCard(
-                    icon = Icons.Rounded.Folder,
+                    icon = Res.drawable.ic_rounded_folder,
                     iconContainerColor = colors.primaryContainer,
                     iconColor = colors.onPrimaryContainer,
                     title = "Save to Song Folder",
@@ -122,7 +123,7 @@ fun SaveLyricsDialog(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 SaveLyricsOptionCard(
-                    icon = Icons.Rounded.FileDownload,
+                    icon = Res.drawable.ic_rounded_file_download,
                     iconContainerColor = colors.surfaceContainerHighest,
                     iconColor = colors.primary,
                     title = "Export to File...",
@@ -133,7 +134,7 @@ fun SaveLyricsDialog(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 SaveLyricsOptionCard(
-                    icon = Icons.Rounded.AudioFile,
+                    icon = Res.drawable.ic_rounded_audio_file,
                     iconContainerColor = colors.secondaryContainer,
                     iconColor = colors.onSecondaryContainer,
                     title = "Embed into Audio File",
@@ -147,7 +148,7 @@ fun SaveLyricsDialog(
 
 @Composable
 private fun SaveLyricsOptionCard(
-    icon: ImageVector,
+    icon: DrawableResource,
     iconContainerColor: Color,
     iconColor: Color,
     title: String,
@@ -179,7 +180,7 @@ private fun SaveLyricsOptionCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = icon,
+                    painter = painterResource(icon),
                     contentDescription = null,
                     tint = iconColor,
                     modifier = Modifier.size(22.dp)

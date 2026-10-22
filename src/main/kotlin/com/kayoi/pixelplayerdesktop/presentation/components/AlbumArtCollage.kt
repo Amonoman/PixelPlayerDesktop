@@ -1,5 +1,8 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -17,8 +20,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -88,7 +89,7 @@ fun AlbumArtCollage(
                                 AsyncArtworkImage(
                                     artworkUri = song.albumArtUriString,
                                     modifier = Modifier.fillMaxSize(),
-                                    placeholderIcon = Icons.Rounded.MusicNote,
+                                    placeholderIcon = Res.drawable.ic_rounded_music_note,
                                     placeholderIconSize = 48.dp,
                                     contentDescription = song.title
                                 )
@@ -124,7 +125,7 @@ fun AlbumArtCollage(
                                 AsyncArtworkImage(
                                     artworkUri = song.albumArtUriString,
                                     modifier = Modifier.fillMaxSize(),
-                                    placeholderIcon = Icons.Rounded.MusicNote,
+                                    placeholderIcon = Res.drawable.ic_rounded_music_note,
                                     placeholderIconSize = 36.dp,
                                     contentDescription = song.title
                                 )
@@ -141,7 +142,7 @@ fun AlbumArtCollage(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.MusicNote,
+                    painter = painterResource(Res.drawable.ic_rounded_music_note),
                     contentDescription = null,
                     modifier = Modifier.size(96.dp),
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)

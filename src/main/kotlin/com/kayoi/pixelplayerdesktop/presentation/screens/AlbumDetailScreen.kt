@@ -1,5 +1,11 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_album
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_auto_fix_high
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,12 +25,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Album
-import androidx.compose.material.icons.rounded.AutoFixHigh
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -190,7 +190,7 @@ fun AlbumDetailScreen(
                             .fillMaxSize()
                             .blur(40.dp),
                         contentScale = ContentScale.Crop,
-                        placeholderIcon = Icons.Rounded.Album,
+                        placeholderIcon = Res.drawable.ic_rounded_album,
                         placeholderIconSize = 48.dp,
                         containerColor = colors.surfaceContainerHighest,
                         contentColor = colors.onSurfaceVariant,
@@ -229,7 +229,7 @@ fun AlbumDetailScreen(
                             modifier = Modifier
                                 .size(coverSize)
                                 .clip(RoundedCornerShape(coverCorner)),
-                            placeholderIcon = Icons.Rounded.Album,
+                            placeholderIcon = Res.drawable.ic_rounded_album,
                             placeholderIconSize = 52.dp,
                             containerColor = colors.surfaceContainerHighest,
                             contentColor = colors.onSurfaceVariant,
@@ -294,7 +294,7 @@ fun AlbumDetailScreen(
                                         modifier = Modifier.size(48.dp)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.AutoFixHigh,
+                                            painter = painterResource(Res.drawable.ic_rounded_auto_fix_high),
                                             contentDescription = "Edit Album Metadata",
                                             modifier = Modifier.size(22.dp)
                                         )
@@ -319,7 +319,7 @@ fun AlbumDetailScreen(
                                     modifier = Modifier.size(92.dp)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Shuffle,
+                                        painter = painterResource(Res.drawable.ic_rounded_shuffle),
                                         contentDescription = "Shuffle",
                                         modifier = Modifier.size(28.dp)
                                     )
@@ -341,7 +341,7 @@ fun AlbumDetailScreen(
                                         modifier = Modifier.size(38.dp)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.AutoFixHigh,
+                                            painter = painterResource(Res.drawable.ic_rounded_auto_fix_high),
                                             contentDescription = "Edit Album Metadata",
                                             modifier = Modifier.size(18.dp)
                                         )
@@ -366,7 +366,7 @@ fun AlbumDetailScreen(
                                     modifier = Modifier.size(62.dp)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Shuffle,
+                                        painter = painterResource(Res.drawable.ic_rounded_shuffle),
                                         contentDescription = "Shuffle",
                                         modifier = Modifier.size(22.dp)
                                     )
@@ -396,7 +396,7 @@ fun AlbumDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.MusicNote,
+                        painter = painterResource(Res.drawable.ic_rounded_music_note),
                         contentDescription = null,
                         tint = colors.onSurfaceVariant.copy(alpha = 0.4f),
                         modifier = Modifier.size(54.dp)

@@ -1,5 +1,9 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_close
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_search
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,11 +23,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -125,7 +124,7 @@ fun AddSongsToPlaylistDialog(
                             contentColor = colors.onSurfaceVariant
                         )
                     ) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close")
+                        Icon(painterResource(Res.drawable.ic_rounded_close), contentDescription = "Close")
                     }
                 }
 
@@ -136,7 +135,7 @@ fun AddSongsToPlaylistDialog(
                     onValueChange = { searchQuery = it },
                     placeholder = { Text("Search songs, artists, or albums...") },
                     leadingIcon = {
-                        Icon(Icons.Rounded.Search, contentDescription = null, tint = colors.onSurfaceVariant)
+                        Icon(painterResource(Res.drawable.ic_rounded_search), contentDescription = null, tint = colors.onSurfaceVariant)
                     },
                     trailingIcon = if (searchQuery.isNotEmpty()) {
                         {
@@ -149,7 +148,7 @@ fun AddSongsToPlaylistDialog(
                                     contentColor = colors.onSurfaceVariant
                                 )
                             ) {
-                                Icon(Icons.Rounded.Close, contentDescription = "Clear", modifier = Modifier.size(16.dp))
+                                Icon(painterResource(Res.drawable.ic_rounded_close), contentDescription = "Clear", modifier = Modifier.size(16.dp))
                             }
                         }
                     } else null,

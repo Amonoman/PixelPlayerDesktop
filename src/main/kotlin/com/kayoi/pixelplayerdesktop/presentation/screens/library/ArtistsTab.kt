@@ -39,7 +39,6 @@ import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.ArtistListI
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryActionRow
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryEmptyState
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryTabKind
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.presentation.screens.ArtistDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_ARTIST_DELIMITERS

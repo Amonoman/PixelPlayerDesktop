@@ -1,5 +1,23 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_queue_music
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_volume_down
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_volume_off
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_volume_up
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_close
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_favorite
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_favorite_border
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_fullscreen
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_pause
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_repeat
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_repeat_one
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_skip_next
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_skip_previous
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
@@ -22,23 +40,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
-import androidx.compose.material.icons.automirrored.rounded.VolumeDown
-import androidx.compose.material.icons.automirrored.rounded.VolumeOff
-import androidx.compose.material.icons.automirrored.rounded.VolumeUp
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material.icons.rounded.Fullscreen
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material.icons.rounded.RepeatOne
-import androidx.compose.material.icons.rounded.Shuffle
-import androidx.compose.material.icons.rounded.SkipNext
-import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -169,7 +170,7 @@ fun MiniPlayerBar(
                                     artworkUri = currentSong.albumArtUriString,
                                     modifier = Modifier.size(52.dp),
                                     shape = CircleShape,
-                                    placeholderIcon = Icons.Rounded.MusicNote,
+                                    placeholderIcon = Res.drawable.ic_rounded_music_note,
                                     placeholderIconSize = 26.dp,
                                     containerColor = colors.surfaceVariant,
                                     contentColor = colors.onSurfaceVariant,
@@ -227,7 +228,7 @@ fun MiniPlayerBar(
                                 )
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.SkipPrevious,
+                                    painter = painterResource(Res.drawable.ic_rounded_skip_previous),
                                     contentDescription = "Previous",
                                     modifier = Modifier.size(22.dp)
                                 )
@@ -252,7 +253,7 @@ fun MiniPlayerBar(
                                     )
                                 } else {
                                     Icon(
-                                        imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                                        painter = painterResource(if (isPlaying) Res.drawable.ic_rounded_pause else Res.drawable.ic_rounded_play_arrow),
                                         contentDescription = if (isPlaying) "Pause" else "Play",
                                         modifier = Modifier.size(22.dp)
                                     )
@@ -271,7 +272,7 @@ fun MiniPlayerBar(
                                 )
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.SkipNext,
+                                    painter = painterResource(Res.drawable.ic_rounded_skip_next),
                                     contentDescription = "Next",
                                     modifier = Modifier.size(22.dp)
                                 )
@@ -284,7 +285,7 @@ fun MiniPlayerBar(
                                 modifier = Modifier.size(32.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Close,
+                                    painter = painterResource(Res.drawable.ic_rounded_close),
                                     contentDescription = "Stop & Close",
                                     tint = colors.onPrimaryContainer.copy(alpha = 0.65f),
                                     modifier = Modifier.size(18.dp)
@@ -331,7 +332,7 @@ fun MiniPlayerBar(
                                     artworkUri = currentSong.albumArtUriString,
                                     modifier = Modifier.size(artworkSize),
                                     shape = CircleShape,
-                                    placeholderIcon = Icons.Rounded.MusicNote,
+                                    placeholderIcon = Res.drawable.ic_rounded_music_note,
                                     placeholderIconSize = if (isMedium) 24.dp else 30.dp,
                                     containerColor = colors.surfaceVariant,
                                     contentColor = colors.onSurfaceVariant,
@@ -396,7 +397,7 @@ fun MiniPlayerBar(
                                     )
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Shuffle,
+                                        painter = painterResource(Res.drawable.ic_rounded_shuffle),
                                         contentDescription = "Shuffle",
                                         modifier = Modifier.size(if (isMedium) 18.dp else 20.dp)
                                     )
@@ -414,7 +415,7 @@ fun MiniPlayerBar(
                                     )
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.SkipPrevious,
+                                        painter = painterResource(Res.drawable.ic_rounded_skip_previous),
                                         contentDescription = "Previous",
                                         modifier = Modifier.size(if (isMedium) 20.dp else 24.dp)
                                     )
@@ -439,7 +440,7 @@ fun MiniPlayerBar(
                                         )
                                     } else {
                                         Icon(
-                                            imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                                            painter = painterResource(if (isPlaying) Res.drawable.ic_rounded_pause else Res.drawable.ic_rounded_play_arrow),
                                             contentDescription = if (isPlaying) "Pause" else "Play",
                                             modifier = Modifier.size(if (isMedium) 20.dp else 24.dp)
                                         )
@@ -458,7 +459,7 @@ fun MiniPlayerBar(
                                     )
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.SkipNext,
+                                        painter = painterResource(Res.drawable.ic_rounded_skip_next),
                                         contentDescription = "Next",
                                         modifier = Modifier.size(if (isMedium) 20.dp else 24.dp)
                                     )
@@ -480,9 +481,9 @@ fun MiniPlayerBar(
                                         contentColor = if (repeatMode > 0) colors.onPrimary else colors.onPrimaryContainer.copy(alpha = 0.6f)
                                     )
                                 ) {
-                                    val repIcon = if (repeatMode == 2) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat
+                                    val repIcon = if (repeatMode == 2) Res.drawable.ic_rounded_repeat_one else Res.drawable.ic_rounded_repeat
                                     Icon(
-                                        imageVector = repIcon,
+                                        painter = painterResource(repIcon),
                                         contentDescription = "Repeat",
                                         modifier = Modifier.size(if (isMedium) 18.dp else 20.dp)
                                     )
@@ -523,7 +524,7 @@ fun MiniPlayerBar(
                                 modifier = Modifier.size(actionButtonSize)
                             ) {
                                 Icon(
-                                    imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                                    painter = painterResource(if (isFavorite) Res.drawable.ic_rounded_favorite else Res.drawable.ic_rounded_favorite_border),
                                     contentDescription = "Favorite",
                                     tint = if (isFavorite) colors.primary else colors.onPrimaryContainer.copy(alpha = 0.75f),
                                     modifier = Modifier.size(actionIconSize)
@@ -539,7 +540,7 @@ fun MiniPlayerBar(
                                 modifier = Modifier.size(actionButtonSize)
                             ) {
                                 Icon(
-                                    imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                                    painter = painterResource(Res.drawable.ic_automirrored_rounded_queue_music),
                                     contentDescription = "Queue",
                                     tint = colors.onPrimaryContainer.copy(alpha = 0.75f),
                                     modifier = Modifier.size(actionIconSize)
@@ -555,12 +556,12 @@ fun MiniPlayerBar(
                                 modifier = Modifier.size(actionButtonSize)
                             ) {
                                 val volIcon = when {
-                                    isMuted || volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
-                                    volume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
-                                    else -> Icons.AutoMirrored.Rounded.VolumeUp
+                                    isMuted || volume == 0f -> Res.drawable.ic_automirrored_rounded_volume_off
+                                    volume < 0.5f -> Res.drawable.ic_automirrored_rounded_volume_down
+                                    else -> Res.drawable.ic_automirrored_rounded_volume_up
                                 }
                                 Icon(
-                                    imageVector = volIcon,
+                                    painter = painterResource(volIcon),
                                     contentDescription = "Volume",
                                     tint = if (isMuted) colors.error else colors.onPrimaryContainer.copy(alpha = 0.75f),
                                     modifier = Modifier.size(actionIconSize)
@@ -603,7 +604,7 @@ fun MiniPlayerBar(
                                 modifier = Modifier.size(actionButtonSize)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Fullscreen,
+                                    painter = painterResource(Res.drawable.ic_rounded_fullscreen),
                                     contentDescription = "Expand Player",
                                     tint = colors.onPrimaryContainer.copy(alpha = 0.75f),
                                     modifier = Modifier.size(actionIconSize)
@@ -617,7 +618,7 @@ fun MiniPlayerBar(
                                 modifier = Modifier.size(actionButtonSize)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Close,
+                                    painter = painterResource(Res.drawable.ic_rounded_close),
                                     contentDescription = "Stop & Close",
                                     tint = colors.onPrimaryContainer.copy(alpha = 0.75f),
                                     modifier = Modifier.size(if (isMedium) 18.dp else 20.dp)

@@ -1,5 +1,9 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_artist
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_more_vert
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.PointerMatcher
 import androidx.compose.foundation.background
@@ -18,8 +22,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalIconButton
@@ -45,7 +47,6 @@ import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.network.deezer.DeezerClient
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -114,7 +115,7 @@ fun ArtistListItem(
                     AsyncArtworkImage(
                         artworkUri = imageUri,
                         shape = ShapeCache.ExpressiveAvatar,
-                        placeholderIcon = PixelPlayerIcons.Artist,
+                        placeholderIcon = Res.drawable.ic_artist,
                         placeholderIconSize = 24.dp,
                         containerColor = colors.primaryContainer,
                         contentColor = colors.onPrimaryContainer,
@@ -123,7 +124,7 @@ fun ArtistListItem(
                     )
                 } else {
                     Icon(
-                        imageVector = PixelPlayerIcons.Artist,
+                        painter = painterResource(Res.drawable.ic_artist),
                         contentDescription = artist.name,
                         tint = colors.onPrimaryContainer,
                         modifier = Modifier.size(26.dp)
@@ -169,7 +170,7 @@ fun ArtistListItem(
                     modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.MoreVert,
+                        painter = painterResource(Res.drawable.ic_rounded_more_vert),
                         contentDescription = "Artist options",
                         modifier = Modifier.size(18.dp)
                     )

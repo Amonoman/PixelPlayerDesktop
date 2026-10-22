@@ -1,5 +1,11 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_arrow_back
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_arrow_forward
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_close
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_search
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -22,12 +28,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.Clear
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -144,7 +144,7 @@ fun AppTopBar(
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            painter = painterResource(Res.drawable.ic_automirrored_rounded_arrow_back),
                             contentDescription = "Back (Alt+Left)",
                             tint = if (canGoBack) colors.onSurface else colors.onSurface.copy(alpha = 0.25f),
                             modifier = Modifier.size(18.dp)
@@ -163,7 +163,7 @@ fun AppTopBar(
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            painter = painterResource(Res.drawable.ic_automirrored_rounded_arrow_forward),
                             contentDescription = "Forward (Alt+Right)",
                             tint = if (canGoForward) colors.onSurface else colors.onSurface.copy(alpha = 0.25f),
                             modifier = Modifier.size(18.dp)
@@ -203,7 +203,7 @@ fun AppTopBar(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Search,
+                        painter = painterResource(Res.drawable.ic_rounded_search),
                         contentDescription = "Search",
                         tint = if (isSearchFocused) colors.primary else colors.onSurfaceVariant,
                         modifier = Modifier.size(18.dp)
@@ -258,7 +258,7 @@ fun AppTopBar(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.Close,
+                                painter = painterResource(Res.drawable.ic_rounded_close),
                                 contentDescription = "Clear Search",
                                 tint = colors.onSurfaceVariant,
                                 modifier = Modifier.size(16.dp)

@@ -1,5 +1,8 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_artist
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.PointerMatcher
 import androidx.compose.foundation.background
@@ -38,7 +41,6 @@ import androidx.compose.ui.unit.sp
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.network.deezer.DeezerClient
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -107,7 +109,7 @@ fun ArtistGridItem(
                     AsyncArtworkImage(
                         artworkUri = imageUri,
                         shape = ShapeCache.ExpressiveAvatar,
-                        placeholderIcon = PixelPlayerIcons.Artist,
+                        placeholderIcon = Res.drawable.ic_artist,
                         placeholderIconSize = 40.dp,
                         containerColor = colors.primaryContainer,
                         contentColor = colors.onPrimaryContainer,
@@ -116,7 +118,7 @@ fun ArtistGridItem(
                     )
                 } else {
                     Icon(
-                        imageVector = PixelPlayerIcons.Artist,
+                        painter = painterResource(Res.drawable.ic_artist),
                         contentDescription = artist.name,
                         tint = colors.onPrimaryContainer,
                         modifier = Modifier.size(42.dp)

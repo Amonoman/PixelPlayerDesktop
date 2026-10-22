@@ -1,5 +1,16 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_playlist_add
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_queue_music
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_edit
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_favorite
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_favorite_border
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_remove_circle_outline
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
@@ -11,16 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -82,7 +83,7 @@ fun SongOptionsDropdownMenu(
                     artworkUri = song.albumArtUriString,
                     modifier = Modifier.size(40.dp),
                     shape = RoundedCornerShape(10.dp),
-                    placeholderIcon = Icons.Rounded.MusicNote,
+                    placeholderIcon = Res.drawable.ic_rounded_music_note,
                     placeholderIconSize = 20.dp
                 )
                 Spacer(modifier = Modifier.width(10.dp))
@@ -117,7 +118,7 @@ fun SongOptionsDropdownMenu(
                     text = { Text("Play Next", fontWeight = FontWeight.Medium) },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Rounded.PlayArrow,
+                            painter = painterResource(Res.drawable.ic_rounded_play_arrow),
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(20.dp)
@@ -138,7 +139,7 @@ fun SongOptionsDropdownMenu(
                     text = { Text("Add to Queue", fontWeight = FontWeight.Medium) },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                            painter = painterResource(Res.drawable.ic_automirrored_rounded_queue_music),
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(20.dp)
@@ -159,7 +160,7 @@ fun SongOptionsDropdownMenu(
                     text = { Text("Add to Playlist", fontWeight = FontWeight.Medium) },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.PlaylistAdd,
+                            painter = painterResource(Res.drawable.ic_automirrored_rounded_playlist_add),
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(20.dp)
@@ -186,7 +187,7 @@ fun SongOptionsDropdownMenu(
                     },
                     leadingIcon = {
                         Icon(
-                            imageVector = if (fav) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                            painter = painterResource(if (fav) Res.drawable.ic_rounded_favorite else Res.drawable.ic_rounded_favorite_border),
                             contentDescription = null,
                             tint = if (fav) colors.primary else colors.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
@@ -207,7 +208,7 @@ fun SongOptionsDropdownMenu(
                     text = { Text("Edit Metadata", fontWeight = FontWeight.Medium) },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Rounded.Edit,
+                            painter = painterResource(Res.drawable.ic_rounded_edit),
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(20.dp)
@@ -243,7 +244,7 @@ fun SongOptionsDropdownMenu(
                     },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Rounded.RemoveCircleOutline,
+                            painter = painterResource(Res.drawable.ic_rounded_remove_circle_outline),
                             contentDescription = null,
                             tint = colors.error,
                             modifier = Modifier.size(20.dp)
@@ -270,7 +271,7 @@ fun SongOptionsDropdownMenu(
                     },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Rounded.RemoveCircleOutline,
+                            painter = painterResource(Res.drawable.ic_rounded_remove_circle_outline),
                             contentDescription = null,
                             tint = colors.error,
                             modifier = Modifier.size(20.dp)
@@ -297,7 +298,7 @@ fun SongOptionsDropdownMenu(
                     },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Rounded.Delete,
+                            painter = painterResource(Res.drawable.ic_rounded_delete),
                             contentDescription = null,
                             tint = colors.error,
                             modifier = Modifier.size(20.dp)

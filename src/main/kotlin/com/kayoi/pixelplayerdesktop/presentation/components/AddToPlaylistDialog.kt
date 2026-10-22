@@ -1,5 +1,11 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_add
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_close
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_search
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,11 +24,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -135,7 +136,7 @@ fun AddToPlaylistDialog(
                             contentColor = colors.onSurfaceVariant
                         )
                     ) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close")
+                        Icon(painterResource(Res.drawable.ic_rounded_close), contentDescription = "Close")
                     }
                 }
 
@@ -151,7 +152,7 @@ fun AddToPlaylistDialog(
                     )
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Add,
+                        painter = painterResource(Res.drawable.ic_rounded_add),
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
@@ -170,7 +171,7 @@ fun AddToPlaylistDialog(
                         onValueChange = { searchQuery = it },
                         placeholder = { Text("Search playlists...", fontSize = 14.sp) },
                         leadingIcon = {
-                            Icon(Icons.Rounded.Search, contentDescription = null, tint = colors.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                            Icon(painterResource(Res.drawable.ic_rounded_search), contentDescription = null, tint = colors.onSurfaceVariant, modifier = Modifier.size(18.dp))
                         },
                         trailingIcon = if (searchQuery.isNotEmpty()) {
                             {
@@ -182,7 +183,7 @@ fun AddToPlaylistDialog(
                                         contentColor = colors.onSurfaceVariant
                                     )
                                 ) {
-                                    Icon(Icons.Rounded.Close, contentDescription = "Clear", modifier = Modifier.size(14.dp))
+                                    Icon(painterResource(Res.drawable.ic_rounded_close), contentDescription = "Clear", modifier = Modifier.size(14.dp))
                                 }
                             }
                         } else null,
@@ -250,7 +251,7 @@ fun AddToPlaylistDialog(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.MusicNote,
+                                            painter = painterResource(Res.drawable.ic_rounded_music_note),
                                             contentDescription = null,
                                             tint = colors.onPrimaryContainer,
                                             modifier = Modifier.size(20.dp)

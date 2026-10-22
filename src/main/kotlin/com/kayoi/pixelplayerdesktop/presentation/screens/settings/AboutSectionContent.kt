@@ -1,5 +1,17 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_app_logo
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_github
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_telegram
+import org.jetbrains.compose.resources.DrawableResource
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_open_in_new
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_auto_awesome
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_palette
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_phone_android
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_public
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_system_update
+import org.jetbrains.compose.resources.painterResource
 import com.kayoi.pixelplayerdesktop.BuildConfig
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,13 +31,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.OpenInNew
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.PhoneAndroid
-import androidx.compose.material.icons.rounded.Public
-import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,13 +47,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.skia.Image as SkiaImage
@@ -60,7 +63,7 @@ private data class ProjectLink(
     val id: String,
     val title: String,
     val subtitle: String,
-    val icon: ImageVector,
+    val icon: DrawableResource,
     val url: String
 )
 
@@ -102,21 +105,21 @@ private val ProjectLinks = listOf(
         id = "source",
         title = "Source code",
         subtitle = "github.com/adlifarizi/PixelPlayerDesktop",
-        icon = PixelPlayerIcons.GitHub,
+        icon = Res.drawable.ic_github,
         url = "https://github.com/adlifarizi/PixelPlayerDesktop"
     ),
     ProjectLink(
         id = "releases",
         title = "Releases & Updates",
         subtitle = "Check latest desktop builds and changelog",
-        icon = Icons.Rounded.SystemUpdate,
+        icon = Res.drawable.ic_rounded_system_update,
         url = "https://github.com/adlifarizi/PixelPlayerDesktop/releases"
     ),
     ProjectLink(
         id = "upstream_foss",
         title = "PixelPlayer OSS (Android)",
         subtitle = "Original mobile upstream edition by lostf1sh",
-        icon = Icons.Rounded.PhoneAndroid,
+        icon = Res.drawable.ic_rounded_phone_android,
         url = "https://github.com/lostf1sh/PixelPlayerOSS"
     )
 )
@@ -189,7 +192,7 @@ fun AboutSectionContent(modifier: Modifier = Modifier) {
                         color = colors.primaryContainer
                     ) {
                         Icon(
-                            imageVector = PixelPlayerIcons.AppLogo,
+                            painter = painterResource(Res.drawable.ic_app_logo),
                             contentDescription = null,
                             tint = colors.onPrimaryContainer,
                             modifier = Modifier
@@ -235,9 +238,9 @@ fun AboutSectionContent(modifier: Modifier = Modifier) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     val signals = listOf(
-                        "Open source" to Icons.Rounded.Public,
-                        "Community-first" to Icons.Rounded.AutoAwesome,
-                        "Material 3 expressive" to Icons.Rounded.Palette
+                        "Open source" to Res.drawable.ic_rounded_public,
+                        "Community-first" to Res.drawable.ic_rounded_auto_awesome,
+                        "Material 3 expressive" to Res.drawable.ic_rounded_palette
                     )
                     signals.forEach { (label, icon) ->
                         Surface(
@@ -250,7 +253,7 @@ fun AboutSectionContent(modifier: Modifier = Modifier) {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = icon,
+                                    painter = painterResource(icon),
                                     contentDescription = null,
                                     tint = colors.onSurfaceVariant,
                                     modifier = Modifier.size(16.dp)
@@ -291,7 +294,7 @@ fun AboutSectionContent(modifier: Modifier = Modifier) {
                                 color = colors.primaryContainer
                             ) {
                                 Icon(
-                                    imageVector = link.icon,
+                                    painter = painterResource(link.icon),
                                     contentDescription = null,
                                     tint = colors.onPrimaryContainer,
                                     modifier = Modifier
@@ -320,7 +323,7 @@ fun AboutSectionContent(modifier: Modifier = Modifier) {
                             }
 
                             Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
+                                painter = painterResource(Res.drawable.ic_automirrored_rounded_open_in_new),
                                 contentDescription = null,
                                 tint = colors.onSurfaceVariant.copy(alpha = 0.6f),
                                 modifier = Modifier.size(20.dp)
@@ -455,7 +458,7 @@ private fun ContributorCard(
                         modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
-                            imageVector = PixelPlayerIcons.GitHub,
+                            painter = painterResource(Res.drawable.ic_github),
                             contentDescription = "GitHub profile",
                             tint = colors.primary,
                             modifier = Modifier.size(20.dp)
@@ -468,7 +471,7 @@ private fun ContributorCard(
                         modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
-                            imageVector = PixelPlayerIcons.Telegram,
+                            painter = painterResource(Res.drawable.ic_telegram),
                             contentDescription = "Telegram profile",
                             tint = colors.primary,
                             modifier = Modifier.size(20.dp)

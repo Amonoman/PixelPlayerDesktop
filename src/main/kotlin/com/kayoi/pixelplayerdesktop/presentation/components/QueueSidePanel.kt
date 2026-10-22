@@ -1,5 +1,15 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_queue_music
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete_sweep
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_drag_indicator
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_my_location
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_repeat
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_repeat_one
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
+import org.jetbrains.compose.resources.painterResource
 import kotlin.math.abs
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -28,14 +38,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
-import androidx.compose.material.icons.rounded.DeleteSweep
-import androidx.compose.material.icons.rounded.DragIndicator
-import androidx.compose.material.icons.rounded.MyLocation
-import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material.icons.rounded.RepeatOne
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -241,7 +243,7 @@ fun QueueSidePanel(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                            painter = painterResource(Res.drawable.ic_automirrored_rounded_queue_music),
                             contentDescription = null,
                             tint = colors.onPrimaryContainer,
                             modifier = Modifier.size(18.dp)
@@ -303,7 +305,7 @@ fun QueueSidePanel(
                                 modifier = Modifier.size(36.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.MyLocation,
+                                    painter = painterResource(Res.drawable.ic_rounded_my_location),
                                     contentDescription = "Locate playing song",
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -332,7 +334,7 @@ fun QueueSidePanel(
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.Shuffle,
+                                painter = painterResource(Res.drawable.ic_rounded_shuffle),
                                 contentDescription = "Toggle Shuffle",
                                 modifier = Modifier.size(18.dp)
                             )
@@ -343,7 +345,7 @@ fun QueueSidePanel(
 
                     val repeatContainerColor = if (repeatMode > 0) colors.primary else colors.surfaceContainerHighest.copy(alpha = 0.6f)
                     val repeatContentColor = if (repeatMode > 0) colors.onPrimary else colors.onSurfaceVariant
-                    val repeatIcon = if (repeatMode == 2) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat
+                    val repeatIcon = if (repeatMode == 2) Res.drawable.ic_rounded_repeat_one else Res.drawable.ic_rounded_repeat
                     val repeatLabel = when (repeatMode) {
                         1 -> "Repeat: All"
                         2 -> "Repeat: One"
@@ -366,7 +368,7 @@ fun QueueSidePanel(
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
-                                imageVector = repeatIcon,
+                                painter = painterResource(repeatIcon),
                                 contentDescription = "Repeat Mode",
                                 modifier = Modifier.size(18.dp)
                             )
@@ -394,7 +396,7 @@ fun QueueSidePanel(
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.DeleteSweep,
+                                painter = painterResource(Res.drawable.ic_rounded_delete_sweep),
                                 contentDescription = "Clear Queue",
                                 modifier = Modifier.size(18.dp)
                             )
@@ -417,7 +419,7 @@ fun QueueSidePanel(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                            painter = painterResource(Res.drawable.ic_automirrored_rounded_queue_music),
                             contentDescription = null,
                             tint = colors.onSurfaceVariant.copy(alpha = 0.35f),
                             modifier = Modifier.size(44.dp)
@@ -505,7 +507,7 @@ fun QueueSidePanel(
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
-                                                imageVector = Icons.Rounded.DragIndicator,
+                                                painter = painterResource(Res.drawable.ic_rounded_drag_indicator),
                                                 contentDescription = "Reorder song",
                                                 tint = if (isSelected || isDragging) colors.onPrimaryContainer.copy(alpha = 0.85f) else colors.onSurfaceVariant.copy(alpha = 0.45f),
                                                 modifier = Modifier.size(20.dp)
@@ -543,7 +545,7 @@ fun QueueSidePanel(
             onDismissRequest = { showClearDialog = false },
             icon = {
                 Icon(
-                    imageVector = Icons.Rounded.DeleteSweep,
+                    painter = painterResource(Res.drawable.ic_rounded_delete_sweep),
                     contentDescription = null,
                     tint = colors.error,
                     modifier = Modifier.size(28.dp)

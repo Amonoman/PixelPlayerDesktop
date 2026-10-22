@@ -1,5 +1,11 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_artist
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_playlist_add
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_queue_music
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -13,10 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -34,7 +36,6 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
-import com.kayoi.pixelplayerdesktop.presentation.icons.PixelPlayerIcons
 import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 
 @Composable
@@ -83,7 +84,7 @@ fun ArtistOptionsDropdownMenu(
                         AsyncArtworkImage(
                             artworkUri = imageUri,
                             shape = ShapeCache.ExpressiveAvatar,
-                            placeholderIcon = PixelPlayerIcons.Artist,
+                            placeholderIcon = Res.drawable.ic_artist,
                             placeholderIconSize = 20.dp,
                             containerColor = colors.primaryContainer,
                             contentColor = colors.onPrimaryContainer,
@@ -92,7 +93,7 @@ fun ArtistOptionsDropdownMenu(
                         )
                     } else {
                         Icon(
-                            imageVector = PixelPlayerIcons.Artist,
+                            painter = painterResource(Res.drawable.ic_artist),
                             contentDescription = artist.name,
                             tint = colors.onPrimaryContainer,
                             modifier = Modifier.size(20.dp)
@@ -136,7 +137,7 @@ fun ArtistOptionsDropdownMenu(
                     text = { Text("Play", fontWeight = FontWeight.Medium) },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Rounded.PlayArrow,
+                            painter = painterResource(Res.drawable.ic_rounded_play_arrow),
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(20.dp)
@@ -158,7 +159,7 @@ fun ArtistOptionsDropdownMenu(
                     text = { Text("Play Next", fontWeight = FontWeight.Medium) },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                            painter = painterResource(Res.drawable.ic_automirrored_rounded_queue_music),
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(20.dp)
@@ -180,7 +181,7 @@ fun ArtistOptionsDropdownMenu(
                     text = { Text("Add to Queue", fontWeight = FontWeight.Medium) },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                            painter = painterResource(Res.drawable.ic_automirrored_rounded_queue_music),
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(20.dp)
@@ -202,7 +203,7 @@ fun ArtistOptionsDropdownMenu(
                     text = { Text("Add to Playlist", fontWeight = FontWeight.Medium) },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.PlaylistAdd,
+                            painter = painterResource(Res.drawable.ic_automirrored_rounded_playlist_add),
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(20.dp)
