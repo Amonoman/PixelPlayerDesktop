@@ -6,6 +6,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -42,6 +43,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.FlowRow
@@ -168,26 +170,50 @@ fun LyricsView(
             }
         }
 
-        LaunchedEffect(activeIndex) {
-            if (activeIndex in syncedLines.indices) {
-                listState.animateScrollToItem(
-                    index = (activeIndex - 2).coerceAtLeast(0)
-                )
-            } else if (activeIndex < 0) {
-                listState.animateScrollToItem(0)
+        BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+            val totalHeight = maxHeight
+            val isCompact = totalHeight < 280.dp
+            val isVeryCompact = totalHeight < 190.dp
+
+            val topPadding = when {
+                isVeryCompact -> 8.dp
+                isCompact -> 14.dp
+                else -> 28.dp
             }
-        }
+            val bottomPadding = when {
+                isVeryCompact -> 16.dp
+                isCompact -> 28.dp
+                else -> 64.dp
+            }
+            val itemSpacing = if (isCompact) 8.dp else 12.dp
+            val mainFontSize = if (isVeryCompact) 19.sp else if (isCompact) 21.sp else 23.sp
+            val romanizationFontSize = if (isCompact) 13.5.sp else 16.5.sp
 
-        val hasKana = remember(syncedLines) {
-            syncedLines.any { line -> line.line.any { it in '\u3040'..'\u309F' || it in '\u30A0'..'\u30FF' } }
-        }
+            LaunchedEffect(activeIndex, isCompact, isVeryCompact) {
+                if (activeIndex in syncedLines.indices) {
+                    val targetIndex = when {
+                        isVeryCompact -> activeIndex
+                        isCompact -> (activeIndex - 1).coerceAtLeast(0)
+                        else -> (activeIndex - 2).coerceAtLeast(0)
+                    }
+                    listState.animateScrollToItem(targetIndex)
+                } else if (activeIndex < 0) {
+                    listState.animateScrollToItem(0)
+                }
+            }
 
-        LazyColumn(
-            state = listState,
-            modifier = modifier.fillMaxSize().padding(horizontal = 24.dp),
-            contentPadding = PaddingValues(top = 36.dp, bottom = 80.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+            val hasKana = remember(syncedLines) {
+                syncedLines.any { line -> line.line.any { it in '\u3040'..'\u309F' || it in '\u30A0'..'\u30FF' } }
+            }
+
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = if (isCompact) 16.dp else 24.dp),
+                contentPadding = PaddingValues(top = topPadding, bottom = bottomPadding),
+                verticalArrangement = Arrangement.spacedBy(itemSpacing)
+            ) {
             itemsIndexed(syncedLines) { index, line ->
                 val isActive = activeIndex >= 0 && index == activeIndex
                 val isPast = activeIndex >= 0 && index < activeIndex
@@ -249,7 +275,7 @@ fun LyricsView(
                         if (line.words.isNullOrEmpty()) {
                             Text(
                                 text = line.line,
-                                fontSize = 23.sp,
+                                fontSize = mainFontSize,
                                 fontWeight = if (isActive) FontWeight.ExtraBold else FontWeight.Medium,
                                 color = textColor,
                                 textAlign = lyricTextAlign,
@@ -265,36 +291,47 @@ fun LyricsView(
                                 alignment = alignment,
                                 activeColor = colors.primary,
                                 inactiveColor = colors.onSurfaceVariant.copy(alpha = 0.55f),
-                                pastColor = colors.onSurface
+                                pastColor = colors.onSurface,
+                                fontSize = mainFontSize
                             )
                         }
 
                         if (showRomanization && !romanization.isNullOrBlank()) {
                             Text(
                                 text = romanization,
-                                fontSize = 16.5.sp,
+                                fontSize = romanizationFontSize,
                                 fontWeight = FontWeight.Normal,
                                 color = textColor.copy(alpha = if (isActive) 0.85f else 0.75f),
                                 textAlign = lyricTextAlign,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 3.dp)
+                                    .padding(top = if (isCompact) 2.dp else 3.dp)
                             )
                         }
                     }
                 }
             }
         }
-    } else if (!lyrics.plain.isNullOrEmpty()) {
+    }
+} else if (!lyrics.plain.isNullOrEmpty()) {
         val hasKana = remember(lyrics.plain) {
             lyrics.plain.any { line -> line.any { it in '\u3040'..'\u309F' || it in '\u30A0'..'\u30FF' } }
         }
 
-        LazyColumn(
-            modifier = modifier.fillMaxSize().padding(horizontal = 28.dp),
-            contentPadding = PaddingValues(top = 32.dp, bottom = 64.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+            val totalHeight = maxHeight
+            val isCompact = totalHeight < 280.dp
+            val topPadding = if (isCompact) 12.dp else 28.dp
+            val bottomPadding = if (isCompact) 20.dp else 56.dp
+            val itemSpacing = if (isCompact) 8.dp else 12.dp
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = if (isCompact) 18.dp else 28.dp),
+                contentPadding = PaddingValues(top = topPadding, bottom = bottomPadding),
+                verticalArrangement = Arrangement.spacedBy(itemSpacing)
+            ) {
             items(lyrics.plain) { rawLine ->
                 val parts = remember(rawLine) { rawLine.split("\n") }
                 val primary = parts.firstOrNull().orEmpty()
@@ -334,6 +371,7 @@ fun LyricsView(
         }
     }
 }
+}
 
 @Composable
 private fun WordSyncedLineContent(
@@ -346,6 +384,7 @@ private fun WordSyncedLineContent(
     activeColor: Color,
     inactiveColor: Color,
     pastColor: Color,
+    fontSize: TextUnit = 23.sp,
     modifier: Modifier = Modifier
 ) {
     val words = line.words ?: return
@@ -390,7 +429,8 @@ private fun WordSyncedLineContent(
                             isPast = isPast,
                             activeColor = activeColor,
                             inactiveColor = inactiveColor,
-                            pastColor = pastColor
+                            pastColor = pastColor,
+                            fontSize = fontSize
                         )
                     }
                 }
@@ -408,6 +448,7 @@ private fun LyricWordSpan(
     activeColor: Color,
     inactiveColor: Color,
     pastColor: Color,
+    fontSize: TextUnit = 23.sp,
     modifier: Modifier = Modifier
 ) {
     val isHighlighted = if (isActive) {
@@ -431,13 +472,13 @@ private fun LyricWordSpan(
     ) {
         Text(
             text = word.word,
-            fontSize = 23.sp,
+            fontSize = fontSize,
             fontWeight = FontWeight.ExtraBold,
             color = Color.Transparent
         )
         Text(
             text = word.word,
-            fontSize = 23.sp,
+            fontSize = fontSize,
             fontWeight = if (isHighlighted) FontWeight.ExtraBold else FontWeight.Medium,
             color = textColor,
             modifier = Modifier.graphicsLayer {
