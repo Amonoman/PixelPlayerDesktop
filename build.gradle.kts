@@ -153,6 +153,9 @@ compose.desktop {
         mainClass = "MainKt"
 
         jvmArgs(
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.jnu.encoding=UTF-8",
+            "-Djna.encoding=UTF-8",
             "-Xms128m",
             "-Xmx512m",
             "-XX:+UseG1GC",
@@ -241,17 +244,38 @@ tasks.register("setupMpvWindows") {
         targetDir.mkdirs()
         if (!archiveFile.exists()) {
             println("Downloading libmpv Windows x64 from $mpvUrl...")
+            val tempFile = downloadDir.resolve("mpv-dev-x86_64.7z.part")
+            tempFile.delete()
             URI(mpvUrl).toURL().openStream().use { input ->
-                archiveFile.outputStream().use { output -> input.copyTo(output) }
+                tempFile.outputStream().use { output -> input.copyTo(output) }
+            }
+            if (!tempFile.renameTo(archiveFile)) {
+                tempFile.copyTo(archiveFile, overwrite = true)
+                tempFile.delete()
             }
         }
 
+        val candidates = listOf(
+            "7z",
+            "C:\\Program Files\\7-Zip\\7z.exe",
+            "C:\\Program Files (x86)\\7-Zip\\7z.exe"
+        )
+        val sevenZip = candidates.firstOrNull { bin ->
+            try {
+                ProcessBuilder(bin).redirectErrorStream(true).start().waitFor()
+                true
+            } catch (_: Exception) {
+                false
+            }
+        } ?: throw GradleException("7-Zip (7z) not found. Please install 7-Zip (e.g. 'winget install 7zip.7zip' or https://www.7-zip.org/)")
+
         println("Extracting libmpv to $targetDir...")
-        val cmd = listOf("7z", "e", "-y", archiveFile.absolutePath, "-o${targetDir.absolutePath}", "libmpv-2.dll")
+        val cmd = listOf(sevenZip, "e", "-y", archiveFile.absolutePath, "-o${targetDir.absolutePath}", "libmpv-2.dll")
         val process = ProcessBuilder(cmd).redirectErrorStream(true).start()
         val output = process.inputStream.bufferedReader().readText()
         val exitCode = process.waitFor()
         if (exitCode != 0) {
+            archiveFile.delete()
             throw GradleException("Failed to extract libmpv archive with 7z (exit code $exitCode):\n$output")
         }
 

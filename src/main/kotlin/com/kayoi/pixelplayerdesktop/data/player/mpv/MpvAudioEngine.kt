@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
 
+import com.sun.jna.Platform
 import com.sun.jna.Pointer
 import com.sun.jna.Structure
 import kotlinx.coroutines.CoroutineScope
@@ -116,11 +117,17 @@ class MpvAudioEngine(
         api.mpv_set_property_string(handle, "vo", "null")
         api.mpv_set_property_string(handle, "video", "no")
         api.mpv_set_property_string(handle, "terminal", "no")
-        api.mpv_set_property_string(handle, "msg-level", "all=no")
+        api.mpv_set_property_string(handle, "msg-level", "all=warn")
         api.mpv_set_property_string(handle, "gapless-audio", "yes")
         api.mpv_set_property_string(handle, "audio-client-name", "PixelPlayer")
         api.mpv_set_property_string(handle, "audio-pitch-correction", "yes")
-        api.mpv_set_property_string(handle, "ao", "pipewire,pulse,alsa,wasapi,coreaudio,null")
+
+        val aoDriver = when {
+            Platform.isWindows() -> "wasapi"
+            Platform.isMac() -> "coreaudio"
+            else -> "pipewire,pulse,alsa"
+        }
+        api.mpv_set_property_string(handle, "ao", aoDriver)
 
         val status = api.mpv_initialize(handle)
         if (status < 0) {
@@ -147,7 +154,11 @@ class MpvAudioEngine(
                 if (eventId == MpvApi.MPV_EVENT_NONE) continue
                 if (eventId == MpvApi.MPV_EVENT_SHUTDOWN) break
 
-                handleMpvEvent(handle, eventRef)
+                try {
+                    handleMpvEvent(handle, eventRef)
+                } catch (t: Throwable) {
+                    System.err.println("[MpvAudioEngine] Error handling event: ${t.message}")
+                }
             }
         }
     }
@@ -325,7 +336,11 @@ class MpvAudioEngine(
             val targetVol = getEffectiveVolume()
             setVolumeOnHandle(player, targetVol)
 
-            api.mpv_command(player, arrayOf("loadfile", validPath, "replace"))
+            val cmdStatus = api.mpv_command(player, arrayOf("loadfile", validPath, "replace"))
+            if (cmdStatus < 0) {
+                val err = api.mpv_error_string(cmdStatus)
+                System.err.println("[MpvAudioEngine] loadfile failed ($cmdStatus): $err for $validPath")
+            }
             api.mpv_set_property_string(player, "pause", "no")
         } catch (e: Exception) {
             _playbackState.value = PlaybackState.ERROR
@@ -576,7 +591,11 @@ class MpvAudioEngine(
             playerPair.set(PlayerPair(active = incomingPlayer, standby = outgoingPlayer))
 
             setVolumeOnHandle(incomingPlayer, 0f)
-            api.mpv_command(incomingPlayer, arrayOf("loadfile", validPath, "replace"))
+            val cmdStatus = api.mpv_command(incomingPlayer, arrayOf("loadfile", validPath, "replace"))
+            if (cmdStatus < 0) {
+                val err = api.mpv_error_string(cmdStatus)
+                System.err.println("[MpvAudioEngine] crossfade loadfile failed ($cmdStatus): $err for $validPath")
+            }
             api.mpv_set_property_string(incomingPlayer, "pause", "no")
 
             val clampedDuration = durationMs.coerceIn(500L, 12000L)

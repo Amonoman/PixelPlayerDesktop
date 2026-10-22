@@ -116,13 +116,17 @@ interface MpvApi : Library {
         }
 
         val INSTANCE: MpvApi by lazy {
+            System.setProperty("jna.encoding", "UTF-8")
             setupNativeDiscovery()
             ensureLocaleNumeric()
+            val loadOptions = mapOf<String, Any>(
+                Library.OPTION_STRING_ENCODING to "UTF-8"
+            )
             val candidates = listOf("mpv", "mpv-2", "libmpv-2", "libmpv.so.2", "libmpv.so", "libmpv.2.dylib", "libmpv.dylib")
             var lastError: Throwable? = null
             for (candidate in candidates) {
                 try {
-                    return@lazy Native.load(candidate, MpvApi::class.java)
+                    return@lazy Native.load(candidate, MpvApi::class.java, loadOptions)
                 } catch (t: Throwable) {
                     lastError = t
                 }
