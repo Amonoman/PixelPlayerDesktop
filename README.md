@@ -5,7 +5,7 @@
 <h1 align="center">PixelPlayer Desktop</h1>
 
 <p align="center">
-  A modern, high-fidelity local and streaming music player for Linux and Windows, crafted with Compose Multiplatform and Material 3 Expressive design.
+  A modern, high-fidelity local and streaming music player for Linux, macOS, and Windows, crafted with Compose Multiplatform and Material 3 Expressive design.
 </p>
 
 <p align="center">
@@ -15,7 +15,7 @@
   <a href="https://github.com/adlifarizi/PixelPlayerDesktop/releases">
     <img src="https://img.shields.io/github/downloads/adlifarizi/PixelPlayerDesktop/total?logo=github&style=for-the-badge" alt="Total downloads">
   </a>
-  <img src="https://img.shields.io/badge/Platform-Linux%20%7C%20Windows-blue?style=for-the-badge&logo=linux&logoColor=white" alt="Platform Linux and Windows">
+  <img src="https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-blue?style=for-the-badge&logo=apple&logoColor=white" alt="Platform Linux, macOS, and Windows">
   <img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge" alt="GPLv3 license">
 </p>
 
@@ -64,7 +64,7 @@
 
 ## Keyboard Shortcuts
 
-PixelPlayer Desktop includes full keyboard navigation for seamless playback and interface control. You can press <kbd>Ctrl</kbd> + <kbd>/</kbd> or <kbd>F1</kbd> anywhere inside the app to view the in-app cheatsheet dialog.
+PixelPlayer Desktop includes full keyboard navigation for seamless playback and interface control. You can press <kbd>Ctrl</kbd> + <kbd>/</kbd> (or <kbd>⌘</kbd> + <kbd>/</kbd> on macOS) or <kbd>F1</kbd> anywhere inside the app to view the in-app cheatsheet dialog. On macOS, <kbd>⌘ Command</kbd> replaces <kbd>Ctrl</kbd> for all playback and navigation hotkeys.
 
 | Action | Shortcut |
 | --- | --- |
@@ -92,7 +92,8 @@ PixelPlayer Desktop includes full keyboard navigation for seamless playback and 
 
 | Requirement | Details |
 | --- | --- |
-| **Operating System** | Linux (Ubuntu/Debian, Fedora, Arch, etc.) or Windows 10/11 (64-bit) |
+| **Operating System** | macOS 12+ (Apple Silicon & Intel), Linux (Ubuntu, Fedora, Arch, etc.), or Windows 10/11 (64-bit) |
+| **macOS Runtime** | `libmpv` is bundled into release packages or resolved via Homebrew (`brew install mpv`) |
 | **Windows Runtime** | `libmpv` is automatically bundled in release installers and portable archives. No separate installation required. |
 | **Linux Runtime** | `libmpv` runtime libraries (`sudo apt install libmpv2 mpv` on Debian/Ubuntu, `sudo dnf install mpv-libs` on Fedora, or distro equivalent) |
 | **Build Toolchain** | JDK 21 (for building from source) |
@@ -103,6 +104,9 @@ PixelPlayer Desktop includes full keyboard navigation for seamless playback and 
 
 Pre-built binaries and release installers are available on the [GitHub Releases page](https://github.com/adlifarizi/PixelPlayerDesktop/releases):
 
+- **macOS**:
+  - Installer: `.dmg` drag-and-drop installer or `.pkg` package.
+  - Portable: `.tar.gz` archive (`PixelPlayer.app`).
 - **Windows**:
   - Installer: `.msi` or `.exe` setup package.
   - Portable: `.zip` archive (extract and launch `PixelPlayer.exe`).
@@ -144,6 +148,12 @@ Build RPM installer package (`.rpm`):
 
 ```sh
 ./gradlew packageRpm
+```
+
+Build macOS disk image and installer (`.dmg` and `.pkg` on a macOS host):
+
+```sh
+./gradlew packageDmg packagePkg
 ```
 
 Build Windows installers (`.msi` and `.exe` on a Windows host):

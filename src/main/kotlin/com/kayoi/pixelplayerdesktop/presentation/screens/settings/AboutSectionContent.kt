@@ -145,11 +145,18 @@ private fun openBrowser(url: String) {
     try {
         if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
             Desktop.getDesktop().browse(URI(url))
-        } else {
-            Runtime.getRuntime().exec(arrayOf("xdg-open", url))
+            return
         }
-    } catch (_: Exception) {
-        runCatching { Runtime.getRuntime().exec(arrayOf("xdg-open", url)) }
+    } catch (_: Exception) {}
+
+    val os = System.getProperty("os.name", "").lowercase()
+    runCatching {
+        val command = when {
+            os.contains("mac") -> arrayOf("open", url)
+            os.contains("win") -> arrayOf("cmd", "/c", "start", "", url)
+            else -> arrayOf("xdg-open", url)
+        }
+        Runtime.getRuntime().exec(command)
     }
 }
 

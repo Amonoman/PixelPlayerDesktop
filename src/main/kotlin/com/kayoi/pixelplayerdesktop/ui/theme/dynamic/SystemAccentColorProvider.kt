@@ -24,6 +24,7 @@ object SystemAccentColorProvider {
         val detected = when {
             os.contains("win") -> getWindowsAccentColor()
             os.contains("linux") || os.contains("nix") -> getLinuxAccentColor()
+            os.contains("mac") || os.contains("darwin") -> getMacAccentColor()
             else -> null
         }
 
@@ -125,6 +126,38 @@ object SystemAccentColorProvider {
         } catch (_: Throwable) {}
 
         return null
+    }
+
+    private fun getMacAccentColor(): Color? {
+        val accentCode = runProcessWithTimeout(listOf("defaults", "read", "-g", "AppleAccentColor"))
+            ?.toIntOrNull()
+        if (accentCode != null) {
+            return when (accentCode) {
+                -1 -> Color(0xFF8E8E93)
+                0 -> Color(0xFFFF3B30)
+                1 -> Color(0xFFFF9500)
+                2 -> Color(0xFFFFCC00)
+                3 -> Color(0xFF34C759)
+                4 -> Color(0xFFAF52DE)
+                5 -> Color(0xFFFF2D55)
+                else -> Color(0xFF007AFF)
+            }
+        }
+
+        val highlightOutput = runProcessWithTimeout(listOf("defaults", "read", "-g", "AppleHighlightColor"))
+        if (highlightOutput != null) {
+            val parts = highlightOutput.split(Regex("\\s+"))
+            if (parts.size >= 3) {
+                val r = parts[0].toFloatOrNull()
+                val g = parts[1].toFloatOrNull()
+                val b = parts[2].toFloatOrNull()
+                if (r != null && g != null && b != null) {
+                    return Color(r, g, b)
+                }
+            }
+        }
+
+        return Color(0xFF007AFF)
     }
 
     internal fun runProcessWithTimeout(

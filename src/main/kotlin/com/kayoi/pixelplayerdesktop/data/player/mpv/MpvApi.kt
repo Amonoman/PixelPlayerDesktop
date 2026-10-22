@@ -67,6 +67,7 @@ interface MpvApi : Library {
                     appResourceDir?.resolve("mpv"),
                     appResourceDir?.resolve("windows/mpv"),
                     appResourceDir?.resolve("linux/mpv"),
+                    appResourceDir?.resolve("macos/mpv"),
                     File(userDir, "mpv"),
                     File(userDir, "app/mpv"),
                     File(userDir, "resources/mpv"),
@@ -76,7 +77,10 @@ interface MpvApi : Library {
                     codeSourceLocation?.parentFile?.parentFile?.resolve("resources/mpv"),
                     codeSourceLocation?.parentFile?.parentFile?.resolve("app/resources/mpv"),
                     File("src/main/resources-packaged/windows/mpv"),
-                    File("src/main/resources-packaged/linux/mpv")
+                    File("src/main/resources-packaged/linux/mpv"),
+                    File("src/main/resources-packaged/macos/mpv"),
+                    File("/opt/homebrew/lib"),
+                    File("/usr/local/lib")
                 )
 
                 val mpvDir = candidates.firstOrNull { dir ->
@@ -94,6 +98,9 @@ interface MpvApi : Library {
                     NativeLibrary.addSearchPath("mpv-2", path)
                     NativeLibrary.addSearchPath("libmpv-2", path)
                     NativeLibrary.addSearchPath("libmpv", path)
+                    NativeLibrary.addSearchPath("libmpv.2", path)
+                    NativeLibrary.addSearchPath("libmpv.2.dylib", path)
+                    NativeLibrary.addSearchPath("libmpv.dylib", path)
                 }
             }
         }

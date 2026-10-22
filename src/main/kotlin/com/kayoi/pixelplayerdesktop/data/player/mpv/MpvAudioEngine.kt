@@ -120,6 +120,7 @@ class MpvAudioEngine(
         api.mpv_set_property_string(handle, "gapless-audio", "yes")
         api.mpv_set_property_string(handle, "audio-client-name", "PixelPlayer")
         api.mpv_set_property_string(handle, "audio-pitch-correction", "yes")
+        api.mpv_set_property_string(handle, "ao", "pipewire,pulse,alsa,wasapi,coreaudio,null")
 
         val status = api.mpv_initialize(handle)
         if (status < 0) {

@@ -3,7 +3,9 @@ package com.kayoi.pixelplayerdesktop.utils
 import java.io.File
 
 object DirectoryFilterUtils {
-    private val isWindows = System.getProperty("os.name")?.lowercase()?.contains("win") == true
+    private val isCaseInsensitiveOs = System.getProperty("os.name")?.lowercase()?.let {
+        it.contains("win") || it.contains("mac")
+    } == true
 
     fun normalizePrefixes(excludedList: List<String>): List<String> {
         if (excludedList.isEmpty()) return emptyList()
@@ -18,7 +20,7 @@ object DirectoryFilterUtils {
         val normPath = File(path).absolutePath
         val normPathWithSep = if (normPath.endsWith(File.separator)) normPath else normPath + File.separator
         return normalizedPrefixes.any { prefix ->
-            if (isWindows) {
+            if (isCaseInsensitiveOs) {
                 normPathWithSep.startsWith(prefix, ignoreCase = true) || normPath.equals(prefix.trimEnd(File.separatorChar), ignoreCase = true)
             } else {
                 normPathWithSep.startsWith(prefix) || normPath == prefix.trimEnd(File.separatorChar)

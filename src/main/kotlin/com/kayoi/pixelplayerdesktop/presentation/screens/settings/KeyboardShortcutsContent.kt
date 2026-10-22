@@ -33,6 +33,9 @@ data class ShortcutCategory(
     val items: List<ShortcutItem>
 )
 
+private val isMacOs = System.getProperty("os.name")?.lowercase()?.contains("mac") == true
+private val modKey = if (isMacOs) "⌘" else "Ctrl"
+
 val defaultShortcutCategories = listOf(
     ShortcutCategory(
         categoryName = "Playback Controls",
@@ -45,12 +48,12 @@ val defaultShortcutCategories = listOf(
             ShortcutItem(
                 title = "Next Track",
                 description = "Skip to the next song in the active queue",
-                keyCombos = listOf(listOf("Ctrl", "→"))
+                keyCombos = listOf(listOf(modKey, "→"))
             ),
             ShortcutItem(
                 title = "Previous Track",
                 description = "Return to previous track or start of current song",
-                keyCombos = listOf(listOf("Ctrl", "←"))
+                keyCombos = listOf(listOf(modKey, "←"))
             ),
             ShortcutItem(
                 title = "Seek Forward",
@@ -65,12 +68,12 @@ val defaultShortcutCategories = listOf(
             ShortcutItem(
                 title = "Toggle Shuffle",
                 description = "Randomize queue playback order",
-                keyCombos = listOf(listOf("Ctrl", "S"))
+                keyCombos = listOf(listOf(modKey, "S"))
             ),
             ShortcutItem(
                 title = "Cycle Repeat Mode",
                 description = "Cycle between Repeat Off, Repeat All, and Repeat One",
-                keyCombos = listOf(listOf("Ctrl", "R"))
+                keyCombos = listOf(listOf(modKey, "R"))
             ),
             ShortcutItem(
                 title = "Favorite Song",
@@ -85,12 +88,12 @@ val defaultShortcutCategories = listOf(
             ShortcutItem(
                 title = "Volume Up",
                 description = "Increase playback volume by 5%",
-                keyCombos = listOf(listOf("Ctrl", "↑"))
+                keyCombos = listOf(listOf(modKey, "↑"))
             ),
             ShortcutItem(
                 title = "Volume Down",
                 description = "Decrease playback volume by 5%",
-                keyCombos = listOf(listOf("Ctrl", "↓"))
+                keyCombos = listOf(listOf(modKey, "↓"))
             ),
             ShortcutItem(
                 title = "Mute / Unmute",
@@ -105,12 +108,12 @@ val defaultShortcutCategories = listOf(
             ShortcutItem(
                 title = "Search Library",
                 description = "Quickly focus the search bar from anywhere",
-                keyCombos = listOf(listOf("Ctrl", "K"))
+                keyCombos = listOf(listOf(modKey, "K"))
             ),
             ShortcutItem(
                 title = "Toggle Queue Panel",
                 description = "Open or collapse the right-side play queue drawer",
-                keyCombos = listOf(listOf("Ctrl", "Q"), listOf("Alt", "Q"))
+                keyCombos = listOf(listOf(modKey, "Q"), listOf("Alt", "Q"))
             ),
             ShortcutItem(
                 title = "Toggle Fullscreen",
@@ -130,7 +133,7 @@ val defaultShortcutCategories = listOf(
             ShortcutItem(
                 title = "Keyboard Shortcuts Cheatsheet",
                 description = "Show the quick reference dialog anywhere",
-                keyCombos = listOf(listOf("Ctrl", "/"), listOf("F1"))
+                keyCombos = listOf(listOf(modKey, "/"), listOf("F1"))
             )
         )
     )

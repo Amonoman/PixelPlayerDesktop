@@ -153,13 +153,14 @@ fun main(args: Array<String> = emptyArray()) {
     }
 
     val isWindows = remember { System.getProperty("os.name").startsWith("Windows", ignoreCase = true) }
+    val isLinux = remember { System.getProperty("os.name").contains("linux", ignoreCase = true) }
 
-    DisposableEffect(triggerBack, triggerForward, isWindows) {
+    DisposableEffect(triggerBack, triggerForward, isLinux) {
         val mouseListener = AWTEventListener { event ->
             if (event is MouseEvent && event.id == MouseEvent.MOUSE_RELEASED) {
                 // OpenJDK on X11 maps side buttons 8/9 to AWT 6/7; buttons 4/5 are horizontal scroll.
-                val isBack = if (isWindows) event.button == 4 else event.button == 6
-                val isForward = if (isWindows) event.button == 5 else event.button == 7
+                val isBack = if (isLinux) event.button == 6 else event.button == 4
+                val isForward = if (isLinux) event.button == 7 else event.button == 5
                 if (isBack) {
                     triggerBack()
                 } else if (isForward) {
@@ -276,7 +277,7 @@ fun main(args: Array<String> = emptyArray()) {
                         searchFocusRequester.requestFocus()
                         true
                     }
-                    keyEvent.isCtrlPressed && keyEvent.key == Key.DirectionRight -> {
+                    isModifier && keyEvent.key == Key.DirectionRight -> {
                         if (!isInputActive) {
                             playerViewModel.playNext()
                             true
@@ -284,7 +285,7 @@ fun main(args: Array<String> = emptyArray()) {
                             false
                         }
                     }
-                    keyEvent.isCtrlPressed && keyEvent.key == Key.DirectionLeft -> {
+                    isModifier && keyEvent.key == Key.DirectionLeft -> {
                         if (!isInputActive) {
                             playerViewModel.playPrevious()
                             true
@@ -300,12 +301,12 @@ fun main(args: Array<String> = emptyArray()) {
                         playerViewModel.seekBackward(5000L)
                         true
                     }
-                    keyEvent.isCtrlPressed && keyEvent.key == Key.DirectionUp -> {
+                    isModifier && keyEvent.key == Key.DirectionUp -> {
                         val currentVol = playerViewModel.playerInfo.value.volume
                         playerViewModel.setVolume((currentVol + 0.05f).coerceIn(0f, 1f))
                         true
                     }
-                    keyEvent.isCtrlPressed && keyEvent.key == Key.DirectionDown -> {
+                    isModifier && keyEvent.key == Key.DirectionDown -> {
                         val currentVol = playerViewModel.playerInfo.value.volume
                         playerViewModel.setVolume((currentVol - 0.05f).coerceIn(0f, 1f))
                         true
@@ -361,7 +362,7 @@ fun main(args: Array<String> = emptyArray()) {
                     (isModifier && keyEvent.key == Key.Slash) || keyEvent.key == Key.F1 -> true
                     keyEvent.isAltPressed && (keyEvent.key == Key.DirectionLeft || keyEvent.key == Key.DirectionRight) -> true
                     isModifier && (keyEvent.key == Key.K || keyEvent.key == Key.S || keyEvent.key == Key.R || keyEvent.key == Key.Q) -> true
-                    keyEvent.isCtrlPressed && !isInputActive && (keyEvent.key == Key.DirectionRight || keyEvent.key == Key.DirectionLeft || keyEvent.key == Key.DirectionUp || keyEvent.key == Key.DirectionDown) -> true
+                    isModifier && !isInputActive && (keyEvent.key == Key.DirectionRight || keyEvent.key == Key.DirectionLeft || keyEvent.key == Key.DirectionUp || keyEvent.key == Key.DirectionDown) -> true
                     !isModifier && !keyEvent.isAltPressed && !isInputActive && (keyEvent.key == Key.DirectionRight || keyEvent.key == Key.DirectionLeft) -> true
                     keyEvent.isAltPressed && keyEvent.key == Key.Q -> true
                     keyEvent.key == Key.F11 -> true

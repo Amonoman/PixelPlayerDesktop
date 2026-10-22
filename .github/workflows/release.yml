@@ -139,9 +139,52 @@ jobs:
           path: dist-windows/*
           retention-days: 1
 
+  build-macos:
+    name: Build macOS Packages
+    runs-on: macos-latest
+    needs: build-linux
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: false
+
+      - name: Install libmpv dependencies
+        run: brew install mpv
+
+      - name: Build macOS Distribution
+        run: ./gradlew packageDmg packagePkg createDistributable "-PAPP_VERSION_NAME=${{ needs.build-linux.outputs.version }}" --no-daemon
+
+      - name: Archive Portable macOS Binary
+        run: |
+          APP_NAME=$(ls build/compose/binaries/main/app | grep '\.app$' | head -n 1)
+          tar -czf build/compose/binaries/main/pixelplayer-macos-portable.tar.gz -C build/compose/binaries/main/app "$APP_NAME"
+
+      - name: Stage macOS Artifacts
+        run: |
+          mkdir -p dist-macos
+          find build/compose/binaries/main -type f \( -name "*.dmg" -o -name "*.pkg" -o -name "*macos-portable.tar.gz" \) -exec cp {} dist-macos/ \;
+
+      - name: Upload macOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dist
+          path: dist-macos/*
+          retention-days: 1
+
   publish-release:
     name: Publish GitHub Release
-    needs: [build-linux, build-windows]
+    needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
 
     steps:
@@ -155,6 +198,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: windows-dist
+          path: release-assets
+
+      - name: Download macOS Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-dist
           path: release-assets
 
       - name: Display Release Files

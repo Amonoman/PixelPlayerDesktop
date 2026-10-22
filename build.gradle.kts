@@ -180,7 +180,9 @@ compose.desktop {
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb,
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Rpm,
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi,
-                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Exe
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Exe,
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg,
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Pkg
             )
 
             packageName = "pixelplayer"
@@ -207,6 +209,15 @@ compose.desktop {
                 exePackageVersion = windowsVersion
                 menuGroup = "Kayoi"
                 upgradeUuid = "d7bfb9d0-6243-4f9e-a81d-e4b5efc4e723"
+            }
+
+            macOS {
+                iconFile.set(project.file("src/main/resources/icons/icon.icns"))
+                packageVersion = windowsVersion
+                bundleID = "com.kayoi.pixelplayerdesktop"
+                packageName = "PixelPlayer"
+                appCategory = "public.app-category.music"
+                minimumSystemVersion = "12.0"
             }
         }
     }
@@ -296,17 +307,62 @@ tasks.register("setupMpvLinux") {
     }
 }
 
+tasks.register("setupMpvMacos") {
+    group = "mpv"
+    description = "Bundles libmpv for macOS from host system"
+    val targetDir = layout.projectDirectory.dir("src/main/resources-packaged/macos/mpv").asFile
+    outputs.dir(targetDir)
+    onlyIf {
+        !targetDir.resolve("libmpv.2.dylib").exists() && !targetDir.resolve("libmpv.dylib").exists()
+    }
+
+    doLast {
+        val searchDirs = listOf(
+            file("/opt/homebrew/lib"),
+            file("/usr/local/lib"),
+            file("/usr/lib")
+        )
+        val mpvLibDir = searchDirs.firstOrNull { dir ->
+            dir.resolve("libmpv.2.dylib").exists() || dir.resolve("libmpv.dylib").exists()
+        }
+
+        if (mpvLibDir == null) {
+            println("WARNING: libmpv not found on host macOS system. Install with: brew install mpv")
+            return@doLast
+        }
+
+        println("Bundling libmpv from $mpvLibDir to $targetDir...")
+        targetDir.mkdirs()
+
+        copy {
+            from(mpvLibDir) {
+                include("libmpv*.dylib")
+            }
+            into(targetDir)
+        }
+
+        val mpvDylib2 = targetDir.resolve("libmpv.2.dylib")
+        val mpvDylib = targetDir.resolve("libmpv.dylib")
+        if (mpvDylib2.exists() && !mpvDylib.exists()) {
+            mpvDylib2.copyTo(mpvDylib)
+        }
+        println("libmpv macOS bundled successfully.")
+    }
+}
+
 tasks.matching {
     it.name.contains("Resource", ignoreCase = true) ||
     it.name.startsWith("package") ||
     it.name == "createDistributable"
 }.configureEach {
-    if (name != "setupMpvWindows" && name != "setupMpvLinux") {
+    if (name != "setupMpvWindows" && name != "setupMpvLinux" && name != "setupMpvMacos") {
         val os = org.gradle.internal.os.OperatingSystem.current()
         if (os.isWindows) {
             dependsOn("setupMpvWindows")
         } else if (os.isLinux) {
             dependsOn("setupMpvLinux")
+        } else if (os.isMacOsX) {
+            dependsOn("setupMpvMacos")
         }
     }
 }
