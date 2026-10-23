@@ -1,8 +1,13 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.roundToInt
+import kotlin.math.sin
+import kotlin.math.tan
+
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -18,24 +23,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.PathNode
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+
 import com.kayoi.pixelplayerdesktop.presentation.components.LocalWindowMinimized
-import kotlinx.coroutines.isActive
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.max
-import kotlin.math.sin
-import kotlin.math.tan
 
 @Composable
 fun BubblesLine(
@@ -54,30 +58,33 @@ fun BubblesLine(
         modifier = modifier
     ) {
         val shouldAnimate = isPlaying && !isMinimized
-        val bubbleProgressAnim = remember { Animatable(0f) }
+        var bubbleProgress by remember { mutableFloatStateOf(0f) }
 
         LaunchedEffect(shouldAnimate) {
             if (!shouldAnimate) return@LaunchedEffect
-            while (coroutineContext.isActive) {
-                val start = (bubbleProgressAnim.value % 1f).let { if (it < 0f) it + 1f else it }
-                bubbleProgressAnim.snapTo(start)
-                bubbleProgressAnim.animateTo(
-                    targetValue = start + 1f,
-                    animationSpec = tween(durationMillis = 3500, easing = LinearEasing)
-                )
+            var last = System.nanoTime()
+            val speed = 1f / 3.5f
+            while (true) {
+                delay(33L)
+                val now = System.nanoTime()
+                val dt = (now - last) / 1_000_000_000f
+                bubbleProgress = (bubbleProgress + dt * speed) % 1f
+                last = now
             }
         }
 
         val density = LocalDensity.current
         val bubbleRadius = remember(density) { with(density) { 4.5f.dp.toPx() } }
 
-        val (morphableCircle, morphableNote) = remember(bubbleRadius) {
+        val cachedMorphPaths = remember(bubbleRadius) {
             val (noteNodes, curveCount) = createVectorNotePathNodes(targetSize = bubbleRadius * 2.8f)
             val circleNodes = createCirclePathNodes(radius = bubbleRadius, curveCount = curveCount)
-            circleNodes to noteNodes
+            val steps = 16
+            List(steps + 1) { step ->
+                val frac = step.toFloat() / steps
+                lerpPath(circleNodes, noteNodes, frac).toPath(Path())
+            }
         }
-
-        val bubblePaths = remember { List(3) { Path() } }
 
         val contentAlignment = when (alignment.lowercase()) {
             "center" -> Alignment.Center
@@ -93,8 +100,12 @@ fun BubblesLine(
                 .padding(vertical = 8.dp, horizontal = 10.dp),
             contentAlignment = contentAlignment
         ) {
-            Canvas(modifier = Modifier.size(160.dp, 44.dp)) {
-                val animatedValue = bubbleProgressAnim.value
+            Canvas(
+                modifier = Modifier
+                    .size(160.dp, 44.dp)
+                    .graphicsLayer { }
+            ) {
+                val animatedValue = bubbleProgress
                 val bubbleCount = 3
                 val bubbleColor = color.copy(alpha = 0.85f)
                 val bounceAmplitude = 9.dp.toPx()
@@ -111,11 +122,8 @@ fun BubblesLine(
                         else -> 0f
                     }.coerceIn(0f, 1f)
 
-                    val morphedPath = lerpPath(
-                        start = morphableCircle,
-                        stop = morphableNote,
-                        fraction = morphProgress
-                    ).toPath(bubblePaths[i])
+                    val morphIndex = (morphProgress * 16f).roundToInt().coerceIn(0, 16)
+                    val morphedPath = cachedMorphPaths[morphIndex]
 
                     val xPos = (size.width / (bubbleCount + 1)) * (i + 1)
                     val yPos = size.height / 2 + yOffset

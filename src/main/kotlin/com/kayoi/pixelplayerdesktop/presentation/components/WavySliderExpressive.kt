@@ -1,8 +1,9 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
-import androidx.compose.animation.core.Animatable
+import kotlin.math.PI
+import kotlin.math.sin
+
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -24,17 +25,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.isActive
-import kotlin.math.PI
-import kotlin.math.sin
+import kotlinx.coroutines.delay
 
-/**
- * An expressive audio playback slider featuring an animated sine wave track when active
- * and a smooth flat transition when paused or scrubbed.
- */
 @Composable
 fun WavySliderExpressive(
     value: Float,
@@ -79,19 +75,20 @@ fun WavySliderExpressive(
         label = "thumbInteraction"
     )
 
-    val phaseAnim = remember { Animatable(0f) }
+    var phase by remember { mutableFloatStateOf(0f) }
     val shouldAnimatePhase = isPhaseRunning && !isMinimized
     val fullRotation = (2f * PI).toFloat()
 
     LaunchedEffect(shouldAnimatePhase) {
         if (!shouldAnimatePhase) return@LaunchedEffect
-        while (isActive) {
-            val start = (phaseAnim.value % fullRotation).let { if (it < 0f) it + fullRotation else it }
-            phaseAnim.snapTo(start)
-            phaseAnim.animateTo(
-                targetValue = start + fullRotation,
-                animationSpec = tween(durationMillis = 1400, easing = LinearEasing)
-            )
+        var lastTime = System.nanoTime()
+        val speed = fullRotation / 1.4f
+        while (true) {
+            delay(33L)
+            val now = System.nanoTime()
+            val dt = (now - lastTime) / 1_000_000_000f
+            phase = (phase + dt * speed) % fullRotation
+            lastTime = now
         }
     }
 
@@ -99,6 +96,7 @@ fun WavySliderExpressive(
 
     Canvas(
         modifier = modifier
+            .graphicsLayer { }
             .fillMaxWidth()
             .height(28.dp)
             .pointerInput(enabled) {
@@ -142,7 +140,7 @@ fun WavySliderExpressive(
                 )
             }
     ) {
-        val phase = phaseAnim.value
+        val currentPhase = phase
         val width = size.width
         val height = size.height
         val centerY = height / 2f
@@ -158,7 +156,6 @@ fun WavySliderExpressive(
         val displayValue = dragFraction ?: value
         val progressX = (trackStart + displayValue.coerceIn(0f, 1f) * trackWidth).coerceIn(trackStart, trackEnd)
 
-        // Draw inactive background track from current progress thumb to end boundary
         if (progressX < trackEnd) {
             val inactiveStart = (progressX + 4.dp.toPx() * (1f - thumbInteractionFraction)).coerceAtMost(trackEnd)
             if (inactiveStart < trackEnd) {
@@ -172,23 +169,22 @@ fun WavySliderExpressive(
             }
         }
 
-        // Draw active track with sinusoidal modulation
         if (progressX > trackStart) {
             wavePath.reset()
             wavePath.moveTo(trackStart, centerY)
 
             if (amplitudePx > 0.05f) {
-                val step = 3.5f
+                val step = (wavelengthPx / 8f).coerceAtLeast(3.5f)
+                val invFadeIn = 1f / (wavelengthPx * 0.6f)
+                val invFadeOut = 1f / (wavelengthPx * 0.4f)
+                val k = (2f * PI.toFloat()) / wavelengthPx
+
                 var x = trackStart
                 while (x <= progressX) {
                     val relX = x - trackStart
-                    // Taper amplitude near track start and the thumb to prevent harsh discontinuities
-                    val fadeIn = (relX / (wavelengthPx * 0.6f)).coerceIn(0f, 1f)
-                    val fadeOut = ((progressX - x) / (wavelengthPx * 0.4f)).coerceIn(0f, 1f)
-                    val envelope = fadeIn * fadeOut
-
-                    val angle = (relX / wavelengthPx) * 2f * PI.toFloat() - phase
-                    val y = centerY + sin(angle) * amplitudePx * envelope
+                    val fadeIn = (relX * invFadeIn).coerceAtMost(1f)
+                    val fadeOut = ((progressX - x) * invFadeOut).coerceIn(0f, 1f)
+                    val y = centerY + sin(relX * k - currentPhase) * (amplitudePx * fadeIn * fadeOut)
                     wavePath.lineTo(x, y)
                     x += step
                 }
@@ -204,7 +200,6 @@ fun WavySliderExpressive(
             )
         }
 
-        // Draw draggable interactive thumb
         val baseThumbRadius = 5.dp.toPx()
         val draggingThumbRadius = 7.dp.toPx()
         val thumbRadius = baseThumbRadius + (draggingThumbRadius - baseThumbRadius) * thumbInteractionFraction

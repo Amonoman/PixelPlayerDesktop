@@ -4,6 +4,7 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
+import kotlin.math.abs
 
 import com.sun.jna.Platform
 import com.sun.jna.Pointer
@@ -175,7 +176,11 @@ class MpvAudioEngine(
                     "time-pos" -> {
                         if (prop.format == MpvApi.MPV_FORMAT_DOUBLE && prop.data != null) {
                             val seconds = prop.data!!.getDouble(0)
-                            _currentPositionMs.value = (seconds * 1000).toLong().coerceAtLeast(0L)
+                            val newMs = (seconds * 1000).toLong().coerceAtLeast(0L)
+                            val current = _currentPositionMs.value
+                            if (abs(newMs - current) >= 250L) {
+                                _currentPositionMs.value = newMs
+                            }
                         }
                     }
                     "duration" -> {
@@ -661,26 +666,7 @@ class MpvAudioEngine(
     private fun startPositionTicker() {
         if (isClosed()) return
         positionTickerJob?.cancel()
-        positionTickerJob = engineScope.launch {
-            while (isActive && !isClosed()) {
-                val active = playerPair.get().active
-                if (active != null && _playbackState.value == PlaybackState.PLAYING) {
-                    val timeStr = api.mpv_get_property_string(active, "time-pos")
-                    val sec = timeStr?.toDoubleOrNull()
-                    if (sec != null) {
-                        _currentPositionMs.value = (sec * 1000).toLong().coerceAtLeast(0L)
-                    }
-                    if (_durationMs.value == 0L) {
-                        val durStr = api.mpv_get_property_string(active, "duration")
-                        val durSec = durStr?.toDoubleOrNull()
-                        if (durSec != null && durSec > 0.0) {
-                            _durationMs.value = (durSec * 1000).toLong().coerceAtLeast(0L)
-                        }
-                    }
-                }
-                delay(100L)
-            }
-        }
+        positionTickerJob = null
     }
 
     private fun stopPositionTicker() {

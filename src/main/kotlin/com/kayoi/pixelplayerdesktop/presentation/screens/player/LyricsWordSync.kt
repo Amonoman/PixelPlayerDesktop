@@ -1,15 +1,17 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.player
 
+import kotlin.math.roundToLong
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
+import kotlinx.coroutines.delay
+
 import com.kayoi.pixelplayerdesktop.data.model.SyncedLine
 import com.kayoi.pixelplayerdesktop.data.model.SyncedWord
-import kotlin.math.roundToLong
 
 internal data class SyncedWordCluster(
     val startIndex: Int,
@@ -139,10 +141,11 @@ internal fun rememberInterpolatedPlaybackPosition(
         interpolatedPositionMs = anchorPositionMs
         if (!isPlaying || !enabled) return@LaunchedEffect
 
-        val anchorFrameNanos = withFrameNanos { it }
+        val anchorNano = System.nanoTime()
         while (true) {
-            val frameNanos = withFrameNanos { it }
-            val elapsedMs = ((frameNanos - anchorFrameNanos) / 1_000_000L).coerceAtLeast(0L)
+            delay(33L)
+            val nowNano = System.nanoTime()
+            val elapsedMs = ((nowNano - anchorNano) / 1_000_000L).coerceAtLeast(0L)
             interpolatedPositionMs = anchorPositionMs + (elapsedMs * safePlaybackSpeed).roundToLong()
         }
     }
