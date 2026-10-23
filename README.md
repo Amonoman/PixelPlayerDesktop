@@ -105,10 +105,10 @@ PixelPlayer Desktop includes full keyboard navigation for seamless playback and 
 Pre-built binaries and release installers are available on the [GitHub Releases page](https://github.com/adlifarizi/PixelPlayerDesktop/releases):
 
 - **macOS**:
-  - Installer: `.dmg` drag-and-drop installer or `.pkg` package.
+  - Installer: `.dmg` drag-and-drop installer.
   - Portable: `.tar.gz` archive (`PixelPlayer.app`).
 - **Windows**:
-  - Installer: `.msi` or `.exe` setup package.
+  - Installer: `.exe` setup package.
   - Portable: `.zip` archive (extract and launch `PixelPlayer.exe`).
 - **Linux**:
   - Debian/Ubuntu: `.deb` package (`sudo dpkg -i pixelplayer-desktop_*.deb`).
