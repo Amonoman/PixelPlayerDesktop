@@ -162,7 +162,15 @@ jobs:
         run: brew install mpv
 
       - name: Build macOS Distribution
-        run: ./gradlew packageDmg createDistributable "-PAPP_VERSION_NAME=${{ needs.build-linux.outputs.version }}" --no-daemon
+        run: ./gradlew packageDmg createDistributable "-PAPP_VERSION_NAME=${{ needs.build-linux.outputs.version }}" --no-daemon --stacktrace
+
+      - name: Dump jpackage logs on failure
+        if: failure()
+        run: |
+          for f in $(find build/compose/logs -type f 2>/dev/null); do
+            echo "==================== $f ===================="
+            cat "$f"
+          done
 
       - name: Archive Portable macOS Binary
         run: |

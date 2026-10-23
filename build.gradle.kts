@@ -10,12 +10,12 @@ plugins {
 val appVersionName: String = providers.gradleProperty("APP_VERSION_NAME").getOrElse("0.1.0")
 val appVersionCode: Int = providers.gradleProperty("APP_VERSION_CODE").map { it.toIntOrNull() ?: 1 }.getOrElse(1)
 
-// Windows & macOS: Compose Desktop strictly enforces "MAJOR.MINOR.BUILD" numeric format (max 3 parts)
+// Compose Desktop strictly enforces "MAJOR.MINOR.BUILD" numeric format (max 3 parts)
 val windowsVersion: String = run {
     val base = appVersionName.substringBefore("-").trim()
     val parts = base.split(".").mapNotNull { it.toIntOrNull() }
-    val major = parts.getOrElse(0) { 0 }
-    val minor = parts.getOrElse(1) { 1 }
+    val major = parts.getOrElse(0) { 1 }
+    val minor = parts.getOrElse(1) { 0 }
     val patch = parts.getOrElse(2) { 0 }
     "$major.$minor.$patch"
 }
@@ -225,6 +225,7 @@ compose.desktop {
             macOS {
                 iconFile.set(project.file("src/main/resources/icons/icon.icns"))
                 packageVersion = windowsVersion
+                dmgPackageVersion = windowsVersion
                 bundleID = "com.kayoi.pixelplayerdesktop"
                 packageName = "PixelPlayer"
                 appCategory = "public.app-category.music"
@@ -356,11 +357,11 @@ tasks.register("setupMpvMacos") {
         println("Bundling libmpv from $mpvLibDir to $targetDir...")
         targetDir.mkdirs()
 
-        copy {
-            from(mpvLibDir) {
-                include("libmpv*.dylib")
-            }
-            into(targetDir)
+        val dylibFiles = mpvLibDir.listFiles { _, name -> name.startsWith("libmpv") && name.endsWith(".dylib") } ?: emptyArray()
+        for (file in dylibFiles) {
+            val realFile = file.canonicalFile
+            val dest = targetDir.resolve(file.name)
+            realFile.copyTo(dest, overwrite = true)
         }
 
         println("libmpv macOS bundled successfully.")
