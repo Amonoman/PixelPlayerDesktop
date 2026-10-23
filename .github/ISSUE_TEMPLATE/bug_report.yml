@@ -32,26 +32,29 @@ body:
       label: Operating System
       description: What OS are you running?
       options:
+        - macOS (Apple Silicon - M1/M2/M3/M4)
+        - macOS (Intel)
+        - Windows 11
+        - Windows 10
         - Linux (Ubuntu / Debian based)
         - Linux (Arch / Manjaro based)
         - Linux (Fedora / RHEL based)
-        - Windows 11
-        - Windows 10
         - Other Linux Distro
+        - Other
     validations:
       required: true
   - type: input
     id: desktop_env
     attributes:
       label: Desktop Environment / Window Manager (Linux only)
-      placeholder: e.g. GNOME 46, KDE Plasma 6, Hyprland, Sway (leave blank if Windows)
+      placeholder: e.g. GNOME 46, KDE Plasma 6, Hyprland, Sway (leave blank if Windows / macOS)
     validations:
       required: false
   - type: input
     id: app_version
     attributes:
       label: PixelPlayer Desktop Version
-      placeholder: e.g. 0.1.0-alpha.1
+      placeholder: e.g. 1.0.0
     validations:
       required: true
   - type: textarea
