@@ -292,7 +292,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.build-linux.outputs.tag }}
-          name: "PixelPlayer Desktop ${{ needs.build-linux.outputs.version }}"
+          name: "PixelPlayer Desktop v${{ needs.build-linux.outputs.version }}"
           body_path: release-notes.md
           prerelease: ${{ needs.build-linux.outputs.is_prerelease == 'true' }}
           draft: true
