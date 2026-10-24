@@ -1,9 +1,12 @@
 package com.kayoi.pixelplayerdesktop.platform.mediasession
 
-import com.kayoi.pixelplayerdesktop.platform.mediasession.linux.LinuxMprisMediaSessionController
-import com.kayoi.pixelplayerdesktop.platform.mediasession.windows.WindowsMediaKeySessionController
-import kotlinx.coroutines.CoroutineScope
 import java.util.Locale
+
+import kotlinx.coroutines.CoroutineScope
+
+import com.kayoi.pixelplayerdesktop.platform.mediasession.linux.LinuxMprisMediaSessionController
+import com.kayoi.pixelplayerdesktop.platform.mediasession.macos.MacOsMediaSessionController
+import com.kayoi.pixelplayerdesktop.platform.mediasession.windows.WindowsMediaKeySessionController
 
 object MediaSessionFactory {
     fun create(
@@ -20,6 +23,11 @@ object MediaSessionFactory {
             os.contains("win") -> {
                 AsyncMediaSessionController(coroutineScope) {
                     WindowsMediaKeySessionController(commands, coroutineScope)
+                }
+            }
+            os.contains("mac") || os.contains("darwin") -> {
+                AsyncMediaSessionController(coroutineScope) {
+                    MacOsMediaSessionController(commands, coroutineScope)
                 }
             }
             else -> NoOpMediaSessionController

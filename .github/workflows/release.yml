@@ -159,7 +159,7 @@ jobs:
           validate-wrappers: false
 
       - name: Install libmpv dependencies
-        run: brew install mpv
+        run: brew install mpv dylibbundler
 
       - name: Build macOS Distribution
         run: ./gradlew packageDmg createDistributable "-PAPP_VERSION_NAME=${{ needs.build-linux.outputs.version }}" --no-daemon --stacktrace

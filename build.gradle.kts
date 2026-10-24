@@ -364,6 +364,92 @@ tasks.register("setupMpvMacos") {
             realFile.copyTo(dest, overwrite = true)
         }
 
+        val bundlerCandidates = listOf("dylibbundler", "/opt/homebrew/bin/dylibbundler", "/usr/local/bin/dylibbundler")
+        val dylibbundler = bundlerCandidates.firstOrNull { bin ->
+            try {
+                ProcessBuilder(bin, "-h").redirectErrorStream(true).start().waitFor() == 0
+            } catch (_: Exception) {
+                false
+            }
+        }
+
+        if (dylibbundler != null) {
+            println("Resolving and bundling dylib dependencies with dylibbundler...")
+            val copiedDylibs = targetDir.listFiles { _, name -> name.startsWith("libmpv") && name.endsWith(".dylib") } ?: emptyArray()
+            val cmd = mutableListOf(dylibbundler, "-b", "-d", targetDir.absolutePath, "-p", "@loader_path/", "-cd", "-of")
+            for (lib in copiedDylibs) {
+                cmd.add("-x")
+                cmd.add(lib.absolutePath)
+            }
+            val process = ProcessBuilder(cmd).redirectErrorStream(true).start()
+            val output = process.inputStream.bufferedReader().readText()
+            val exitCode = process.waitFor()
+            if (exitCode != 0) {
+                println("WARNING: dylibbundler failed with exit code $exitCode:\n$output")
+            } else {
+                println("Dependencies bundled successfully with dylibbundler.")
+            }
+
+            val allBundledDylibs = targetDir.listFiles { _, name -> name.endsWith(".dylib") } ?: emptyArray()
+            for (dylib in allBundledDylibs) {
+                var attempts = 0
+                while (attempts < 10) {
+                    attempts++
+                    val otoolProc = ProcessBuilder("otool", "-l", dylib.absolutePath).start()
+                    val otoolOutput = otoolProc.inputStream.bufferedReader().readText()
+                    otoolProc.waitFor()
+
+                    val rpaths = mutableListOf<String>()
+                    val lines = otoolOutput.lines()
+                    for (i in lines.indices) {
+                        val line = lines[i].trim()
+                        if (line.endsWith("LC_RPATH")) {
+                            for (j in (i + 1)..minOf(i + 4, lines.size - 1)) {
+                                val cand = lines[j].trim()
+                                if (cand.startsWith("path ")) {
+                                    val rpath = cand.removePrefix("path ").replace(Regex("\\s*\\(offset.*"), "").trim()
+                                    rpaths.add(rpath)
+                                    break
+                                }
+                            }
+                        }
+                    }
+
+                    val duplicates = rpaths.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
+                    if (duplicates.isEmpty()) {
+                        break
+                    }
+
+                    var deletedAny = false
+                    for (dup in duplicates) {
+                        println("Removing duplicate LC_RPATH '$dup' from ${dylib.name}...")
+                        val proc = ProcessBuilder("install_name_tool", "-delete_rpath", dup, dylib.absolutePath)
+                            .redirectErrorStream(true)
+                            .start()
+                        proc.inputStream.bufferedReader().readText()
+                        if (proc.waitFor() == 0) {
+                            deletedAny = true
+                        }
+                    }
+                    if (!deletedAny) {
+                        break
+                    }
+                }
+            }
+
+            for (dylib in allBundledDylibs) {
+                try {
+                    ProcessBuilder("codesign", "-f", "-s", "-", dylib.absolutePath)
+                        .redirectErrorStream(true)
+                        .start()
+                        .waitFor()
+                } catch (_: Exception) {
+                }
+            }
+        } else {
+            println("WARNING: dylibbundler not found. Dependent dylibs may not be bundled. Install with: brew install dylibbundler")
+        }
+
         println("libmpv macOS bundled successfully.")
     }
 }

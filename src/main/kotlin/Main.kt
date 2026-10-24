@@ -73,6 +73,10 @@ private const val MIN_CONTENT_WIDTH_DP = 600
 private const val MIN_CONTENT_HEIGHT_DP = 400
 
 fun main(args: Array<String> = emptyArray()) {
+    val osName = System.getProperty("os.name", "").lowercase()
+    if (osName.contains("mac") || osName.contains("darwin")) {
+        System.setProperty("apple.awt.application.appearance", "system")
+    }
     val appStartTime = System.currentTimeMillis()
     val isBenchmark = args.contains("--benchmark-first-frame")
     AppShutdownCoordinator.registerShutdownHook()
