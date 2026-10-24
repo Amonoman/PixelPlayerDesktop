@@ -82,7 +82,8 @@ jobs:
 
       - name: Archive Portable Linux Binary
         run: |
-          tar -czf build/compose/binaries/main/pixelplayer-linux-portable.tar.gz -C build/compose/binaries/main/app pixelplayer
+          APP_DIR=$(ls build/compose/binaries/main/app | head -n 1)
+          tar -czf build/compose/binaries/main/pixelplayer-linux-portable.tar.gz -C build/compose/binaries/main/app "$APP_DIR"
 
       - name: Stage Linux Artifacts
         run: |
@@ -122,7 +123,8 @@ jobs:
       - name: Archive Portable Windows Binary
         shell: pwsh
         run: |
-          Compress-Archive -Path "build\compose\binaries\main\app\pixelplayer\*" -DestinationPath "build\compose\binaries\main\pixelplayer-windows-portable.zip"
+          $appDir = (Get-ChildItem -Directory "build\compose\binaries\main\app" | Select-Object -First 1).FullName
+          Compress-Archive -Path "$appDir\*" -DestinationPath "build\compose\binaries\main\pixelplayer-windows-portable.zip"
 
       - name: Stage Windows Artifacts
         shell: pwsh
