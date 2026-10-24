@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -58,10 +59,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.Song
-import com.kayoi.pixelplayerdesktop.data.model.SortOption
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
 import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveScrollBar
-import com.kayoi.pixelplayerdesktop.presentation.components.songFastScrollLabel
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.EnhancedSongListItem
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
@@ -191,15 +190,6 @@ fun ArtistDetailScreen(
         }
 
         val expandedSections = remember { mutableStateMapOf<String, Boolean>() }
-
-        val songFastScrollLabelProvider = remember(allSortedSongs) {
-            { index: Int ->
-                songFastScrollLabel(
-                    song = allSortedSongs.getOrNull(index),
-                    sortOption = SortOption.SongTitleAZ
-                )
-            }
-        }
 
         Column(
             modifier = modifier
@@ -367,19 +357,26 @@ fun ArtistDetailScreen(
                     LazyColumn(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(start = 24.dp, end = 28.dp, top = 16.dp, bottom = 24.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        contentPadding = PaddingValues(start = 24.dp, end = 28.dp, top = 16.dp, bottom = 24.dp)
                     ) {
                         albumSections.forEach { section ->
                             val isExpanded = expandedSections[section.title] ?: true
+                            val hasSongs = section.songs.isNotEmpty()
 
-                            item(key = "album_section_${section.title}") {
-                                val parentShape = RoundedCornerShape(24.dp)
+                            item(
+                                key = "album_header_${section.title}",
+                                contentType = "album_header"
+                            ) {
+                                val headerShape = if (isExpanded && hasSongs) {
+                                    RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 4.dp, bottomEnd = 4.dp)
+                                } else {
+                                    RoundedCornerShape(24.dp)
+                                }
 
-                                Column(
+                                Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(parentShape)
+                                        .clip(headerShape)
                                         .background(colors.surfaceContainerLow)
                                 ) {
                                     CollapsibleAlbumHeader(
@@ -394,57 +391,77 @@ fun ArtistDetailScreen(
                                             }
                                         }
                                     )
+                                }
+                            }
 
-                                    if (isExpanded) {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
-                                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                                        ) {
-                                            section.songs.forEachIndexed { songIndex, song ->
-                                                val isCurrentPlaying = currentSong?.id == song.id
-                                                val globalIndex = allSortedSongs.indexOfFirst { it.id == song.id }
-                                                val effectiveIndex = if (globalIndex != -1) globalIndex else 0
+                            if (isExpanded && hasSongs) {
+                                itemsIndexed(
+                                    items = section.songs,
+                                    key = { songIndex, song -> "album_${section.title}_song_${song.id}_$songIndex" },
+                                    contentType = { _, _ -> "album_song_item" }
+                                ) { songIndex, song ->
+                                    val isCurrentPlaying = currentSong?.id == song.id
+                                    val globalIndex = allSortedSongs.indexOfFirst { it.id == song.id }
+                                    val effectiveIndex = if (globalIndex != -1) globalIndex else 0
+                                    val isLastSong = songIndex == section.songs.lastIndex
 
-                                                val songShape = when {
-                                                    section.songs.size == 1 -> RoundedCornerShape(16.dp)
-                                                    songIndex == 0 -> RoundedCornerShape(
-                                                        topStart = 16.dp,
-                                                        topEnd = 16.dp,
-                                                        bottomStart = 4.dp,
-                                                        bottomEnd = 4.dp
-                                                    )
-                                                    songIndex == section.songs.lastIndex -> RoundedCornerShape(
-                                                        topStart = 4.dp,
-                                                        topEnd = 4.dp,
-                                                        bottomStart = 16.dp,
-                                                        bottomEnd = 16.dp
-                                                    )
-                                                    else -> RoundedCornerShape(4.dp)
-                                                }
+                                    val songShape = when {
+                                        section.songs.size == 1 -> RoundedCornerShape(16.dp)
+                                        songIndex == 0 -> RoundedCornerShape(
+                                            topStart = 16.dp,
+                                            topEnd = 16.dp,
+                                            bottomStart = 4.dp,
+                                            bottomEnd = 4.dp
+                                        )
+                                        isLastSong -> RoundedCornerShape(
+                                            topStart = 4.dp,
+                                            topEnd = 4.dp,
+                                            bottomStart = 16.dp,
+                                            bottomEnd = 16.dp
+                                        )
+                                        else -> RoundedCornerShape(4.dp)
+                                    }
 
-                                                EnhancedSongListItem(
-                                                    song = song,
-                                                    isPlaying = isCurrentPlaying && playerInfo.isPlaying,
-                                                    isCurrentSong = isCurrentPlaying,
-                                                    showAlbumArt = false,
-                                                    showDuration = false,
-                                                    customShape = songShape,
-                                                    containerColorOverride = colors.surfaceContainer,
-                                                    isFavorite = favoriteIds.contains(song.id),
-                                                    onPlayNext = { viewModel.playSongNext(song) },
-                                                    onAddToQueue = { viewModel.addSongToQueue(song) },
-                                                    onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
-                                                    onToggleFavorite = { viewModel.toggleFavorite(song) },
-                                                    onEditMetadata = if (onEditMetadata != null) { { onEditMetadata(song) } } else null,
-                                                    onDelete = if (onDelete != null) { { onDelete(song) } } else null,
-                                                    onClick = { viewModel.playSongs(allSortedSongs, effectiveIndex) }
-                                                )
-                                            }
-                                        }
+                                    val cardContainerShape = if (isLastSong) {
+                                        RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
+                                    } else {
+                                        RoundedCornerShape(0.dp)
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(cardContainerShape)
+                                            .background(colors.surfaceContainerLow)
+                                            .padding(
+                                                start = 8.dp,
+                                                end = 8.dp,
+                                                bottom = if (isLastSong) 8.dp else 2.dp
+                                            )
+                                    ) {
+                                        EnhancedSongListItem(
+                                            song = song,
+                                            isPlaying = isCurrentPlaying && playerInfo.isPlaying,
+                                            isCurrentSong = isCurrentPlaying,
+                                            showAlbumArt = false,
+                                            showDuration = false,
+                                            customShape = songShape,
+                                            containerColorOverride = colors.surfaceContainer,
+                                            isFavorite = favoriteIds.contains(song.id),
+                                            onPlayNext = { viewModel.playSongNext(song) },
+                                            onAddToQueue = { viewModel.addSongToQueue(song) },
+                                            onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
+                                            onToggleFavorite = { viewModel.toggleFavorite(song) },
+                                            onEditMetadata = if (onEditMetadata != null) { { onEditMetadata(song) } } else null,
+                                            onDelete = if (onDelete != null) { { onDelete(song) } } else null,
+                                            onClick = { viewModel.playSongs(allSortedSongs, effectiveIndex) }
+                                        )
                                     }
                                 }
+                            }
+
+                            item(key = "album_spacing_${section.title}") {
+                                Spacer(modifier = Modifier.height(12.dp))
                             }
                         }
                     }
@@ -453,8 +470,7 @@ fun ArtistDetailScreen(
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
                             .padding(end = 4.dp, top = 8.dp, bottom = 24.dp),
-                        listState = listState,
-                        dragLabelProvider = songFastScrollLabelProvider
+                        listState = listState
                     )
                 }
             }

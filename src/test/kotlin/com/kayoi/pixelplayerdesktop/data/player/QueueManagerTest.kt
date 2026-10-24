@@ -100,6 +100,34 @@ class QueueManagerTest {
     }
 
     @Test
+    fun testMoveQueueItemWithDuplicates() {
+        val qm = QueueManager()
+        val duplicateList = listOf(
+            Song(id = "dup_a", title = "Duplicate A", artist = "Artist", path = "/path/1.mp3"),
+            Song(id = "song_b", title = "Song B", artist = "Artist", path = "/path/2.mp3"),
+            Song(id = "dup_a", title = "Duplicate A", artist = "Artist", path = "/path/3.mp3"),
+            Song(id = "song_c", title = "Song C", artist = "Artist", path = "/path/4.mp3")
+        )
+        qm.setQueue(duplicateList, startIndex = 2)
+        assertEquals(2, qm.currentIndex.value)
+
+        // Move playing duplicate from index 2 to index 0 (before the first duplicate)
+        qm.moveQueueItem(2, 0)
+        assertEquals(0, qm.currentIndex.value)
+        assertEquals("dup_a", qm.currentSong.value?.id)
+
+        // Move playing duplicate from index 0 to index 3 (after the other duplicate which is now at 1)
+        qm.moveQueueItem(0, 3)
+        assertEquals(3, qm.currentIndex.value)
+        assertEquals("dup_a", qm.currentSong.value?.id)
+
+        // Move non-playing item (index 0) to index 2
+        qm.moveQueueItem(0, 2)
+        // Playing item was at 3, moving 0 to 2 shifts 3 to 2? No, 0 was removed (items shifted left), then inserted at 2 (before 3), so index 3 remains 3
+        assertEquals(3, qm.currentIndex.value)
+    }
+
+    @Test
     fun testUpdateSongInQueue() {
         val qm = QueueManager()
         qm.setQueue(sampleSongs, startIndex = 1)

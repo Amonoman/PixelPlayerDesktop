@@ -143,6 +143,19 @@ fun AlbumsTab(
             )
         } else {
             Box(modifier = Modifier.fillMaxSize()) {
+                val songsForAlbum: (Album) -> List<Song> = remember(songs) {
+                    { album ->
+                        songs.filter {
+                            (it.albumId != 0L && it.albumId == album.id) ||
+                            (it.album.equals(album.title, ignoreCase = true) && (album.artist.isBlank() || it.artist.equals(album.artist, ignoreCase = true)))
+                        }.sortedWith(
+                            compareBy<Song> { it.discNumber ?: 1 }
+                                .thenBy { if (it.trackNumber > 0) it.trackNumber else Int.MAX_VALUE }
+                                .thenBy { it.title.lowercase() }
+                        )
+                    }
+                }
+
                 if (isAlbumsListView) {
                     LazyColumn(
                         state = albumsListState,
@@ -155,9 +168,7 @@ fun AlbumsTab(
                             key = { it.title + it.artist },
                             contentType = { "album_list_item" }
                         ) { album ->
-                            val albumSongs = remember(album, songs) {
-                                songs.filter { (it.albumId != 0L && it.albumId == album.id) || (it.album.equals(album.title, ignoreCase = true) && (album.artist.isBlank() || it.artist.equals(album.artist, ignoreCase = true))) }
-                            }
+                            val albumSongs = remember(album, songs) { songsForAlbum(album) }
                             val artist = remember(album.artist, allArtists) {
                                 allArtists.find { it.name.equals(album.artist, ignoreCase = true) }
                             }
@@ -195,9 +206,7 @@ fun AlbumsTab(
                             key = { it.title + it.artist },
                             contentType = { "album_grid_item" }
                         ) { album ->
-                            val albumSongs = remember(album, songs) {
-                                songs.filter { (it.albumId != 0L && it.albumId == album.id) || (it.album.equals(album.title, ignoreCase = true) && (album.artist.isBlank() || it.artist.equals(album.artist, ignoreCase = true))) }
-                            }
+                            val albumSongs = remember(album, songs) { songsForAlbum(album) }
                             val artist = remember(album.artist, allArtists) {
                                 allArtists.find { it.name.equals(album.artist, ignoreCase = true) }
                             }

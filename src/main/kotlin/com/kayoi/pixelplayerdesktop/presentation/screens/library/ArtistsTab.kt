@@ -143,11 +143,28 @@ fun ArtistsTab(
                 Box(modifier = Modifier.fillMaxSize()) {
                     val songsForArtist: (Artist) -> List<Song> = remember(songs) {
                         { artist ->
-                            songs.filter { song ->
+                            val filtered = songs.filter { song ->
                                 (song.artistId != 0L && song.artistId == artist.id) ||
                                 song.artists.any { it.id == artist.id || it.name.equals(artist.name, ignoreCase = true) } ||
                                 song.artist.contains(artist.name, ignoreCase = true)
                             }
+                            filtered.groupBy { it.album.ifBlank { "Unknown Album" } }
+                                .map { (_, songsInAlbum) ->
+                                    val maxYear = songsInAlbum.map { it.year }.filter { it > 0 }.maxOrNull()
+                                    Pair(
+                                        maxYear ?: 0,
+                                        songsInAlbum.sortedWith(
+                                            compareBy<Song> { it.discNumber ?: 1 }
+                                                .thenBy { if (it.trackNumber > 0) it.trackNumber else Int.MAX_VALUE }
+                                                .thenBy { it.title.lowercase() }
+                                        )
+                                    )
+                                }
+                                .sortedWith(
+                                    compareByDescending<Pair<Int, List<Song>>> { it.first }
+                                        .thenBy { it.second.firstOrNull()?.album?.lowercase().orEmpty() }
+                                )
+                                .flatMap { it.second }
                         }
                     }
 

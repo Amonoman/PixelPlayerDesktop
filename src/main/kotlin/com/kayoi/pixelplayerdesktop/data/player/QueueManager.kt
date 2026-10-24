@@ -278,9 +278,23 @@ class QueueManager(
             currentList.add(toIndex, item)
             _queue.value = currentList.toList()
 
-            val curr = _currentSong.value
-            if (curr != null) {
-                _currentIndex.value = currentList.indexOfFirst { it.id == curr.id }
+            if (!_isShuffleEnabled.value && fromIndex in originalQueue.indices && toIndex in originalQueue.indices) {
+                val origList = originalQueue.toMutableList()
+                val origItem = origList.removeAt(fromIndex)
+                origList.add(toIndex, origItem)
+                originalQueue = origList.toList()
+            }
+
+            val currIdx = _currentIndex.value
+            if (currIdx in currentList.indices) {
+                val newIndex = when {
+                    currIdx == fromIndex -> toIndex
+                    fromIndex < currIdx && toIndex >= currIdx -> currIdx - 1
+                    fromIndex > currIdx && toIndex <= currIdx -> currIdx + 1
+                    else -> currIdx
+                }
+                _currentIndex.value = newIndex
+                _currentSong.value = currentList[newIndex]
             }
         }
     }

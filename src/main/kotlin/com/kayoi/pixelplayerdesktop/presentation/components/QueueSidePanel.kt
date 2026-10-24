@@ -2,7 +2,6 @@ package com.kayoi.pixelplayerdesktop.presentation.components
 
 import com.kayoi.pixelplayerdesktop.generated.resources.Res
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_queue_music
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete_sweep
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_drag_indicator
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_my_location
@@ -84,6 +83,7 @@ private data class QueueUiItem(val stableKey: String, val song: Song)
 fun QueueSidePanel(
     queue: List<Song>,
     currentSong: Song?,
+    currentQueueIndex: Int = -1,
     isPlaying: Boolean,
     isShuffleOn: Boolean,
     repeatMode: Int = 0,
@@ -112,8 +112,14 @@ fun QueueSidePanel(
     var keyCounter by remember { mutableStateOf(0L) }
     var localQueue by remember { mutableStateOf<List<QueueUiItem>>(emptyList()) }
 
-    val currentSongIndex = remember(localQueue, currentSong) {
-        if (currentSong == null) -1 else localQueue.indexOfFirst { it.song.id == currentSong.id }
+    val currentSongIndex = remember(localQueue, currentQueueIndex, currentSong) {
+        if (currentQueueIndex in localQueue.indices) {
+            currentQueueIndex
+        } else if (currentSong == null) {
+            -1
+        } else {
+            localQueue.indexOfFirst { it.song.id == currentSong.id }
+        }
     }
 
     val queueIndexOffset = remember(localQueue, currentSongIndex, showQueueHistory) {
@@ -142,12 +148,14 @@ fun QueueSidePanel(
 
     LaunchedEffect(queue) {
         if (!reorderableState.isAnyItemDragging) {
-            val newItems = mutableListOf<QueueUiItem>()
-            val oldPool = localQueue.toMutableList()
+            val oldBuckets = HashMap<String, ArrayDeque<QueueUiItem>>(localQueue.size)
+            for (item in localQueue) {
+                oldBuckets.getOrPut(item.song.id) { ArrayDeque() }.add(item)
+            }
+            val newItems = ArrayList<QueueUiItem>(queue.size)
             for (song in queue) {
-                val matchIdx = oldPool.indexOfFirst { it.song.id == song.id }
-                if (matchIdx >= 0) {
-                    val matched = oldPool.removeAt(matchIdx)
+                val matched = oldBuckets[song.id]?.removeFirstOrNull()
+                if (matched != null) {
                     newItems.add(matched.copy(song = song))
                 } else {
                     newItems.add(QueueUiItem(stableKey = "q_${keyCounter++}_${song.id}", song = song))
@@ -460,7 +468,7 @@ fun QueueSidePanel(
                         ) { index ->
                             val song = displayedQueue[index].song
                             val actualIndex = index + queueIndexOffset
-                            val isSelected = currentSong?.id == song.id && (actualIndex == currentSongIndex || currentSongIndex == -1)
+                            val isSelected = actualIndex == currentSongIndex && (currentSong == null || currentSong.id == song.id)
 
                             ReorderableItem(
                                 state = reorderableState,
@@ -484,6 +492,14 @@ fun QueueSidePanel(
                                     ),
                                     label = "scaleAnimation"
                                 )
+
+                                val onPlayNextCallback = remember(song, onPlayNext) { onPlayNext?.let { { it(song) } } }
+                                val onAddToPlaylistCallback = remember(song, onAddToPlaylist) { onAddToPlaylist?.let { { it(song) } } }
+                                val onToggleFavoriteCallback = remember(song, onToggleFavorite) { onToggleFavorite?.let { { it(song) } } }
+                                val onEditMetadataCallback = remember(song, onEditMetadata) { onEditMetadata?.let { { it(song) } } }
+                                val onRemoveCallback = remember(actualIndex, onRemoveItem) { onRemoveItem?.let { { it(actualIndex) } } }
+                                val onDeleteCallback = remember(song, onDelete) { onDelete?.let { { it(song) } } }
+                                val onClickCallback = remember(song, actualIndex, onSongClick) { { onSongClick(song, actualIndex) } }
 
                                 EnhancedSongListItem(
                                     modifier = Modifier
@@ -515,13 +531,13 @@ fun QueueSidePanel(
                                         }
                                     },
                                     isFavorite = if (favoriteSongIds.isNotEmpty()) favoriteSongIds.contains(song.id) else song.isFavorite,
-                                    onPlayNext = if (onPlayNext != null) { { onPlayNext(song) } } else null,
-                                    onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
-                                    onToggleFavorite = if (onToggleFavorite != null) { { onToggleFavorite(song) } } else null,
-                                    onEditMetadata = if (onEditMetadata != null) { { onEditMetadata(song) } } else null,
-                                    onRemoveFromQueue = if (onRemoveItem != null) { { onRemoveItem(actualIndex) } } else null,
-                                    onDelete = if (onDelete != null) { { onDelete(song) } } else null,
-                                    onClick = { onSongClick(song, actualIndex) }
+                                    onPlayNext = onPlayNextCallback,
+                                    onAddToPlaylist = onAddToPlaylistCallback,
+                                    onToggleFavorite = onToggleFavoriteCallback,
+                                    onEditMetadata = onEditMetadataCallback,
+                                    onRemoveFromQueue = onRemoveCallback,
+                                    onDelete = onDeleteCallback,
+                                    onClick = onClickCallback
                                 )
                             }
                         }

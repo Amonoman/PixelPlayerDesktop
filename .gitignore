@@ -19,3 +19,6 @@ hs_err_pid*
 # Bundled native binaries
 src/main/resources-packaged/
 /mpv/
+
+# Local agent config
+AGENTS.md

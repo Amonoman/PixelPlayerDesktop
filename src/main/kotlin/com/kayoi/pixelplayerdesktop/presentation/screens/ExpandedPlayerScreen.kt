@@ -121,6 +121,7 @@ fun ExpandedPlayerScreen(
     val playerInfo by viewModel.playerInfo.collectAsState()
     val currentSong by viewModel.currentSong.collectAsState()
     val queue by viewModel.queue.collectAsState()
+    val currentQueueIndex by viewModel.currentQueueIndex.collectAsState()
     val allArtists by viewModel.artists.collectAsState()
     val allAlbums by viewModel.albums.collectAsState()
     val favoriteSongs by viewModel.favoriteSongs.collectAsState()
@@ -582,6 +583,7 @@ fun ExpandedPlayerScreen(
                                 QueueSidePanel(
                                     queue = queue,
                                     currentSong = currentSong,
+                                    currentQueueIndex = currentQueueIndex,
                                     isPlaying = playerInfo.isPlaying,
                                     isShuffleOn = playerInfo.isShuffleEnabled,
                                     repeatMode = playerInfo.repeatMode,
@@ -636,6 +638,7 @@ fun ExpandedPlayerScreen(
                             QueueSidePanel(
                                 queue = queue,
                                 currentSong = currentSong,
+                                currentQueueIndex = currentQueueIndex,
                                 isPlaying = playerInfo.isPlaying,
                                 isShuffleOn = playerInfo.isShuffleEnabled,
                                 repeatMode = playerInfo.repeatMode,

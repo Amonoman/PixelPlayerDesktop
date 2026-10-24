@@ -34,6 +34,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +53,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 
@@ -221,45 +223,57 @@ fun ExpressiveScrollBar(
 
         val indicatorPath = remember { Path() }
 
+        val currentScrollScale by rememberUpdatedState(scrollScale)
+        val currentScrollableTrackPx by rememberUpdatedState(scrollableTrackPx)
+        val currentThumbHeightPx by rememberUpdatedState(thumbHeightPx)
+        val currentThumbYVal by rememberUpdatedState(currentThumbY)
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer { alpha = scrollBarAlpha }
                 .hoverable(interactionSource)
-                .pointerInput(adapter, scrollableTrackPx, scrollScale, thumbHeightPx) {
+                .pointerInput(adapter) {
+                    var dragScrollJob: Job? = null
                     detectDragGestures(
                         onDragStart = { offset ->
                             isDragging = true
-                            val thumbY = dragThumbY ?: currentThumbY
-                            val isTouchOnThumb = offset.y >= thumbY && offset.y <= (thumbY + thumbHeightPx)
+                            val thumbY = dragThumbY ?: currentThumbYVal
+                            val isTouchOnThumb = offset.y >= thumbY && offset.y <= (thumbY + currentThumbHeightPx)
                             grabOffset = if (isTouchOnThumb) {
                                 offset.y - thumbY
                             } else {
-                                thumbHeightPx / 2f
+                                currentThumbHeightPx / 2f
                             }
-                            val targetY = (offset.y - grabOffset).coerceIn(0f, scrollableTrackPx)
+                            val targetY = (offset.y - grabOffset).coerceIn(0f, currentScrollableTrackPx)
                             dragThumbY = targetY
-                            val targetScrollOffset = targetY / scrollScale
-                            coroutineScope.launch {
+                            val targetScrollOffset = targetY / currentScrollScale
+                            dragScrollJob?.cancel()
+                            dragScrollJob = coroutineScope.launch {
                                 adapter?.scrollTo(targetScrollOffset)
                             }
                         },
                         onDrag = { change, _ ->
                             change.consume()
-                            val targetY = (change.position.y - grabOffset).coerceIn(0f, scrollableTrackPx)
+                            val targetY = (change.position.y - grabOffset).coerceIn(0f, currentScrollableTrackPx)
                             dragThumbY = targetY
-                            val targetScrollOffset = targetY / scrollScale
-                            coroutineScope.launch {
+                            val targetScrollOffset = targetY / currentScrollScale
+                            dragScrollJob?.cancel()
+                            dragScrollJob = coroutineScope.launch {
                                 adapter?.scrollTo(targetScrollOffset)
                             }
                         },
                         onDragEnd = {
                             isDragging = false
                             dragThumbY = null
+                            dragScrollJob?.cancel()
+                            dragScrollJob = null
                         },
                         onDragCancel = {
                             isDragging = false
                             dragThumbY = null
+                            dragScrollJob?.cancel()
+                            dragScrollJob = null
                         }
                     )
                 }

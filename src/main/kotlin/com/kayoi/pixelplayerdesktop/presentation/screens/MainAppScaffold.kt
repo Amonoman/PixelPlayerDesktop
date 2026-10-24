@@ -101,6 +101,7 @@ fun MainAppScaffold(
 
     val playerInfo by viewModel.playerInfo.collectAsState()
     val currentSong by viewModel.currentSong.collectAsState()
+    val currentQueueIndex by viewModel.currentQueueIndex.collectAsState()
     val queue by viewModel.queue.collectAsState()
     val isDarkTheme by viewModel.isDarkMode.collectAsState()
     val isDynamicColor by viewModel.isDynamicColorEnabled.collectAsState()
@@ -509,6 +510,7 @@ fun MainAppScaffold(
                             QueueSidePanel(
                                 queue = queue,
                                 currentSong = currentSong,
+                                currentQueueIndex = currentQueueIndex,
                                 isPlaying = playerInfo.isPlaying,
                                 isShuffleOn = playerInfo.isShuffleEnabled,
                                 repeatMode = playerInfo.repeatMode,
@@ -559,6 +561,7 @@ fun MainAppScaffold(
                         QueueSidePanel(
                             queue = queue,
                             currentSong = currentSong,
+                            currentQueueIndex = currentQueueIndex,
                             isPlaying = playerInfo.isPlaying,
                             isShuffleOn = playerInfo.isShuffleEnabled,
                             repeatMode = playerInfo.repeatMode,

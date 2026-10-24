@@ -760,6 +760,7 @@ class PlaybackStateHolder(
     }
 
     val currentSong: StateFlow<Song?> = queueManager.currentSong
+    val currentQueueIndex: StateFlow<Int> = queueManager.currentIndex
     val queue: StateFlow<List<Song>> = queueManager.queue
     val playbackState: StateFlow<PlaybackState> = audioEngine.playbackState
     val errorEvents: SharedFlow<String> = audioEngine.errorEvents
