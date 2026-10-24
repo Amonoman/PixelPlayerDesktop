@@ -31,6 +31,7 @@ class PlayerViewModel(
     val libraryStateHolder: LibraryStateHolder,
     val themeStateHolder: ThemeStateHolder,
     val statsStateHolder: StatsStateHolder,
+    val updateStateHolder: UpdateStateHolder? = null,
     private val mediaSessionBridge: MediaSessionBridge? = null
 ) {
     val homeStatsOverview = statsStateHolder.homeOverview

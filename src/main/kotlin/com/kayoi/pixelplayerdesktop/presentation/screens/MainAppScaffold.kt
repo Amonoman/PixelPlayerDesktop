@@ -44,6 +44,7 @@ import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
 import com.kayoi.pixelplayerdesktop.presentation.components.AddToPlaylistDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.AppSidebar
 import com.kayoi.pixelplayerdesktop.presentation.components.AppTopBar
+import com.kayoi.pixelplayerdesktop.presentation.components.AppUpdateDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.BatchEditMetadataDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.DeleteSongConfirmationDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.DismissUndoBar
@@ -112,6 +113,12 @@ fun MainAppScaffold(
     val showQueueHistory by viewModel.showQueueHistory.collectAsState()
     val storageFilter by viewModel.storageFilter.collectAsState()
     val showShortcutsDialog by viewModel.showShortcutsDialog.collectAsState()
+    val showUpdateDialog = viewModel.updateStateHolder?.showUpdateDialog?.collectAsState()?.value ?: false
+    val availableRelease = viewModel.updateStateHolder?.availableRelease?.collectAsState()?.value
+
+    LaunchedEffect(Unit) {
+        viewModel.updateStateHolder?.runStartupCheckIfNeeded()
+    }
 
     val initialDestination = remember {
         DesktopNavDestination.entries.firstOrNull { it.name == viewModel.defaultTab.value } ?: DesktopNavDestination.HOME
@@ -780,6 +787,21 @@ fun MainAppScaffold(
             KeyboardShortcutsDialog(
                 onDismiss = { viewModel.hideShortcutsDialog() }
             )
+        }
+
+        val updateHolder = viewModel.updateStateHolder
+        if (showUpdateDialog && availableRelease != null) {
+            updateHolder.let { holder ->
+                AppUpdateDialog(
+                    release = availableRelease,
+                    onDismiss = { skipThisVersion ->
+                        holder.dismissUpdateDialog(skipThisVersion)
+                    },
+                    onOpenRelease = { url ->
+                        holder.openReleasePage(url)
+                    }
+                )
+            }
         }
     }
 }

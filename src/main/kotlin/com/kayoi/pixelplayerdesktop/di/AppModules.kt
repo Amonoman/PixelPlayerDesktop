@@ -27,6 +27,7 @@ import com.kayoi.pixelplayerdesktop.data.backup.validation.BackupFileValidator
 import com.kayoi.pixelplayerdesktop.data.backup.validation.ManifestValidator
 import com.kayoi.pixelplayerdesktop.data.backup.validation.ModuleSchemaValidator
 import com.kayoi.pixelplayerdesktop.data.backup.validation.ValidationPipeline
+import com.kayoi.pixelplayerdesktop.data.network.github.GitHubReleaseClient
 import com.kayoi.pixelplayerdesktop.data.network.jellyfin.JellyfinApiClient
 import com.kayoi.pixelplayerdesktop.data.network.jellyfin.JellyfinRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.network.listenbrainz.ListenBrainzApiClient
@@ -59,6 +60,7 @@ import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlaybackStateHolder
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.StatsStateHolder
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.ThemeStateHolder
+import com.kayoi.pixelplayerdesktop.presentation.viewmodel.UpdateStateHolder
 import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -134,6 +136,7 @@ val repositoryModule: Module = module {
     single { PlaybackUriResolver(navidromeRepository = get(), jellyfinRepository = get()) }
     single { DesktopMusicScanner(musicDao = get(), lyricsDao = get(), ioDispatcher = get()) }
     single { DesktopMetadataEditor(musicDao = get(), ioDispatcher = get()) }
+    single { GitHubReleaseClient(okHttpClient = get(), json = get(), ioDispatcher = get()) }
 }
 
 val playerModule: Module = module {
@@ -177,6 +180,13 @@ val stateModule: Module = module {
         )
     }
     single {
+        UpdateStateHolder(
+            releaseClient = get(),
+            settingsRepository = get(),
+            coroutineScope = get()
+        )
+    }
+    single {
         MediaSessionBridge(
             playbackStateHolder = get(),
             coroutineScope = get()
@@ -188,6 +198,7 @@ val stateModule: Module = module {
             libraryStateHolder = get(),
             themeStateHolder = get(),
             statsStateHolder = get(),
+            updateStateHolder = get(),
             mediaSessionBridge = get()
         )
     }

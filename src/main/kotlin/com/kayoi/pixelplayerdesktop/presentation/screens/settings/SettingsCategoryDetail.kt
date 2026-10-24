@@ -103,6 +103,7 @@ fun SettingsCategoryDetail(
     onOpenArtistsDetail: () -> Unit,
     onOpenDuplicatesDetail: () -> Unit,
     onOpenPaletteStyleDetail: () -> Unit,
+    onOpenLicensesDetail: () -> Unit = {},
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -994,7 +995,10 @@ fun SettingsCategoryDetail(
 
             SettingsSection.ABOUT -> {
                 item {
-                    AboutSectionContent()
+                    AboutSectionContent(
+                        viewModel = viewModel,
+                        onOpenLicenses = onOpenLicensesDetail
+                    )
                 }
             }
 

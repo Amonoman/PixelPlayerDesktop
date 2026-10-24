@@ -350,6 +350,14 @@ class SettingsRepositoryImpl(
         updateSettings { it.copy(equalizerViewMode = mode) }
     }
 
+    override suspend fun setCheckUpdatesOnStartup(enabled: Boolean) {
+        updateSettings { it.copy(checkUpdatesOnStartup = enabled) }
+    }
+
+    override suspend fun setLastDismissedUpdateVersion(version: String?) {
+        updateSettings { it.copy(lastDismissedUpdateVersion = version) }
+    }
+
     private fun loadSettingsFromDisk(): UserSettings {
         return try {
             if (settingsFile.exists()) {

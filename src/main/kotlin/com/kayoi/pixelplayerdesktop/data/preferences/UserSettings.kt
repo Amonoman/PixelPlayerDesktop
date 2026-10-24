@@ -66,5 +66,7 @@ data class UserSettings(
     val jellyfinUsername: String? = null,
     val jellyfinAccessToken: String? = null,
     val jellyfinUserId: String? = null,
-    val jellyfinEnabled: Boolean = false
+    val jellyfinEnabled: Boolean = false,
+    val checkUpdatesOnStartup: Boolean = true,
+    val lastDismissedUpdateVersion: String? = null
 )

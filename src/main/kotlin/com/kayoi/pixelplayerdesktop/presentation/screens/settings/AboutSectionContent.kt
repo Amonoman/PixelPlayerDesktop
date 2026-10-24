@@ -1,18 +1,8 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.settings
 
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_app_logo
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_github
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_telegram
-import org.jetbrains.compose.resources.DrawableResource
-import com.kayoi.pixelplayerdesktop.generated.resources.Res
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_open_in_new
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_auto_awesome
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_palette
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_phone_android
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_public
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_system_update
-import org.jetbrains.compose.resources.painterResource
-import com.kayoi.pixelplayerdesktop.BuildConfig
+import java.net.HttpURLConnection
+import java.net.URI
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,6 +21,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +30,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,10 +47,31 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.skia.Image as SkiaImage
-import java.awt.Desktop
-import java.net.HttpURLConnection
-import java.net.URI
+
+import com.kayoi.pixelplayerdesktop.BuildConfig
+import com.kayoi.pixelplayerdesktop.domain.model.UpdateCheckResult
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_app_logo
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_open_in_new
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_github
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_cloud_download
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_auto_awesome
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_balance
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_check_circle
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_chevron_right
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_palette
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_phone_android
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_public
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_refresh
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_system_update
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_telegram
+import com.kayoi.pixelplayerdesktop.presentation.components.AppUpdateDialog
+import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveSwitch
+import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
+import com.kayoi.pixelplayerdesktop.utils.BrowserUtils
 
 private data class ProjectLink(
     val id: String,
@@ -109,11 +123,11 @@ private val ProjectLinks = listOf(
         url = "https://github.com/adlifarizi/PixelPlayerDesktop"
     ),
     ProjectLink(
-        id = "releases",
-        title = "Releases & Updates",
-        subtitle = "Check latest desktop builds and changelog",
-        icon = Res.drawable.ic_rounded_system_update,
-        url = "https://github.com/adlifarizi/PixelPlayerDesktop/releases"
+        id = "licenses",
+        title = "Licenses & attribution",
+        subtitle = "Open-source libraries, fonts and bundled data",
+        icon = Res.drawable.ic_rounded_balance,
+        url = ""
     ),
     ProjectLink(
         id = "upstream_foss",
@@ -144,29 +158,36 @@ private suspend fun fetchAvatarBitmap(url: String): ImageBitmap? {
     }
 }
 
-private fun openBrowser(url: String) {
-    try {
-        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-            Desktop.getDesktop().browse(URI(url))
-            return
-        }
-    } catch (_: Exception) {}
-
-    val os = System.getProperty("os.name", "").lowercase()
-    runCatching {
-        val command = when {
-            os.contains("mac") -> arrayOf("open", url)
-            os.contains("win") -> arrayOf("cmd", "/c", "start", "", url)
-            else -> arrayOf("xdg-open", url)
-        }
-        Runtime.getRuntime().exec(command)
-    }
-}
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun AboutSectionContent(modifier: Modifier = Modifier) {
+fun AboutSectionContent(
+    viewModel: PlayerViewModel? = null,
+    onOpenLicenses: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
     val colors = MaterialTheme.colorScheme
+    val updateHolder = viewModel?.updateStateHolder
+
+    val checkResult = updateHolder?.checkResult?.collectAsState()?.value ?: UpdateCheckResult.Idle
+    val availableRelease = updateHolder?.availableRelease?.collectAsState()?.value
+    val checkUpdatesOnStartup = updateHolder?.checkUpdatesOnStartup?.collectAsState()?.value ?: true
+
+    var showManualDialog by remember { mutableStateOf(false) }
+
+    if (showManualDialog && availableRelease != null) {
+        updateHolder.let { holder ->
+            AppUpdateDialog(
+                release = availableRelease,
+                onDismiss = { skipThisVersion ->
+                    holder.dismissUpdateDialog(skipThisVersion)
+                    showManualDialog = false
+                },
+                onOpenRelease = { url ->
+                    holder.openReleasePage(url)
+                }
+            )
+        }
+    }
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -270,6 +291,163 @@ fun AboutSectionContent(modifier: Modifier = Modifier) {
             }
         }
 
+        SettingsSubsection(title = "UPDATES") {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Surface(
+                    shape = getGroupShape(0, 2),
+                    color = colors.surfaceContainer,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            if (checkResult is UpdateCheckResult.UpdateAvailable) {
+                                showManualDialog = true
+                            } else if (checkResult !is UpdateCheckResult.Checking) {
+                                updateHolder?.checkForUpdates()
+                            }
+                        }
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = colors.primaryContainer
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_rounded_system_update),
+                                contentDescription = null,
+                                tint = colors.onPrimaryContainer,
+                                modifier = Modifier
+                                    .padding(10.dp)
+                                    .size(22.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                text = "Check for updates",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.onSurface
+                            )
+                            val subtitle = when (checkResult) {
+                                is UpdateCheckResult.Checking -> "Checking GitHub Releases..."
+                                is UpdateCheckResult.UpdateAvailable -> "Update available: ${checkResult.release.versionTag}. Click to view."
+                                is UpdateCheckResult.UpToDate -> "PixelPlayer is up to date (v${checkResult.currentVersion})."
+                                is UpdateCheckResult.Error -> "${checkResult.message} Click to retry."
+                                is UpdateCheckResult.Idle -> "Current: v${BuildConfig.APP_VERSION_NAME} • Check GitHub Releases"
+                            }
+                            Text(
+                                text = subtitle,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (checkResult is UpdateCheckResult.UpdateAvailable) colors.primary else colors.onSurfaceVariant
+                            )
+                        }
+
+                        when (checkResult) {
+                            is UpdateCheckResult.Checking -> {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                    color = colors.primary
+                                )
+                            }
+                            is UpdateCheckResult.UpdateAvailable -> {
+                                Button(
+                                    onClick = { showManualDialog = true },
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Text("Update")
+                                }
+                            }
+                            is UpdateCheckResult.UpToDate -> {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_rounded_check_circle),
+                                    contentDescription = null,
+                                    tint = colors.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            else -> {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_rounded_refresh),
+                                    contentDescription = null,
+                                    tint = colors.onSurfaceVariant.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Surface(
+                    shape = getGroupShape(1, 2),
+                    color = colors.surfaceContainer,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { updateHolder?.setCheckUpdatesOnStartup(!checkUpdatesOnStartup) }
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = colors.primaryContainer
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_outlined_cloud_download),
+                                contentDescription = null,
+                                tint = colors.onPrimaryContainer,
+                                modifier = Modifier
+                                    .padding(10.dp)
+                                    .size(22.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                text = "Check for updates on startup",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.onSurface
+                            )
+                            Text(
+                                text = "Automatically notify when a new release is available",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colors.onSurfaceVariant
+                            )
+                        }
+
+                        ExpressiveSwitch(
+                            checked = checkUpdatesOnStartup,
+                            onCheckedChange = { updateHolder?.setCheckUpdatesOnStartup(it) }
+                        )
+                    }
+                }
+            }
+        }
+
         SettingsSubsection(title = "PROJECT") {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -281,7 +459,13 @@ fun AboutSectionContent(modifier: Modifier = Modifier) {
                         color = colors.surfaceContainer,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { openBrowser(link.url) }
+                            .clickable {
+                                if (link.id == "licenses") {
+                                    onOpenLicenses()
+                                } else {
+                                    BrowserUtils.openBrowser(link.url)
+                                }
+                            }
                     ) {
                         Row(
                             modifier = Modifier
@@ -322,8 +506,14 @@ fun AboutSectionContent(modifier: Modifier = Modifier) {
                                 )
                             }
 
+                            val trailingIcon = if (link.id == "licenses") {
+                                Res.drawable.ic_rounded_chevron_right
+                            } else {
+                                Res.drawable.ic_automirrored_rounded_open_in_new
+                            }
+
                             Icon(
-                                painter = painterResource(Res.drawable.ic_automirrored_rounded_open_in_new),
+                                painter = painterResource(trailingIcon),
                                 contentDescription = null,
                                 tint = colors.onSurfaceVariant.copy(alpha = 0.6f),
                                 modifier = Modifier.size(20.dp)
@@ -343,7 +533,7 @@ fun AboutSectionContent(modifier: Modifier = Modifier) {
                     ContributorCard(
                         contributor = contributor,
                         shape = getGroupShape(index, MaintainersList.size),
-                        onOpenUrl = ::openBrowser
+                        onOpenUrl = BrowserUtils::openBrowser
                     )
                 }
             }

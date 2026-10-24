@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.ArtistSettingsDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.DuplicatesDetailScreen
+import com.kayoi.pixelplayerdesktop.presentation.screens.settings.LicensesDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.MusicFoldersDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.PaletteStyleDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.screens.settings.SettingsCategoryDetail
@@ -30,7 +31,8 @@ enum class LibrarySubDetail {
     FOLDERS,
     ARTISTS,
     DUPLICATES,
-    PALETTE_STYLE
+    PALETTE_STYLE,
+    LICENSES
 }
 
 @Composable
@@ -126,6 +128,11 @@ fun SettingsScreen(
                     onBack = onBack
                 )
             }
+            subDetail == LibrarySubDetail.LICENSES -> {
+                LicensesDetailScreen(
+                    onBack = onBack
+                )
+            }
             else -> {
                 SettingsCategoryDetail(
                     section = section,
@@ -139,6 +146,7 @@ fun SettingsScreen(
                     onOpenArtistsDetail = { onNavigate(section, LibrarySubDetail.ARTISTS) },
                     onOpenDuplicatesDetail = { onNavigate(section, LibrarySubDetail.DUPLICATES) },
                     onOpenPaletteStyleDetail = { onNavigate(section, LibrarySubDetail.PALETTE_STYLE) },
+                    onOpenLicensesDetail = { onNavigate(section, LibrarySubDetail.LICENSES) },
                     onBack = onBack
                 )
             }

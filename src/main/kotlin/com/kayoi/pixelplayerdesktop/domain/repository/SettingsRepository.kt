@@ -64,4 +64,6 @@ interface SettingsRepository {
     suspend fun renameCustomEqualizerPreset(oldName: String, newName: String)
     suspend fun setPinnedEqualizerPresets(pinnedNames: List<String>)
     suspend fun setEqualizerViewMode(mode: String)
+    suspend fun setCheckUpdatesOnStartup(enabled: Boolean)
+    suspend fun setLastDismissedUpdateVersion(version: String?)
 }
