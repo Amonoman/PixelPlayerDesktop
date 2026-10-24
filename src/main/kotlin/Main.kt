@@ -62,6 +62,8 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.MouseEvent
 import java.awt.event.WindowStateListener
+import java.awt.image.BufferedImage
+import javax.imageio.ImageIO
 import javax.swing.SwingUtilities
 import kotlin.math.roundToInt
 import kotlin.system.exitProcess
@@ -73,6 +75,73 @@ import com.kayoi.pixelplayerdesktop.lifecycle.AppShutdownCoordinator
 // 600 x 400 keeps the window inside a half-screen snap zone on a 1280-dp-wide display.
 private const val MIN_CONTENT_WIDTH_DP = 600
 private const val MIN_CONTENT_HEIGHT_DP = 400
+
+/**
+ * Parses an ICO resource into a list of [BufferedImage] at every embedded resolution.
+ */
+private fun loadMultiResolutionIcoImages(resourcePath: String): List<BufferedImage> {
+    val stream = Thread.currentThread().contextClassLoader.getResourceAsStream(resourcePath)
+        ?: return emptyList()
+    return try {
+        val bytes = stream.use { it.readBytes() }
+        if (bytes.size < 6) return emptyList()
+        val count = (bytes[4].toInt() and 0xFF) or ((bytes[5].toInt() and 0xFF) shl 8)
+        val images = mutableListOf<BufferedImage>()
+        for (i in 0 until count) {
+            val dirOffset = 6 + i * 16
+            if (dirOffset + 16 > bytes.size) break
+            val dataSize = ((bytes[dirOffset + 8].toInt() and 0xFF)) or
+                    ((bytes[dirOffset + 9].toInt() and 0xFF) shl 8) or
+                    ((bytes[dirOffset + 10].toInt() and 0xFF) shl 16) or
+                    ((bytes[dirOffset + 11].toInt() and 0xFF) shl 24)
+            val dataOffset = ((bytes[dirOffset + 12].toInt() and 0xFF)) or
+                    ((bytes[dirOffset + 13].toInt() and 0xFF) shl 8) or
+                    ((bytes[dirOffset + 14].toInt() and 0xFF) shl 16) or
+                    ((bytes[dirOffset + 15].toInt() and 0xFF) shl 24)
+            if (dataOffset + dataSize > bytes.size) continue
+            val imageBytes = bytes.copyOfRange(dataOffset, dataOffset + dataSize)
+            val isPng = imageBytes.size >= 8 &&
+                    imageBytes[0] == 0x89.toByte() && imageBytes[1] == 0x50.toByte() &&
+                    imageBytes[2] == 0x4E.toByte() && imageBytes[3] == 0x47.toByte()
+            if (isPng) {
+                val img = ImageIO.read(java.io.ByteArrayInputStream(imageBytes))
+                if (img != null) images.add(img)
+            } else {
+                if (imageBytes.size < 40) continue
+                val bmpWidth = ((imageBytes[4].toInt() and 0xFF)) or
+                        ((imageBytes[5].toInt() and 0xFF) shl 8) or
+                        ((imageBytes[6].toInt() and 0xFF) shl 16) or
+                        ((imageBytes[7].toInt() and 0xFF) shl 24)
+                val bmpHeightRaw = ((imageBytes[8].toInt() and 0xFF)) or
+                        ((imageBytes[9].toInt() and 0xFF) shl 8) or
+                        ((imageBytes[10].toInt() and 0xFF) shl 16) or
+                        ((imageBytes[11].toInt() and 0xFF) shl 24)
+                val bmpHeight = bmpHeightRaw / 2
+                val bpp = ((imageBytes[14].toInt() and 0xFF)) or
+                        ((imageBytes[15].toInt() and 0xFF) shl 8)
+                if (bpp == 32 && bmpWidth > 0 && bmpHeight > 0) {
+                    val img = BufferedImage(bmpWidth, bmpHeight, BufferedImage.TYPE_INT_ARGB)
+                    val pixelDataOffset = 40
+                    for (y in 0 until bmpHeight) {
+                        for (x in 0 until bmpWidth) {
+                            val pos = pixelDataOffset + ((bmpHeight - 1 - y) * bmpWidth + x) * 4
+                            if (pos + 3 >= imageBytes.size) continue
+                            val b = imageBytes[pos].toInt() and 0xFF
+                            val g = imageBytes[pos + 1].toInt() and 0xFF
+                            val r = imageBytes[pos + 2].toInt() and 0xFF
+                            val a = imageBytes[pos + 3].toInt() and 0xFF
+                            img.setRGB(x, y, (a shl 24) or (r shl 16) or (g shl 8) or b)
+                        }
+                    }
+                    images.add(img)
+                }
+            }
+        }
+        images
+    } catch (e: Exception) {
+        emptyList()
+    }
+}
 
 fun main(args: Array<String> = emptyArray()) {
     val osName = System.getProperty("os.name", "").lowercase()
@@ -161,6 +230,10 @@ fun main(args: Array<String> = emptyArray()) {
     }
 
     val isWindows = remember { System.getProperty("os.name").startsWith("Windows", ignoreCase = true) }
+
+    val icoIconImages = remember {
+        if (isWindows) loadMultiResolutionIcoImages("icons/icon.ico") else emptyList()
+    }
     val isLinux = remember { System.getProperty("os.name").contains("linux", ignoreCase = true) }
 
     DisposableEffect(triggerBack, triggerForward, isLinux) {
@@ -394,6 +467,10 @@ fun main(args: Array<String> = emptyArray()) {
          }
     ) {
         DisposableEffect(window) {
+            if (icoIconImages.isNotEmpty()) {
+                window.iconImages = icoIconImages
+            }
+
             // minimumSize is in physical pixels on Windows; insets use logical units.
             fun applyMinimumContentSize() {
                 val insets = window.insets ?: Insets(0, 0, 0, 0)
@@ -604,6 +681,13 @@ fun main(args: Array<String> = emptyArray()) {
         ) {
             DisposableEffect(window, isDarkTheme) {
                 applyNativeWindowAppearance(window, isDarkTheme)
+                onDispose {}
+            }
+
+            DisposableEffect(window) {
+                if (icoIconImages.isNotEmpty()) {
+                    window.iconImages = icoIconImages
+                }
                 onDispose {}
             }
 

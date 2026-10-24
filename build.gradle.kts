@@ -197,13 +197,14 @@ compose.desktop {
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg
             )
 
-            packageName = "pixelplayer"
+            packageName = "PixelPlayer"
             packageVersion = windowsVersion
             description = "PixelPlayer Desktop - Modern Material 3 Music Player"
             vendor = "PixelPlayer"
             copyright = "Copyright (C) 2026 Theo Vilardo"
 
             linux {
+                packageName = "pixelplayer"
                 iconFile.set(project.file("src/main/resources/icons/icon.png"))
                 debPackageVersion = debianPackageVersion
                 rpmPackageVersion = rpmVersion
