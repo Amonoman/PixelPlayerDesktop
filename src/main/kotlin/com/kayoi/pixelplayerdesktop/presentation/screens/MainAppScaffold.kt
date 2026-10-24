@@ -664,6 +664,7 @@ fun MainAppScaffold(
                             onToggleMute = { viewModel.toggleMute() },
                             onExpandClick = { isExpandedPlayerOpen = true },
                             onQueueClick = onToggleQueueSidePanel,
+                            onMiniPlayerClick = { viewModel.setMiniPlayerMode(true) },
                             onCloseClick = {
                                 viewModel.stopPlayback()
                                 showDismissUndoBar = true

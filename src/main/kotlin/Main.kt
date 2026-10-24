@@ -20,6 +20,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.painterResource
@@ -36,6 +37,7 @@ import com.kayoi.pixelplayerdesktop.di.appModules
 import com.kayoi.pixelplayerdesktop.presentation.components.InputFocusTracker
 import com.kayoi.pixelplayerdesktop.presentation.components.LocalInputFocusTracker
 import com.kayoi.pixelplayerdesktop.presentation.components.LocalWindowMinimized
+import com.kayoi.pixelplayerdesktop.presentation.components.MiniPlayerWindowView
 import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopBackDispatcher
 import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavDestination
 import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavigator
@@ -107,6 +109,8 @@ fun main(args: Array<String> = emptyArray()) {
     val queue by playerViewModel.queue.collectAsState()
     val playerInfo by playerViewModel.playerInfo.collectAsState()
     val closeToTray by playerViewModel.closeToTray.collectAsState()
+    val isMiniPlayerMode by playerViewModel.isMiniPlayerMode.collectAsState()
+    val isMiniPlayerAlwaysOnTop by playerViewModel.isMiniPlayerAlwaysOnTop.collectAsState()
     var isWindowVisible by remember { mutableStateOf(true) }
     var isExiting by remember { mutableStateOf(false) }
 
@@ -241,6 +245,13 @@ fun main(args: Array<String> = emptyArray()) {
                     }
                 )
                 Item(
+                    text = if (isMiniPlayerMode) "Switch to Full Player" else "Switch to Mini Player",
+                    onClick = {
+                        isWindowVisible = true
+                        playerViewModel.toggleMiniPlayerMode()
+                    }
+                )
+                Item(
                     text = if (playerInfo.isPlaying) "Pause" else "Play",
                     onClick = { playerViewModel.togglePlayPause() }
                 )
@@ -262,7 +273,7 @@ fun main(args: Array<String> = emptyArray()) {
     }
 
     Window(
-        visible = isWindowVisible,
+        visible = isWindowVisible && !isMiniPlayerMode,
         onCloseRequest = {
             if (closeToTray) {
                 isWindowVisible = false
@@ -333,6 +344,10 @@ fun main(args: Array<String> = emptyArray()) {
                     }
                     (isModifier || keyEvent.isAltPressed) && keyEvent.key == Key.Q -> {
                         isQueueSidePanelOpen = !isQueueSidePanelOpen
+                        true
+                    }
+                    isModifier && keyEvent.isShiftPressed && keyEvent.key == Key.M -> {
+                        playerViewModel.toggleMiniPlayerMode()
                         true
                     }
                     keyEvent.key == Key.F11 -> {
@@ -517,6 +532,91 @@ fun main(args: Array<String> = emptyArray()) {
                         )
                     }
                 }
+            }
+        }
+    }
+
+    if (isMiniPlayerMode && !isExiting) {
+        val miniWindowState = rememberWindowState(
+            width = 360.dp,
+            height = 184.dp
+        )
+        Window(
+            visible = isWindowVisible,
+            onCloseRequest = {
+                playerViewModel.setMiniPlayerMode(false)
+            },
+            title = currentSong?.let { "${it.title} • ${it.artist}" } ?: "PixelPlayer Mini",
+            icon = painterResource("icons/icon.png"),
+            state = miniWindowState,
+            alwaysOnTop = isMiniPlayerAlwaysOnTop,
+            resizable = false,
+            onPreviewKeyEvent = { keyEvent ->
+                val isModifier = keyEvent.isCtrlPressed || keyEvent.isMetaPressed
+                if (keyEvent.type == KeyEventType.KeyDown) {
+                    when {
+                        isModifier && keyEvent.isShiftPressed && keyEvent.key == Key.M -> {
+                            playerViewModel.setMiniPlayerMode(false)
+                            true
+                        }
+                        keyEvent.key == Key.Spacebar -> {
+                            playerViewModel.togglePlayPause()
+                            true
+                        }
+                        isModifier && keyEvent.key == Key.DirectionRight -> {
+                            playerViewModel.playNext()
+                            true
+                        }
+                        isModifier && keyEvent.key == Key.DirectionLeft -> {
+                            playerViewModel.playPrevious()
+                            true
+                        }
+                        !isModifier && !keyEvent.isAltPressed && keyEvent.key == Key.DirectionRight -> {
+                            playerViewModel.seekForward(5000L)
+                            true
+                        }
+                        !isModifier && !keyEvent.isAltPressed && keyEvent.key == Key.DirectionLeft -> {
+                            playerViewModel.seekBackward(5000L)
+                            true
+                        }
+                        isModifier && keyEvent.key == Key.DirectionUp -> {
+                            val currentVol = playerViewModel.playerInfo.value.volume
+                            playerViewModel.setVolume((currentVol + 0.05f).coerceIn(0f, 1f))
+                            true
+                        }
+                        isModifier && keyEvent.key == Key.DirectionDown -> {
+                            val currentVol = playerViewModel.playerInfo.value.volume
+                            playerViewModel.setVolume((currentVol - 0.05f).coerceIn(0f, 1f))
+                            true
+                        }
+                        keyEvent.key == Key.M && !isModifier -> {
+                            playerViewModel.toggleMute()
+                            true
+                        }
+                        keyEvent.key == Key.L -> {
+                            playerViewModel.toggleFavoriteCurrentSong()
+                            true
+                        }
+                        else -> false
+                    }
+                } else false
+            }
+        ) {
+            DisposableEffect(window, isDarkTheme) {
+                applyNativeWindowAppearance(window, isDarkTheme)
+                onDispose {}
+            }
+
+            PixelPlayerTheme(
+                darkTheme = isDarkTheme,
+                colorSchemeOverride = systemColorScheme
+            ) {
+                MiniPlayerWindowView(
+                    viewModel = playerViewModel,
+                    isAlwaysOnTop = isMiniPlayerAlwaysOnTop,
+                    onToggleAlwaysOnTop = { playerViewModel.toggleMiniPlayerAlwaysOnTop() },
+                    onRestoreMainWindow = { playerViewModel.setMiniPlayerMode(false) }
+                )
             }
         }
     }

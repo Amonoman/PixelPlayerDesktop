@@ -49,6 +49,12 @@ class PlayerViewModel(
     private val _showShortcutsDialog = MutableStateFlow(false)
     val showShortcutsDialog: StateFlow<Boolean> = _showShortcutsDialog.asStateFlow()
 
+    private val _isMiniPlayerMode = MutableStateFlow(false)
+    val isMiniPlayerMode: StateFlow<Boolean> = _isMiniPlayerMode.asStateFlow()
+
+    private val _isMiniPlayerAlwaysOnTop = MutableStateFlow(true)
+    val isMiniPlayerAlwaysOnTop: StateFlow<Boolean> = _isMiniPlayerAlwaysOnTop.asStateFlow()
+
     private val _controlActionEvent = MutableSharedFlow<String>(extraBufferCapacity = 64)
     val controlActionEvent: SharedFlow<String> = _controlActionEvent.asSharedFlow()
 
@@ -62,6 +68,18 @@ class PlayerViewModel(
 
     fun toggleShortcutsDialog() {
         _showShortcutsDialog.value = !_showShortcutsDialog.value
+    }
+
+    fun setMiniPlayerMode(enabled: Boolean) {
+        _isMiniPlayerMode.value = enabled
+    }
+
+    fun toggleMiniPlayerMode() {
+        _isMiniPlayerMode.value = !_isMiniPlayerMode.value
+    }
+
+    fun toggleMiniPlayerAlwaysOnTop() {
+        _isMiniPlayerAlwaysOnTop.value = !_isMiniPlayerAlwaysOnTop.value
     }
 
     fun searchLyrics(query: String) = playbackStateHolder.searchLyrics(query)

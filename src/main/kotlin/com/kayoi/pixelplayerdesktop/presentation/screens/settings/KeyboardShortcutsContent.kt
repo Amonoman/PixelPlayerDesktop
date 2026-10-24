@@ -131,6 +131,11 @@ val defaultShortcutCategories = listOf(
                 keyCombos = listOf(listOf("Alt", "→"))
             ),
             ShortcutItem(
+                title = "Toggle Mini Player",
+                description = "Switch between full player and compact floating mini player",
+                keyCombos = listOf(listOf(modKey, "Shift", "M"))
+            ),
+            ShortcutItem(
                 title = "Keyboard Shortcuts Cheatsheet",
                 description = "Show the quick reference dialog anywhere",
                 keyCombos = listOf(listOf(modKey, "/"), listOf("F1"))

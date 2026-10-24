@@ -17,6 +17,7 @@ import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_repeat_one
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_skip_next
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_skip_previous
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_tab
 import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -95,6 +96,7 @@ fun MiniPlayerBar(
     onVolumeChange: (Float) -> Unit = {},
     onToggleMute: () -> Unit = {},
     onQueueClick: () -> Unit = {},
+    onMiniPlayerClick: (() -> Unit)? = null,
     onExpandClick: () -> Unit = {},
     onCloseClick: () -> Unit = {},
     onClick: () -> Unit = {}
@@ -276,6 +278,22 @@ fun MiniPlayerBar(
                                     contentDescription = "Next",
                                     modifier = Modifier.size(22.dp)
                                 )
+                            }
+                        }
+
+                        if (onMiniPlayerClick != null) {
+                            AppTooltip("Mini Player (Ctrl+Shift+M)") {
+                                IconButton(
+                                    onClick = onMiniPlayerClick,
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_rounded_tab),
+                                        contentDescription = "Mini Player",
+                                        tint = colors.onPrimaryContainer.copy(alpha = 0.65f),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
                         }
 
@@ -533,6 +551,24 @@ fun MiniPlayerBar(
                         }
 
                         Spacer(modifier = Modifier.width(2.dp))
+
+                        if (onMiniPlayerClick != null) {
+                            AppTooltip("Mini Player (Ctrl+Shift+M)") {
+                                IconButton(
+                                    onClick = onMiniPlayerClick,
+                                    modifier = Modifier.size(actionButtonSize)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_rounded_tab),
+                                        contentDescription = "Mini Player",
+                                        tint = colors.onPrimaryContainer.copy(alpha = 0.75f),
+                                        modifier = Modifier.size(actionIconSize)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(2.dp))
+                        }
 
                         AppTooltip("Queue") {
                             IconButton(
