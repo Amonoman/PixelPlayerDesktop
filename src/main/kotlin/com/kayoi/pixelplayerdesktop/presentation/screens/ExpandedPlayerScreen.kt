@@ -7,6 +7,7 @@ import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_keyboard
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_keyboard_arrow_down
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_more_vert
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_search
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_timer
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_speaker
 import org.jetbrains.compose.resources.painterResource
 import java.io.File
@@ -86,6 +87,7 @@ import com.kayoi.pixelplayerdesktop.presentation.components.LyricsSearchDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueSidePanel
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueToggleButton
 import com.kayoi.pixelplayerdesktop.presentation.components.SaveLyricsDialog
+import com.kayoi.pixelplayerdesktop.presentation.components.SleepTimerDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.TrackDialogInput
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LyricsOptionsMenu
@@ -138,9 +140,14 @@ fun ExpandedPlayerScreen(
     val equalizerEnabled by viewModel.equalizerEnabled.collectAsState()
     val selectedAudioDevice by viewModel.selectedAudioDevice.collectAsState()
     val availableAudioDevices by viewModel.availableAudioDevices.collectAsState()
+    val isEndOfTrackActive by viewModel.isEndOfTrackTimerActive.collectAsState()
+    val activeDurationMinutes by viewModel.activeTimerDurationMinutes.collectAsState()
+    val sleepTimerPlayCount by viewModel.sleepTimerPlayCount.collectAsState()
+    val isSleepTimerActive = isEndOfTrackActive || activeDurationMinutes != null || sleepTimerPlayCount > 1f
     val coroutineScope = rememberCoroutineScope()
     var showEqualizerDialog by remember { mutableStateOf(false) }
     var showAudioDeviceDialog by remember { mutableStateOf(false) }
+    var showSleepTimerDialog by remember { mutableStateOf(false) }
     var showLyricsSearchDialog by remember { mutableStateOf(false) }
     var showSaveLyricsDialog by remember { mutableStateOf(false) }
     var showLyricsMenu by remember { mutableStateOf(false) }
@@ -311,6 +318,38 @@ fun ExpandedPlayerScreen(
                         ) {
                             FilledIconButton(
                                 onClick = { showAudioDeviceDialog = true },
+                                shape = RoundedCornerShape(
+                                    topStart = innerCorner,
+                                    bottomStart = innerCorner,
+                                    topEnd = innerCorner,
+                                    bottomEnd = innerCorner
+                                ),
+                                colors = IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = colors.surfaceContainerHighest,
+                                    contentColor = colors.onSurface
+                                ),
+                                modifier = Modifier.size(buttonSize)
+                            ) {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_rounded_speaker),
+                                    contentDescription = "Audio Output Device",
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(buttonGap))
+
+                        val sleepTimerContainerColor = if (isSleepTimerActive) colors.primary else colors.surfaceContainerHighest
+                        val sleepTimerContentColor = if (isSleepTimerActive) colors.onPrimary else colors.onSurface
+
+                        AppTooltip(
+                            text = if (isSleepTimerActive) "Sleep Timer: Active" else "Sleep Timer",
+                            alignment = Alignment.BottomCenter,
+                            offset = DpOffset(0.dp, 6.dp)
+                        ) {
+                            FilledIconButton(
+                                onClick = { showSleepTimerDialog = true },
                                 shape = if (isCompactLayout) {
                                     RoundedCornerShape(
                                         topStart = innerCorner,
@@ -327,14 +366,14 @@ fun ExpandedPlayerScreen(
                                     )
                                 },
                                 colors = IconButtonDefaults.filledIconButtonColors(
-                                    containerColor = colors.surfaceContainerHighest,
-                                    contentColor = colors.onSurface
+                                    containerColor = sleepTimerContainerColor,
+                                    contentColor = sleepTimerContentColor
                                 ),
                                 modifier = Modifier.size(buttonSize)
                             ) {
                                 Icon(
-                                    painter = painterResource(Res.drawable.ic_rounded_speaker),
-                                    contentDescription = "Audio Output Device",
+                                    painter = painterResource(Res.drawable.ic_rounded_timer),
+                                    contentDescription = "Sleep Timer",
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -816,6 +855,13 @@ fun ExpandedPlayerScreen(
                 onSelectDevice = { viewModel.setSelectedAudioDevice(it) },
                 onRefreshDevices = { viewModel.refreshAudioDevices() },
                 onDismiss = { showAudioDeviceDialog = false }
+            )
+        }
+
+        if (showSleepTimerDialog) {
+            SleepTimerDialog(
+                viewModel = viewModel,
+                onDismiss = { showSleepTimerDialog = false }
             )
         }
     }

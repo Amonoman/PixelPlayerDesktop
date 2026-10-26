@@ -50,6 +50,7 @@ import com.kayoi.pixelplayerdesktop.data.repository.MusicRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.repository.SettingsRepositoryImpl
 import com.kayoi.pixelplayerdesktop.data.scanner.DesktopMusicScanner
 import com.kayoi.pixelplayerdesktop.domain.player.AudioEngine
+import com.kayoi.pixelplayerdesktop.domain.player.SleepTimerSession
 import com.kayoi.pixelplayerdesktop.domain.repository.LyricsRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
@@ -58,6 +59,7 @@ import com.kayoi.pixelplayerdesktop.presentation.viewmodel.DesktopListeningStats
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.LibraryStateHolder
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlaybackStateHolder
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
+import com.kayoi.pixelplayerdesktop.presentation.viewmodel.SleepTimerStateHolder
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.StatsStateHolder
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.ThemeStateHolder
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.UpdateStateHolder
@@ -142,6 +144,7 @@ val repositoryModule: Module = module {
 val playerModule: Module = module {
     single<AudioEngine> { MpvAudioEngine(coroutineScope = get()) }
     single { QueueManager() }
+    single { SleepTimerSession() }
 }
 
 val stateModule: Module = module {
@@ -155,6 +158,15 @@ val stateModule: Module = module {
             settingsRepository = get(),
             listeningStatsTracker = get(),
             playbackUriResolver = get(),
+            sleepTimerSession = get(),
+            coroutineScope = get()
+        )
+    }
+    single {
+        SleepTimerStateHolder(
+            session = get(),
+            audioEngine = get(),
+            queueManager = get(),
             coroutineScope = get()
         )
     }
@@ -199,6 +211,7 @@ val stateModule: Module = module {
             themeStateHolder = get(),
             statsStateHolder = get(),
             updateStateHolder = get(),
+            sleepTimerStateHolder = get(),
             mediaSessionBridge = get()
         )
     }

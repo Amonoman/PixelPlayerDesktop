@@ -30,6 +30,7 @@ import com.kayoi.pixelplayerdesktop.data.player.QueueManager
 import com.kayoi.pixelplayerdesktop.domain.player.AudioDevice
 import com.kayoi.pixelplayerdesktop.domain.player.AudioEngine
 import com.kayoi.pixelplayerdesktop.domain.player.PlaybackState
+import com.kayoi.pixelplayerdesktop.domain.player.SleepTimerSession
 import com.kayoi.pixelplayerdesktop.domain.repository.LyricsRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
@@ -43,6 +44,7 @@ class PlaybackStateHolder(
     private val settingsRepository: SettingsRepository,
     private val listeningStatsTracker: DesktopListeningStatsTracker = DesktopListeningStatsTracker(musicRepository),
     private val playbackUriResolver: PlaybackUriResolver? = null,
+    val sleepTimerSession: SleepTimerSession = SleepTimerSession(),
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) {
 
@@ -362,6 +364,16 @@ class PlaybackStateHolder(
 
         coroutineScope.launch {
             queueManager.currentSong.collectLatest { song ->
+                val activeTimer = sleepTimerSession.timer.value
+                if (activeTimer is SleepTimerSession.Timer.EndOfTrack && activeTimer.songId != song?.id) {
+                    sleepTimerSession.setTimer(null)
+                    sleepTimerSession.emit(SleepTimerSession.Event.EndOfTrackCancelledBySongChange(activeTimer.songId, song?.id))
+                }
+                val countedPlay = sleepTimerSession.countedPlay.value
+                if (countedPlay != null && countedPlay.songId != song?.id) {
+                    sleepTimerSession.setCountedPlay(null)
+                }
+
                 listeningStatsTracker.onSongChanged(song, audioEngine.playbackState.value == PlaybackState.PLAYING)
                 val isFav = if (song != null) musicRepository.isFavorite(song.id) else false
                 val offset = if (song != null) {
@@ -430,6 +442,10 @@ class PlaybackStateHolder(
         coroutineScope.launch {
             queueManager.repeatMode.collect { rep ->
                 _playerInfo.update { it.copy(repeatMode = rep) }
+                val countedPlay = sleepTimerSession.countedPlay.value
+                if (countedPlay != null && rep != 2) {
+                    sleepTimerSession.setCountedPlay(null)
+                }
             }
         }
 
@@ -501,9 +517,67 @@ class PlaybackStateHolder(
         }
 
         coroutineScope.launch {
+            sleepTimerSession.timer.collect { timer ->
+                if (timer is SleepTimerSession.Timer.EndOfTrack) {
+                    transitionSchedulerJob?.cancel()
+                } else if (timer == null) {
+                    val curr = queueManager.currentSong.value
+                    if (curr != null && crossfadeEnabled.value) {
+                        scheduleTransitionFor(curr)
+                    }
+                }
+            }
+        }
+
+        coroutineScope.launch {
+            sleepTimerSession.countedPlay.collect { countedPlay ->
+                if (countedPlay != null && countedPlay.currentCount >= countedPlay.total) {
+                    transitionSchedulerJob?.cancel()
+                } else if (countedPlay == null) {
+                    val curr = queueManager.currentSong.value
+                    if (curr != null && crossfadeEnabled.value) {
+                        scheduleTransitionFor(curr)
+                    }
+                }
+            }
+        }
+
+        coroutineScope.launch {
             audioEngine.completionEvents.collect {
                 transitionSchedulerJob?.cancel()
                 val current = queueManager.currentSong.value
+                val activeTimer = sleepTimerSession.timer.value
+                val countedPlay = sleepTimerSession.countedPlay.value
+
+                if (activeTimer is SleepTimerSession.Timer.EndOfTrack) {
+                    sleepTimerSession.setTimer(null)
+                    sleepTimerSession.emit(SleepTimerSession.Event.EndOfTrackReached(activeTimer.songId))
+                    listeningStatsTracker.onPlaybackStopped()
+                    audioEngine.stop()
+                    val next = queueManager.peekNextSong()
+                    if (next != null && next.id != current?.id) {
+                        queueManager.getNextSong()
+                    }
+                    return@collect
+                }
+
+                if (countedPlay != null) {
+                    if (countedPlay.currentCount >= countedPlay.total) {
+                        sleepTimerSession.setCountedPlay(null)
+                        sleepTimerSession.emit(SleepTimerSession.Event.CountedPlayFinished(countedPlay.songId))
+                        listeningStatsTracker.onPlaybackStopped()
+                        audioEngine.stop()
+                        return@collect
+                    } else {
+                        val updated = countedPlay.copy(currentCount = countedPlay.currentCount + 1)
+                        sleepTimerSession.setCountedPlay(updated)
+                        if (current != null) {
+                            audioEngine.play(resolvePath(current))
+                        }
+                        return@collect
+                    }
+                }
+
                 val next = queueManager.getNextSong()
                 if (next != null) {
                     if (current != null && next.id == current.id) {
@@ -523,6 +597,12 @@ class PlaybackStateHolder(
     private fun scheduleTransitionFor(song: Song) {
         transitionSchedulerJob?.cancel()
         if (!crossfadeEnabled.value) return
+
+        val currentTimer = sleepTimerSession.timer.value
+        val countedPlay = sleepTimerSession.countedPlay.value
+        val isEndOfTrack = currentTimer is SleepTimerSession.Timer.EndOfTrack
+        val isFinalCountedPlay = countedPlay != null && countedPlay.currentCount >= countedPlay.total
+        if (isEndOfTrack || isFinalCountedPlay) return
 
         transitionSchedulerJob = coroutineScope.launch {
             while (isActive && audioEngine.isCrossfading.value) {
@@ -612,9 +692,12 @@ class PlaybackStateHolder(
         if (audioEngine.playbackState.value == PlaybackState.PLAYING) {
             audioEngine.pause()
         } else {
-            val currSong = queueManager.currentSong.value
-            if (currSong != null) {
+            val currSong = queueManager.currentSong.value ?: return
+            val targetPath = resolvePath(currSong)
+            if (audioEngine.playbackState.value == PlaybackState.PAUSED && audioEngine.currentTrackPath == targetPath) {
                 audioEngine.play()
+            } else {
+                audioEngine.play(targetPath)
             }
         }
     }
