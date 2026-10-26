@@ -34,6 +34,12 @@ class MpvAudioEngineTest {
             engine.setReplayGain(true, "album")
             engine.setEqualizer(true, listOf(2f, 3f, 0f, -1f, 0f, 0f, 1f, 2f, 3f, 4f), preamp = 1.5f)
 
+            assertEquals("auto", engine.getCurrentAudioDevice())
+            val devices = engine.getAudioDevices()
+            assertTrue(devices.isNotEmpty(), "Audio devices list should not be empty")
+            engine.setAudioDevice("auto")
+            assertEquals("auto", engine.getCurrentAudioDevice())
+
             engine.pause()
             assertEquals(PlaybackState.IDLE, engine.playbackState.value)
 

@@ -1,20 +1,12 @@
 package com.kayoi.pixelplayerdesktop.presentation.viewmodel
 
-import com.kayoi.pixelplayerdesktop.data.model.EqualizerPreset
-import com.kayoi.pixelplayerdesktop.data.model.Lyrics
-import com.kayoi.pixelplayerdesktop.data.model.PlayerInfo
-import com.kayoi.pixelplayerdesktop.data.model.QueueItem
-import com.kayoi.pixelplayerdesktop.data.model.Song
-import com.kayoi.pixelplayerdesktop.data.player.QueueManager
-import com.kayoi.pixelplayerdesktop.domain.player.AudioEngine
-import com.kayoi.pixelplayerdesktop.domain.player.PlaybackState
-import com.kayoi.pixelplayerdesktop.domain.repository.LyricsRepository
-import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
-import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
-import com.kayoi.pixelplayerdesktop.utils.LrcParser
+import java.io.File
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,12 +17,23 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import com.kayoi.pixelplayerdesktop.data.player.PlaybackUriResolver
 import kotlinx.coroutines.launch
-import java.io.File
+
+import com.kayoi.pixelplayerdesktop.data.model.EqualizerPreset
+import com.kayoi.pixelplayerdesktop.data.model.Lyrics
+import com.kayoi.pixelplayerdesktop.data.model.PlayerInfo
+import com.kayoi.pixelplayerdesktop.data.model.QueueItem
+import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.data.player.PlaybackUriResolver
+import com.kayoi.pixelplayerdesktop.data.player.QueueManager
+import com.kayoi.pixelplayerdesktop.domain.player.AudioDevice
+import com.kayoi.pixelplayerdesktop.domain.player.AudioEngine
+import com.kayoi.pixelplayerdesktop.domain.player.PlaybackState
+import com.kayoi.pixelplayerdesktop.domain.repository.LyricsRepository
+import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
+import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
+import com.kayoi.pixelplayerdesktop.utils.LrcParser
 
 class PlaybackStateHolder(
     private val audioEngine: AudioEngine,
@@ -93,6 +96,23 @@ class PlaybackStateHolder(
 
     fun setCloseToTray(enabled: Boolean) {
         coroutineScope.launch { settingsRepository.setCloseToTray(enabled) }
+    }
+
+    val selectedAudioDevice: StateFlow<String> = settingsRepository.settingsFlow
+        .map { it.selectedAudioDevice }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, "auto")
+
+    private val _availableAudioDevices = MutableStateFlow<List<AudioDevice>>(emptyList())
+    val availableAudioDevices: StateFlow<List<AudioDevice>> = _availableAudioDevices.asStateFlow()
+
+    fun refreshAudioDevices() {
+        _availableAudioDevices.value = audioEngine.getAudioDevices()
+    }
+
+    fun setSelectedAudioDevice(device: String) {
+        coroutineScope.launch {
+            settingsRepository.setSelectedAudioDevice(device)
+        }
     }
 
     val equalizerEnabled: StateFlow<Boolean> = settingsRepository.settingsFlow
@@ -442,6 +462,27 @@ class PlaybackStateHolder(
                     audioEngine.setEqualizer(enabled, bands, preamp)
                 }
         }
+
+        coroutineScope.launch {
+            settingsRepository.settingsFlow
+                .map { it.selectedAudioDevice }
+                .distinctUntilChanged()
+                .collect { device ->
+                    audioEngine.setAudioDevice(device)
+                }
+        }
+        coroutineScope.launch {
+            audioEngine.audioDeviceFallbackEvents.collect { fallbackDevice ->
+                settingsRepository.setSelectedAudioDevice(fallbackDevice)
+                refreshAudioDevices()
+            }
+        }
+        coroutineScope.launch {
+            audioEngine.audioDeviceListChangedEvents.collect {
+                refreshAudioDevices()
+            }
+        }
+        refreshAudioDevices()
 
         coroutineScope.launch {
             settingsRepository.settingsFlow

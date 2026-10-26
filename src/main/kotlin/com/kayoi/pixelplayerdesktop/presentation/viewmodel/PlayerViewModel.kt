@@ -136,6 +136,8 @@ class PlayerViewModel(
     val crossfadeDurationSeconds = playbackStateHolder.crossfadeDurationSeconds
     val showQueueHistory = playbackStateHolder.showQueueHistory
     val closeToTray = playbackStateHolder.closeToTray
+    val selectedAudioDevice = playbackStateHolder.selectedAudioDevice
+    val availableAudioDevices = playbackStateHolder.availableAudioDevices
     val equalizerEnabled = playbackStateHolder.equalizerEnabled
     val equalizerPreset = playbackStateHolder.equalizerPreset
     val equalizerBands = playbackStateHolder.equalizerBands
@@ -150,6 +152,8 @@ class PlayerViewModel(
     fun setCrossfadeDurationSeconds(duration: Int) = playbackStateHolder.setCrossfadeDurationSeconds(duration)
     fun setShowQueueHistory(show: Boolean) = playbackStateHolder.setShowQueueHistory(show)
     fun setCloseToTray(enabled: Boolean) = playbackStateHolder.setCloseToTray(enabled)
+    fun setSelectedAudioDevice(device: String) = playbackStateHolder.setSelectedAudioDevice(device)
+    fun refreshAudioDevices() = playbackStateHolder.refreshAudioDevices()
     fun setEqualizerEnabled(enabled: Boolean) = playbackStateHolder.setEqualizerEnabled(enabled)
     fun setEqualizerPreset(preset: EqualizerPreset) = playbackStateHolder.setEqualizerPreset(preset)
     fun setEqualizerBand(index: Int, level: Float) = playbackStateHolder.setEqualizerBand(index, level)

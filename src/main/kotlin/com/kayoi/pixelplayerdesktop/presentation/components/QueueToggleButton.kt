@@ -1,8 +1,5 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
-import com.kayoi.pixelplayerdesktop.generated.resources.Res
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_queue_music
-import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -37,9 +34,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.painterResource
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_queue_music
 
 /**
  * Queue toggle pill shared by the main top bar and the expanded player.
@@ -57,7 +60,13 @@ fun QueueToggleButton(
     queueCount: Int,
     onClick: () -> Unit,
     showLabel: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(18.dp),
+    height: Dp = 36.dp,
+    containerColor: Color? = null,
+    contentColor: Color? = null,
+    badgeContainerColor: Color? = null,
+    badgeContentColor: Color? = null
 ) {
     val colors = MaterialTheme.colorScheme
 
@@ -88,47 +97,51 @@ fun QueueToggleButton(
             shrinkHorizontally(shrinkTowards = Alignment.End, animationSpec = tween(180)),
         modifier = modifier
     ) {
-        val containerColor by animateColorAsState(
-            targetValue = if (isQueueOpen) colors.primaryContainer else colors.surfaceContainerHighest.copy(alpha = 0.6f),
+        val resolvedDefaultContainerColor = containerColor ?: colors.surfaceContainerHighest.copy(alpha = 0.6f)
+        val resolvedDefaultContentColor = contentColor ?: colors.onSurfaceVariant
+        val containerColorState by animateColorAsState(
+            targetValue = if (isQueueOpen) colors.primaryContainer else resolvedDefaultContainerColor,
             animationSpec = tween(180),
             label = "queueToggleContainerColor"
         )
-        val contentColor by animateColorAsState(
-            targetValue = if (isQueueOpen) colors.onPrimaryContainer else colors.onSurfaceVariant,
+        val contentColorState by animateColorAsState(
+            targetValue = if (isQueueOpen) colors.onPrimaryContainer else resolvedDefaultContentColor,
             animationSpec = tween(180),
             label = "queueToggleContentColor"
         )
         val badgeBackgroundColor by animateColorAsState(
-            targetValue = if (isQueueOpen) colors.primary else colors.surfaceContainerHighest,
+            targetValue = if (isQueueOpen) colors.primary else (badgeContainerColor ?: if (resolvedDefaultContainerColor == colors.surfaceContainerHighest) colors.surfaceContainer else colors.surfaceContainerHighest),
             animationSpec = tween(180),
             label = "queueToggleBadgeContainerColor"
         )
         val badgeTextColor by animateColorAsState(
-            targetValue = if (isQueueOpen) colors.onPrimary else colors.onSurfaceVariant,
+            targetValue = if (isQueueOpen) colors.onPrimary else (badgeContentColor ?: resolvedDefaultContentColor),
             animationSpec = tween(180),
             label = "queueToggleBadgeTextColor"
         )
 
         Surface(
             modifier = Modifier
-                .height(36.dp)
-                .clip(RoundedCornerShape(18.dp))
+                .height(height)
+                .clip(shape)
                 .clickable(onClick = onClick),
-            shape = RoundedCornerShape(18.dp),
-            color = containerColor
+            shape = shape,
+            color = containerColorState
         ) {
             Row(
-                modifier = Modifier.padding(
-                    horizontal = if (showLabel) 12.dp else 8.dp,
-                    vertical = 6.dp
-                ),
+                modifier = Modifier
+                    .height(height)
+                    .padding(
+                        horizontal = if (showLabel) 12.dp else 10.dp,
+                        vertical = 6.dp
+                    ),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(if (showLabel) 6.dp else 4.dp)
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_automirrored_rounded_queue_music),
                     contentDescription = "Toggle Queue Panel",
-                    tint = contentColor,
+                    tint = contentColorState,
                     modifier = Modifier.size(17.dp)
                 )
                 if (showLabel) {
@@ -136,7 +149,7 @@ fun QueueToggleButton(
                         text = "Queue",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = if (isQueueOpen) FontWeight.Bold else FontWeight.Medium,
-                        color = contentColor
+                        color = contentColorState
                     )
                 }
                 Box(

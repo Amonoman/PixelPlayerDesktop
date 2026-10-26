@@ -1,5 +1,6 @@
 package com.kayoi.pixelplayerdesktop.domain.player
 
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -32,6 +33,11 @@ interface AudioEngine {
     fun setMute(muted: Boolean)
     fun setReplayGain(enabled: Boolean, mode: String = "track")
     fun setEqualizer(enabled: Boolean, bands: List<Float>, preamp: Float = 0f) {}
+    val audioDeviceFallbackEvents: SharedFlow<String> get() = MutableSharedFlow()
+    val audioDeviceListChangedEvents: SharedFlow<Unit> get() = MutableSharedFlow()
+    fun getAudioDevices(): List<AudioDevice> = emptyList()
+    fun setAudioDevice(deviceName: String) {}
+    fun getCurrentAudioDevice(): String = "auto"
     fun crossfadeTo(mediaPathOrUri: String, durationMs: Long) {
         play(mediaPathOrUri)
     }

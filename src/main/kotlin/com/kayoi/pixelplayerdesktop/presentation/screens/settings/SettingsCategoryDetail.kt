@@ -20,6 +20,7 @@ import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_layers
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_light_mode
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_palette
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_refresh
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_speaker
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_tab
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_view_week
 import org.jetbrains.compose.resources.painterResource
@@ -86,6 +87,7 @@ import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtColorAccuracy
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
 import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
 import com.kayoi.pixelplayerdesktop.data.scanner.ScanProgress
+import com.kayoi.pixelplayerdesktop.presentation.components.AudioDeviceSelectorDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveSwitchRow
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import kotlin.math.roundToInt
@@ -787,6 +789,40 @@ fun SettingsCategoryDetail(
             }
 
             SettingsSection.PLAYBACK -> {
+                item {
+                    val selectedAudioDevice by viewModel.selectedAudioDevice.collectAsState()
+                    val availableAudioDevices by viewModel.availableAudioDevices.collectAsState()
+                    var showAudioDeviceDialog by remember { mutableStateOf(false) }
+
+                    SettingsSubsection(title = "AUDIO OUTPUT") {
+                        val currentDesc = availableAudioDevices.firstOrNull { it.name == selectedAudioDevice }?.description
+                            ?: if (selectedAudioDevice == "auto") "Autoselect device (System Default)" else selectedAudioDevice
+
+                        ExpressiveSettingsRow(
+                            title = "Audio Output Device",
+                            subtitle = currentDesc,
+                            leadingIcon = {
+                                Icon(painterResource(Res.drawable.ic_rounded_speaker), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                            },
+                            trailingIcon = {
+                                Icon(painterResource(Res.drawable.ic_rounded_chevron_right), null, tint = colors.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(22.dp))
+                            },
+                            shape = getGroupShape(0, 1),
+                            onClick = { showAudioDeviceDialog = true }
+                        )
+                    }
+
+                    if (showAudioDeviceDialog) {
+                        AudioDeviceSelectorDialog(
+                            selectedDevice = selectedAudioDevice,
+                            availableDevices = availableAudioDevices,
+                            onSelectDevice = { viewModel.setSelectedAudioDevice(it) },
+                            onRefreshDevices = { viewModel.refreshAudioDevices() },
+                            onDismiss = { showAudioDeviceDialog = false }
+                        )
+                    }
+                }
+
                 item {
                     val replayGainEnabled by viewModel.replayGainEnabled.collectAsState()
                     val replayGainMode by viewModel.replayGainMode.collectAsState()

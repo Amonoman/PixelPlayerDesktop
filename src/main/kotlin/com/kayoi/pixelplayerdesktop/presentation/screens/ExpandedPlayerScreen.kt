@@ -7,6 +7,7 @@ import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_keyboard
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_keyboard_arrow_down
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_more_vert
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_search
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_speaker
 import org.jetbrains.compose.resources.painterResource
 import java.io.File
 
@@ -45,6 +46,7 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -79,6 +81,7 @@ import kotlinx.coroutines.withContext
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.presentation.components.AudioDeviceSelectorDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.LyricsSearchDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueSidePanel
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueToggleButton
@@ -98,7 +101,7 @@ import com.kayoi.pixelplayerdesktop.utils.MultiLangRomanizer
 
 private val outerCorner = 26.dp
 private val innerCorner = 4.dp
-private val buttonGap = 2.dp
+private val buttonGap = 4.dp
 private val buttonSize = 42.dp
 
 enum class ExpandedTab {
@@ -133,8 +136,11 @@ fun ExpandedPlayerScreen(
     val lyricsAlignment by viewModel.lyricsAlignment.collectAsState()
     val showLyricsRomanization by viewModel.showLyricsRomanization.collectAsState()
     val equalizerEnabled by viewModel.equalizerEnabled.collectAsState()
+    val selectedAudioDevice by viewModel.selectedAudioDevice.collectAsState()
+    val availableAudioDevices by viewModel.availableAudioDevices.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     var showEqualizerDialog by remember { mutableStateOf(false) }
+    var showAudioDeviceDialog by remember { mutableStateOf(false) }
     var showLyricsSearchDialog by remember { mutableStateOf(false) }
     var showSaveLyricsDialog by remember { mutableStateOf(false) }
     var showLyricsMenu by remember { mutableStateOf(false) }
@@ -265,13 +271,96 @@ fun ExpandedPlayerScreen(
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    QueueToggleButton(
-                        visible = isCompactLayout,
-                        isQueueOpen = isQueueExpanded,
-                        queueCount = queue.size,
-                        onClick = { isQueueExpanded = !isQueueExpanded },
-                        showLabel = !isCompactLayout
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        val equalizerContainerColor = if (equalizerEnabled) colors.primary else colors.surfaceContainerHighest
+                        val equalizerContentColor = if (equalizerEnabled) colors.onPrimary else colors.onSurface
+
+                        AppTooltip(
+                            text = "Equalizer",
+                            alignment = Alignment.BottomCenter,
+                            offset = DpOffset(0.dp, 6.dp)
+                        ) {
+                            FilledIconButton(
+                                onClick = { showEqualizerDialog = true },
+                                shape = RoundedCornerShape(
+                                    topStart = outerCorner,
+                                    bottomStart = outerCorner,
+                                    topEnd = innerCorner,
+                                    bottomEnd = innerCorner
+                                ),
+                                colors = IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = equalizerContainerColor,
+                                    contentColor = equalizerContentColor
+                                ),
+                                modifier = Modifier.size(buttonSize)
+                            ) {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_rounded_graphic_eq),
+                                    contentDescription = "Equalizer",
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(buttonGap))
+
+                        AppTooltip(
+                            text = "Audio Output Device",
+                            alignment = Alignment.BottomCenter,
+                            offset = DpOffset(0.dp, 6.dp)
+                        ) {
+                            FilledIconButton(
+                                onClick = { showAudioDeviceDialog = true },
+                                shape = if (isCompactLayout) {
+                                    RoundedCornerShape(
+                                        topStart = innerCorner,
+                                        bottomStart = innerCorner,
+                                        topEnd = innerCorner,
+                                        bottomEnd = innerCorner
+                                    )
+                                } else {
+                                    RoundedCornerShape(
+                                        topStart = innerCorner,
+                                        bottomStart = innerCorner,
+                                        topEnd = outerCorner,
+                                        bottomEnd = outerCorner
+                                    )
+                                },
+                                colors = IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = colors.surfaceContainerHighest,
+                                    contentColor = colors.onSurface
+                                ),
+                                modifier = Modifier.size(buttonSize)
+                            ) {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_rounded_speaker),
+                                    contentDescription = "Audio Output Device",
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+
+                        if (isCompactLayout) {
+                            Spacer(modifier = Modifier.width(buttonGap))
+                        }
+
+                        QueueToggleButton(
+                            visible = isCompactLayout,
+                            isQueueOpen = isQueueExpanded,
+                            queueCount = queue.size,
+                            onClick = { isQueueExpanded = !isQueueExpanded },
+                            showLabel = !isCompactLayout,
+                            shape = RoundedCornerShape(
+                                topStart = innerCorner,
+                                bottomStart = innerCorner,
+                                topEnd = outerCorner,
+                                bottomEnd = outerCorner
+                            ),
+                            height = buttonSize,
+                            containerColor = colors.surfaceContainerHighest,
+                            contentColor = colors.onSurface
+                        )
+                    }
                 }
 
                 BoxWithConstraints(
@@ -414,80 +503,33 @@ fun ExpandedPlayerScreen(
                                         }
 
                                         Row(
-                                            verticalAlignment = Alignment.CenterVertically
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                                         ) {
-                                            val equalizerContainerColor = if (equalizerEnabled) colors.primary else colors.surfaceContainerHighest.copy(alpha = 0.6f)
-                                            val equalizerContentColor = if (equalizerEnabled) colors.onPrimary else colors.onSurfaceVariant
-
-                                            AppTooltip("Equalizer") {
-                                                FilledIconButton(
-                                                    onClick = { showEqualizerDialog = true },
-                                                    shape = RoundedCornerShape(
-                                                        topStart = outerCorner,
-                                                        bottomStart = outerCorner,
-                                                        topEnd = innerCorner,
-                                                        bottomEnd = innerCorner
-                                                    ),
-                                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                                        containerColor = equalizerContainerColor,
-                                                        contentColor = equalizerContentColor
-                                                    ),
-                                                    modifier = Modifier.size(buttonSize)
-                                                ) {
-                                                    Icon(
-                                                        painter = painterResource(Res.drawable.ic_rounded_graphic_eq),
-                                                        contentDescription = "Equalizer",
-                                                        modifier = Modifier.size(20.dp)
-                                                    )
-                                                }
-                                            }
-
-                                            Spacer(modifier = Modifier.width(buttonGap))
-
                                             AppTooltip("Search / Change Lyrics") {
-                                                FilledIconButton(
+                                                IconButton(
                                                     onClick = { showLyricsSearchDialog = true },
-                                                    shape = RoundedCornerShape(
-                                                        topStart = innerCorner,
-                                                        bottomStart = innerCorner,
-                                                        topEnd = innerCorner,
-                                                        bottomEnd = innerCorner
-                                                    ),
-                                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                                        containerColor = colors.surfaceContainerHighest.copy(alpha = 0.6f),
-                                                        contentColor = colors.onSurfaceVariant
-                                                    ),
-                                                    modifier = Modifier.size(buttonSize)
+                                                    modifier = Modifier.size(40.dp)
                                                 ) {
                                                     Icon(
                                                         painter = painterResource(Res.drawable.ic_rounded_search),
                                                         contentDescription = "Search Lyrics",
+                                                        tint = colors.onSurfaceVariant,
                                                         modifier = Modifier.size(20.dp)
                                                     )
                                                 }
                                             }
 
-                                            Spacer(modifier = Modifier.width(buttonGap))
-
                                             Box {
                                                 AppTooltip("Lyrics Options") {
-                                                    FilledIconButton(
+                                                    IconButton(
                                                         onClick = { showLyricsMenu = true },
-                                                        shape = RoundedCornerShape(
-                                                            topStart = innerCorner,
-                                                            bottomStart = innerCorner,
-                                                            topEnd = outerCorner,
-                                                            bottomEnd = outerCorner
-                                                        ),
-                                                        colors = IconButtonDefaults.filledIconButtonColors(
-                                                            containerColor = colors.surfaceContainerHighest.copy(alpha = 0.6f),
-                                                            contentColor = colors.onSurfaceVariant
-                                                        ),
-                                                        modifier = Modifier.size(buttonSize)
+                                                        modifier = Modifier.size(40.dp)
                                                     ) {
                                                         Icon(
                                                             painter = painterResource(Res.drawable.ic_rounded_more_vert),
                                                             contentDescription = "Lyrics Options",
+                                                            tint = colors.onSurfaceVariant,
                                                             modifier = Modifier.size(20.dp)
                                                         )
                                                     }
@@ -764,6 +806,16 @@ fun ExpandedPlayerScreen(
             EqualizerDialog(
                 viewModel = viewModel,
                 onDismiss = { showEqualizerDialog = false }
+            )
+        }
+
+        if (showAudioDeviceDialog) {
+            AudioDeviceSelectorDialog(
+                selectedDevice = selectedAudioDevice,
+                availableDevices = availableAudioDevices,
+                onSelectDevice = { viewModel.setSelectedAudioDevice(it) },
+                onRefreshDevices = { viewModel.refreshAudioDevices() },
+                onDismiss = { showAudioDeviceDialog = false }
             )
         }
     }
