@@ -7,6 +7,7 @@ import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_keyboard
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_keyboard_arrow_down
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_more_vert
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_search
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_speaker
 import org.jetbrains.compose.resources.painterResource
 import java.io.File
 
@@ -79,6 +80,7 @@ import kotlinx.coroutines.withContext
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.presentation.components.AudioDeviceSelectorDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.LyricsSearchDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueSidePanel
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueToggleButton
@@ -133,8 +135,11 @@ fun ExpandedPlayerScreen(
     val lyricsAlignment by viewModel.lyricsAlignment.collectAsState()
     val showLyricsRomanization by viewModel.showLyricsRomanization.collectAsState()
     val equalizerEnabled by viewModel.equalizerEnabled.collectAsState()
+    val selectedAudioDevice by viewModel.selectedAudioDevice.collectAsState()
+    val availableAudioDevices by viewModel.availableAudioDevices.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     var showEqualizerDialog by remember { mutableStateOf(false) }
+    var showAudioDeviceDialog by remember { mutableStateOf(false) }
     var showLyricsSearchDialog by remember { mutableStateOf(false) }
     var showSaveLyricsDialog by remember { mutableStateOf(false) }
     var showLyricsMenu by remember { mutableStateOf(false) }
@@ -264,6 +269,30 @@ fun ExpandedPlayerScreen(
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
+
+                    AppTooltip(
+                        text = "Audio Output Device",
+                        alignment = Alignment.BottomCenter,
+                        offset = DpOffset(0.dp, 6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(CircleShape)
+                                .background(colors.surfaceContainerHighest)
+                                .clickable { showAudioDeviceDialog = true },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_rounded_speaker),
+                                contentDescription = "Audio Output Device",
+                                tint = colors.onSurface,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
 
                     QueueToggleButton(
                         visible = isCompactLayout,
@@ -764,6 +793,16 @@ fun ExpandedPlayerScreen(
             EqualizerDialog(
                 viewModel = viewModel,
                 onDismiss = { showEqualizerDialog = false }
+            )
+        }
+
+        if (showAudioDeviceDialog) {
+            AudioDeviceSelectorDialog(
+                selectedDevice = selectedAudioDevice,
+                availableDevices = availableAudioDevices,
+                onSelectDevice = { viewModel.setSelectedAudioDevice(it) },
+                onRefreshDevices = { viewModel.refreshAudioDevices() },
+                onDismiss = { showAudioDeviceDialog = false }
             )
         }
     }

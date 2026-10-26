@@ -22,8 +22,10 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 import com.kayoi.pixelplayerdesktop.data.player.ReplayGainManager
+import com.kayoi.pixelplayerdesktop.domain.player.AudioDevice
 import com.kayoi.pixelplayerdesktop.domain.player.AudioEngine
 import com.kayoi.pixelplayerdesktop.domain.player.PlaybackState
 
@@ -96,6 +98,15 @@ class MpvAudioEngine(
     private var equalizerEnabled = false
     private var equalizerBands: List<Float> = List(10) { 0f }
     private var equalizerPreamp = 0f
+    private var currentAudioDevice: String = "auto"
+    private val jsonParser = Json { ignoreUnknownKeys = true }
+
+    private val _audioDeviceFallbackEvents = MutableSharedFlow<String>(extraBufferCapacity = 4)
+    override val audioDeviceFallbackEvents: SharedFlow<String> = _audioDeviceFallbackEvents.asSharedFlow()
+    private val _audioDeviceListChangedEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 4)
+    override val audioDeviceListChangedEvents: SharedFlow<Unit> = _audioDeviceListChangedEvents.asSharedFlow()
+    private var deviceListCheckJob: Job? = null
+    private var pendingSeekPositionMs: Long? = null
 
     init {
         initMpvPair()
@@ -122,6 +133,7 @@ class MpvAudioEngine(
         api.mpv_set_property_string(handle, "gapless-audio", "yes")
         api.mpv_set_property_string(handle, "audio-client-name", "PixelPlayer")
         api.mpv_set_property_string(handle, "audio-pitch-correction", "yes")
+        api.mpv_set_property_string(handle, "audio-fallback-to-null", "yes")
 
         val aoDriver = when {
             Platform.isWindows() -> "wasapi"
@@ -129,6 +141,9 @@ class MpvAudioEngine(
             else -> "pipewire,pulse,alsa"
         }
         api.mpv_set_property_string(handle, "ao", aoDriver)
+        if (currentAudioDevice != "auto") {
+            api.mpv_set_property_string(handle, "audio-device", currentAudioDevice)
+        }
 
         val status = api.mpv_initialize(handle)
         if (status < 0) {
@@ -142,6 +157,7 @@ class MpvAudioEngine(
         api.mpv_observe_property(handle, 3L, "pause", MpvApi.MPV_FORMAT_FLAG)
         api.mpv_observe_property(handle, 4L, "idle-active", MpvApi.MPV_FORMAT_FLAG)
         api.mpv_observe_property(handle, 5L, "paused-for-cache", MpvApi.MPV_FORMAT_FLAG)
+        api.mpv_observe_property(handle, 6L, "audio-device-list", MpvApi.MPV_FORMAT_NONE)
 
         setVolumeOnHandle(handle, getEffectiveVolume())
         return handle
@@ -220,6 +236,11 @@ class MpvAudioEngine(
                             }
                         }
                     }
+                    "audio-device-list" -> {
+                        if (isActivePlayer) {
+                            scheduleDeviceListCheck()
+                        }
+                    }
                 }
             }
             MpvApi.MPV_EVENT_START_FILE -> {
@@ -229,8 +250,18 @@ class MpvAudioEngine(
             }
             MpvApi.MPV_EVENT_FILE_LOADED -> {
                 if (isActivePlayer) {
-                    _playbackState.value = PlaybackState.PLAYING
-                    startPositionTicker()
+                    val isPaused = api.mpv_get_property_string(sourceHandle, "pause") == "yes"
+                    if (isPaused) {
+                        _playbackState.value = PlaybackState.PAUSED
+                    } else {
+                        _playbackState.value = PlaybackState.PLAYING
+                        startPositionTicker()
+                    }
+                    val pendingSeek = pendingSeekPositionMs
+                    if (pendingSeek != null) {
+                        pendingSeekPositionMs = null
+                        seekTo(pendingSeek)
+                    }
                 }
             }
             MpvApi.MPV_EVENT_END_FILE -> {
@@ -321,6 +352,7 @@ class MpvAudioEngine(
 
         _currentPositionMs.value = 0L
         _durationMs.value = 0L
+        pendingSeekPositionMs = null
 
         val file = File(mediaPathOrUri)
         val validPath = if (file.exists()) file.absolutePath else mediaPathOrUri
@@ -360,6 +392,29 @@ class MpvAudioEngine(
         playPauseFadeJob?.cancel()
 
         try {
+            if (currentAudioDevice != "auto") {
+                val devices = getAudioDevices()
+                if (devices.none { it.name == currentAudioDevice }) {
+                    currentAudioDevice = "auto"
+                    player.let { api.mpv_set_property_string(it, "audio-device", "auto") }
+                    standby?.let { api.mpv_set_property_string(it, "audio-device", "auto") }
+                    _audioDeviceFallbackEvents.tryEmit("auto")
+
+                    val path = currentTrackPath
+                    if (path != null) {
+                        val posMs = _currentPositionMs.value
+                        pendingSeekPositionMs = posMs
+                        val targetVol = getEffectiveVolume()
+                        setVolumeOnHandle(player, targetVol)
+                        api.mpv_command(player, arrayOf("loadfile", path, "replace"))
+                        api.mpv_set_property_string(player, "pause", "no")
+                        _playbackState.value = PlaybackState.PLAYING
+                        startPositionTicker()
+                        return
+                    }
+                }
+            }
+
             _playbackState.value = PlaybackState.PLAYING
             startPositionTicker()
 
@@ -475,6 +530,9 @@ class MpvAudioEngine(
         } else {
             positionMs.coerceAtLeast(0L)
         }
+        if (pendingSeekPositionMs != null) {
+            pendingSeekPositionMs = clampedMs
+        }
         val seconds = (clampedMs / 1000.0).toString()
         api.mpv_command(player, arrayOf("seek", seconds, "absolute"))
         _currentPositionMs.value = clampedMs
@@ -551,6 +609,106 @@ class MpvAudioEngine(
 
         player?.let { api.mpv_set_property_string(it, "af", afString) }
         standby?.let { api.mpv_set_property_string(it, "af", afString) }
+    }
+
+    override fun setAudioDevice(deviceName: String): Unit = synchronized(commandLock) {
+        if (isClosed()) return
+        val targetDevice = deviceName.ifBlank { "auto" }
+        if (currentAudioDevice == targetDevice) return
+        currentAudioDevice = targetDevice
+        val (player, standby) = playerPair.get()
+        player?.let {
+            api.mpv_set_property_string(it, "audio-device", currentAudioDevice)
+            api.mpv_command_string(it, "ao-reload")
+        }
+        standby?.let {
+            api.mpv_set_property_string(it, "audio-device", currentAudioDevice)
+            api.mpv_command_string(it, "ao-reload")
+        }
+    }
+
+    private fun scheduleDeviceListCheck() {
+        deviceListCheckJob?.cancel()
+        deviceListCheckJob = engineScope.launch {
+            delay(300)
+            if (isClosed()) return@launch
+            _audioDeviceListChangedEvents.tryEmit(Unit)
+            if (currentAudioDevice == "auto") return@launch
+            val devices = getAudioDevices()
+            val stillExists = devices.any { it.name == currentAudioDevice }
+            if (!stillExists) {
+                fallbackToDefaultDevice()
+            }
+        }
+    }
+
+    private fun fallbackToDefaultDevice() {
+        synchronized(commandLock) {
+            if (isClosed() || currentAudioDevice == "auto") return
+            currentAudioDevice = "auto"
+            val (player, standby) = playerPair.get()
+            player?.let { api.mpv_set_property_string(it, "audio-device", "auto") }
+            standby?.let { api.mpv_set_property_string(it, "audio-device", "auto") }
+
+            val path = currentTrackPath
+            if (player != null && path != null) {
+                api.mpv_set_property_string(player, "pause", "yes")
+                _playbackState.value = PlaybackState.PAUSED
+                stopPositionTicker()
+
+                val resumePosMs = _currentPositionMs.value
+                pendingSeekPositionMs = resumePosMs
+
+                api.mpv_command(player, arrayOf("loadfile", path, "replace"))
+            }
+        }
+        _audioDeviceFallbackEvents.tryEmit("auto")
+    }
+
+    override fun getCurrentAudioDevice(): String = currentAudioDevice
+
+    override fun getAudioDevices(): List<AudioDevice> = synchronized(commandLock) {
+        if (isClosed()) return emptyList()
+        val player = playerPair.get()?.active ?: return emptyList()
+        val jsonStr = api.mpv_get_property_string(player, "audio-device-list") ?: return emptyList()
+        val rawList = runCatching {
+            jsonParser.decodeFromString<List<AudioDevice>>(jsonStr)
+        }.getOrDefault(emptyList())
+
+        val hasSoundServer = rawList.any { it.name.startsWith("pipewire") || it.name.startsWith("pulse") }
+
+        return rawList.filter { device ->
+            val name = device.name
+            val desc = device.description
+
+            val isVirtualPlugin = name.startsWith("alsa/lavrate") ||
+                name.startsWith("alsa/samplerate") ||
+                name.startsWith("alsa/speex") ||
+                name.startsWith("alsa/oss") ||
+                name.startsWith("alsa/jack") ||
+                name.startsWith("alsa/upmix") ||
+                name.startsWith("alsa/vdownmix") ||
+                name.startsWith("alsa/dmix") ||
+                name.startsWith("alsa/plughw") ||
+                name.startsWith("alsa/surround") ||
+                name.startsWith("alsa/sysdefault") ||
+                name.startsWith("alsa/default") ||
+                name.startsWith("alsa/usbstream") ||
+                desc.contains("Rate Converter", ignoreCase = true) ||
+                desc.contains("Direct sample mixing", ignoreCase = true) ||
+                desc.contains("Hardware device with all software conversions", ignoreCase = true) ||
+                desc.contains("Plugin using", ignoreCase = true) ||
+                desc.contains("JACK Audio Connection Kit", ignoreCase = true) ||
+                desc.contains("Open Sound System", ignoreCase = true)
+
+            if (isVirtualPlugin) return@filter false
+
+            if (hasSoundServer && name.startsWith("alsa/")) {
+                return@filter false
+            }
+
+            true
+        }
     }
 
     override fun crossfadeTo(mediaPathOrUri: String, durationMs: Long): Unit = synchronized(commandLock) {
@@ -681,6 +839,7 @@ class MpvAudioEngine(
         if (!isReleased.compareAndSet(false, true)) return
         cancelCrossfade()
         playPauseFadeJob?.cancel()
+        deviceListCheckJob?.cancel()
         stopPositionTicker()
 
         val pA = handleA

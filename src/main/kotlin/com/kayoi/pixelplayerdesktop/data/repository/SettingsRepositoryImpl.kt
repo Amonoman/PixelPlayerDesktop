@@ -279,6 +279,10 @@ class SettingsRepositoryImpl(
         updateSettings { it.copy(closeToTray = enabled) }
     }
 
+    override suspend fun setSelectedAudioDevice(device: String) {
+        updateSettings { it.copy(selectedAudioDevice = device) }
+    }
+
     override suspend fun setEqualizerEnabled(enabled: Boolean) {
         updateSettings { it.copy(equalizerEnabled = enabled) }
     }

@@ -55,6 +55,7 @@ interface SettingsRepository {
     suspend fun setCrossfadeDurationSeconds(durationSeconds: Int)
     suspend fun setShowQueueHistory(show: Boolean)
     suspend fun setCloseToTray(enabled: Boolean)
+    suspend fun setSelectedAudioDevice(device: String)
     suspend fun setEqualizerEnabled(enabled: Boolean)
     suspend fun setEqualizerPreset(preset: String)
     suspend fun setEqualizerBands(bands: List<Float>)

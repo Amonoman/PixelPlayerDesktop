@@ -43,6 +43,7 @@ data class UserSettings(
     val crossfadeDurationSeconds: Int = 3,
     val showQueueHistory: Boolean = true,
     val closeToTray: Boolean = false,
+    val selectedAudioDevice: String = "auto",
     val equalizerEnabled: Boolean = false,
     val equalizerPreset: String = "flat",
     val equalizerBands: List<Float> = listOf(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f),
