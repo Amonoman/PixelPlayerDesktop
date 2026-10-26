@@ -32,8 +32,15 @@ class PlayerViewModel(
     val themeStateHolder: ThemeStateHolder,
     val statsStateHolder: StatsStateHolder,
     val updateStateHolder: UpdateStateHolder? = null,
+    val sleepTimerStateHolder: SleepTimerStateHolder? = null,
     private val mediaSessionBridge: MediaSessionBridge? = null
 ) {
+    val isEndOfTrackTimerActive = sleepTimerStateHolder?.isEndOfTrackTimerActive ?: MutableStateFlow(false)
+    val activeTimerDurationMinutes = sleepTimerStateHolder?.activeTimerDurationMinutes ?: MutableStateFlow(null)
+    val activeTimerValueDisplay = sleepTimerStateHolder?.activeTimerValueDisplay ?: MutableStateFlow(null)
+    val sleepTimerRemainingSeconds = sleepTimerStateHolder?.remainingSeconds ?: MutableStateFlow(null)
+    val sleepTimerPlayCount = sleepTimerStateHolder?.playCount ?: MutableStateFlow(1f)
+
     val homeStatsOverview = statsStateHolder.homeOverview
     val currentStatsSummary = statsStateHolder.currentSummary
     val selectedStatsRange = statsStateHolder.selectedRange
@@ -338,4 +345,11 @@ class PlayerViewModel(
     suspend fun fetchOnlineCoverArt(releaseId: String): ByteArray? {
         return libraryStateHolder.fetchOnlineCoverArt(releaseId)
     }
+
+    fun setSleepTimer(minutes: Int) = sleepTimerStateHolder?.setSleepTimer(minutes)
+    fun setEndOfTrackTimer(enabled: Boolean) = sleepTimerStateHolder?.setEndOfTrackTimer(enabled)
+    fun playCounted(count: Int) = sleepTimerStateHolder?.playCounted(count)
+    fun stopCountedPlay() = sleepTimerStateHolder?.stopCountedPlay()
+    fun cancelSleepTimer() = sleepTimerStateHolder?.cancelTimer()
+    fun cancelAllSleepTimers() = sleepTimerStateHolder?.cancelAll()
 }

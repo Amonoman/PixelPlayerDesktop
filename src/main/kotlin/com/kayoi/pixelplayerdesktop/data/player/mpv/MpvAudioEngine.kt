@@ -93,7 +93,8 @@ class MpvAudioEngine(
     private var replayGainEnabled = false
     private var replayGainMode = "track"
     private var currentReplayGainMultiplier = 1.0f
-    private var currentTrackPath: String? = null
+    override var currentTrackPath: String? = null
+        private set
 
     private var equalizerEnabled = false
     private var equalizerBands: List<Float> = List(10) { 0f }
@@ -514,6 +515,7 @@ class MpvAudioEngine(
 
         _playbackState.value = PlaybackState.IDLE
         _currentPositionMs.value = 0L
+        currentTrackPath = null
     }
 
     override fun seekTo(positionMs: Long): Unit = synchronized(commandLock) {

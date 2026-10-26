@@ -23,6 +23,7 @@ interface AudioEngine {
     val isCrossfading: StateFlow<Boolean> get() = kotlinx.coroutines.flow.MutableStateFlow(false)
     val errorEvents: SharedFlow<String>
     val completionEvents: SharedFlow<Unit>
+    val currentTrackPath: String? get() = null
 
     fun play(mediaPathOrUri: String)
     fun play()
