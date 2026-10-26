@@ -2,6 +2,17 @@
 
 PixelPlayer Desktop is licensed under the GNU General Public License v3.0 (GPL-3.0) and includes third-party open-source components.
 
+Portions of this software were originally contributed to the public PixelPlayer repository under the MIT License. Those contributions remain licensed under the MIT License, and their notice is preserved as required. Portions of the logic and architecture are derived from PixelPlayerOSS.
+
+The full text of every license listed here is bundled in `licenses/texts/`.
+
+## PixelPlayer contributors
+
+| Component | Source / Repository | License |
+| --- | --- | --- |
+| PixelPlayer Contributors | Theo Vilardo & open-source contributors · `https://github.com/PixelPlayerHQ/PixelPlayer` | MIT License |
+| PixelPlayerOSS (Upstream Android) | Theo Vilardo · maintained by lostf1sh · `https://github.com/PixelPlayerHQ/PixelPlayerOSS` | GPL-3.0 |
+
 Bundled fonts:
 
 | Asset | Source | License |
@@ -53,5 +64,5 @@ Text parsing and romanization:
 | Library | Coordinates / Source | License |
 | --- | --- | --- |
 | Kuromoji IPADIC (Japanese) | `com.atilika.kuromoji:kuromoji-ipadic:0.9.0` | Apache-2.0 |
-| Pinyin4j (Chinese) | `com.belerweb:pinyin4j:2.5.1` | GPL-2.0 |
+| Pinyin4j (Chinese) | `com.belerweb:pinyin4j:2.5.1` | BSD |
 | ICU4J (Unicode / Text) | `com.ibm.icu:icu4j:76.1` | Unicode-3.0 / ICU License |

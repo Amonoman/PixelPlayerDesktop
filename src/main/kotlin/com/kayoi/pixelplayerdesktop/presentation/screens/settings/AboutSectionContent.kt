@@ -63,7 +63,6 @@ import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_balance
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_check_circle
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_chevron_right
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_palette
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_phone_android
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_public
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_refresh
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_system_update
@@ -128,13 +127,6 @@ private val ProjectLinks = listOf(
         subtitle = "Open-source libraries, fonts and bundled data",
         icon = Res.drawable.ic_rounded_balance,
         url = ""
-    ),
-    ProjectLink(
-        id = "upstream_foss",
-        title = "PixelPlayer OSS (Android)",
-        subtitle = "Original mobile upstream edition by lostf1sh",
-        icon = Res.drawable.ic_rounded_phone_android,
-        url = "https://github.com/lostf1sh/PixelPlayerOSS"
     )
 )
 

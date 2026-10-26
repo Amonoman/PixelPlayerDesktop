@@ -224,9 +224,11 @@ Before creating a pull request, ensure tests and build verification pass:
 
 PixelPlayer Desktop is licensed under the [GNU General Public License v3.0](LICENSE) (`SPDX-License-Identifier: GPL-3.0-or-later`).
 
+Portions of this software were originally contributed under the MIT License by PixelPlayer contributors. For full open-source library licenses, font notices, and contributor acknowledgments, see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [PIXELPLAYER_CONTRIBUTORS.txt](src/main/resources/licenses/PIXELPLAYER_CONTRIBUTORS.txt).
+
 ```text
 PixelPlayer Desktop
-Copyright (C) 2026 Theo Vilardo, adlifarizi, and contributors
+Copyright (C) 2026 Theo Vilardo
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -245,5 +247,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 <p align="center">
   Desktop version ported and maintained by <a href="https://github.com/adlifarizi">adlifarizi</a><br />
   Original Android version by <a href="https://github.com/theovilardo">theovilardo</a> (<a href="https://github.com/PixelPlayerHQ/PixelPlayer">PixelPlayer</a>)<br />
-  Open-source Android version maintained by <a href="https://github.com/lostf1sh">lostf1sh</a> (<a href="https://github.com/PixelPlayerHQ/PixelPlayerOSS">PixelPlayerOSS</a>)
+  Open-source Android version maintained by <a href="https://github.com/lostf1sh">lostf1sh</a> (<a href="https://github.com/PixelPlayerHQ/PixelPlayerOSS">PixelPlayerOSS</a>)<br />
+  Historical contributions by <a href="https://github.com/PixelPlayerHQ/PixelPlayer/graphs/contributors">PixelPlayer Contributors</a>
 </p>
+

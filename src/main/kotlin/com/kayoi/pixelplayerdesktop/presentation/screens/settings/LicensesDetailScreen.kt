@@ -76,6 +76,7 @@ import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_dataset
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_font_download
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_graphic_eq
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_palette
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_person
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_public
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_search
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_sort_by_alpha
@@ -85,6 +86,7 @@ import com.kayoi.pixelplayerdesktop.utils.BrowserUtils
 
 enum class LicenseCategory {
     ALL,
+    CONTRIBUTORS,
     LIBRARIES,
     FONTS,
     RAW_NOTICE
@@ -96,6 +98,7 @@ private enum class LicenseTab(
     val category: LicenseCategory
 ) {
     ALL("All", Res.drawable.ic_rounded_category, LicenseCategory.ALL),
+    CONTRIBUTORS("Contributors", Res.drawable.ic_rounded_person, LicenseCategory.CONTRIBUTORS),
     LIBRARIES("Libraries", Res.drawable.ic_rounded_code, LicenseCategory.LIBRARIES),
     FONTS("Fonts", Res.drawable.ic_rounded_font_download, LicenseCategory.FONTS),
     RAW_NOTICE("Raw notice", Res.drawable.ic_automirrored_rounded_article, LicenseCategory.RAW_NOTICE)
@@ -145,6 +148,7 @@ private fun parseThirdPartyNotices(markdown: String): List<LicenseNotice> {
             .joinToString(" · ")
 
         val category = when {
+            "contributor" in section.lowercase() -> LicenseCategory.CONTRIBUTORS
             "font" in section.lowercase() -> LicenseCategory.FONTS
             else -> LicenseCategory.LIBRARIES
         }
@@ -164,6 +168,7 @@ private fun parseThirdPartyNotices(markdown: String): List<LicenseNotice> {
 private fun getItemIcon(item: LicenseNotice): DrawableResource {
     val name = item.name.lowercase()
     return when {
+        item.category == LicenseCategory.CONTRIBUTORS -> Res.drawable.ic_rounded_person
         item.category == LicenseCategory.FONTS -> Res.drawable.ic_rounded_font_download
         name.contains("mpv") || name.contains("jaudiotagger") || name.contains("vorbis") ->
             Res.drawable.ic_rounded_graphic_eq
@@ -180,6 +185,26 @@ private fun getItemIcon(item: LicenseNotice): DrawableResource {
         else ->
             Res.drawable.ic_rounded_code
     }
+}
+
+private fun getLicenseText(item: LicenseNotice, fallbackOflText: String): String {
+    val license = item.licenseName.lowercase()
+    val path = when {
+        item.category == LicenseCategory.CONTRIBUTORS && "mit" in license ->
+            "licenses/PIXELPLAYER_CONTRIBUTORS.txt"
+        "lgpl-3" in license -> "licenses/texts/LGPL-3.0.txt"
+        "lgpl" in license -> "licenses/texts/LGPL-2.1.txt"
+        "gpl" in license -> "licenses/texts/GPL-3.0.txt"
+        "apache" in license -> "licenses/texts/Apache-2.0.txt"
+        "mit" in license -> "licenses/texts/MIT.txt"
+        "bsd" in license -> "licenses/texts/BSD-3-Clause.txt"
+        "icu" in license || "unicode" in license -> "licenses/texts/ICU.txt"
+        "ofl" in license || "font" in license || item.category == LicenseCategory.FONTS ->
+            "licenses/texts/OFL-1.1.txt"
+        else -> null
+    }
+    val loaded = path?.let { readResourceText(it) }?.trim().orEmpty()
+    return if (loaded.isNotBlank()) loaded else fallbackOflText.trim()
 }
 
 private fun readResourceText(path: String): String {
@@ -964,15 +989,17 @@ private fun LicenseDetailDialog(
     val itemIcon = getItemIcon(item)
     var copied by remember { mutableStateOf(false) }
 
-    val noticeText = remember(item, oflText) {
+    val fullLicenseText = remember(item, oflText) { getLicenseText(item, oflText) }
+
+    val noticeText = remember(item, fullLicenseText) {
         buildString {
             appendLine(item.name)
             if (item.section.isNotBlank()) appendLine("Category: ${item.section}")
             if (item.source.isNotBlank()) appendLine("Source / Repository: ${item.source}")
             append("License: ${item.licenseName}")
-            if ((item.licenseName.contains("OFL", ignoreCase = true) || item.category == LicenseCategory.FONTS) && oflText.isNotBlank()) {
+            if (fullLicenseText.isNotBlank()) {
                 append("\n\n")
-                append(oflText.trim())
+                append(fullLicenseText)
             }
         }
     }
