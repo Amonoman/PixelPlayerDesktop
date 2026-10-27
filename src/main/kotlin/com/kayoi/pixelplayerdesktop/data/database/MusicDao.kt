@@ -187,7 +187,7 @@ class MusicDao(
                 }
 
                 val deleteSongArtistsSql = "DELETE FROM song_artists WHERE song_id = ?"
-                val insertArtistSql = "INSERT INTO artists (id, name, track_count) VALUES (?, ?, 0) ON CONFLICT(name) DO UPDATE SET id = excluded.id"
+                val insertArtistSql = "INSERT OR IGNORE INTO artists (id, name, track_count) VALUES (?, ?, 0)"
                 val insertSongArtistSql = "INSERT OR REPLACE INTO song_artists (song_id, artist_id, is_primary) VALUES (?, ?, ?)"
 
                 conn.prepareStatement(deleteSongArtistsSql).use { deleteStmt ->

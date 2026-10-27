@@ -191,4 +191,38 @@ class DatabaseDaoTest {
         assertEquals("id_1200", retrievedSongs.first().id)
         assertEquals("id_1", retrievedSongs.last().id)
     }
+
+    @Test
+    fun testUpsertSongsWithCaseCollidingArtistNames() = runTest {
+        val tempDb = File.createTempFile("test_pixelplayer_artist_case", ".db")
+        tempDb.deleteOnExit()
+
+        val db = PixelPlayerDatabase(tempDb)
+        val musicDao = MusicDao(db)
+
+        val song1 = Song(
+            id = "id_1",
+            title = "Track 1",
+            artist = "Deeb",
+            album = "Album 1",
+            path = "navidrome://1",
+            contentUriString = "navidrome://1",
+            duration = 180000L
+        )
+        val song2 = Song(
+            id = "id_2",
+            title = "Track 2",
+            artist = "deeB",
+            album = "Album 2",
+            path = "navidrome://2",
+            contentUriString = "navidrome://2",
+            duration = 180000L
+        )
+
+        musicDao.upsertSongs(listOf(song1, song2))
+        val songs = musicDao.getAllSongs()
+        assertEquals(2, songs.size)
+        val artists = musicDao.getAllArtists()
+        assertEquals(1, artists.size)
+    }
 }
