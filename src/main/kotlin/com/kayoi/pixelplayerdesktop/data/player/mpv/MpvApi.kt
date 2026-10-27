@@ -21,7 +21,7 @@ interface MpvApi : Library {
     fun mpv_command_string(handle: Pointer, args: String): Int
     fun mpv_set_property(handle: Pointer, name: String, format: Int, data: Pointer): Int
     fun mpv_set_property_string(handle: Pointer, name: String, data: String): Int
-    fun mpv_get_property_string(handle: Pointer, name: String): String?
+    fun mpv_get_property_string(handle: Pointer, name: String): Pointer?
     fun mpv_observe_property(handle: Pointer, replyUserdata: Long, name: String, format: Int): Int
     fun mpv_unobserve_property(handle: Pointer, registeredReplyUserdata: Long): Int
     fun mpv_wait_event(handle: Pointer, timeout: Double): MpvEvent.ByReference?
@@ -164,4 +164,13 @@ open class MpvEventEndFile : Structure() {
     class ByReference : MpvEventEndFile(), Structure.ByReference
 
     override fun getFieldOrder(): List<String> = listOf("reason", "error")
+}
+
+fun MpvApi.getPropertyString(handle: Pointer, name: String): String? {
+    val ptr = mpv_get_property_string(handle, name) ?: return null
+    return try {
+        ptr.getString(0, "UTF-8")
+    } finally {
+        mpv_free(ptr)
+    }
 }

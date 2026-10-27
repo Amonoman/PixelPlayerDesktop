@@ -251,7 +251,7 @@ class MpvAudioEngine(
             }
             MpvApi.MPV_EVENT_FILE_LOADED -> {
                 if (isActivePlayer) {
-                    val isPaused = api.mpv_get_property_string(sourceHandle, "pause") == "yes"
+                    val isPaused = api.getPropertyString(sourceHandle, "pause") == "yes"
                     if (isPaused) {
                         _playbackState.value = PlaybackState.PAUSED
                     } else {
@@ -312,7 +312,7 @@ class MpvAudioEngine(
 
     private fun getVolumeOnHandle(handle: Pointer?): Float {
         if (handle == null || isClosed()) return 0f
-        val str = api.mpv_get_property_string(handle, "volume") ?: return 0f
+        val str = api.getPropertyString(handle, "volume") ?: return 0f
         return str.toFloatOrNull() ?: 0f
     }
 
@@ -672,7 +672,7 @@ class MpvAudioEngine(
     override fun getAudioDevices(): List<AudioDevice> = synchronized(commandLock) {
         if (isClosed()) return emptyList()
         val player = playerPair.get()?.active ?: return emptyList()
-        val jsonStr = api.mpv_get_property_string(player, "audio-device-list") ?: return emptyList()
+        val jsonStr = api.getPropertyString(player, "audio-device-list") ?: return emptyList()
         val rawList = runCatching {
             jsonParser.decodeFromString<List<AudioDevice>>(jsonStr)
         }.getOrDefault(emptyList())
