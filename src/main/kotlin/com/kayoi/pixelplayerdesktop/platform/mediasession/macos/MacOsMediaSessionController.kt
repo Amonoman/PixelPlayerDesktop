@@ -2,6 +2,7 @@ package com.kayoi.pixelplayerdesktop.platform.mediasession.macos
 
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.abs
 
 import com.sun.jna.Callback
 import com.sun.jna.Function
@@ -28,6 +29,8 @@ class MacOsMediaSessionController(
         fun objc_allocateClassPair(superClass: Pointer?, name: String, extraBytes: Int): Pointer?
         fun class_addMethod(cls: Pointer?, sel: Pointer?, imp: Callback, types: String): Boolean
         fun objc_registerClassPair(cls: Pointer?)
+        fun objc_autoreleasePoolPush(): Pointer?
+        fun objc_autoreleasePoolPop(pool: Pointer?)
     }
 
     private interface CommandCallback : Callback {
@@ -58,6 +61,13 @@ class MacOsMediaSessionController(
     private var selSetNowPlayingInfo: Pointer? = null
     private var selSetPlaybackState: Pointer? = null
 
+    private var keyTitle: Pointer? = null
+    private var keyArtist: Pointer? = null
+    private var keyAlbum: Pointer? = null
+    private var keyDuration: Pointer? = null
+    private var keyElapsedPlaybackTime: Pointer? = null
+    private var keyPlaybackRate: Pointer? = null
+
     private var lastMetadata = MediaMetadata()
     private var lastStatus = MediaPlaybackStatus.STOPPED
     private var lastPositionMs: Long = 0L
@@ -80,12 +90,40 @@ class MacOsMediaSessionController(
 
         val selAlloc = objcLib.sel_registerName("alloc") ?: return
         val selInit = objcLib.sel_registerName("init") ?: return
+        val selRetain = objcLib.sel_registerName("retain")
         selAddTargetAction = objcLib.sel_registerName("addTarget:action:")
         selRemoveTarget = objcLib.sel_registerName("removeTarget:")
         selSetEnabled = objcLib.sel_registerName("setEnabled:")
         selPositionTime = objcLib.sel_registerName("positionTime")
         selSetNowPlayingInfo = objcLib.sel_registerName("setNowPlayingInfo:")
         selSetPlaybackState = objcLib.sel_registerName("setPlaybackState:")
+
+        val mediaPlayerLib = runCatching {
+            NativeLibrary.getInstance("/System/Library/Frameworks/MediaPlayer.framework/MediaPlayer")
+        }.getOrNull()
+
+        fun resolveKey(symbolName: String): Pointer? {
+            val constantPtr = if (mediaPlayerLib != null) {
+                runCatching {
+                    val addr = mediaPlayerLib.getGlobalVariableAddress(symbolName)
+                    addr.getPointer(0)
+                }.getOrNull()
+            } else {
+                null
+            }
+            val ptr = constantPtr ?: createNSString(symbolName)
+            if (ptr != null && selRetain != null) {
+                msgSendPointer(ptr, selRetain)
+            }
+            return ptr
+        }
+
+        keyTitle = resolveKey("MPMediaItemPropertyTitle")
+        keyArtist = resolveKey("MPMediaItemPropertyArtist")
+        keyAlbum = resolveKey("MPMediaItemPropertyAlbumTitle")
+        keyDuration = resolveKey("MPMediaItemPropertyPlaybackDuration")
+        keyElapsedPlaybackTime = resolveKey("MPNowPlayingInfoPropertyElapsedPlaybackTime")
+        keyPlaybackRate = resolveKey("MPNowPlayingInfoPropertyPlaybackRate")
 
         val className = "PixelPlayerMediaRemoteTarget"
         val nsObjectClass = objcLib.objc_getClass("NSObject") ?: return
@@ -131,7 +169,10 @@ class MacOsMediaSessionController(
         val cbChangePos = object : CommandCallback {
             override fun invoke(self: Pointer, cmd: Pointer, event: Pointer): Long {
                 val posSec = msgSendDouble(event, selPositionTime)
-                coroutineScope.launch { commands.setPosition((posSec * 1000.0).toLong()) }
+                val posMs = (posSec * 1000.0).toLong()
+                lastPositionMs = posMs
+                syncNowPlayingInfo()
+                coroutineScope.launch { commands.setPosition(posMs) }
                 return 0L
             }
         }
@@ -193,6 +234,9 @@ class MacOsMediaSessionController(
     }
 
     override fun updateMetadata(metadata: MediaMetadata) {
+        if (lastMetadata.trackId != metadata.trackId) {
+            lastPositionMs = 0L
+        }
         lastMetadata = metadata
         syncNowPlayingInfo()
     }
@@ -210,8 +254,12 @@ class MacOsMediaSessionController(
     }
 
     override fun updatePosition(positionMs: Long) {
+        val wasJump = abs(positionMs - lastPositionMs) > 2000L
+        val wasPausedSeek = lastStatus != MediaPlaybackStatus.PLAYING && abs(positionMs - lastPositionMs) > 500L
         lastPositionMs = positionMs
-        syncNowPlayingInfo()
+        if (wasJump || wasPausedSeek) {
+            syncNowPlayingInfo()
+        }
     }
 
     override fun updateCapabilities(
@@ -237,37 +285,50 @@ class MacOsMediaSessionController(
         val infoCenter = defaultInfoCenter ?: return
         val objcLib = libObjC ?: return
 
-        val dictClass = objcLib.objc_getClass("NSMutableDictionary") ?: return
-        val selDictionary = objcLib.sel_registerName("dictionary") ?: return
-        val dict = msgSendPointer(dictClass, selDictionary) ?: return
-        val selSetObject = objcLib.sel_registerName("setObject:forKey:") ?: return
+        withAutoreleasePool {
+            val dictClass = objcLib.objc_getClass("NSMutableDictionary") ?: return@withAutoreleasePool
+            val selDictionary = objcLib.sel_registerName("dictionary") ?: return@withAutoreleasePool
+            val dict = msgSendPointer(dictClass, selDictionary) ?: return@withAutoreleasePool
+            val selSetObject = objcLib.sel_registerName("setObject:forKey:") ?: return@withAutoreleasePool
 
-        fun putEntry(key: String, valueObj: Pointer?) {
-            if (valueObj == null) return
-            val keyObj = createNSString(key) ?: return
-            msgSendVoid(dict, selSetObject, valueObj, keyObj)
+            fun putEntry(keyObj: Pointer?, valueObj: Pointer?) {
+                if (keyObj == null || valueObj == null) return
+                msgSendVoid(dict, selSetObject, valueObj, keyObj)
+            }
+
+            if (lastMetadata.title.isNotBlank()) {
+                putEntry(keyTitle, createNSString(lastMetadata.title))
+            }
+            if (lastMetadata.artist.isNotBlank()) {
+                putEntry(keyArtist, createNSString(lastMetadata.artist))
+            }
+            if (lastMetadata.album.isNotBlank()) {
+                putEntry(keyAlbum, createNSString(lastMetadata.album))
+            }
+
+            val durationSec = (lastMetadata.durationMs.coerceAtLeast(0L) / 1000.0)
+            putEntry(keyDuration, createNSNumber(durationSec))
+
+            val elapsedSec = (lastPositionMs.coerceAtLeast(0L) / 1000.0)
+            putEntry(keyElapsedPlaybackTime, createNSNumber(elapsedSec))
+
+            val rate = if (lastStatus == MediaPlaybackStatus.PLAYING) 1.0 else 0.0
+            putEntry(keyPlaybackRate, createNSNumber(rate))
+
+            msgSendVoid(infoCenter, selSetNowPlayingInfo, dict)
         }
+    }
 
-        if (lastMetadata.title.isNotBlank()) {
-            putEntry("title", createNSString(lastMetadata.title))
+    private inline fun <T> withAutoreleasePool(block: () -> T): T {
+        val objcLib = libObjC
+        val pool = runCatching { objcLib?.objc_autoreleasePoolPush() }.getOrNull()
+        return try {
+            block()
+        } finally {
+            if (pool != null) {
+                runCatching { objcLib?.objc_autoreleasePoolPop(pool) }
+            }
         }
-        if (lastMetadata.artist.isNotBlank()) {
-            putEntry("artist", createNSString(lastMetadata.artist))
-        }
-        if (lastMetadata.album.isNotBlank()) {
-            putEntry("albumTitle", createNSString(lastMetadata.album))
-        }
-
-        val durationSec = (lastMetadata.durationMs.coerceAtLeast(0L) / 1000.0)
-        putEntry("playbackDuration", createNSNumber(durationSec))
-
-        val elapsedSec = (lastPositionMs.coerceAtLeast(0L) / 1000.0)
-        putEntry("elapsedPlaybackTime", createNSNumber(elapsedSec))
-
-        val rate = if (lastStatus == MediaPlaybackStatus.PLAYING) 1.0 else 0.0
-        putEntry("playbackRate", createNSNumber(rate))
-
-        msgSendVoid(infoCenter, selSetNowPlayingInfo, dict)
     }
 
     private fun createNSString(str: String): Pointer? {
@@ -329,6 +390,25 @@ class MacOsMediaSessionController(
                 msgSendVoid(infoCenter, selSetNowPlayingInfo, null)
                 msgSendVoid(infoCenter, selSetPlaybackState, 0L)
             }
+
+            val selRelease = libObjC?.sel_registerName("release")
+            fun releasePointer(ptr: Pointer?) {
+                if (ptr != null && selRelease != null) {
+                    msgSendVoid(ptr, selRelease)
+                }
+            }
+            releasePointer(keyTitle)
+            releasePointer(keyArtist)
+            releasePointer(keyAlbum)
+            releasePointer(keyDuration)
+            releasePointer(keyElapsedPlaybackTime)
+            releasePointer(keyPlaybackRate)
+            keyTitle = null
+            keyArtist = null
+            keyAlbum = null
+            keyDuration = null
+            keyElapsedPlaybackTime = null
+            keyPlaybackRate = null
 
             retainedCallbacks.clear()
             targetObject = null
