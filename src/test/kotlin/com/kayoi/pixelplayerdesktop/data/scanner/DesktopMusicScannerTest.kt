@@ -151,4 +151,88 @@ class DesktopMusicScannerTest {
         assertTrue(song != null, "Song should be indexed and pass minDuration filter")
         assertTrue(song.duration >= 12000L, "Song duration should be at least 12000ms, but was ${song.duration}")
     }
+
+    @Test
+    fun testPruningDoesNotDeleteSongsFromUnmountedOrUnscannedDirectories() = runTest {
+        val tempDb = File.createTempFile("test_prune_scope_db", ".db")
+        tempDb.deleteOnExit()
+        val db = PixelPlayerDatabase(tempDb)
+        val musicDao = MusicDao(db)
+
+        val dirA = File(System.getProperty("java.io.tmpdir"), "test_prune_a_${System.currentTimeMillis()}")
+        dirA.mkdirs()
+        dirA.deleteOnExit()
+
+        val dirB = File(System.getProperty("java.io.tmpdir"), "test_prune_b_${System.currentTimeMillis()}")
+        dirB.mkdirs()
+        dirB.deleteOnExit()
+
+        val songA = File(dirA, "songA.mp3")
+        songA.writeBytes(byteArrayOf(1, 2, 3, 4))
+        songA.deleteOnExit()
+
+        val songB = File(dirB, "songB.mp3")
+        songB.writeBytes(byteArrayOf(5, 6, 7, 8))
+        songB.deleteOnExit()
+
+        val scanner = DesktopMusicScanner(
+            musicDao = musicDao,
+            artworkCacheDir = dirA
+        )
+
+        val initialScan = scanner.scanDirectories(listOf(dirA.absolutePath, dirB.absolutePath))
+        assertTrue(initialScan is ScanProgress.Completed)
+        assertEquals(2, musicDao.getAllSongs().size)
+
+        val nonExistentMount = "Z:\\Unmounted\\Drive\\Music"
+        val singleFolderScan = scanner.scanDirectories(
+            directories = listOf(dirA.absolutePath, nonExistentMount),
+            pruneMissing = true
+        )
+        assertTrue(singleFolderScan is ScanProgress.Completed)
+
+        val songsAfterScan = musicDao.getAllSongs()
+        assertEquals(2, songsAfterScan.size)
+        assertTrue(songsAfterScan.any { it.path == songA.absolutePath })
+        assertTrue(songsAfterScan.any { it.path == songB.absolutePath })
+    }
+
+    @Test
+    fun testPruningWhenAllDirectoriesAreUnreachableDoesNotWipeLibrary() = runTest {
+        val tempDb = File.createTempFile("test_prune_unreachable_db", ".db")
+        tempDb.deleteOnExit()
+        val db = PixelPlayerDatabase(tempDb)
+        val musicDao = MusicDao(db)
+
+        val dirA = File(System.getProperty("java.io.tmpdir"), "test_prune_unreach_${System.currentTimeMillis()}")
+        dirA.mkdirs()
+        dirA.deleteOnExit()
+
+        val songA = File(dirA, "songA.mp3")
+        songA.writeBytes(byteArrayOf(1, 2, 3, 4))
+        songA.deleteOnExit()
+
+        val scanner = DesktopMusicScanner(
+            musicDao = musicDao,
+            artworkCacheDir = dirA
+        )
+
+        val initialScan = scanner.scanDirectories(listOf(dirA.absolutePath))
+        assertTrue(initialScan is ScanProgress.Completed)
+        assertEquals(1, musicDao.getAllSongs().size)
+
+        val unreachableDirs = listOf(
+            "Z:\\Disconnected\\ExternalDrive",
+            "/media/unmounted/share/music"
+        )
+        val scanResult = scanner.scanDirectories(
+            directories = unreachableDirs,
+            pruneMissing = true
+        )
+        assertTrue(scanResult is ScanProgress.Completed)
+
+        val songsAfterScan = musicDao.getAllSongs()
+        assertEquals(1, songsAfterScan.size)
+        assertEquals(songA.absolutePath, songsAfterScan[0].path)
+    }
 }

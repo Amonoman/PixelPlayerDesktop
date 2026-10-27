@@ -3,6 +3,7 @@ package com.kayoi.pixelplayerdesktop.data.network.navidrome
 import com.kayoi.pixelplayerdesktop.data.database.LocalPlaylistDao
 import com.kayoi.pixelplayerdesktop.data.database.MusicDao
 import com.kayoi.pixelplayerdesktop.data.model.ArtistRef
+import com.kayoi.pixelplayerdesktop.data.model.generateArtistId
 import com.kayoi.pixelplayerdesktop.data.model.Playlist
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.network.navidrome.model.NavidromeAuthMethod
@@ -153,8 +154,8 @@ class NavidromeRepositoryImpl(
                                             id = "navidrome_${ns.id}",
                                             title = ns.title,
                                             artist = ns.artist,
-                                            artistId = ns.artist.hashCode().toLong(),
-                                            artists = listOf(ArtistRef(id = ns.artist.hashCode().toLong(), name = ns.artist, isPrimary = true)),
+                                            artistId = generateArtistId(ns.artist),
+                                            artists = listOf(ArtistRef(id = generateArtistId(ns.artist), name = ns.artist, isPrimary = true)),
                                             album = ns.album,
                                             albumId = album.id.hashCode().toLong(),
                                             albumArtist = ns.albumArtist,

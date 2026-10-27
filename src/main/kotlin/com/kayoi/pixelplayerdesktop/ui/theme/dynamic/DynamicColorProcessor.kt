@@ -1,11 +1,15 @@
 package com.kayoi.pixelplayerdesktop.ui.theme.dynamic
 
+import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.security.MessageDigest
+import java.util.LinkedHashMap
+import java.util.concurrent.ConcurrentHashMap
+import javax.imageio.ImageIO
+
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import com.kayoi.pixelplayerdesktop.data.network.RemoteArtworkResolver
-import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtColorAccuracy
-import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
-import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +18,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
@@ -23,14 +26,15 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.koin.core.context.GlobalContext
-import java.awt.image.BufferedImage
-import java.io.ByteArrayInputStream
-import java.io.File
-import java.security.MessageDigest
-import java.util.concurrent.ConcurrentHashMap
-import javax.imageio.ImageIO
+
+import com.kayoi.pixelplayerdesktop.data.network.RemoteArtworkResolver
+import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtColorAccuracy
+import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
+import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
 
 object DynamicColorProcessor {
+
+    private const val MAX_MEMORY_CACHE_ENTRIES = 256
 
     @Volatile
     var defaultPaletteStyle: AlbumArtPaletteStyle = AlbumArtPaletteStyle.default
@@ -44,7 +48,12 @@ object DynamicColorProcessor {
         File(DesktopPathProvider.cacheDir, "palette_seed_cache.json")
     }
 
-    private val memoryCache = ConcurrentHashMap<String, ColorSchemePair>()
+    private val memoryCacheLock = Any()
+    private val memoryCache = object : LinkedHashMap<String, ColorSchemePair>(MAX_MEMORY_CACHE_ENTRIES, 0.75f, true) {
+        override fun removeEldestEntry(eldest: Map.Entry<String, ColorSchemePair>?): Boolean {
+            return size > MAX_MEMORY_CACHE_ENTRIES
+        }
+    }
     private val seedDiskCache = ConcurrentHashMap<String, Int>()
     private val extractionSemaphore = Semaphore(4)
     private val inFlightJobs = ConcurrentHashMap<String, Deferred<ColorSchemePair?>>()
@@ -55,6 +64,8 @@ object DynamicColorProcessor {
     init {
         loadDiskCache()
     }
+
+    internal fun memoryCacheSize(): Int = synchronized(memoryCacheLock) { memoryCache.size }
 
     private fun loadDiskCache() {
         runCatching {
@@ -135,54 +146,24 @@ object DynamicColorProcessor {
     ): ColorSchemePair? {
         val file = resolveFile(pathOrUri) ?: return null
         val fullKey = buildFullKey(file, paletteStyle, colorAccuracyLevel)
-        memoryCache[fullKey]?.let { return it }
+        synchronized(memoryCacheLock) {
+            memoryCache[fullKey]?.let { return it }
+        }
 
         val seedKey = buildSeedKey(file, colorAccuracyLevel)
         val cachedArgb = seedDiskCache[seedKey] ?: return null
         val scheme = generateColorSchemeFromSeed(Color(cachedArgb), paletteStyle)
-        memoryCache[fullKey] = scheme
+        synchronized(memoryCacheLock) {
+            memoryCache[fullKey] = scheme
+        }
         return scheme
     }
 
-    fun extractColorScheme(
+    suspend fun extractColorScheme(
         pathOrUri: String?,
         paletteStyle: AlbumArtPaletteStyle = defaultPaletteStyle,
         colorAccuracyLevel: Int = defaultColorAccuracyLevel
-    ): ColorSchemePair? {
-        if (pathOrUri.isNullOrBlank()) return null
-        val file = resolveFile(pathOrUri)
-        if (file != null) {
-            return extractColorScheme(file, paletteStyle, colorAccuracyLevel)
-        }
-
-        if (pathOrUri.startsWith("navidrome_cover://") ||
-            pathOrUri.startsWith("jellyfin_cover://") ||
-            pathOrUri.startsWith("http://") ||
-            pathOrUri.startsWith("https://")
-        ) {
-            return try {
-                val resolver = GlobalContext.getOrNull()
-                    ?.getOrNull<RemoteArtworkResolver>()
-                val bytes = if (resolver != null) {
-                    runBlocking {
-                        resolver.resolveArtworkBytes(pathOrUri)
-                    }
-                } else null
-
-                if (bytes != null && bytes.isNotEmpty()) {
-                    val resolvedFile = resolveFile(pathOrUri)
-                    if (resolvedFile != null) {
-                        extractColorScheme(resolvedFile, paletteStyle, colorAccuracyLevel)
-                    } else {
-                        extractColorScheme(bytes, paletteStyle, colorAccuracyLevel)
-                    }
-                } else null
-            } catch (_: Exception) {
-                null
-            }
-        }
-        return null
-    }
+    ): ColorSchemePair? = extractColorSchemeAsync(pathOrUri, paletteStyle, colorAccuracyLevel)
 
     suspend fun extractColorSchemeAsync(
         pathOrUri: String?,
@@ -197,7 +178,7 @@ object DynamicColorProcessor {
             scope.async(Dispatchers.IO) {
                 extractionSemaphore.withPermit {
                     try {
-                        extractColorScheme(pathOrUri, paletteStyle, colorAccuracyLevel)
+                        extractColorSchemeInternal(pathOrUri, paletteStyle, colorAccuracyLevel)
                     } finally {
                         inFlightJobs.remove(cacheKey)
                     }
@@ -205,6 +186,41 @@ object DynamicColorProcessor {
             }
         }
         deferred.await()
+    }
+
+    private suspend fun extractColorSchemeInternal(
+        pathOrUri: String,
+        paletteStyle: AlbumArtPaletteStyle,
+        colorAccuracyLevel: Int
+    ): ColorSchemePair? {
+        val file = resolveFile(pathOrUri)
+        if (file != null) {
+            return extractColorScheme(file, paletteStyle, colorAccuracyLevel)
+        }
+
+        if (pathOrUri.startsWith("navidrome_cover://") ||
+            pathOrUri.startsWith("jellyfin_cover://") ||
+            pathOrUri.startsWith("http://") ||
+            pathOrUri.startsWith("https://")
+        ) {
+            return try {
+                val resolver = GlobalContext.getOrNull()
+                    ?.getOrNull<RemoteArtworkResolver>()
+                val bytes = resolver?.resolveArtworkBytes(pathOrUri)
+
+                if (bytes != null && bytes.isNotEmpty()) {
+                    val resolvedFile = resolveFile(pathOrUri)
+                    if (resolvedFile != null) {
+                        extractColorScheme(resolvedFile, paletteStyle, colorAccuracyLevel)
+                    } else {
+                        extractColorScheme(bytes, paletteStyle, colorAccuracyLevel)
+                    }
+                } else null
+            } catch (_: Exception) {
+                null
+            }
+        }
+        return null
     }
 
     private fun readSampledImage(file: File, maxDimension: Int = 128): BufferedImage? {
@@ -282,7 +298,9 @@ object DynamicColorProcessor {
 
             val result = generateColorSchemeFromSeed(seedColor, paletteStyle)
             val fullKey = buildFullKey(file, paletteStyle, colorAccuracyLevel)
-            memoryCache[fullKey] = result
+            synchronized(memoryCacheLock) {
+                memoryCache[fullKey] = result
+            }
             result
         } catch (e: Exception) {
             null
@@ -321,7 +339,9 @@ object DynamicColorProcessor {
     }
 
     fun clearCache() {
-        memoryCache.clear()
+        synchronized(memoryCacheLock) {
+            memoryCache.clear()
+        }
         seedDiskCache.clear()
         runCatching {
             if (diskCacheFile.exists()) {

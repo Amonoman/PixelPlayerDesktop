@@ -1,14 +1,19 @@
 package com.kayoi.pixelplayerdesktop.lifecycle
 
-import com.kayoi.pixelplayerdesktop.domain.player.AudioEngine
-import okhttp3.OkHttpClient
-import org.koin.core.context.GlobalContext
-import org.koin.core.context.stopKoin
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
+
+import okhttp3.OkHttpClient
+import org.koin.core.context.GlobalContext
+import org.koin.core.context.stopKoin
+
+import com.kayoi.pixelplayerdesktop.data.database.PixelPlayerDatabase
+import com.kayoi.pixelplayerdesktop.domain.player.AudioEngine
+import com.kayoi.pixelplayerdesktop.platform.mediasession.MediaSessionBridge
+import com.kayoi.pixelplayerdesktop.presentation.viewmodel.DesktopListeningStatsTracker
 
 object AppShutdownCoordinator {
     private val isTeardownExecuted = AtomicBoolean(false)
@@ -39,12 +44,17 @@ object AppShutdownCoordinator {
 
         val teardownFuture = CompletableFuture.runAsync {
             runCatching {
-                val mediaSessionBridge = GlobalContext.getOrNull()?.getOrNull<com.kayoi.pixelplayerdesktop.platform.mediasession.MediaSessionBridge>()
+                val mediaSessionBridge = GlobalContext.getOrNull()?.getOrNull<MediaSessionBridge>()
                 mediaSessionBridge?.release()
             }
 
             runCatching {
                 targetAudioEngine?.release()
+            }
+
+            runCatching {
+                val statsTracker = GlobalContext.getOrNull()?.getOrNull<DesktopListeningStatsTracker>()
+                statsTracker?.finalizeCurrentSession(forceSynchronous = true)
             }
 
             runCatching {
@@ -54,7 +64,7 @@ object AppShutdownCoordinator {
             }
 
             runCatching {
-                val database = GlobalContext.getOrNull()?.getOrNull<com.kayoi.pixelplayerdesktop.data.database.PixelPlayerDatabase>()
+                val database = GlobalContext.getOrNull()?.getOrNull<PixelPlayerDatabase>()
                 database?.close()
             }
 

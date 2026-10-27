@@ -35,6 +35,7 @@ import com.kayoi.pixelplayerdesktop.domain.repository.LyricsRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
 import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
 import com.kayoi.pixelplayerdesktop.utils.LrcParser
+import com.kayoi.pixelplayerdesktop.utils.MultiLangRomanizer
 
 class PlaybackStateHolder(
     private val audioEngine: AudioEngine,
@@ -252,8 +253,9 @@ class PlaybackStateHolder(
     fun applyLyrics(lyrics: Lyrics) {
         val currentSong = queueManager.currentSong.value ?: return
         coroutineScope.launch {
-            lyricsRepository.saveLyrics(currentSong.id, lyrics)
-            _playerInfo.update { it.copy(lyrics = lyrics) }
+            val enriched = MultiLangRomanizer.enrichLyrics(lyrics)
+            lyricsRepository.saveLyrics(currentSong.id, enriched)
+            _playerInfo.update { it.copy(lyrics = enriched) }
             _lyricsSearchUiState.value = LyricsSearchUiState.Idle
         }
     }
@@ -264,8 +266,9 @@ class PlaybackStateHolder(
         coroutineScope.launch {
             val content = runCatching { file.readText(Charsets.UTF_8) }.getOrNull() ?: return@launch
             val parsed = LrcParser.parse(content).copy(areFromRemote = false)
-            lyricsRepository.saveLyrics(currentSong.id, parsed)
-            _playerInfo.update { it.copy(lyrics = parsed) }
+            val enriched = MultiLangRomanizer.enrichLyrics(parsed)
+            lyricsRepository.saveLyrics(currentSong.id, enriched)
+            _playerInfo.update { it.copy(lyrics = enriched) }
             _lyricsSearchUiState.value = LyricsSearchUiState.Idle
         }
     }
@@ -707,12 +710,8 @@ class PlaybackStateHolder(
         if (next != null) {
             audioEngine.play(resolvePath(next))
         } else {
-            val current = queueManager.currentSong.value
-            if (current != null) {
-                audioEngine.play(resolvePath(current))
-            } else {
-                audioEngine.stop()
-            }
+            listeningStatsTracker.onPlaybackStopped()
+            audioEngine.stop()
         }
     }
 

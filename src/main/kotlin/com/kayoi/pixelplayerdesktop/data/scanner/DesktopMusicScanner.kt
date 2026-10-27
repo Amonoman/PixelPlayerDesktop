@@ -3,6 +3,7 @@ package com.kayoi.pixelplayerdesktop.data.scanner
 import com.kayoi.pixelplayerdesktop.data.database.LyricsDao
 import com.kayoi.pixelplayerdesktop.data.database.MusicDao
 import com.kayoi.pixelplayerdesktop.data.model.ArtistRef
+import com.kayoi.pixelplayerdesktop.data.model.generateArtistId
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_ARTIST_DELIMITERS
 import com.kayoi.pixelplayerdesktop.utils.AudioFileReaderUtils
@@ -40,6 +41,7 @@ sealed interface ScanProgress {
     data class Completed(val totalScanned: Int, val addedOrUpdated: Int, val durationMs: Long) : ScanProgress
     data class Error(val message: String) : ScanProgress
 }
+private const val PROGRESS_UPDATE_INTERVAL_MS = 100L
 
 /**
  * High-performance audio library scanner for local desktop storage.
@@ -82,6 +84,7 @@ class DesktopMusicScanner(
 
             // 1. Discover all audio files across directories
             val discoveredFiles = mutableListOf<File>()
+            val scannedDirectories = mutableListOf<String>()
             for (dirPath in directories) {
                 try {
                     val dir = File(dirPath)
@@ -121,6 +124,7 @@ class DesktopMusicScanner(
                                 return FileVisitResult.CONTINUE
                             }
                         })
+                        scannedDirectories.add(rootDirAbs)
                     }
                 } catch (_: Exception) {
                     // Safely ignore failures accessing a specific directory
@@ -140,17 +144,22 @@ class DesktopMusicScanner(
             val allDiscoveredPaths = mutableSetOf<String>()
 
             var scannedCount = 0
+            var lastProgressUpdateTime = 0L
             for (file in discoveredFiles) {
                 try {
                     scannedCount++
                     val path = file.absolutePath
                     allDiscoveredPaths.add(path)
 
-                    _scanProgress.value = ScanProgress.Scanning(
-                        currentFile = file.name,
-                        scannedCount = scannedCount,
-                        totalDiscovered = totalDiscovered
-                    )
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastProgressUpdateTime >= PROGRESS_UPDATE_INTERVAL_MS || scannedCount == totalDiscovered) {
+                        lastProgressUpdateTime = currentTime
+                        _scanProgress.value = ScanProgress.Scanning(
+                            currentFile = file.name,
+                            scannedCount = scannedCount,
+                            totalDiscovered = totalDiscovered
+                        )
+                    }
 
                     val lastModified = file.lastModified()
                     val existing = existingSongs[path]
@@ -180,8 +189,8 @@ class DesktopMusicScanner(
             }
 
             // 4. Prune missing files if enabled
-            if (pruneMissing && directories.isNotEmpty()) {
-                musicDao.deleteSongsNotInPaths(allDiscoveredPaths)
+            if (pruneMissing && scannedDirectories.isNotEmpty()) {
+                musicDao.deleteSongsNotInPaths(allDiscoveredPaths, scannedDirectories)
             }
 
             val duration = System.currentTimeMillis() - startTime
@@ -247,7 +256,7 @@ class DesktopMusicScanner(
 
                 val artistRefs = parsedArtists.mapIndexed { index, name ->
                     ArtistRef(
-                        id = kotlin.math.abs(name.trim().lowercase().hashCode().toLong()),
+                        id = generateArtistId(name),
                         name = name.trim(),
                         isPrimary = (index == 0)
                     )
@@ -288,7 +297,7 @@ class DesktopMusicScanner(
                 val artworkUri = extractOpusArtworkToCache(tags, file)
 
                 val songId = existingId ?: UUID.nameUUIDFromBytes(file.absolutePath.toByteArray()).toString()
-                val artistId = artist.hashCode().toLong()
+                val artistId = generateArtistId(artist)
                 val albumId = "$album-$artist".hashCode().toLong()
 
                 Song(
@@ -355,7 +364,7 @@ class DesktopMusicScanner(
 
             val artistRefs = parsedArtists.mapIndexed { index, name ->
                 ArtistRef(
-                    id = kotlin.math.abs(name.trim().lowercase().hashCode().toLong()),
+                    id = generateArtistId(name),
                     name = name.trim(),
                     isPrimary = (index == 0)
                 )
@@ -380,7 +389,7 @@ class DesktopMusicScanner(
             val artworkUri = extractArtworkToCache(tag, file)
 
             val songId = existingId ?: UUID.nameUUIDFromBytes(file.absolutePath.toByteArray()).toString()
-            val artistId = artist.hashCode().toLong()
+            val artistId = generateArtistId(artist)
             val albumId = "$album-$artist".hashCode().toLong()
 
             Song(
@@ -571,7 +580,7 @@ class DesktopMusicScanner(
             id = songId,
             title = file.nameWithoutExtension,
             artist = "Unknown Artist",
-            artistId = "Unknown Artist".hashCode().toLong(),
+            artistId = generateArtistId("Unknown Artist"),
             album = "Unknown Album",
             albumId = "Unknown Album".hashCode().toLong(),
             path = file.absolutePath,

@@ -1,6 +1,5 @@
 package com.kayoi.pixelplayerdesktop.ui.theme.dynamic
 
-import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
@@ -10,6 +9,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+
+import kotlinx.coroutines.runBlocking
+
+import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
 
 class DynamicColorProcessorTest {
 
@@ -70,6 +73,41 @@ class DynamicColorProcessorTest {
             val pair = DynamicColorProcessor.extractFromBufferedImage(image, paletteStyle = style)
             assertNotNull(pair.light)
             assertNotNull(pair.dark)
+        }
+    }
+
+    @Test
+    fun testMemoryCacheBoundedCap() {
+        DynamicColorProcessor.clearCache()
+        val tempFiles = mutableListOf<File>()
+        try {
+            for (i in 0 until 300) {
+                val img = BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB)
+                val f = File.createTempFile("art_$i", ".png")
+                f.deleteOnExit()
+                ImageIO.write(img, "png", f)
+                tempFiles.add(f)
+                DynamicColorProcessor.extractColorScheme(f)
+            }
+            assertTrue(DynamicColorProcessor.memoryCacheSize() <= 256)
+        } finally {
+            tempFiles.forEach { it.delete() }
+            DynamicColorProcessor.clearCache()
+        }
+    }
+
+    @Test
+    fun testExtractColorSchemeSuspend() = runBlocking {
+        val image = BufferedImage(32, 32, BufferedImage.TYPE_INT_RGB)
+        val tempFile = File.createTempFile("suspend_art", ".png")
+        tempFile.deleteOnExit()
+        try {
+            ImageIO.write(image, "png", tempFile)
+            val scheme = DynamicColorProcessor.extractColorScheme(tempFile.absolutePath)
+            assertNotNull(scheme)
+            assertNotNull(scheme.dark)
+        } finally {
+            tempFile.delete()
         }
     }
 }

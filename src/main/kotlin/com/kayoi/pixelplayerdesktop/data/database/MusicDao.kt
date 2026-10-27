@@ -1,15 +1,25 @@
 package com.kayoi.pixelplayerdesktop.data.database
 
-import com.kayoi.pixelplayerdesktop.data.model.*
+import java.io.File
+import java.sql.ResultSet
+import java.sql.Types
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
-import java.io.File
-import java.sql.ResultSet
-import java.sql.Types
+import com.kayoi.pixelplayerdesktop.data.model.Album
+import com.kayoi.pixelplayerdesktop.data.model.Artist
+import com.kayoi.pixelplayerdesktop.data.model.ArtistRef
+import com.kayoi.pixelplayerdesktop.data.model.Genre
+import com.kayoi.pixelplayerdesktop.data.model.PlaybackEvent
+import com.kayoi.pixelplayerdesktop.data.model.Playlist
+import com.kayoi.pixelplayerdesktop.data.model.SearchFilterType
+import com.kayoi.pixelplayerdesktop.data.model.SearchResultItem
+import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.data.model.SortOption
+import com.kayoi.pixelplayerdesktop.data.model.generateArtistId
 
 private val artistRefListSerializer = ListSerializer(ArtistRef.serializer())
 private val stringListSerializer = ListSerializer(String.serializer())
@@ -85,24 +95,25 @@ class MusicDao(
 
     suspend fun getSongsByIds(ids: List<String>): List<Song> = withContext(ioDispatcher) {
         if (ids.isEmpty()) return@withContext emptyList()
-        val placeholders = ids.joinToString(",") { "?" }
+        val resultMap = mutableMapOf<String, Song>()
         database.withConnection(readOnly = true) { conn ->
-            val sql = "SELECT * FROM songs WHERE id IN ($placeholders)"
-            conn.prepareStatement(sql).use { stmt ->
-                ids.forEachIndexed { index, id ->
-                    stmt.setString(index + 1, id)
-                }
-                val resultMap = mutableMapOf<String, Song>()
-                stmt.executeQuery().use { rs ->
-                    while (rs.next()) {
-                        val song = rs.toSong(json)
-                        resultMap[song.id] = song
+            ids.chunked(500).forEach { chunk ->
+                val placeholders = chunk.joinToString(",") { "?" }
+                val sql = "SELECT * FROM songs WHERE id IN ($placeholders)"
+                conn.prepareStatement(sql).use { stmt ->
+                    chunk.forEachIndexed { index, id ->
+                        stmt.setString(index + 1, id)
+                    }
+                    stmt.executeQuery().use { rs ->
+                        while (rs.next()) {
+                            val song = rs.toSong(json)
+                            resultMap[song.id] = song
+                        }
                     }
                 }
-                // Maintain the requested order
-                ids.mapNotNull { resultMap[it] }
             }
         }
+        ids.mapNotNull { resultMap[it] }
     }
 
     suspend fun upsertSongs(songs: List<Song>) = withContext(ioDispatcher) {
@@ -179,6 +190,21 @@ class MusicDao(
                 val insertArtistSql = "INSERT OR IGNORE INTO artists (id, name, track_count) VALUES (?, ?, 0)"
                 val insertSongArtistSql = "INSERT OR REPLACE INTO song_artists (song_id, artist_id, is_primary) VALUES (?, ?, ?)"
 
+                val affectedArtistIds = mutableSetOf<Long>()
+                val songIds = songs.map { it.id }
+                songIds.chunked(500).forEach { chunk ->
+                    val placeholders = chunk.joinToString(",") { "?" }
+                    val query = "SELECT DISTINCT artist_id FROM song_artists WHERE song_id IN ($placeholders)"
+                    conn.prepareStatement(query).use { stmt ->
+                        chunk.forEachIndexed { index, id -> stmt.setString(index + 1, id) }
+                        stmt.executeQuery().use { rs ->
+                            while (rs.next()) {
+                                affectedArtistIds.add(rs.getLong(1))
+                            }
+                        }
+                    }
+                }
+
                 conn.prepareStatement(deleteSongArtistsSql).use { deleteStmt ->
                     for (song in songs) {
                         deleteStmt.setString(1, song.id)
@@ -187,13 +213,25 @@ class MusicDao(
                     deleteStmt.executeBatch()
                 }
 
-                conn.prepareStatement(insertArtistSql).use { artistStmt ->
-                    for (song in songs) {
-                        val allArtists = if (song.artists.isNotEmpty()) {
-                            song.artists
-                        } else {
-                            listOf(ArtistRef(id = song.artistId, name = song.artist, isPrimary = true))
+                val songArtistsMap = songs.associateWith { song ->
+                    if (song.artists.isNotEmpty()) {
+                        song.artists.map { ref ->
+                            if (ref.id != 0L) ref else ref.copy(id = generateArtistId(ref.name))
                         }
+                    } else {
+                        val aid = if (song.artistId != 0L) song.artistId else generateArtistId(song.artist)
+                        listOf(ArtistRef(id = aid, name = song.artist, isPrimary = true))
+                    }
+                }
+
+                for ((_, allArtists) in songArtistsMap) {
+                    for (ref in allArtists) {
+                        affectedArtistIds.add(ref.id)
+                    }
+                }
+
+                conn.prepareStatement(insertArtistSql).use { artistStmt ->
+                    for ((_, allArtists) in songArtistsMap) {
                         for (ref in allArtists) {
                             artistStmt.setLong(1, ref.id)
                             artistStmt.setString(2, ref.name)
@@ -204,12 +242,7 @@ class MusicDao(
                 }
 
                 conn.prepareStatement(insertSongArtistSql).use { songArtistStmt ->
-                    for (song in songs) {
-                        val allArtists = if (song.artists.isNotEmpty()) {
-                            song.artists
-                        } else {
-                            listOf(ArtistRef(id = song.artistId, name = song.artist, isPrimary = true))
-                        }
+                    for ((song, allArtists) in songArtistsMap) {
                         for (ref in allArtists) {
                             songArtistStmt.setString(1, song.id)
                             songArtistStmt.setLong(2, ref.id)
@@ -220,12 +253,25 @@ class MusicDao(
                     songArtistStmt.executeBatch()
                 }
 
-                conn.createStatement().use { stmt ->
-                    stmt.executeUpdate("""
-                        UPDATE artists 
-                        SET track_count = (SELECT COUNT(*) FROM song_artists WHERE song_artists.artist_id = artists.id)
-                    """.trimIndent())
-                    stmt.executeUpdate("DELETE FROM artists WHERE track_count = 0")
+                if (affectedArtistIds.isNotEmpty()) {
+                    affectedArtistIds.toList().chunked(500).forEach { chunk ->
+                        val placeholders = chunk.joinToString(",") { "?" }
+                        val updateSql = """
+                            UPDATE artists 
+                            SET track_count = (SELECT COUNT(*) FROM song_artists WHERE song_artists.artist_id = artists.id)
+                            WHERE id IN ($placeholders)
+                        """.trimIndent()
+                        conn.prepareStatement(updateSql).use { stmt ->
+                            chunk.forEachIndexed { index, id -> stmt.setLong(index + 1, id) }
+                            stmt.executeUpdate()
+                        }
+
+                        val deleteSql = "DELETE FROM artists WHERE track_count = 0 AND id IN ($placeholders)"
+                        conn.prepareStatement(deleteSql).use { stmt ->
+                            chunk.forEachIndexed { index, id -> stmt.setLong(index + 1, id) }
+                            stmt.executeUpdate()
+                        }
+                    }
                 }
 
                 conn.commit()
@@ -251,29 +297,38 @@ class MusicDao(
         database.notifyTableChanged("songs")
     }
 
-    suspend fun deleteSongsNotInPaths(existingPaths: Set<String>) = withContext(ioDispatcher) {
-        if (existingPaths.isEmpty()) {
-            database.withConnection { conn ->
-                conn.createStatement().use { stmt ->
-                    stmt.executeUpdate("DELETE FROM songs WHERE navidrome_id IS NULL AND jellyfin_id IS NULL")
-                    stmt.executeUpdate("DELETE FROM song_artists WHERE song_id NOT IN (SELECT id FROM songs)")
-                    stmt.executeUpdate("DELETE FROM artists WHERE id NOT IN (SELECT DISTINCT artist_id FROM song_artists)")
-                }
-                database.notifyTableChanged("songs")
-                database.notifyTableChanged("artists")
-            }
+    suspend fun deleteSongsNotInPaths(
+        existingPaths: Set<String>,
+        scannedDirectories: List<String>
+    ) = withContext(ioDispatcher) {
+        if (scannedDirectories.isEmpty()) {
             return@withContext
         }
+
+        val normalizedDirs = scannedDirectories.map { dir ->
+            val abs = File(dir).absolutePath
+            if (abs.endsWith(File.separator)) abs else abs + File.separator
+        }
+
         database.withConnection { conn ->
-            val allPaths = mutableSetOf<String>()
-            conn.createStatement().use { stmt ->
-                stmt.executeQuery("SELECT path FROM songs WHERE navidrome_id IS NULL AND jellyfin_id IS NULL").use { rs ->
+            val pathsInScannedDirs = mutableSetOf<String>()
+            val placeholders = normalizedDirs.joinToString(" OR ") { "path LIKE ? || '%'" }
+            val sql = "SELECT path FROM songs WHERE navidrome_id IS NULL AND jellyfin_id IS NULL AND ($placeholders)"
+            conn.prepareStatement(sql).use { stmt ->
+                normalizedDirs.forEachIndexed { index, prefix ->
+                    stmt.setString(index + 1, prefix)
+                }
+                stmt.executeQuery().use { rs ->
                     while (rs.next()) {
-                        allPaths.add(rs.getString("path"))
+                        val path = rs.getString("path")
+                        if (normalizedDirs.any { prefix -> path.startsWith(prefix) }) {
+                            pathsInScannedDirs.add(path)
+                        }
                     }
                 }
             }
-            val pathsToDelete = allPaths - existingPaths
+
+            val pathsToDelete = pathsInScannedDirs - existingPaths
             if (pathsToDelete.isNotEmpty()) {
                 conn.autoCommit = false
                 try {
@@ -295,6 +350,30 @@ class MusicDao(
                     conn.rollback()
                     throw e
                 }
+            }
+        }
+    }
+
+    suspend fun deleteSongsInDirectory(directoryPath: String) = withContext(ioDispatcher) {
+        val abs = File(directoryPath).absolutePath
+        val prefix = if (abs.endsWith(File.separator)) abs else abs + File.separator
+        database.withConnection { conn ->
+            conn.autoCommit = false
+            try {
+                conn.prepareStatement("DELETE FROM songs WHERE path LIKE ? || '%' AND navidrome_id IS NULL AND jellyfin_id IS NULL").use { stmt ->
+                    stmt.setString(1, prefix)
+                    stmt.executeUpdate()
+                }
+                conn.createStatement().use { stmt ->
+                    stmt.executeUpdate("DELETE FROM song_artists WHERE song_id NOT IN (SELECT id FROM songs)")
+                    stmt.executeUpdate("DELETE FROM artists WHERE id NOT IN (SELECT DISTINCT artist_id FROM song_artists)")
+                }
+                conn.commit()
+                database.notifyTableChanged("songs")
+                database.notifyTableChanged("artists")
+            } catch (e: Exception) {
+                conn.rollback()
+                throw e
             }
         }
     }

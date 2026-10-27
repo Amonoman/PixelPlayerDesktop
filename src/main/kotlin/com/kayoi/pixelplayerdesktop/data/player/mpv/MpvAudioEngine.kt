@@ -86,7 +86,6 @@ class MpvAudioEngine(
     private var eventThreadA: Thread? = null
     private var eventThreadB: Thread? = null
 
-    private var positionTickerJob: Job? = null
     private var playPauseFadeJob: Job? = null
 
     private val replayGainManager = ReplayGainManager()
@@ -168,6 +167,7 @@ class MpvAudioEngine(
         return thread(name = threadName, isDaemon = true) {
             while (!isClosed()) {
                 val eventRef = api.mpv_wait_event(handle, 0.1) ?: continue
+                if (isClosed()) break
                 val eventId = eventRef.eventId
                 if (eventId == MpvApi.MPV_EVENT_NONE) continue
                 if (eventId == MpvApi.MPV_EVENT_SHUTDOWN) break
@@ -211,10 +211,8 @@ class MpvAudioEngine(
                             val isPaused = prop.data!!.getInt(0) != 0
                             if (isPaused && _playbackState.value == PlaybackState.PLAYING) {
                                 _playbackState.value = PlaybackState.PAUSED
-                                stopPositionTicker()
                             } else if (!isPaused && _playbackState.value == PlaybackState.PAUSED) {
                                 _playbackState.value = PlaybackState.PLAYING
-                                startPositionTicker()
                             }
                         }
                     }
@@ -223,7 +221,6 @@ class MpvAudioEngine(
                             val isIdle = prop.data!!.getInt(0) != 0
                             if (isIdle && _playbackState.value != PlaybackState.ENDED && _playbackState.value != PlaybackState.ERROR) {
                                 _playbackState.value = PlaybackState.IDLE
-                                stopPositionTicker()
                             }
                         }
                     }
@@ -251,12 +248,11 @@ class MpvAudioEngine(
             }
             MpvApi.MPV_EVENT_FILE_LOADED -> {
                 if (isActivePlayer) {
-                    val isPaused = api.mpv_get_property_string(sourceHandle, "pause") == "yes"
+                    val isPaused = api.getPropertyString(sourceHandle, "pause") == "yes"
                     if (isPaused) {
                         _playbackState.value = PlaybackState.PAUSED
                     } else {
                         _playbackState.value = PlaybackState.PLAYING
-                        startPositionTicker()
                     }
                     val pendingSeek = pendingSeekPositionMs
                     if (pendingSeek != null) {
@@ -277,11 +273,9 @@ class MpvAudioEngine(
                     if (reason == MpvApi.MPV_END_FILE_REASON_EOF) {
                         _playbackState.value = PlaybackState.ENDED
                         _currentPositionMs.value = _durationMs.value
-                        stopPositionTicker()
                         _completionEvents.tryEmit(Unit)
                     } else if (reason == MpvApi.MPV_END_FILE_REASON_ERROR) {
                         _playbackState.value = PlaybackState.ERROR
-                        stopPositionTicker()
                         _errorEvents.tryEmit("Playback error encountered in audio track")
                     }
                 }
@@ -312,7 +306,7 @@ class MpvAudioEngine(
 
     private fun getVolumeOnHandle(handle: Pointer?): Float {
         if (handle == null || isClosed()) return 0f
-        val str = api.mpv_get_property_string(handle, "volume") ?: return 0f
+        val str = api.getPropertyString(handle, "volume") ?: return 0f
         return str.toFloatOrNull() ?: 0f
     }
 
@@ -410,14 +404,12 @@ class MpvAudioEngine(
                         api.mpv_command(player, arrayOf("loadfile", path, "replace"))
                         api.mpv_set_property_string(player, "pause", "no")
                         _playbackState.value = PlaybackState.PLAYING
-                        startPositionTicker()
                         return
                     }
                 }
             }
 
             _playbackState.value = PlaybackState.PLAYING
-            startPositionTicker()
 
             if (_isCrossfading.value) {
                 api.mpv_set_property_string(player, "pause", "no")
@@ -464,7 +456,6 @@ class MpvAudioEngine(
 
         try {
             _playbackState.value = PlaybackState.PAUSED
-            stopPositionTicker()
 
             if (_isCrossfading.value || activeCrossfadeSession != null) {
                 cancelCrossfade()
@@ -501,7 +492,6 @@ class MpvAudioEngine(
         if (isClosed()) return
         cancelCrossfade()
         playPauseFadeJob?.cancel()
-        stopPositionTicker()
 
         val (player, standby) = playerPair.get()
         try {
@@ -656,7 +646,6 @@ class MpvAudioEngine(
             if (player != null && path != null) {
                 api.mpv_set_property_string(player, "pause", "yes")
                 _playbackState.value = PlaybackState.PAUSED
-                stopPositionTicker()
 
                 val resumePosMs = _currentPositionMs.value
                 pendingSeekPositionMs = resumePosMs
@@ -672,7 +661,7 @@ class MpvAudioEngine(
     override fun getAudioDevices(): List<AudioDevice> = synchronized(commandLock) {
         if (isClosed()) return emptyList()
         val player = playerPair.get()?.active ?: return emptyList()
-        val jsonStr = api.mpv_get_property_string(player, "audio-device-list") ?: return emptyList()
+        val jsonStr = api.getPropertyString(player, "audio-device-list") ?: return emptyList()
         val rawList = runCatching {
             jsonParser.decodeFromString<List<AudioDevice>>(jsonStr)
         }.getOrDefault(emptyList())
@@ -823,16 +812,7 @@ class MpvAudioEngine(
         }
     }
 
-    private fun startPositionTicker() {
-        if (isClosed()) return
-        positionTickerJob?.cancel()
-        positionTickerJob = null
-    }
 
-    private fun stopPositionTicker() {
-        positionTickerJob?.cancel()
-        positionTickerJob = null
-    }
 
     internal fun getActivePlayerForTest(): Pointer? = playerPair.get().active
     internal fun getStandbyPlayerForTest(): Pointer? = playerPair.get().standby
@@ -842,13 +822,22 @@ class MpvAudioEngine(
         cancelCrossfade()
         playPauseFadeJob?.cancel()
         deviceListCheckJob?.cancel()
-        stopPositionTicker()
 
         val pA = handleA
         val pB = handleB
         handleA = null
         handleB = null
         playerPair.set(PlayerPair(null, null))
+
+        if (pA != null) api.mpv_wakeup(pA)
+        if (pB != null) api.mpv_wakeup(pB)
+
+        runCatching {
+            eventThreadA?.join(250)
+            eventThreadB?.join(250)
+        }
+        eventThreadA = null
+        eventThreadB = null
 
         try {
             if (pA != null) {

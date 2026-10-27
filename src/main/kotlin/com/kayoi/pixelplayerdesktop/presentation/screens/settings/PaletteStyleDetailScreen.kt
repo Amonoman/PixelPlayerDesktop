@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,7 +72,17 @@ fun PaletteStyleDetailScreen(
         )
     }
 
-    val previewScheme = remember(effectiveSong.albumArtUriString, currentPaletteStyle, currentColorAccuracy, isDarkTheme) {
+    val previewScheme by produceState(
+        initialValue = DynamicColorProcessor.getCachedColorScheme(
+            pathOrUri = effectiveSong.albumArtUriString,
+            paletteStyle = currentPaletteStyle,
+            colorAccuracyLevel = currentColorAccuracy
+        )?.let { if (isDarkTheme) it.dark else it.light } ?: colors,
+        effectiveSong.albumArtUriString,
+        currentPaletteStyle,
+        currentColorAccuracy,
+        isDarkTheme
+    ) {
         val pair = if (effectiveSong.albumArtUriString != null) {
             DynamicColorProcessor.extractColorScheme(
                 pathOrUri = effectiveSong.albumArtUriString,
@@ -84,7 +95,7 @@ fun PaletteStyleDetailScreen(
                 paletteStyle = currentPaletteStyle
             )
         }
-        if (isDarkTheme) pair?.dark ?: colors else pair?.light ?: colors
+        value = if (isDarkTheme) pair?.dark ?: colors else pair?.light ?: colors
     }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
