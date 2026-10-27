@@ -3,11 +3,14 @@ package com.kayoi.pixelplayerdesktop.presentation.screens.library
 import com.kayoi.pixelplayerdesktop.generated.resources.Res
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_playlist_play
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_add
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_upload_file
 import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -46,6 +49,7 @@ import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryActi
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.PlaylistListItem
 import com.kayoi.pixelplayerdesktop.presentation.screens.PlaylistDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
+import com.kayoi.pixelplayerdesktop.utils.DirectoryPicker
 
 @Composable
 fun PlaylistsTab(
@@ -117,19 +121,27 @@ fun PlaylistsTab(
                 currentSortOption = currentPlaylistSortOption,
                 availableSortOptions = SortOption.PLAYLISTS,
                 showCreateButton = true,
-                createButtonLabel = "New Playlist",
+                createButtonLabel = "New",
                 onCreateClick = { showCreatePlaylistDialog = true },
+                showImportButton = true,
+                importButtonLabel = "Import",
+                onImportClick = {
+                    DirectoryPicker.chooseM3uFile { file ->
+                        viewModel.importPlaylistFromM3u(file)
+                    }
+                },
                 showShuffleButton = false,
                 onSortOptionSelect = { option -> viewModel.setPlaylistSortOption(option) }
             )
 
             if (filteredPlaylists.isEmpty()) {
-                Box(
+                BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 24.dp, vertical = 32.dp),
                     contentAlignment = Alignment.Center
                 ) {
+                    val isSmall = maxWidth < 800.dp
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -147,17 +159,54 @@ fun PlaylistsTab(
                             color = colors.onSurfaceVariant
                         )
                         if (searchQuery.isBlank()) {
-                            Button(
-                                onClick = { showCreatePlaylistDialog = true },
-                                shape = RoundedCornerShape(16.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = colors.primary,
-                                    contentColor = colors.onPrimary
-                                )
-                            ) {
-                                Icon(painterResource(Res.drawable.ic_rounded_add), contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Create Playlist", fontWeight = FontWeight.Bold)
+                            val buttonModifier = if (isSmall) Modifier.width(220.dp) else Modifier
+                            val buttons = @Composable {
+                                Button(
+                                    onClick = { showCreatePlaylistDialog = true },
+                                    shape = RoundedCornerShape(16.dp),
+                                    modifier = buttonModifier,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = colors.primary,
+                                        contentColor = colors.onPrimary
+                                    )
+                                ) {
+                                    Icon(painterResource(Res.drawable.ic_rounded_add), contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Create Playlist", fontWeight = FontWeight.Bold)
+                                }
+                                Button(
+                                    onClick = {
+                                        DirectoryPicker.chooseM3uFile { file ->
+                                            viewModel.importPlaylistFromM3u(file)
+                                        }
+                                    },
+                                    shape = RoundedCornerShape(16.dp),
+                                    modifier = buttonModifier,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = colors.secondaryContainer,
+                                        contentColor = colors.onSecondaryContainer
+                                    )
+                                ) {
+                                    Icon(painterResource(Res.drawable.ic_rounded_upload_file), contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Import M3U", fontWeight = FontWeight.Bold)
+                                }
+                            }
+
+                            if (isSmall) {
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    buttons()
+                                }
+                            } else {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    buttons()
+                                }
                             }
                         }
                     }
@@ -188,7 +237,12 @@ fun PlaylistsTab(
                                     }
                                 },
                                 onRenameClick = { playlistToRename = pl },
-                                onDeleteClick = { playlistToDelete = pl }
+                                onDeleteClick = { playlistToDelete = pl },
+                                onExportClick = {
+                                    DirectoryPicker.saveM3uFile(defaultFileName = "${pl.name}.m3u") { targetFile ->
+                                        viewModel.exportPlaylistToM3u(pl.id, targetFile)
+                                    }
+                                }
                             )
                         }
                     }

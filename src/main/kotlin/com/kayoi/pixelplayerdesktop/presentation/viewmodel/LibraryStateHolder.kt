@@ -14,6 +14,7 @@ import com.kayoi.pixelplayerdesktop.data.model.Playlist
 import com.kayoi.pixelplayerdesktop.data.model.SearchResultItem
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
+import com.kayoi.pixelplayerdesktop.data.playlist.M3uParseResult
 import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
 import com.kayoi.pixelplayerdesktop.data.scanner.DesktopMusicScanner
 import com.kayoi.pixelplayerdesktop.data.scanner.ScanProgress
@@ -576,6 +577,20 @@ class LibraryStateHolder(
     fun updatePlaylist(playlist: Playlist) {
         coroutineScope.launch {
             musicRepository.updatePlaylist(playlist)
+        }
+    }
+
+    fun importPlaylistFromM3u(file: File, onComplete: ((Result<Pair<Playlist, M3uParseResult>>) -> Unit)? = null) {
+        coroutineScope.launch {
+            val result = musicRepository.importPlaylistFromM3u(file)
+            onComplete?.invoke(result)
+        }
+    }
+
+    fun exportPlaylistToM3u(playlistId: String, targetFile: File, onComplete: ((Result<Unit>) -> Unit)? = null) {
+        coroutineScope.launch {
+            val result = musicRepository.exportPlaylistToM3u(playlistId, targetFile)
+            onComplete?.invoke(result)
         }
     }
 
