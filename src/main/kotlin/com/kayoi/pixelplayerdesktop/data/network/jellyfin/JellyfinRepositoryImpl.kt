@@ -3,6 +3,7 @@ package com.kayoi.pixelplayerdesktop.data.network.jellyfin
 import com.kayoi.pixelplayerdesktop.data.database.LocalPlaylistDao
 import com.kayoi.pixelplayerdesktop.data.database.MusicDao
 import com.kayoi.pixelplayerdesktop.data.model.ArtistRef
+import com.kayoi.pixelplayerdesktop.data.model.generateArtistId
 import com.kayoi.pixelplayerdesktop.data.model.Playlist
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.network.jellyfin.model.JellyfinCredentials
@@ -152,8 +153,8 @@ class JellyfinRepositoryImpl(
                                 id = "jellyfin_${js.id}",
                                 title = js.name,
                                 artist = js.artist,
-                                artistId = js.artist.hashCode().toLong(),
-                                artists = listOf(ArtistRef(id = js.artist.hashCode().toLong(), name = js.artist, isPrimary = true)),
+                                artistId = generateArtistId(js.artist),
+                                artists = listOf(ArtistRef(id = generateArtistId(js.artist), name = js.artist, isPrimary = true)),
                                 album = js.album,
                                 albumId = (js.albumId ?: js.album).hashCode().toLong(),
                                 albumArtist = js.albumArtist,

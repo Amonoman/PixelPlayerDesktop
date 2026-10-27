@@ -3,6 +3,9 @@ package com.kayoi.pixelplayerdesktop.data.model
 import androidx.compose.runtime.Immutable
 import kotlinx.serialization.Serializable
 
+fun generateArtistId(name: String): Long =
+    name.trim().lowercase().hashCode().toLong() and 0xFFFFFFFFL
+
 @Serializable
 @Immutable
 data class ArtistRef(

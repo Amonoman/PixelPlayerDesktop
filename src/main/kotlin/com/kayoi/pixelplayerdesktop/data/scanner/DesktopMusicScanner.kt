@@ -3,6 +3,7 @@ package com.kayoi.pixelplayerdesktop.data.scanner
 import com.kayoi.pixelplayerdesktop.data.database.LyricsDao
 import com.kayoi.pixelplayerdesktop.data.database.MusicDao
 import com.kayoi.pixelplayerdesktop.data.model.ArtistRef
+import com.kayoi.pixelplayerdesktop.data.model.generateArtistId
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_ARTIST_DELIMITERS
 import com.kayoi.pixelplayerdesktop.utils.AudioFileReaderUtils
@@ -249,7 +250,7 @@ class DesktopMusicScanner(
 
                 val artistRefs = parsedArtists.mapIndexed { index, name ->
                     ArtistRef(
-                        id = kotlin.math.abs(name.trim().lowercase().hashCode().toLong()),
+                        id = generateArtistId(name),
                         name = name.trim(),
                         isPrimary = (index == 0)
                     )
@@ -290,7 +291,7 @@ class DesktopMusicScanner(
                 val artworkUri = extractOpusArtworkToCache(tags, file)
 
                 val songId = existingId ?: UUID.nameUUIDFromBytes(file.absolutePath.toByteArray()).toString()
-                val artistId = artist.hashCode().toLong()
+                val artistId = generateArtistId(artist)
                 val albumId = "$album-$artist".hashCode().toLong()
 
                 Song(
@@ -357,7 +358,7 @@ class DesktopMusicScanner(
 
             val artistRefs = parsedArtists.mapIndexed { index, name ->
                 ArtistRef(
-                    id = kotlin.math.abs(name.trim().lowercase().hashCode().toLong()),
+                    id = generateArtistId(name),
                     name = name.trim(),
                     isPrimary = (index == 0)
                 )
@@ -382,7 +383,7 @@ class DesktopMusicScanner(
             val artworkUri = extractArtworkToCache(tag, file)
 
             val songId = existingId ?: UUID.nameUUIDFromBytes(file.absolutePath.toByteArray()).toString()
-            val artistId = artist.hashCode().toLong()
+            val artistId = generateArtistId(artist)
             val albumId = "$album-$artist".hashCode().toLong()
 
             Song(
@@ -573,7 +574,7 @@ class DesktopMusicScanner(
             id = songId,
             title = file.nameWithoutExtension,
             artist = "Unknown Artist",
-            artistId = "Unknown Artist".hashCode().toLong(),
+            artistId = generateArtistId("Unknown Artist"),
             album = "Unknown Album",
             albumId = "Unknown Album".hashCode().toLong(),
             path = file.absolutePath,

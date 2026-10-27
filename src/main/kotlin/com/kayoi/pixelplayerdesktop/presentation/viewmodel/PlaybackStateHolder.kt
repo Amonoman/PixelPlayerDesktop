@@ -707,12 +707,8 @@ class PlaybackStateHolder(
         if (next != null) {
             audioEngine.play(resolvePath(next))
         } else {
-            val current = queueManager.currentSong.value
-            if (current != null) {
-                audioEngine.play(resolvePath(current))
-            } else {
-                audioEngine.stop()
-            }
+            listeningStatsTracker.onPlaybackStopped()
+            audioEngine.stop()
         }
     }
 
