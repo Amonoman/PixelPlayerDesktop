@@ -41,6 +41,7 @@ sealed interface ScanProgress {
     data class Completed(val totalScanned: Int, val addedOrUpdated: Int, val durationMs: Long) : ScanProgress
     data class Error(val message: String) : ScanProgress
 }
+private const val PROGRESS_UPDATE_INTERVAL_MS = 100L
 
 /**
  * High-performance audio library scanner for local desktop storage.
@@ -143,17 +144,22 @@ class DesktopMusicScanner(
             val allDiscoveredPaths = mutableSetOf<String>()
 
             var scannedCount = 0
+            var lastProgressUpdateTime = 0L
             for (file in discoveredFiles) {
                 try {
                     scannedCount++
                     val path = file.absolutePath
                     allDiscoveredPaths.add(path)
 
-                    _scanProgress.value = ScanProgress.Scanning(
-                        currentFile = file.name,
-                        scannedCount = scannedCount,
-                        totalDiscovered = totalDiscovered
-                    )
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastProgressUpdateTime >= PROGRESS_UPDATE_INTERVAL_MS || scannedCount == totalDiscovered) {
+                        lastProgressUpdateTime = currentTime
+                        _scanProgress.value = ScanProgress.Scanning(
+                            currentFile = file.name,
+                            scannedCount = scannedCount,
+                            totalDiscovered = totalDiscovered
+                        )
+                    }
 
                     val lastModified = file.lastModified()
                     val existing = existingSongs[path]
