@@ -160,4 +160,35 @@ class DatabaseDaoTest {
         assertEquals(1, filteredArtists.size)
         assertEquals(1, filteredArtists[0].songCount)
     }
+
+    @Test
+    fun testGetSongsByIdsWithLargeList() = runTest {
+        val tempDb = File.createTempFile("test_pixelplayer_large", ".db")
+        tempDb.deleteOnExit()
+
+        val db = PixelPlayerDatabase(tempDb)
+        val musicDao = MusicDao(db)
+
+        val songs = (1..1200).map { index ->
+            Song(
+                id = "id_$index",
+                title = "Song $index",
+                artist = "Artist",
+                artistId = 1L,
+                album = "Album",
+                albumId = 1L,
+                path = "/music/$index.mp3",
+                contentUriString = "file:///music/$index.mp3",
+                duration = 180000L
+            )
+        }
+        musicDao.upsertSongs(songs)
+
+        val queriedIds = songs.map { it.id }.reversed()
+        val retrievedSongs = musicDao.getSongsByIds(queriedIds)
+
+        assertEquals(1200, retrievedSongs.size)
+        assertEquals("id_1200", retrievedSongs.first().id)
+        assertEquals("id_1", retrievedSongs.last().id)
+    }
 }

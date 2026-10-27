@@ -167,6 +167,7 @@ class MpvAudioEngine(
         return thread(name = threadName, isDaemon = true) {
             while (!isClosed()) {
                 val eventRef = api.mpv_wait_event(handle, 0.1) ?: continue
+                if (isClosed()) break
                 val eventId = eventRef.eventId
                 if (eventId == MpvApi.MPV_EVENT_NONE) continue
                 if (eventId == MpvApi.MPV_EVENT_SHUTDOWN) break
@@ -827,6 +828,16 @@ class MpvAudioEngine(
         handleA = null
         handleB = null
         playerPair.set(PlayerPair(null, null))
+
+        if (pA != null) api.mpv_wakeup(pA)
+        if (pB != null) api.mpv_wakeup(pB)
+
+        runCatching {
+            eventThreadA?.join(250)
+            eventThreadB?.join(250)
+        }
+        eventThreadA = null
+        eventThreadB = null
 
         try {
             if (pA != null) {

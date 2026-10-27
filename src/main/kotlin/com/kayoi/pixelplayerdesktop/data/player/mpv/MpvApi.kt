@@ -25,6 +25,7 @@ interface MpvApi : Library {
     fun mpv_observe_property(handle: Pointer, replyUserdata: Long, name: String, format: Int): Int
     fun mpv_unobserve_property(handle: Pointer, registeredReplyUserdata: Long): Int
     fun mpv_wait_event(handle: Pointer, timeout: Double): MpvEvent.ByReference?
+    fun mpv_wakeup(handle: Pointer)
     fun mpv_free(data: Pointer)
 
     companion object {

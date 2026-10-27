@@ -22,14 +22,6 @@ class DesktopListeningStatsTracker(
 ) {
     private val currentSession = AtomicReference<ActiveSession?>(null)
 
-    init {
-        runCatching {
-            Runtime.getRuntime().addShutdownHook(Thread {
-                finalizeCurrentSession(forceSynchronous = true)
-            })
-        }
-    }
-
     fun onSongChanged(song: Song?, isPlaying: Boolean) {
         finalizeCurrentSession()
         if (song == null) return

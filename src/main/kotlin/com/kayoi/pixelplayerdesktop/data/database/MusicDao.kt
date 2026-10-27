@@ -19,6 +19,7 @@ import com.kayoi.pixelplayerdesktop.data.model.SearchFilterType
 import com.kayoi.pixelplayerdesktop.data.model.SearchResultItem
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
+import com.kayoi.pixelplayerdesktop.data.model.generateArtistId
 
 private val artistRefListSerializer = ListSerializer(ArtistRef.serializer())
 private val stringListSerializer = ListSerializer(String.serializer())
@@ -94,24 +95,25 @@ class MusicDao(
 
     suspend fun getSongsByIds(ids: List<String>): List<Song> = withContext(ioDispatcher) {
         if (ids.isEmpty()) return@withContext emptyList()
-        val placeholders = ids.joinToString(",") { "?" }
+        val resultMap = mutableMapOf<String, Song>()
         database.withConnection(readOnly = true) { conn ->
-            val sql = "SELECT * FROM songs WHERE id IN ($placeholders)"
-            conn.prepareStatement(sql).use { stmt ->
-                ids.forEachIndexed { index, id ->
-                    stmt.setString(index + 1, id)
-                }
-                val resultMap = mutableMapOf<String, Song>()
-                stmt.executeQuery().use { rs ->
-                    while (rs.next()) {
-                        val song = rs.toSong(json)
-                        resultMap[song.id] = song
+            ids.chunked(500).forEach { chunk ->
+                val placeholders = chunk.joinToString(",") { "?" }
+                val sql = "SELECT * FROM songs WHERE id IN ($placeholders)"
+                conn.prepareStatement(sql).use { stmt ->
+                    chunk.forEachIndexed { index, id ->
+                        stmt.setString(index + 1, id)
+                    }
+                    stmt.executeQuery().use { rs ->
+                        while (rs.next()) {
+                            val song = rs.toSong(json)
+                            resultMap[song.id] = song
+                        }
                     }
                 }
-                // Maintain the requested order
-                ids.mapNotNull { resultMap[it] }
             }
         }
+        ids.mapNotNull { resultMap[it] }
     }
 
     suspend fun upsertSongs(songs: List<Song>) = withContext(ioDispatcher) {
@@ -196,13 +198,19 @@ class MusicDao(
                     deleteStmt.executeBatch()
                 }
 
-                conn.prepareStatement(insertArtistSql).use { artistStmt ->
-                    for (song in songs) {
-                        val allArtists = if (song.artists.isNotEmpty()) {
-                            song.artists
-                        } else {
-                            listOf(ArtistRef(id = song.artistId, name = song.artist, isPrimary = true))
+                val songArtistsMap = songs.associateWith { song ->
+                    if (song.artists.isNotEmpty()) {
+                        song.artists.map { ref ->
+                            if (ref.id != 0L) ref else ref.copy(id = generateArtistId(ref.name))
                         }
+                    } else {
+                        val aid = if (song.artistId != 0L) song.artistId else generateArtistId(song.artist)
+                        listOf(ArtistRef(id = aid, name = song.artist, isPrimary = true))
+                    }
+                }
+
+                conn.prepareStatement(insertArtistSql).use { artistStmt ->
+                    for ((_, allArtists) in songArtistsMap) {
                         for (ref in allArtists) {
                             artistStmt.setLong(1, ref.id)
                             artistStmt.setString(2, ref.name)
@@ -213,12 +221,7 @@ class MusicDao(
                 }
 
                 conn.prepareStatement(insertSongArtistSql).use { songArtistStmt ->
-                    for (song in songs) {
-                        val allArtists = if (song.artists.isNotEmpty()) {
-                            song.artists
-                        } else {
-                            listOf(ArtistRef(id = song.artistId, name = song.artist, isPrimary = true))
-                        }
+                    for ((song, allArtists) in songArtistsMap) {
                         for (ref in allArtists) {
                             songArtistStmt.setString(1, song.id)
                             songArtistStmt.setLong(2, ref.id)
