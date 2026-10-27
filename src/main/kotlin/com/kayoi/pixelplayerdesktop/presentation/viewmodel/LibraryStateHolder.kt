@@ -335,6 +335,7 @@ class LibraryStateHolder(
     fun removeMusicDirectory(path: String) {
         coroutineScope.launch {
             settingsRepository.removeMusicDirectory(path)
+            musicRepository.deleteSongsInDirectory(path)
             val settings = settingsRepository.getSettings()
             scanner.scanDirectories(
                 directories = settings.musicDirectories,

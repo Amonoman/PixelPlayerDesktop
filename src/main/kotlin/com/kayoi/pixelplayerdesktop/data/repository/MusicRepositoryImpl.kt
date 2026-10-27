@@ -70,6 +70,10 @@ class MusicRepositoryImpl(
         musicDao.deleteSong(song)
     }
 
+    override suspend fun deleteSongsInDirectory(directoryPath: String) {
+        musicDao.deleteSongsInDirectory(directoryPath)
+    }
+
     override suspend fun clearLibrary() {
         musicDao.clearLibrary()
     }

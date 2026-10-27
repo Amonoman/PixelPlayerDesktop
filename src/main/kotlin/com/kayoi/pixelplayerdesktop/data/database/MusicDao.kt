@@ -1,15 +1,24 @@
 package com.kayoi.pixelplayerdesktop.data.database
 
-import com.kayoi.pixelplayerdesktop.data.model.*
+import java.io.File
+import java.sql.ResultSet
+import java.sql.Types
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
-import java.io.File
-import java.sql.ResultSet
-import java.sql.Types
+import com.kayoi.pixelplayerdesktop.data.model.Album
+import com.kayoi.pixelplayerdesktop.data.model.Artist
+import com.kayoi.pixelplayerdesktop.data.model.ArtistRef
+import com.kayoi.pixelplayerdesktop.data.model.Genre
+import com.kayoi.pixelplayerdesktop.data.model.PlaybackEvent
+import com.kayoi.pixelplayerdesktop.data.model.Playlist
+import com.kayoi.pixelplayerdesktop.data.model.SearchFilterType
+import com.kayoi.pixelplayerdesktop.data.model.SearchResultItem
+import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.data.model.SortOption
 
 private val artistRefListSerializer = ListSerializer(ArtistRef.serializer())
 private val stringListSerializer = ListSerializer(String.serializer())
@@ -251,29 +260,38 @@ class MusicDao(
         database.notifyTableChanged("songs")
     }
 
-    suspend fun deleteSongsNotInPaths(existingPaths: Set<String>) = withContext(ioDispatcher) {
-        if (existingPaths.isEmpty()) {
-            database.withConnection { conn ->
-                conn.createStatement().use { stmt ->
-                    stmt.executeUpdate("DELETE FROM songs WHERE navidrome_id IS NULL AND jellyfin_id IS NULL")
-                    stmt.executeUpdate("DELETE FROM song_artists WHERE song_id NOT IN (SELECT id FROM songs)")
-                    stmt.executeUpdate("DELETE FROM artists WHERE id NOT IN (SELECT DISTINCT artist_id FROM song_artists)")
-                }
-                database.notifyTableChanged("songs")
-                database.notifyTableChanged("artists")
-            }
+    suspend fun deleteSongsNotInPaths(
+        existingPaths: Set<String>,
+        scannedDirectories: List<String>
+    ) = withContext(ioDispatcher) {
+        if (scannedDirectories.isEmpty()) {
             return@withContext
         }
+
+        val normalizedDirs = scannedDirectories.map { dir ->
+            val abs = File(dir).absolutePath
+            if (abs.endsWith(File.separator)) abs else abs + File.separator
+        }
+
         database.withConnection { conn ->
-            val allPaths = mutableSetOf<String>()
-            conn.createStatement().use { stmt ->
-                stmt.executeQuery("SELECT path FROM songs WHERE navidrome_id IS NULL AND jellyfin_id IS NULL").use { rs ->
+            val pathsInScannedDirs = mutableSetOf<String>()
+            val placeholders = normalizedDirs.joinToString(" OR ") { "path LIKE ? || '%'" }
+            val sql = "SELECT path FROM songs WHERE navidrome_id IS NULL AND jellyfin_id IS NULL AND ($placeholders)"
+            conn.prepareStatement(sql).use { stmt ->
+                normalizedDirs.forEachIndexed { index, prefix ->
+                    stmt.setString(index + 1, prefix)
+                }
+                stmt.executeQuery().use { rs ->
                     while (rs.next()) {
-                        allPaths.add(rs.getString("path"))
+                        val path = rs.getString("path")
+                        if (normalizedDirs.any { prefix -> path.startsWith(prefix) }) {
+                            pathsInScannedDirs.add(path)
+                        }
                     }
                 }
             }
-            val pathsToDelete = allPaths - existingPaths
+
+            val pathsToDelete = pathsInScannedDirs - existingPaths
             if (pathsToDelete.isNotEmpty()) {
                 conn.autoCommit = false
                 try {
@@ -295,6 +313,30 @@ class MusicDao(
                     conn.rollback()
                     throw e
                 }
+            }
+        }
+    }
+
+    suspend fun deleteSongsInDirectory(directoryPath: String) = withContext(ioDispatcher) {
+        val abs = File(directoryPath).absolutePath
+        val prefix = if (abs.endsWith(File.separator)) abs else abs + File.separator
+        database.withConnection { conn ->
+            conn.autoCommit = false
+            try {
+                conn.prepareStatement("DELETE FROM songs WHERE path LIKE ? || '%' AND navidrome_id IS NULL AND jellyfin_id IS NULL").use { stmt ->
+                    stmt.setString(1, prefix)
+                    stmt.executeUpdate()
+                }
+                conn.createStatement().use { stmt ->
+                    stmt.executeUpdate("DELETE FROM song_artists WHERE song_id NOT IN (SELECT id FROM songs)")
+                    stmt.executeUpdate("DELETE FROM artists WHERE id NOT IN (SELECT DISTINCT artist_id FROM song_artists)")
+                }
+                conn.commit()
+                database.notifyTableChanged("songs")
+                database.notifyTableChanged("artists")
+            } catch (e: Exception) {
+                conn.rollback()
+                throw e
             }
         }
     }

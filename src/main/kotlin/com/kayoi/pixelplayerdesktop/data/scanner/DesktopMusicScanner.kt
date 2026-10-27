@@ -82,6 +82,7 @@ class DesktopMusicScanner(
 
             // 1. Discover all audio files across directories
             val discoveredFiles = mutableListOf<File>()
+            val scannedDirectories = mutableListOf<String>()
             for (dirPath in directories) {
                 try {
                     val dir = File(dirPath)
@@ -121,6 +122,7 @@ class DesktopMusicScanner(
                                 return FileVisitResult.CONTINUE
                             }
                         })
+                        scannedDirectories.add(rootDirAbs)
                     }
                 } catch (_: Exception) {
                     // Safely ignore failures accessing a specific directory
@@ -180,8 +182,8 @@ class DesktopMusicScanner(
             }
 
             // 4. Prune missing files if enabled
-            if (pruneMissing && directories.isNotEmpty()) {
-                musicDao.deleteSongsNotInPaths(allDiscoveredPaths)
+            if (pruneMissing && scannedDirectories.isNotEmpty()) {
+                musicDao.deleteSongsNotInPaths(allDiscoveredPaths, scannedDirectories)
             }
 
             val duration = System.currentTimeMillis() - startTime

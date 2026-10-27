@@ -28,6 +28,7 @@ interface MusicRepository {
     suspend fun getSongsByIds(ids: List<String>): List<Song>
     suspend fun getSongByPath(path: String): Song?
     suspend fun deleteSong(song: Song)
+    suspend fun deleteSongsInDirectory(directoryPath: String)
     suspend fun clearLibrary()
 
     fun getAllAlbumsFlow(sortOption: SortOption = SortOption.AlbumTitleAZ, minTracks: Int = 1, minDurationMs: Long = 0L): Flow<List<Album>>
