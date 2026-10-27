@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -94,7 +95,7 @@ fun AddToPlaylistDialog(
             tonalElevation = 6.dp,
             modifier = Modifier
                 .width(460.dp)
-                .height(520.dp)
+                .heightIn(max = 540.dp)
                 .padding(16.dp)
         ) {
             Column(

@@ -19,9 +19,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
@@ -67,7 +70,7 @@ fun SaveLyricsDialog(
             tonalElevation = 6.dp,
             modifier = Modifier
                 .width(440.dp)
-                .wrapContentHeight()
+                .heightIn(max = 520.dp)
                 .padding(16.dp)
         ) {
             Column(
@@ -111,36 +114,40 @@ fun SaveLyricsDialog(
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                SaveLyricsOptionCard(
-                    icon = Res.drawable.ic_rounded_folder,
-                    iconContainerColor = colors.primaryContainer,
-                    iconColor = colors.onPrimaryContainer,
-                    title = "Save to Song Folder",
-                    subtitle = "Saves as $fileName beside the audio file",
-                    onClick = onSaveToSongFolder
-                )
+                Column(
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    SaveLyricsOptionCard(
+                        icon = Res.drawable.ic_rounded_folder,
+                        iconContainerColor = colors.primaryContainer,
+                        iconColor = colors.onPrimaryContainer,
+                        title = "Save to Song Folder",
+                        subtitle = "Saves as $fileName beside the audio file",
+                        onClick = onSaveToSongFolder
+                    )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                    SaveLyricsOptionCard(
+                        icon = Res.drawable.ic_rounded_file_download,
+                        iconContainerColor = colors.surfaceContainerHighest,
+                        iconColor = colors.primary,
+                        title = "Export to File...",
+                        subtitle = "Choose custom destination folder on your device",
+                        onClick = onExportFile
+                    )
 
-                SaveLyricsOptionCard(
-                    icon = Res.drawable.ic_rounded_file_download,
-                    iconContainerColor = colors.surfaceContainerHighest,
-                    iconColor = colors.primary,
-                    title = "Export to File...",
-                    subtitle = "Choose custom destination folder on your device",
-                    onClick = onExportFile
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                SaveLyricsOptionCard(
-                    icon = Res.drawable.ic_rounded_audio_file,
-                    iconContainerColor = colors.secondaryContainer,
-                    iconColor = colors.onSecondaryContainer,
-                    title = "Embed into Audio File",
-                    subtitle = "Writes directly into file tags (ID3 / Vorbis tag)",
-                    onClick = onEmbedToAudioFile
-                )
+                    SaveLyricsOptionCard(
+                        icon = Res.drawable.ic_rounded_audio_file,
+                        iconContainerColor = colors.secondaryContainer,
+                        iconColor = colors.onSecondaryContainer,
+                        title = "Embed into Audio File",
+                        subtitle = "Writes directly into file tags (ID3 / Vorbis tag)",
+                        onClick = onEmbedToAudioFile
+                    )
+                }
             }
         }
     }
@@ -157,18 +164,17 @@ private fun SaveLyricsOptionCard(
 ) {
     val colors = MaterialTheme.colorScheme
     Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = colors.surfaceContainerLow,
+        onClick = onClick,
+        shape = RoundedCornerShape(18.dp),
+        color = colors.surfaceContainer,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
             .pointerHoverIcon(PointerIcon.Hand)
-            .clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {

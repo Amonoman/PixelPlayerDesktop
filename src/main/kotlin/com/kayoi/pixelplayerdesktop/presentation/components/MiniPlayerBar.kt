@@ -202,7 +202,9 @@ fun MiniPlayerBar(
                                             } else Modifier
                                         )
                                     )
+
                                     Spacer(modifier = Modifier.height(2.dp))
+
                                     Text(
                                         text = currentSong.displayArtist,
                                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
@@ -330,6 +332,7 @@ fun MiniPlayerBar(
                     Box(
                         modifier = Modifier
                             .weight(1f)
+                            .padding(end = if (isMedium) 4.dp else 8.dp)
                             .pointerHoverIcon(PointerIcon.Hand)
                             .clickable(
                                 interactionSource = infoInteractionSource,
@@ -340,9 +343,7 @@ fun MiniPlayerBar(
                     ) {
                         AppTooltip("Expand Player") {
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(end = if (isMedium) 4.dp else 8.dp),
+                                modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.Start
                             ) {
@@ -359,35 +360,58 @@ fun MiniPlayerBar(
 
                                 Spacer(modifier = Modifier.width(artworkSpacing))
 
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = currentSong.title,
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontSize = if (isMedium) 15.sp else 16.sp,
-                                            textDecoration = if (isInfoHovered) TextDecoration.Underline else TextDecoration.None
-                                        ),
-                                        fontWeight = FontWeight.Bold,
-                                        color = colors.onPrimaryContainer,
-                                        maxLines = 1,
-                                        overflow = if (isPlaying) TextOverflow.Clip else TextOverflow.Ellipsis,
-                                        modifier = Modifier.then(
-                                            if (isPlaying) {
-                                                Modifier.basicMarquee(
-                                                    iterations = Int.MAX_VALUE,
-                                                    initialDelayMillis = 1500,
-                                                    repeatDelayMillis = 2000
-                                                )
-                                            } else Modifier
+                                Row(
+                                    modifier = Modifier.weight(1f, fill = false),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f, fill = false)) {
+                                        Text(
+                                            text = currentSong.title,
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                fontSize = if (isMedium) 15.sp else 16.sp,
+                                                textDecoration = if (isInfoHovered) TextDecoration.Underline else TextDecoration.None
+                                            ),
+                                            fontWeight = FontWeight.Bold,
+                                            color = colors.onPrimaryContainer,
+                                            maxLines = 1,
+                                            overflow = if (isPlaying) TextOverflow.Clip else TextOverflow.Ellipsis,
+                                            modifier = Modifier.then(
+                                                if (isPlaying) {
+                                                    Modifier.basicMarquee(
+                                                        iterations = Int.MAX_VALUE,
+                                                        initialDelayMillis = 1500,
+                                                        repeatDelayMillis = 2000
+                                                    )
+                                                } else Modifier
+                                            )
                                         )
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = currentSong.displayArtist,
-                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = if (isMedium) 12.5.sp else 13.5.sp),
-                                        color = colors.onPrimaryContainer.copy(alpha = if (isInfoHovered) 0.95f else 0.75f),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
+
+                                        Spacer(modifier = Modifier.height(2.dp))
+
+                                        Text(
+                                            text = currentSong.displayArtist,
+                                            style = MaterialTheme.typography.bodySmall.copy(fontSize = if (isMedium) 12.5.sp else 13.5.sp),
+                                            color = colors.onPrimaryContainer.copy(alpha = if (isInfoHovered) 0.95f else 0.75f),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(if (isMedium) 6.dp else 8.dp))
+
+                                    AppTooltip(if (isFavorite) "Remove from favorites" else "Add to favorites") {
+                                        IconButton(
+                                            onClick = onToggleFavorite,
+                                            modifier = Modifier.size(actionButtonSize)
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(if (isFavorite) Res.drawable.ic_rounded_favorite else Res.drawable.ic_rounded_favorite_border),
+                                                contentDescription = "Favorite",
+                                                tint = if (isFavorite) colors.primary else colors.onPrimaryContainer.copy(alpha = 0.75f),
+                                                modifier = Modifier.size(actionIconSize)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -536,22 +560,6 @@ fun MiniPlayerBar(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.End
                     ) {
-                        AppTooltip(if (isFavorite) "Remove from favorites" else "Add to favorites") {
-                            IconButton(
-                                onClick = onToggleFavorite,
-                                modifier = Modifier.size(actionButtonSize)
-                            ) {
-                                Icon(
-                                    painter = painterResource(if (isFavorite) Res.drawable.ic_rounded_favorite else Res.drawable.ic_rounded_favorite_border),
-                                    contentDescription = "Favorite",
-                                    tint = if (isFavorite) colors.primary else colors.onPrimaryContainer.copy(alpha = 0.75f),
-                                    modifier = Modifier.size(actionIconSize)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(2.dp))
-
                         if (onMiniPlayerClick != null) {
                             AppTooltip("Mini Player (Ctrl+Shift+M)") {
                                 IconButton(
