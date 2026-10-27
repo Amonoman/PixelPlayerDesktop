@@ -190,6 +190,21 @@ class MusicDao(
                 val insertArtistSql = "INSERT OR IGNORE INTO artists (id, name, track_count) VALUES (?, ?, 0)"
                 val insertSongArtistSql = "INSERT OR REPLACE INTO song_artists (song_id, artist_id, is_primary) VALUES (?, ?, ?)"
 
+                val affectedArtistIds = mutableSetOf<Long>()
+                val songIds = songs.map { it.id }
+                songIds.chunked(500).forEach { chunk ->
+                    val placeholders = chunk.joinToString(",") { "?" }
+                    val query = "SELECT DISTINCT artist_id FROM song_artists WHERE song_id IN ($placeholders)"
+                    conn.prepareStatement(query).use { stmt ->
+                        chunk.forEachIndexed { index, id -> stmt.setString(index + 1, id) }
+                        stmt.executeQuery().use { rs ->
+                            while (rs.next()) {
+                                affectedArtistIds.add(rs.getLong(1))
+                            }
+                        }
+                    }
+                }
+
                 conn.prepareStatement(deleteSongArtistsSql).use { deleteStmt ->
                     for (song in songs) {
                         deleteStmt.setString(1, song.id)
@@ -206,6 +221,12 @@ class MusicDao(
                     } else {
                         val aid = if (song.artistId != 0L) song.artistId else generateArtistId(song.artist)
                         listOf(ArtistRef(id = aid, name = song.artist, isPrimary = true))
+                    }
+                }
+
+                for ((_, allArtists) in songArtistsMap) {
+                    for (ref in allArtists) {
+                        affectedArtistIds.add(ref.id)
                     }
                 }
 
@@ -232,12 +253,25 @@ class MusicDao(
                     songArtistStmt.executeBatch()
                 }
 
-                conn.createStatement().use { stmt ->
-                    stmt.executeUpdate("""
-                        UPDATE artists 
-                        SET track_count = (SELECT COUNT(*) FROM song_artists WHERE song_artists.artist_id = artists.id)
-                    """.trimIndent())
-                    stmt.executeUpdate("DELETE FROM artists WHERE track_count = 0")
+                if (affectedArtistIds.isNotEmpty()) {
+                    affectedArtistIds.toList().chunked(500).forEach { chunk ->
+                        val placeholders = chunk.joinToString(",") { "?" }
+                        val updateSql = """
+                            UPDATE artists 
+                            SET track_count = (SELECT COUNT(*) FROM song_artists WHERE song_artists.artist_id = artists.id)
+                            WHERE id IN ($placeholders)
+                        """.trimIndent()
+                        conn.prepareStatement(updateSql).use { stmt ->
+                            chunk.forEachIndexed { index, id -> stmt.setLong(index + 1, id) }
+                            stmt.executeUpdate()
+                        }
+
+                        val deleteSql = "DELETE FROM artists WHERE track_count = 0 AND id IN ($placeholders)"
+                        conn.prepareStatement(deleteSql).use { stmt ->
+                            chunk.forEachIndexed { index, id -> stmt.setLong(index + 1, id) }
+                            stmt.executeUpdate()
+                        }
+                    }
                 }
 
                 conn.commit()
