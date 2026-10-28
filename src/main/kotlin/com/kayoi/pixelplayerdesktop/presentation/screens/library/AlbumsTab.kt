@@ -28,8 +28,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Artist
+import com.kayoi.pixelplayerdesktop.data.model.QuickAccessType
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
 import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
@@ -79,6 +81,10 @@ fun AlbumsTab(
         val currentAlbumSortOption by viewModel.libraryStateHolder.albumSortOption.collectAsState()
         val isAlbumsListView by viewModel.isAlbumsListView.collectAsState()
         val storageFilter by viewModel.storageFilter.collectAsState()
+        val quickAccessItems by viewModel.quickAccessItems.collectAsState()
+        val pinnedAlbumIds = remember(quickAccessItems) {
+            quickAccessItems.filter { it.type == QuickAccessType.ALBUM }.mapNotNull { it.targetKey.toLongOrNull() }.toSet()
+        }
         val albumsGridState = rememberLazyGridState()
         val albumsListState = rememberLazyListState()
         var lastHandledAlbumSortKey by remember { mutableStateOf(currentAlbumSortOption.storageKey) }
@@ -172,6 +178,10 @@ fun AlbumsTab(
                             val artist = remember(album.artist, allArtists) {
                                 allArtists.find { it.name.equals(album.artist, ignoreCase = true) }
                             }
+                            val isPinned = album.id in pinnedAlbumIds
+                            val onTogglePin = remember(isPinned, album) {
+                                { viewModel.togglePin("album_${album.id}", album.title, QuickAccessType.ALBUM, album.id.toString(), isPinned) }
+                            }
                             AlbumListItem(
                                 album = album,
                                 isDarkTheme = isDarkTheme,
@@ -188,7 +198,9 @@ fun AlbumsTab(
                                 },
                                 onNavigateToArtist = if (artist != null && onNavigateToArtist != null) {
                                     { onNavigateToArtist(artist) }
-                                } else null
+                                } else null,
+                                isPinned = isPinned,
+                                onTogglePin = onTogglePin
                             )
                         }
                     }
@@ -210,6 +222,10 @@ fun AlbumsTab(
                             val artist = remember(album.artist, allArtists) {
                                 allArtists.find { it.name.equals(album.artist, ignoreCase = true) }
                             }
+                            val isPinned = album.id in pinnedAlbumIds
+                            val onTogglePin = remember(isPinned, album) {
+                                { viewModel.togglePin("album_${album.id}", album.title, QuickAccessType.ALBUM, album.id.toString(), isPinned) }
+                            }
                             AlbumGridItem(
                                 album = album,
                                 isDarkTheme = isDarkTheme,
@@ -226,7 +242,9 @@ fun AlbumsTab(
                                 },
                                 onNavigateToArtist = if (artist != null && onNavigateToArtist != null) {
                                     { onNavigateToArtist(artist) }
-                                } else null
+                                } else null,
+                                isPinned = isPinned,
+                                onTogglePin = onTogglePin
                             )
                         }
                     }

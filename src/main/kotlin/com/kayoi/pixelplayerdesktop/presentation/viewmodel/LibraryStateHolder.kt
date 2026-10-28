@@ -1,31 +1,7 @@
 package com.kayoi.pixelplayerdesktop.presentation.viewmodel
 
-import com.kayoi.pixelplayerdesktop.data.metadata.AudioMetadataDetails
-import com.kayoi.pixelplayerdesktop.data.metadata.BatchMetadataResult
-import com.kayoi.pixelplayerdesktop.data.metadata.BatchSongMetadataUpdate
-import com.kayoi.pixelplayerdesktop.data.metadata.EditableSongMetadata
-import com.kayoi.pixelplayerdesktop.data.metadata.MetadataEditResult
-import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineReleaseMetadata
-import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineTrackMetadata
-import com.kayoi.pixelplayerdesktop.data.model.Album
-import com.kayoi.pixelplayerdesktop.data.model.Artist
-import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
-import com.kayoi.pixelplayerdesktop.data.model.Playlist
-import com.kayoi.pixelplayerdesktop.data.model.SearchResultItem
-import com.kayoi.pixelplayerdesktop.data.model.Song
-import com.kayoi.pixelplayerdesktop.data.model.SortOption
-import com.kayoi.pixelplayerdesktop.data.playlist.M3uParseResult
-import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
-import com.kayoi.pixelplayerdesktop.data.scanner.DesktopMusicScanner
-import com.kayoi.pixelplayerdesktop.data.scanner.ScanProgress
-import com.kayoi.pixelplayerdesktop.domain.repository.LyricsRepository
-import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
-import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
-import com.kayoi.pixelplayerdesktop.utils.AlbumArtCacheManager
-import com.kayoi.pixelplayerdesktop.utils.DEFAULT_ARTIST_DELIMITERS
-import com.kayoi.pixelplayerdesktop.utils.DEFAULT_WORD_DELIMITERS
-import com.kayoi.pixelplayerdesktop.utils.DirectoryFilterUtils
 import java.io.File
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -39,6 +15,34 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
+import com.kayoi.pixelplayerdesktop.data.metadata.AudioMetadataDetails
+import com.kayoi.pixelplayerdesktop.data.metadata.BatchMetadataResult
+import com.kayoi.pixelplayerdesktop.data.metadata.BatchSongMetadataUpdate
+import com.kayoi.pixelplayerdesktop.data.metadata.EditableSongMetadata
+import com.kayoi.pixelplayerdesktop.data.metadata.MetadataEditResult
+import com.kayoi.pixelplayerdesktop.data.model.Album
+import com.kayoi.pixelplayerdesktop.data.model.Artist
+import com.kayoi.pixelplayerdesktop.data.model.Playlist
+import com.kayoi.pixelplayerdesktop.data.model.QuickAccessItem
+import com.kayoi.pixelplayerdesktop.data.model.QuickAccessType
+import com.kayoi.pixelplayerdesktop.data.model.SearchResultItem
+import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.data.model.SortOption
+import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineReleaseMetadata
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineTrackMetadata
+import com.kayoi.pixelplayerdesktop.data.playlist.M3uParseResult
+import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
+import com.kayoi.pixelplayerdesktop.data.scanner.DesktopMusicScanner
+import com.kayoi.pixelplayerdesktop.data.scanner.ScanProgress
+import com.kayoi.pixelplayerdesktop.domain.repository.LyricsRepository
+import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
+import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
+import com.kayoi.pixelplayerdesktop.utils.AlbumArtCacheManager
+import com.kayoi.pixelplayerdesktop.utils.DEFAULT_ARTIST_DELIMITERS
+import com.kayoi.pixelplayerdesktop.utils.DEFAULT_WORD_DELIMITERS
+import com.kayoi.pixelplayerdesktop.utils.DirectoryFilterUtils
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LibraryStateHolder(
@@ -130,6 +134,10 @@ class LibraryStateHolder(
     val isFoldersPlaylistView: StateFlow<Boolean> = settingsRepository.settingsFlow
         .map { it.isFoldersPlaylistView }
         .stateIn(coroutineScope, SharingStarted.Eagerly, false)
+
+    val quickAccessItems: StateFlow<List<QuickAccessItem>> = settingsRepository.settingsFlow
+        .map { it.quickAccessItems }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, QuickAccessItem.DEFAULT_ITEMS)
 
     val rescanRequired: StateFlow<Boolean> = settingsRepository.settingsFlow
         .map { it.artistSettingsRescanRequired }
@@ -534,6 +542,7 @@ class LibraryStateHolder(
     fun deletePlaylist(id: String) {
         coroutineScope.launch {
             musicRepository.deletePlaylist(id)
+            settingsRepository.unpinFromQuickAccess("playlist_$id")
         }
     }
 
@@ -656,5 +665,48 @@ class LibraryStateHolder(
 
     suspend fun fetchOnlineCoverArt(releaseId: String): ByteArray? {
         return musicRepository.fetchOnlineCoverArt(releaseId)
+    }
+
+    fun pinToQuickAccess(item: QuickAccessItem, onResult: ((Boolean) -> Unit)? = null) {
+        coroutineScope.launch {
+            val success = settingsRepository.pinToQuickAccess(item)
+            onResult?.invoke(success)
+        }
+    }
+
+    fun unpinFromQuickAccess(id: String) {
+        coroutineScope.launch {
+            settingsRepository.unpinFromQuickAccess(id)
+        }
+    }
+
+    fun setQuickAccessItems(items: List<QuickAccessItem>) {
+        coroutineScope.launch {
+            settingsRepository.setQuickAccessItems(items)
+        }
+    }
+
+    fun togglePin(
+        id: String,
+        title: String,
+        type: QuickAccessType,
+        targetKey: String,
+        isPinned: Boolean,
+        onResult: ((Boolean) -> Unit)? = null
+    ) {
+        if (isPinned) {
+            unpinFromQuickAccess(id)
+            onResult?.invoke(true)
+        } else {
+            pinToQuickAccess(
+                QuickAccessItem(
+                    id = id,
+                    title = title,
+                    type = type,
+                    targetKey = targetKey
+                ),
+                onResult = onResult
+            )
+        }
     }
 }

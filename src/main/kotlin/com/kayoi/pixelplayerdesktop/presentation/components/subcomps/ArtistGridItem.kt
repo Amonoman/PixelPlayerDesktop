@@ -53,7 +53,9 @@ fun ArtistGridItem(
     onPlay: (() -> Unit)? = null,
     onPlayNext: (() -> Unit)? = null,
     onAddToQueue: (() -> Unit)? = null,
-    onAddToPlaylist: (() -> Unit)? = null
+    onAddToPlaylist: (() -> Unit)? = null,
+    isPinned: Boolean = false,
+    onTogglePin: (() -> Unit)? = null
 ) {
     val colors = MaterialTheme.colorScheme
     val cardShape = RoundedCornerShape(20.dp)
@@ -159,7 +161,9 @@ fun ArtistGridItem(
                 onPlay = onPlay,
                 onPlayNext = onPlayNext,
                 onAddToQueue = onAddToQueue,
-                onAddToPlaylist = onAddToPlaylist
+                onAddToPlaylist = onAddToPlaylist,
+                isPinned = isPinned,
+                onTogglePin = onTogglePin
             )
         }
     }

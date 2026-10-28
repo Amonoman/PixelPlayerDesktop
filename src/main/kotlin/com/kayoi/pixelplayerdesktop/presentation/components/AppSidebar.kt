@@ -1,10 +1,6 @@
 package com.kayoi.pixelplayerdesktop.presentation.components
 
-import com.kayoi.pixelplayerdesktop.generated.resources.Res
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_app_logo
-import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
@@ -15,6 +11,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.PointerMatcher
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -31,32 +30,68 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.painterResource
+
+import com.kayoi.pixelplayerdesktop.data.model.Album
+import com.kayoi.pixelplayerdesktop.data.model.Artist
+import com.kayoi.pixelplayerdesktop.data.model.Playlist
+import com.kayoi.pixelplayerdesktop.data.model.QuickAccessItem
+import com.kayoi.pixelplayerdesktop.data.model.QuickAccessType
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_app_logo
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_artist
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_playlist_play
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_show_chart
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_album
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_auto_awesome
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_edit
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_history
+import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.AppTooltip
 import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavDestination
+import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavTarget
 import com.kayoi.pixelplayerdesktop.presentation.navigation.NavSection
 
 @Composable
 fun AppSidebar(
     currentDestination: DesktopNavDestination,
+    currentTarget: DesktopNavTarget? = null,
+    quickAccessItems: List<QuickAccessItem> = emptyList(),
+    albums: List<Album> = emptyList(),
+    artists: List<Artist> = emptyList(),
+    playlists: List<Playlist> = emptyList(),
     onNavigate: (DesktopNavDestination) -> Unit,
+    onNavigateToTarget: ((DesktopNavTarget) -> Unit)? = null,
+    onUnpinQuickAccess: ((String) -> Unit)? = null,
+    onOpenQuickAccessSettings: (() -> Unit)? = null,
     isCompact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
@@ -122,6 +157,87 @@ fun AppSidebar(
 
             val navScrollState = rememberScrollState()
 
+            val enabledQuickAccess = remember(quickAccessItems, playlists) {
+                quickAccessItems
+                    .filter { it.isEnabled }
+                    .filter { item ->
+                        if (item.type == QuickAccessType.PLAYLIST) {
+                            playlists.isEmpty() || playlists.any { it.id == item.targetKey }
+                        } else {
+                            true
+                        }
+                    }
+                    .sortedBy { it.order }
+            }
+
+            val isCurrentTargetInQuickAccess = remember(enabledQuickAccess, currentTarget) {
+                enabledQuickAccess.any { item ->
+                    when (item.type) {
+                        QuickAccessType.SMART_PRESET -> when (item.targetKey) {
+                            QuickAccessItem.PRESET_RECENTLY_PLAYED -> currentTarget is DesktopNavTarget.RecentlyPlayed
+                            QuickAccessItem.PRESET_RECENTLY_ADDED -> currentTarget is DesktopNavTarget.RecentlyAdded
+                            QuickAccessItem.PRESET_MOST_PLAYED -> currentTarget is DesktopNavTarget.MostPlayed
+                            else -> false
+                        }
+                        QuickAccessType.ALBUM -> currentTarget is DesktopNavTarget.AlbumDetail && currentTarget.album.id.toString() == item.targetKey
+                        QuickAccessType.ARTIST -> currentTarget is DesktopNavTarget.ArtistDetail && currentTarget.artist.id.toString() == item.targetKey
+                        QuickAccessType.PLAYLIST -> currentTarget is DesktopNavTarget.PlaylistDetail && currentTarget.playlistId == item.targetKey
+                    }
+                }
+            }
+
+            val pinnedAlbumKeys = remember(enabledQuickAccess) {
+                enabledQuickAccess.filter { it.type == QuickAccessType.ALBUM }.map { it.targetKey }.toSet()
+            }
+            val pinnedArtistKeys = remember(enabledQuickAccess) {
+                enabledQuickAccess.filter { it.type == QuickAccessType.ARTIST }.map { it.targetKey }.toSet()
+            }
+            val pinnedPlaylistKeys = remember(enabledQuickAccess) {
+                enabledQuickAccess.filter { it.type == QuickAccessType.PLAYLIST }.map { it.targetKey }.toSet()
+            }
+
+            val albumArtMap = remember(albums, pinnedAlbumKeys) {
+                if (pinnedAlbumKeys.isEmpty()) emptyMap()
+                else {
+                    val map = mutableMapOf<String, String?>()
+                    for (album in albums) {
+                        val key = album.id.toString()
+                        if (key in pinnedAlbumKeys) {
+                            map[key] = album.albumArtUriString
+                            if (map.size == pinnedAlbumKeys.size) break
+                        }
+                    }
+                    map
+                }
+            }
+            val artistImageMap = remember(artists, pinnedArtistKeys) {
+                if (pinnedArtistKeys.isEmpty()) emptyMap()
+                else {
+                    val map = mutableMapOf<String, String?>()
+                    for (artist in artists) {
+                        val key = artist.id.toString()
+                        if (key in pinnedArtistKeys) {
+                            map[key] = artist.effectiveImageUrl
+                            if (map.size == pinnedArtistKeys.size) break
+                        }
+                    }
+                    map
+                }
+            }
+            val playlistMap = remember(playlists, pinnedPlaylistKeys) {
+                if (pinnedPlaylistKeys.isEmpty()) emptyMap()
+                else {
+                    val map = mutableMapOf<String, Pair<String?, String>>()
+                    for (playlist in playlists) {
+                        if (playlist.id in pinnedPlaylistKeys) {
+                            map[playlist.id] = Pair(playlist.coverImageUri, playlist.name)
+                            if (map.size == pinnedPlaylistKeys.size) break
+                        }
+                    }
+                    map
+                }
+            }
+
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -131,6 +247,15 @@ fun AppSidebar(
             ) {
                 NavSection.entries.forEach { section ->
                     if (section != NavSection.SYSTEM) {
+                        if (isCompact && section == NavSection.LIBRARY) {
+                            HorizontalDivider(
+                                color = colors.outline.copy(alpha = 0.5f),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                            )
+                        }
+
                         AnimatedVisibility(
                             visible = !isCompact && section != NavSection.MENU,
                             enter = fadeIn(tween(180, delayMillis = 40)) + expandVertically(tween(180)),
@@ -143,7 +268,7 @@ fun AppSidebar(
                                 color = colors.onSurfaceVariant.copy(alpha = 0.65f),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(start = 12.dp, top = 14.dp, bottom = 4.dp),
+                                    .padding(start = 12.dp, top = 10.dp, bottom = 4.dp),
                                 fontSize = 11.5.sp,
                                 letterSpacing = 1.1.sp,
                                 maxLines = 1,
@@ -156,18 +281,188 @@ fun AppSidebar(
                             .forEach { destination ->
                                 SidebarNavItem(
                                     destination = destination,
-                                    isSelected = currentDestination == destination,
+                                    isSelected = currentDestination == destination && !isCurrentTargetInQuickAccess && (currentTarget == null || currentTarget.rootDestination == destination),
                                     isCompact = isCompact,
                                     onClick = { onNavigate(destination) }
                                 )
                             }
+
+                        if (section == NavSection.LIBRARY) {
+                            if (isCompact) {
+                                HorizontalDivider(
+                                    color = colors.outline.copy(alpha = 0.5f),
+                                    modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                                )
+                            }
+
+                            AnimatedVisibility(
+                                visible = !isCompact,
+                                enter = fadeIn(tween(180, delayMillis = 40)) + expandVertically(tween(180)),
+                                exit = fadeOut(tween(60)) + shrinkVertically(tween(140))
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = "QUICK ACCESS",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.onSurfaceVariant.copy(alpha = 0.65f),
+                                        fontSize = 11.5.sp,
+                                        letterSpacing = 1.1.sp,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
+
+                                    if (onOpenQuickAccessSettings != null) {
+                                        IconButton(
+                                            onClick = onOpenQuickAccessSettings,
+                                            modifier = Modifier.size(30.dp)
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(Res.drawable.ic_rounded_edit),
+                                                contentDescription = "Customize Quick Access",
+                                                tint = colors.onSurfaceVariant.copy(alpha = 0.75f),
+                                                modifier = Modifier.size(17.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (enabledQuickAccess.isNotEmpty()) {
+                                enabledQuickAccess.forEach { item ->
+                                    val artworkUri = when (item.type) {
+                                        QuickAccessType.ALBUM -> albumArtMap[item.targetKey]
+                                        QuickAccessType.ARTIST -> artistImageMap[item.targetKey]
+                                        QuickAccessType.PLAYLIST -> playlistMap[item.targetKey]?.first
+                                        QuickAccessType.SMART_PRESET -> null
+                                    }
+                                    val displayTitle = if (item.type == QuickAccessType.PLAYLIST) {
+                                        playlistMap[item.targetKey]?.second ?: item.title
+                                    } else {
+                                        item.title
+                                    }
+
+                                    QuickAccessSidebarNavItem(
+                                        item = item,
+                                        currentTarget = currentTarget,
+                                        displayTitle = displayTitle,
+                                        artworkUri = artworkUri,
+                                        isCompact = isCompact,
+                                        onClick = {
+                                            if (onNavigateToTarget != null) {
+                                                when (item.type) {
+                                                    QuickAccessType.SMART_PRESET -> {
+                                                        when (item.targetKey) {
+                                                            QuickAccessItem.PRESET_RECENTLY_PLAYED -> onNavigateToTarget(DesktopNavTarget.RecentlyPlayed)
+                                                            QuickAccessItem.PRESET_RECENTLY_ADDED -> onNavigateToTarget(DesktopNavTarget.RecentlyAdded)
+                                                            QuickAccessItem.PRESET_MOST_PLAYED -> onNavigateToTarget(DesktopNavTarget.MostPlayed)
+                                                        }
+                                                    }
+                                                    QuickAccessType.ALBUM -> {
+                                                        val albumId = item.targetKey.toLongOrNull() ?: 0L
+                                                        val matched = albums.find { it.id == albumId } ?: Album(id = albumId, title = item.title, artist = "", albumArtUriString = artworkUri)
+                                                        onNavigateToTarget(DesktopNavTarget.AlbumDetail(matched))
+                                                    }
+                                                    QuickAccessType.ARTIST -> {
+                                                        val artistId = item.targetKey.toLongOrNull() ?: 0L
+                                                        val matched = artists.find { it.id == artistId } ?: Artist(id = artistId, name = item.title, customImageUri = artworkUri)
+                                                        onNavigateToTarget(DesktopNavTarget.ArtistDetail(matched))
+                                                    }
+                                                    QuickAccessType.PLAYLIST -> {
+                                                        onNavigateToTarget(DesktopNavTarget.PlaylistDetail(item.targetKey))
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        onUnpin = {
+                                            onUnpinQuickAccess?.invoke(item.id)
+                                        },
+                                        onOpenSettings = onOpenQuickAccessSettings
+                                    )
+                                }
+                            } else {
+                                if (!isCompact) {
+                                    Surface(
+                                        onClick = { onOpenQuickAccessSettings?.invoke() },
+                                        shape = RoundedCornerShape(14.dp),
+                                        color = colors.surfaceContainerHighest.copy(alpha = 0.45f),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 4.dp, vertical = 4.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(Res.drawable.ic_rounded_edit),
+                                                contentDescription = null,
+                                                tint = colors.primary,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(10.dp))
+                                            Column {
+                                                Text(
+                                                    text = "Customize",
+                                                    style = MaterialTheme.typography.labelLarge,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = colors.onSurface
+                                                )
+                                                Text(
+                                                    text = "Pin playlists & artists",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    fontSize = 11.sp,
+                                                    color = colors.onSurfaceVariant.copy(alpha = 0.7f)
+                                                )
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    AppTooltip(
+                                        text = "Customize Quick Access",
+                                        alignment = Alignment.CenterEnd,
+                                        offset = DpOffset(12.dp, 0.dp)
+                                    ) {
+                                        IconButton(
+                                            onClick = { onOpenQuickAccessSettings?.invoke() },
+                                            modifier = Modifier.size(44.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(36.dp)
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .background(colors.surfaceContainerHighest.copy(alpha = 0.5f)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(Res.drawable.ic_rounded_edit),
+                                                    contentDescription = "Customize Quick Access",
+                                                    tint = colors.onSurfaceVariant,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
 
             HorizontalDivider(
-                color = colors.outlineVariant.copy(alpha = 0.35f),
-                modifier = Modifier.padding(vertical = 10.dp)
+                color = if (isCompact) colors.outline.copy(alpha = 0.5f) else colors.outlineVariant.copy(alpha = 0.5f),
+                modifier = Modifier.padding(horizontal = if (isCompact) 8.dp else 4.dp, vertical = 10.dp)
             )
 
             SidebarNavItem(
@@ -209,46 +504,230 @@ private fun SidebarNavItem(
         else -> colors.onSurfaceVariant
     }
 
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .hoverable(interactionSource)
-            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        color = containerColor
+    AppTooltip(
+        text = if (isCompact) destination.title else "",
+        alignment = Alignment.CenterEnd,
+        offset = DpOffset(12.dp, 0.dp)
     ) {
-        Row(
+        Surface(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 13.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxWidth()
+                .height(48.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .hoverable(interactionSource)
+                .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
+            shape = RoundedCornerShape(16.dp),
+            color = containerColor
         ) {
-            Icon(
-                painter = painterResource(destination.icon),
-                contentDescription = destination.title,
-                tint = iconColor,
-                modifier = Modifier.size(22.dp)
-            )
-
-            AnimatedVisibility(
-                visible = !isCompact,
-                enter = fadeIn(tween(180, delayMillis = 60)) + expandHorizontally(tween(200)),
-                exit = fadeOut(tween(80)) + shrinkHorizontally(tween(150))
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 13.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Spacer(modifier = Modifier.width(14.dp))
-                    Text(
-                        text = destination.title,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp),
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = textColor,
-                        maxLines = 1,
-                        softWrap = false,
-                        overflow = TextOverflow.Clip
-                    )
+                Icon(
+                    painter = painterResource(destination.icon),
+                    contentDescription = destination.title,
+                    tint = iconColor,
+                    modifier = Modifier.size(22.dp)
+                )
+
+                AnimatedVisibility(
+                    visible = !isCompact,
+                    enter = fadeIn(tween(180, delayMillis = 60)) + expandHorizontally(tween(200)),
+                    exit = fadeOut(tween(80)) + shrinkHorizontally(tween(150))
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Spacer(modifier = Modifier.width(14.dp))
+                        Text(
+                            text = destination.title,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp),
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = textColor,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Clip
+                        )
+                    }
                 }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun QuickAccessSidebarNavItem(
+    item: QuickAccessItem,
+    currentTarget: DesktopNavTarget?,
+    displayTitle: String,
+    artworkUri: String?,
+    isCompact: Boolean,
+    onClick: () -> Unit,
+    onUnpin: () -> Unit,
+    onOpenSettings: (() -> Unit)? = null
+) {
+    val isSelected = when (item.type) {
+        QuickAccessType.SMART_PRESET -> {
+            when (item.targetKey) {
+                QuickAccessItem.PRESET_RECENTLY_PLAYED -> currentTarget is DesktopNavTarget.RecentlyPlayed
+                QuickAccessItem.PRESET_RECENTLY_ADDED -> currentTarget is DesktopNavTarget.RecentlyAdded
+                QuickAccessItem.PRESET_MOST_PLAYED -> currentTarget is DesktopNavTarget.MostPlayed
+                else -> false
+            }
+        }
+        QuickAccessType.ALBUM -> {
+            currentTarget is DesktopNavTarget.AlbumDetail && currentTarget.album.id.toString() == item.targetKey
+        }
+        QuickAccessType.ARTIST -> {
+            currentTarget is DesktopNavTarget.ArtistDetail && currentTarget.artist.id.toString() == item.targetKey
+        }
+        QuickAccessType.PLAYLIST -> {
+            currentTarget is DesktopNavTarget.PlaylistDetail && currentTarget.playlistId == item.targetKey
+        }
+    }
+
+    val iconResource = when (item.type) {
+        QuickAccessType.SMART_PRESET -> when (item.targetKey) {
+            QuickAccessItem.PRESET_RECENTLY_ADDED -> Res.drawable.ic_rounded_auto_awesome
+            QuickAccessItem.PRESET_MOST_PLAYED -> Res.drawable.ic_automirrored_rounded_show_chart
+            QuickAccessItem.PRESET_RECENTLY_PLAYED -> Res.drawable.ic_rounded_history
+            else -> Res.drawable.ic_rounded_auto_awesome
+        }
+        QuickAccessType.ALBUM -> Res.drawable.ic_rounded_album
+        QuickAccessType.ARTIST -> Res.drawable.ic_artist
+        QuickAccessType.PLAYLIST -> Res.drawable.ic_automirrored_rounded_playlist_play
+    }
+
+    val colors = MaterialTheme.colorScheme
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    var isMenuOpen by remember { mutableStateOf(false) }
+
+    val containerColor = when {
+        isSelected -> colors.secondaryContainer
+        isHovered -> colors.surfaceContainerHighest.copy(alpha = 0.6f)
+        else -> Color.Transparent
+    }
+
+    val iconColor = when {
+        isSelected -> colors.onSecondaryContainer
+        isHovered -> colors.onSurface
+        else -> colors.onSurfaceVariant
+    }
+
+    val textColor = when {
+        isSelected -> colors.onSurface
+        isHovered -> colors.onSurface
+        else -> colors.onSurfaceVariant
+    }
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        AppTooltip(
+            text = if (isCompact) displayTitle else "",
+            alignment = Alignment.CenterEnd,
+            offset = DpOffset(12.dp, 0.dp)
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .hoverable(interactionSource)
+                    .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
+                    .onClick(
+                        matcher = PointerMatcher.mouse(PointerButton.Secondary),
+                        onClick = { isMenuOpen = true }
+                    ),
+                shape = RoundedCornerShape(16.dp),
+                color = containerColor
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    if (!artworkUri.isNullOrBlank()) {
+                        val shape = if (item.type == QuickAccessType.ARTIST) CircleShape else RoundedCornerShape(6.dp)
+                        AsyncArtworkImage(
+                            artworkUri = artworkUri,
+                            targetSize = ArtworkSize.SMALL,
+                            shape = shape,
+                            placeholderIcon = iconResource,
+                            placeholderIconSize = 14.dp,
+                            containerColor = colors.surfaceContainerHighest,
+                            contentColor = iconColor,
+                            contentDescription = displayTitle,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(iconResource),
+                            contentDescription = displayTitle,
+                            tint = iconColor,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                    AnimatedVisibility(
+                        visible = !isCompact,
+                        enter = fadeIn(tween(180, delayMillis = 60)) + expandHorizontally(tween(200)),
+                        exit = fadeOut(tween(80)) + shrinkHorizontally(tween(150))
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Spacer(modifier = Modifier.width(14.dp))
+                            Text(
+                                text = displayTitle,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp),
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = textColor,
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        DropdownMenu(
+            expanded = isMenuOpen,
+            onDismissRequest = { isMenuOpen = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Unpin from Quick Access") },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_rounded_delete),
+                        contentDescription = null,
+                        tint = colors.error,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                onClick = {
+                    isMenuOpen = false
+                    onUnpin()
+                }
+            )
+            if (onOpenSettings != null) {
+                DropdownMenuItem(
+                    text = { Text("Customize Quick Access…") },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_rounded_edit),
+                            contentDescription = null,
+                            tint = colors.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    },
+                    onClick = {
+                        isMenuOpen = false
+                        onOpenSettings()
+                    }
+                )
             }
         }
     }

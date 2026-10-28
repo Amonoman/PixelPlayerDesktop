@@ -1,10 +1,12 @@
 package com.kayoi.pixelplayerdesktop.domain.repository
 
+import kotlinx.coroutines.flow.StateFlow
+
 import com.kayoi.pixelplayerdesktop.data.model.EqualizerPreset
+import com.kayoi.pixelplayerdesktop.data.model.QuickAccessItem
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
 import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
 import com.kayoi.pixelplayerdesktop.data.preferences.UserSettings
-import kotlinx.coroutines.flow.StateFlow
 
 interface SettingsRepository {
     val settingsFlow: StateFlow<UserSettings>
@@ -67,4 +69,7 @@ interface SettingsRepository {
     suspend fun setEqualizerViewMode(mode: String)
     suspend fun setCheckUpdatesOnStartup(enabled: Boolean)
     suspend fun setLastDismissedUpdateVersion(version: String?)
+    suspend fun setQuickAccessItems(items: List<QuickAccessItem>)
+    suspend fun pinToQuickAccess(item: QuickAccessItem): Boolean
+    suspend fun unpinFromQuickAccess(id: String)
 }

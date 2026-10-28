@@ -1,17 +1,5 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
-import com.kayoi.pixelplayerdesktop.generated.resources.Res
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_file_upload
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_add
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_drag_indicator
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_edit
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_more_vert
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_remove_circle_outline
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
-import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -70,7 +58,24 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.painterResource
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
+
+import com.kayoi.pixelplayerdesktop.data.model.QuickAccessType
 import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_file_upload
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_add
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_drag_indicator
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_edit
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_more_vert
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_music_note
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_push_pin
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_remove_circle_outline
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
 import com.kayoi.pixelplayerdesktop.presentation.components.AddSongsToPlaylistDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.CreatePlaylistDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveScrollBar
@@ -79,8 +84,6 @@ import com.kayoi.pixelplayerdesktop.presentation.components.TrackDialogInput
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.EnhancedSongListItem
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.utils.DirectoryPicker
-import sh.calvin.reorderable.ReorderableItem
-import sh.calvin.reorderable.rememberReorderableLazyListState
 
 private data class PlaylistSongUiItem(val stableKey: String, val song: Song)
 
@@ -102,6 +105,18 @@ fun PlaylistDetailScreen(
 
     val playlist = remember(playlists, playlistId) {
         playlists.find { it.id == playlistId }
+    }
+
+    val quickAccessItems by viewModel.quickAccessItems.collectAsState()
+    val isPinned = remember(quickAccessItems, playlist?.id) {
+        if (playlist == null) false
+        else quickAccessItems.any { it.type == QuickAccessType.PLAYLIST && it.targetKey == playlist.id }
+    }
+    val onTogglePin = remember(isPinned, playlist) {
+        if (playlist == null) null
+        else {
+            { viewModel.togglePin("playlist_${playlist.id}", playlist.name, QuickAccessType.PLAYLIST, playlist.id, isPinned) }
+        }
     }
 
     if (playlist == null) {
@@ -271,7 +286,9 @@ fun PlaylistDetailScreen(
                             }
                         },
                         onDelete = { showDeleteConfirmDialog = true },
-                        isWide = true
+                        isWide = true,
+                        isPinned = isPinned,
+                        onTogglePin = onTogglePin
                     )
                 }
             } else {
@@ -357,7 +374,9 @@ fun PlaylistDetailScreen(
                             }
                         },
                         onDelete = { showDeleteConfirmDialog = true },
-                        isWide = false
+                        isWide = false,
+                        isPinned = isPinned,
+                        onTogglePin = onTogglePin
                     )
                 }
             }
@@ -591,6 +610,8 @@ private fun PlaylistHeaderActions(
     onExport: () -> Unit = {},
     onDelete: () -> Unit,
     isWide: Boolean = true,
+    isPinned: Boolean = false,
+    onTogglePin: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -823,6 +844,32 @@ private fun PlaylistHeaderActions(
                                 onExport()
                             }
                         )
+                        if (onTogglePin != null) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        if (isPinned) "Unpin from Quick Access" else "Pin to Quick Access",
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_rounded_push_pin),
+                                        contentDescription = null,
+                                        tint = colors.primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 2.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                onClick = {
+                                    isMenuExpanded = false
+                                    onTogglePin()
+                                }
+                            )
+                        }
                         DropdownMenuItem(
                             text = { Text("Delete Playlist", fontWeight = FontWeight.Medium, color = colors.error) },
                             leadingIcon = {

@@ -1,12 +1,5 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
-import com.kayoi.pixelplayerdesktop.generated.resources.Res
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_playlist_add
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_queue_music
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_album
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_person
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
-import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
@@ -33,7 +26,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.painterResource
+
 import com.kayoi.pixelplayerdesktop.data.model.Album
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_playlist_add
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_queue_music
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_album
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_person
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_push_pin
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
 
 @Composable
@@ -46,6 +48,8 @@ fun AlbumOptionsDropdownMenu(
     onAddToQueue: (() -> Unit)? = null,
     onAddToPlaylist: (() -> Unit)? = null,
     onNavigateToArtist: (() -> Unit)? = null,
+    isPinned: Boolean = false,
+    onTogglePin: (() -> Unit)? = null,
     customItems: (@Composable ColumnScope.() -> Unit)? = null,
     menuWidth: Dp = 250.dp,
     offset: DpOffset = DpOffset(0.dp, 8.dp),
@@ -216,6 +220,33 @@ fun AlbumOptionsDropdownMenu(
                     onClick = {
                         onDismissRequest()
                         onNavigateToArtist()
+                    }
+                )
+            }
+
+            if (onTogglePin != null) {
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            if (isPinned) "Unpin from Quick Access" else "Pin to Quick Access",
+                            fontWeight = FontWeight.Medium
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_rounded_push_pin),
+                            contentDescription = null,
+                            tint = colors.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    onClick = {
+                        onDismissRequest()
+                        onTogglePin()
                     }
                 )
             }
