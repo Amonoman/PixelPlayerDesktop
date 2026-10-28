@@ -1,5 +1,13 @@
 package com.kayoi.pixelplayerdesktop.data.repository
 
+import java.io.File
+import java.util.UUID
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
 import com.kayoi.pixelplayerdesktop.data.database.FavoritesDao
 import com.kayoi.pixelplayerdesktop.data.database.LocalPlaylistDao
 import com.kayoi.pixelplayerdesktop.data.database.MusicDao
@@ -10,9 +18,6 @@ import com.kayoi.pixelplayerdesktop.data.metadata.BatchSongMetadataUpdate
 import com.kayoi.pixelplayerdesktop.data.metadata.DesktopMetadataEditor
 import com.kayoi.pixelplayerdesktop.data.metadata.EditableSongMetadata
 import com.kayoi.pixelplayerdesktop.data.metadata.MetadataEditResult
-import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.MusicBrainzClient
-import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineReleaseMetadata
-import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineTrackMetadata
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.Genre
@@ -22,14 +27,12 @@ import com.kayoi.pixelplayerdesktop.data.model.SearchFilterType
 import com.kayoi.pixelplayerdesktop.data.model.SearchResultItem
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.MusicBrainzClient
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineReleaseMetadata
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineTrackMetadata
+import com.kayoi.pixelplayerdesktop.data.playlist.M3uManager
+import com.kayoi.pixelplayerdesktop.data.playlist.M3uParseResult
 import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
-import java.io.File
-import java.util.UUID
 
 class MusicRepositoryImpl(
     private val database: PixelPlayerDatabase,
@@ -38,6 +41,7 @@ class MusicRepositoryImpl(
     private val playlistDao: LocalPlaylistDao,
     private val metadataEditor: DesktopMetadataEditor? = null,
     private val musicBrainzClient: MusicBrainzClient? = null,
+    private val m3uManager: M3uManager = M3uManager(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : MusicRepository {
 
@@ -199,6 +203,35 @@ class MusicRepositoryImpl(
             lastModified = System.currentTimeMillis()
         )
         playlistDao.insertPlaylist(updated)
+    }
+
+    override suspend fun importPlaylistFromM3u(file: File): Result<Pair<Playlist, M3uParseResult>> = withContext(ioDispatcher) {
+        runCatching {
+            val allSongs = musicDao.getAllSongs()
+            val (name, parseResult) = m3uManager.parseM3uFile(file, allSongs)
+            val playlist = Playlist(
+                id = parseResult.playlistId ?: UUID.randomUUID().toString(),
+                name = name,
+                songIds = parseResult.songIds,
+                createdAt = System.currentTimeMillis(),
+                lastModified = System.currentTimeMillis()
+            )
+            playlistDao.insertPlaylist(playlist)
+            Pair(playlist, parseResult)
+        }
+    }
+
+    override suspend fun exportPlaylistToM3u(playlistId: String, targetFile: File): Result<Unit> = withContext(ioDispatcher) {
+        runCatching {
+            val playlist = playlistDao.getPlaylistById(playlistId)
+                ?: throw IllegalArgumentException("Playlist not found: $playlistId")
+            val songs = musicDao.getSongsByIds(playlist.songIds)
+            val songMap = songs.associateBy { it.id }
+            val orderedSongs = playlist.songIds.mapNotNull { songMap[it] }
+            val content = m3uManager.generateM3uContent(playlist, orderedSongs, targetFile)
+            targetFile.writeText(content, Charsets.UTF_8)
+            Unit
+        }
     }
 
     override fun getFavoriteSongsFlow(): Flow<List<Song>> = flow {

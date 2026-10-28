@@ -1,6 +1,7 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
 import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_file_upload
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_add
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_drag_indicator
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -76,6 +78,7 @@ import com.kayoi.pixelplayerdesktop.presentation.components.PlaylistCover
 import com.kayoi.pixelplayerdesktop.presentation.components.TrackDialogInput
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.EnhancedSongListItem
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
+import com.kayoi.pixelplayerdesktop.utils.DirectoryPicker
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -262,8 +265,13 @@ fun PlaylistDetailScreen(
                         onShuffle = { viewModel.shuffleSongs(plainSongs) },
                         onAddSongs = { showAddSongsDialog = true },
                         onRename = { showRenameDialog = true },
+                        onExport = {
+                            DirectoryPicker.saveM3uFile(defaultFileName = "${playlist.name}.m3u") { targetFile ->
+                                viewModel.exportPlaylistToM3u(playlist.id, targetFile)
+                            }
+                        },
                         onDelete = { showDeleteConfirmDialog = true },
-                        isCompact = false
+                        isWide = true
                     )
                 }
             } else {
@@ -343,8 +351,13 @@ fun PlaylistDetailScreen(
                         onShuffle = { viewModel.shuffleSongs(plainSongs) },
                         onAddSongs = { showAddSongsDialog = true },
                         onRename = { showRenameDialog = true },
+                        onExport = {
+                            DirectoryPicker.saveM3uFile(defaultFileName = "${playlist.name}.m3u") { targetFile ->
+                                viewModel.exportPlaylistToM3u(playlist.id, targetFile)
+                            }
+                        },
                         onDelete = { showDeleteConfirmDialog = true },
-                        isCompact = isCompact
+                        isWide = false
                     )
                 }
             }
@@ -575,194 +588,256 @@ private fun PlaylistHeaderActions(
     onShuffle: () -> Unit,
     onAddSongs: () -> Unit,
     onRename: () -> Unit,
+    onExport: () -> Unit = {},
     onDelete: () -> Unit,
-    isCompact: Boolean = false,
+    isWide: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
     var isMenuExpanded by remember { mutableStateOf(false) }
 
-    Row(
-        modifier = modifier.horizontalScroll(rememberScrollState()),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    val playCornerTL = 28.dp
+    val playCornerBL = 28.dp
+    val playCornerTR = 8.dp
+    val playCornerBR = 8.dp
+
+    val shuffleCornerTL = 8.dp
+    val shuffleCornerBL = 8.dp
+    val shuffleCornerTR = 28.dp
+    val shuffleCornerBR = 28.dp
+
+    val heroHeight = if (isWide) 42.dp else 46.dp
+    val chipHeight = 36.dp
+
+    val removeBtnBg by animateColorAsState(
+        targetValue = if (isRemoveModeEnabled) colors.tertiary else colors.surfaceContainerHigh,
+        label = "removeBtnBg"
+    )
+    val removeBtnContent by animateColorAsState(
+        targetValue = if (isRemoveModeEnabled) colors.onTertiary else colors.onSurface,
+        label = "removeBtnContent"
+    )
+    val removeCorner by animateDpAsState(
+        targetValue = if (isRemoveModeEnabled) 18.dp else 12.dp,
+        label = "removeCorner"
+    )
+
+    val reorderBtnBg by animateColorAsState(
+        targetValue = if (isReorderModeEnabled) colors.tertiary else colors.surfaceContainerHigh,
+        label = "reorderBtnBg"
+    )
+    val reorderBtnContent by animateColorAsState(
+        targetValue = if (isReorderModeEnabled) colors.onTertiary else colors.onSurface,
+        label = "reorderBtnContent"
+    )
+    val reorderCorner by animateDpAsState(
+        targetValue = if (isReorderModeEnabled) 18.dp else 12.dp,
+        label = "reorderCorner"
+    )
+
+    Column(
+        modifier = if (isWide) modifier.width(IntrinsicSize.Max) else modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.Start
     ) {
         if (localSongs.isNotEmpty()) {
-            FilledTonalButton(
-                onClick = onPlay,
-                shape = RoundedCornerShape(24.dp),
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = colors.primary,
-                    contentColor = colors.onPrimary
-                ),
-                contentPadding = PaddingValues(horizontal = if (isCompact) 14.dp else 18.dp, vertical = 8.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_rounded_play_arrow),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Play", fontWeight = FontWeight.Bold)
-            }
+                Button(
+                    onClick = onPlay,
+                    shape = RoundedCornerShape(
+                        topStart = playCornerTL,
+                        bottomStart = playCornerBL,
+                        topEnd = playCornerTR,
+                        bottomEnd = playCornerBR
+                    ),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.primary,
+                        contentColor = colors.onPrimary
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp, pressedElevation = 4.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    modifier = Modifier.weight(1f).height(heroHeight)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_rounded_play_arrow),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Play", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                }
 
-            FilledTonalIconButton(
-                onClick = onShuffle,
+                FilledTonalButton(
+                    onClick = onShuffle,
+                    shape = RoundedCornerShape(
+                        topStart = shuffleCornerTL,
+                        bottomStart = shuffleCornerBL,
+                        topEnd = shuffleCornerTR,
+                        bottomEnd = shuffleCornerBR
+                    ),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = colors.primaryContainer,
+                        contentColor = colors.onPrimaryContainer
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 1.dp, pressedElevation = 3.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    modifier = Modifier.weight(1f).height(heroHeight)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_rounded_shuffle),
+                        contentDescription = null,
+                        modifier = Modifier.size(19.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Shuffle", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                }
+            }
+        }
+
+        Row(
+            modifier = if (isWide) Modifier else Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = onAddSongs,
                 shape = CircleShape,
-                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                colors = ButtonDefaults.buttonColors(
                     containerColor = colors.tertiaryContainer,
                     contentColor = colors.onTertiaryContainer
                 ),
-                modifier = Modifier.size(38.dp)
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 1.dp, pressedElevation = 3.dp),
+                contentPadding = PaddingValues(horizontal = 14.dp),
+                modifier = Modifier.height(chipHeight)
             ) {
                 Icon(
-                    painter = painterResource(Res.drawable.ic_rounded_shuffle),
-                    contentDescription = "Shuffle",
-                    modifier = Modifier.size(18.dp)
+                    painter = painterResource(Res.drawable.ic_rounded_add),
+                    contentDescription = null,
+                    modifier = Modifier.size(17.dp)
                 )
-            }
-        }
-
-        FilledTonalButton(
-            onClick = onAddSongs,
-            shape = RoundedCornerShape(24.dp),
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = colors.secondaryContainer,
-                contentColor = colors.onSecondaryContainer
-            ),
-            contentPadding = PaddingValues(horizontal = if (isCompact) 12.dp else 16.dp, vertical = 8.dp)
-        ) {
-            Icon(
-                painter = painterResource(Res.drawable.ic_rounded_add),
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text("Add Songs", fontWeight = FontWeight.SemiBold)
-        }
-
-        if (localSongs.isNotEmpty()) {
-            val removeBtnBg by animateColorAsState(
-                targetValue = if (isRemoveModeEnabled) colors.tertiary else colors.surfaceContainerHigh,
-                label = "removeBtnBg"
-            )
-            val removeBtnContent by animateColorAsState(
-                targetValue = if (isRemoveModeEnabled) colors.onTertiary else colors.onSurface,
-                label = "removeBtnContent"
-            )
-            val removeCornerRadius by animateDpAsState(
-                targetValue = if (isRemoveModeEnabled) 24.dp else 12.dp,
-                label = "removeCornerRadius"
-            )
-
-            FilledTonalButton(
-                onClick = onToggleRemoveMode,
-                shape = RoundedCornerShape(removeCornerRadius),
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = removeBtnBg,
-                    contentColor = removeBtnContent
-                ),
-                contentPadding = PaddingValues(horizontal = if (isCompact) 10.dp else 14.dp, vertical = 8.dp)
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_rounded_remove_circle_outline),
-                    contentDescription = "Toggle Remove Mode",
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Remove", fontWeight = FontWeight.SemiBold)
+                Spacer(modifier = Modifier.width(5.dp))
+                Text("Add Songs", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
             }
 
-            val reorderBtnBg by animateColorAsState(
-                targetValue = if (isReorderModeEnabled) colors.tertiary else colors.surfaceContainerHigh,
-                label = "reorderBtnBg"
-            )
-            val reorderBtnContent by animateColorAsState(
-                targetValue = if (isReorderModeEnabled) colors.onTertiary else colors.onSurface,
-                label = "reorderBtnContent"
-            )
-            val reorderCornerRadius by animateDpAsState(
-                targetValue = if (isReorderModeEnabled) 24.dp else 12.dp,
-                label = "reorderCornerRadius"
-            )
-
-            FilledTonalButton(
-                onClick = onToggleReorderMode,
-                shape = RoundedCornerShape(reorderCornerRadius),
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = reorderBtnBg,
-                    contentColor = reorderBtnContent
-                ),
-                contentPadding = PaddingValues(horizontal = if (isCompact) 10.dp else 14.dp, vertical = 8.dp)
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_rounded_drag_indicator),
-                    contentDescription = "Toggle Reorder Mode",
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Reorder", fontWeight = FontWeight.SemiBold)
-            }
-        }
-
-        Box {
-            FilledTonalIconButton(
-                onClick = { isMenuExpanded = true },
-                shape = CircleShape,
-                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = colors.surfaceContainerHigh,
-                    contentColor = colors.onSurfaceVariant
-                ),
-                modifier = Modifier.size(38.dp)
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_rounded_more_vert),
-                    contentDescription = "Options",
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-
-            MaterialTheme(
-                shapes = MaterialTheme.shapes.copy(extraSmall = RoundedCornerShape(20.dp))
-            ) {
-                DropdownMenu(
-                    expanded = isMenuExpanded,
-                    onDismissRequest = { isMenuExpanded = false },
-                    offset = DpOffset(0.dp, 8.dp),
-                    modifier = Modifier
-                        .width(200.dp)
-                        .background(colors.surfaceContainerHigh, RoundedCornerShape(20.dp))
-                        .border(1.dp, colors.outlineVariant.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
-                        .padding(horizontal = 4.dp, vertical = 4.dp)
+            if (localSongs.isNotEmpty()) {
+                FilledTonalButton(
+                    onClick = onToggleReorderMode,
+                    shape = RoundedCornerShape(reorderCorner),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = reorderBtnBg,
+                        contentColor = reorderBtnContent
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 1.dp, pressedElevation = 3.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp),
+                    modifier = Modifier.height(chipHeight)
                 ) {
-                    DropdownMenuItem(
-                        text = { Text("Rename Playlist", fontWeight = FontWeight.Medium) },
-                        leadingIcon = {
-                            Icon(painterResource(Res.drawable.ic_rounded_edit), contentDescription = null, modifier = Modifier.size(18.dp))
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp)
-                            .clip(RoundedCornerShape(12.dp)),
-                        onClick = {
-                            isMenuExpanded = false
-                            onRename()
-                        }
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_rounded_drag_indicator),
+                        contentDescription = "Toggle Reorder Mode",
+                        modifier = Modifier.size(16.dp)
                     )
-                    DropdownMenuItem(
-                        text = { Text("Delete Playlist", fontWeight = FontWeight.Medium, color = colors.error) },
-                        leadingIcon = {
-                            Icon(painterResource(Res.drawable.ic_rounded_delete), contentDescription = null, tint = colors.error, modifier = Modifier.size(18.dp))
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp)
-                            .clip(RoundedCornerShape(12.dp)),
-                        onClick = {
-                            isMenuExpanded = false
-                            onDelete()
-                        }
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text("Reorder", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                }
+
+                FilledTonalButton(
+                    onClick = onToggleRemoveMode,
+                    shape = RoundedCornerShape(removeCorner),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = removeBtnBg,
+                        contentColor = removeBtnContent
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 1.dp, pressedElevation = 3.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp),
+                    modifier = Modifier.height(chipHeight)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_rounded_remove_circle_outline),
+                        contentDescription = "Toggle Remove Mode",
+                        modifier = Modifier.size(16.dp)
                     )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text("Remove", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                }
+            }
+
+            Box {
+                FilledTonalIconButton(
+                    onClick = { isMenuExpanded = true },
+                    shape = CircleShape,
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = colors.surfaceContainerHigh,
+                        contentColor = colors.onSurfaceVariant
+                    ),
+                    modifier = Modifier.size(chipHeight)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_rounded_more_vert),
+                        contentDescription = "Options",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                MaterialTheme(
+                    shapes = MaterialTheme.shapes.copy(extraSmall = RoundedCornerShape(20.dp))
+                ) {
+                    DropdownMenu(
+                        expanded = isMenuExpanded,
+                        onDismissRequest = { isMenuExpanded = false },
+                        offset = DpOffset(0.dp, 8.dp),
+                        modifier = Modifier
+                            .width(200.dp)
+                            .background(colors.surfaceContainerHigh, RoundedCornerShape(20.dp))
+                            .border(1.dp, colors.outlineVariant.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 4.dp, vertical = 4.dp)
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Rename Playlist", fontWeight = FontWeight.Medium) },
+                            leadingIcon = {
+                                Icon(painterResource(Res.drawable.ic_rounded_edit), contentDescription = null, modifier = Modifier.size(18.dp))
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            onClick = {
+                                isMenuExpanded = false
+                                onRename()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Export as M3U", fontWeight = FontWeight.Medium) },
+                            leadingIcon = {
+                                Icon(painterResource(Res.drawable.ic_outlined_file_upload), contentDescription = null, modifier = Modifier.size(18.dp))
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            onClick = {
+                                isMenuExpanded = false
+                                onExport()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Delete Playlist", fontWeight = FontWeight.Medium, color = colors.error) },
+                            leadingIcon = {
+                                Icon(painterResource(Res.drawable.ic_rounded_delete), contentDescription = null, tint = colors.error, modifier = Modifier.size(18.dp))
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            onClick = {
+                                isMenuExpanded = false
+                                onDelete()
+                            }
+                        )
+                    }
                 }
             }
         }

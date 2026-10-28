@@ -1,12 +1,12 @@
 package com.kayoi.pixelplayerdesktop.domain.repository
 
+import java.io.File
+import kotlinx.coroutines.flow.Flow
 import com.kayoi.pixelplayerdesktop.data.metadata.AudioMetadataDetails
 import com.kayoi.pixelplayerdesktop.data.metadata.BatchMetadataResult
 import com.kayoi.pixelplayerdesktop.data.metadata.BatchSongMetadataUpdate
 import com.kayoi.pixelplayerdesktop.data.metadata.EditableSongMetadata
 import com.kayoi.pixelplayerdesktop.data.metadata.MetadataEditResult
-import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineReleaseMetadata
-import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineTrackMetadata
 import com.kayoi.pixelplayerdesktop.data.model.Album
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.Genre
@@ -16,10 +16,11 @@ import com.kayoi.pixelplayerdesktop.data.model.SearchFilterType
 import com.kayoi.pixelplayerdesktop.data.model.SearchResultItem
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineReleaseMetadata
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineTrackMetadata
+import com.kayoi.pixelplayerdesktop.data.playlist.M3uParseResult
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_ARTIST_DELIMITERS
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_WORD_DELIMITERS
-import kotlinx.coroutines.flow.Flow
-import java.io.File
 
 interface MusicRepository {
     fun getAllSongsFlow(sortOption: SortOption = SortOption.SongTitleAZ, minDurationMs: Long = 0L): Flow<List<Song>>
@@ -53,6 +54,8 @@ interface MusicRepository {
     suspend fun addSongsToPlaylist(playlistId: String, songIds: List<String>)
     suspend fun removeSongFromPlaylist(playlistId: String, songId: String)
     suspend fun reorderPlaylistSongs(playlistId: String, songIds: List<String>)
+    suspend fun importPlaylistFromM3u(file: File): Result<Pair<Playlist, M3uParseResult>>
+    suspend fun exportPlaylistToM3u(playlistId: String, targetFile: File): Result<Unit>
 
     fun getFavoriteSongsFlow(): Flow<List<Song>>
     suspend fun isFavorite(songId: String): Boolean

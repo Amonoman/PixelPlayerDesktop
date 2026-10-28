@@ -2,6 +2,7 @@ package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
 import org.jetbrains.compose.resources.DrawableResource
 import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_playlist_add
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_sort
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_view_list
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_add
@@ -21,6 +22,7 @@ import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_person
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_schedule
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_sort_by_alpha
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_upload_file
 import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -110,6 +112,9 @@ fun LibraryActionRow(
     showCreateButton: Boolean = false,
     createButtonLabel: String = "New",
     onCreateClick: () -> Unit = {},
+    showImportButton: Boolean = false,
+    importButtonLabel: String = "Import M3U",
+    onImportClick: () -> Unit = {},
     customLeadingContent: (@Composable () -> Unit)? = null,
     onSortOptionSelect: (SortOption) -> Unit,
     onShuffleClick: () -> Unit = {}
@@ -177,33 +182,80 @@ fun LibraryActionRow(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    if (showCreateButton) {
-                        FilledTonalButton(
-                            onClick = onCreateClick,
-                            shape = RoundedCornerShape(outerCorner),
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = colors.primary,
-                                contentColor = colors.onPrimary
-                            ),
-                            elevation = ButtonDefaults.buttonElevation(
-                                defaultElevation = 2.dp,
-                                pressedElevation = 4.dp
-                            ),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            modifier = Modifier.height(genHeight)
+                    if (showCreateButton || showImportButton) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_rounded_add),
-                                contentDescription = createButtonLabel,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = createButtonLabel,
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
-                            )
+                            if (showCreateButton) {
+                                FilledTonalButton(
+                                    onClick = onCreateClick,
+                                    shape = RoundedCornerShape(
+                                        topStart = outerCorner,
+                                        bottomStart = outerCorner,
+                                        topEnd = if (showImportButton) innerCorner else outerCorner,
+                                        bottomEnd = if (showImportButton) innerCorner else outerCorner
+                                    ),
+                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                        containerColor = colors.primary,
+                                        contentColor = colors.onPrimary
+                                    ),
+                                    elevation = ButtonDefaults.buttonElevation(
+                                        defaultElevation = 4.dp,
+                                        pressedElevation = 6.dp
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                                    modifier = Modifier.height(genHeight)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_automirrored_rounded_playlist_add),
+                                        contentDescription = createButtonLabel,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = createButtonLabel,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            }
+
+                            if (showImportButton) {
+                                FilledTonalButton(
+                                    onClick = onImportClick,
+                                    shape = RoundedCornerShape(
+                                        topStart = if (showCreateButton) innerCorner else outerCorner,
+                                        bottomStart = if (showCreateButton) innerCorner else outerCorner,
+                                        topEnd = outerCorner,
+                                        bottomEnd = outerCorner
+                                    ),
+                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                        containerColor = colors.secondaryContainer,
+                                        contentColor = colors.onSecondaryContainer
+                                    ),
+                                    elevation = ButtonDefaults.buttonElevation(
+                                        defaultElevation = 4.dp,
+                                        pressedElevation = 6.dp
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                                    modifier = Modifier.height(genHeight)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_rounded_upload_file),
+                                        contentDescription = importButtonLabel,
+                                        modifier = Modifier.size(19.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = importButtonLabel,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            }
                         }
                     }
 

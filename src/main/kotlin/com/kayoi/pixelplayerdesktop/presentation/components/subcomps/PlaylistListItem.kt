@@ -1,6 +1,7 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
 import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_file_upload
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_edit
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_more_vert
@@ -67,7 +68,8 @@ fun PlaylistListItem(
     onClick: () -> Unit,
     onPlayClick: () -> Unit = {},
     onRenameClick: () -> Unit = {},
-    onDeleteClick: () -> Unit = {}
+    onDeleteClick: () -> Unit = {},
+    onExportClick: () -> Unit = {}
 ) {
     val colors = MaterialTheme.colorScheme
     val interactionSource = remember { MutableInteractionSource() }
@@ -197,6 +199,20 @@ fun PlaylistListItem(
                             onClick = {
                                 isMenuExpanded = false
                                 onRenameClick()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Export as M3U", fontWeight = FontWeight.Medium) },
+                            leadingIcon = {
+                                Icon(painterResource(Res.drawable.ic_outlined_file_upload), contentDescription = null, modifier = Modifier.size(18.dp))
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            onClick = {
+                                isMenuExpanded = false
+                                onExportClick()
                             }
                         )
                         DropdownMenuItem(

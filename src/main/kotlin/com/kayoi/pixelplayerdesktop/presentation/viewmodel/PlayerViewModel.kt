@@ -15,6 +15,7 @@ import com.kayoi.pixelplayerdesktop.data.model.Playlist
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
 import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
+import com.kayoi.pixelplayerdesktop.data.playlist.M3uParseResult
 import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
 import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
 import com.kayoi.pixelplayerdesktop.platform.mediasession.MediaSessionBridge
@@ -280,6 +281,10 @@ class PlayerViewModel(
     fun addSongsToPlaylist(playlistId: String, songIds: List<String>) = libraryStateHolder.addSongsToPlaylist(playlistId, songIds)
     fun removeSongFromPlaylist(playlistId: String, songId: String) = libraryStateHolder.removeSongFromPlaylist(playlistId, songId)
     fun reorderPlaylistSongs(playlistId: String, songIds: List<String>) = libraryStateHolder.reorderPlaylistSongs(playlistId, songIds)
+    fun importPlaylistFromM3u(file: File, onComplete: ((Result<Pair<Playlist, M3uParseResult>>) -> Unit)? = null) =
+        libraryStateHolder.importPlaylistFromM3u(file, onComplete)
+    fun exportPlaylistToM3u(playlistId: String, targetFile: File, onComplete: ((Result<Unit>) -> Unit)? = null) =
+        libraryStateHolder.exportPlaylistToM3u(playlistId, targetFile, onComplete)
     fun toggleFavorite(song: Song) = playbackStateHolder.toggleFavorite(song)
 
     val isDarkMode = themeStateHolder.isDarkMode
