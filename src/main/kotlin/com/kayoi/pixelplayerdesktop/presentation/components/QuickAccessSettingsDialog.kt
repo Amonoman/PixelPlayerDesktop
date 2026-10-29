@@ -192,7 +192,7 @@ fun QuickAccessSettingsDialog(
                                     val itemIcon = when (item.type) {
                                         QuickAccessType.SMART_PRESET -> when (item.targetKey) {
                                             QuickAccessItem.PRESET_RECENTLY_ADDED -> Res.drawable.ic_rounded_auto_awesome
-                                            QuickAccessItem.PRESET_MOST_PLAYED -> Res.drawable.ic_automirrored_rounded_show_chart
+                                            QuickAccessItem.PRESET_MOST_LISTENED -> Res.drawable.ic_automirrored_rounded_show_chart
                                             QuickAccessItem.PRESET_RECENTLY_PLAYED -> Res.drawable.ic_rounded_history
                                             else -> Res.drawable.ic_rounded_auto_awesome
                                         }

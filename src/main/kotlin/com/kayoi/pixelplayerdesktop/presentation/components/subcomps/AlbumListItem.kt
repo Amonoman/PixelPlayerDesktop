@@ -45,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,6 +64,7 @@ fun AlbumListItem(
     album: Album,
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier,
+    customShape: Shape? = null,
     onClick: () -> Unit,
     onPlay: (() -> Unit)? = null,
     onPlayNext: (() -> Unit)? = null,
@@ -118,8 +120,7 @@ fun AlbumListItem(
         animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
         label = "albumListOnContainerColor"
     )
-    val cardCornerRadius = 18.dp
-    val cardShape = RoundedCornerShape(cardCornerRadius)
+    val cardShape = customShape ?: RoundedCornerShape(20.dp)
 
     Card(
         modifier = modifier

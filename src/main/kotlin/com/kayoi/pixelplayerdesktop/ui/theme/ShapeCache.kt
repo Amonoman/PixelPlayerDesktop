@@ -30,6 +30,64 @@ object ShapeCache {
 
     /** M3 Expressive 9-sided cookie — artist/people avatars and placeholders */
     val ExpressiveAvatar: Shape = CookieShape(lobes = 9, innerRatio = 0.86f)
+
+    object ConnectedGroup {
+        val Single = RoundedCornerShape(20.dp)
+        val Top = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
+        val Middle = RoundedCornerShape(8.dp)
+        val Bottom = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 20.dp, bottomEnd = 20.dp)
+
+        fun getShape(index: Int, totalItems: Int): Shape = when {
+            totalItems <= 1 -> Single
+            index == 0 -> Top
+            index == totalItems - 1 -> Bottom
+            else -> Middle
+        }
+    }
+
+    object ConnectedGrid {
+        val Single = RoundedCornerShape(20.dp)
+        val Middle = RoundedCornerShape(8.dp)
+
+        val TopLeft = RoundedCornerShape(topStart = 20.dp, topEnd = 8.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
+        val TopRight = RoundedCornerShape(topStart = 8.dp, topEnd = 20.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
+        val BottomLeft = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 20.dp, bottomEnd = 8.dp)
+        val BottomRight = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 8.dp, bottomEnd = 20.dp)
+
+        val RowSingleLeft = RoundedCornerShape(topStart = 20.dp, topEnd = 8.dp, bottomStart = 20.dp, bottomEnd = 8.dp)
+        val RowSingleRight = RoundedCornerShape(topStart = 8.dp, topEnd = 20.dp, bottomStart = 8.dp, bottomEnd = 20.dp)
+
+        fun getShape(index: Int, totalItems: Int, columnCount: Int): Shape {
+            if (totalItems <= 1) return Single
+            if (columnCount <= 1) return ConnectedGroup.getShape(index, totalItems)
+
+            val totalRows = (totalItems + columnCount - 1) / columnCount
+            val row = index / columnCount
+            val col = index % columnCount
+
+            if (totalRows == 1) {
+                return when (col) {
+                    0 -> RowSingleLeft
+                    totalItems - 1 -> RowSingleRight
+                    else -> Middle
+                }
+            }
+
+            val isTopLeft = index == 0
+            val isTopRight = row == 0 && col == columnCount - 1
+            val isBottomLeft = col == 0 && (row == totalRows - 1 || index + columnCount >= totalItems)
+            val isBottomRight = index == totalItems - 1
+
+            return when {
+                isBottomLeft && isBottomRight -> ConnectedGroup.Bottom
+                isTopLeft -> TopLeft
+                isTopRight -> TopRight
+                isBottomLeft -> BottomLeft
+                isBottomRight -> BottomRight
+                else -> Middle
+            }
+        }
+    }
 }
 
 private class CookieShape(

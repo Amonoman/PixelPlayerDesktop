@@ -39,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -49,6 +50,7 @@ import com.kayoi.pixelplayerdesktop.presentation.components.PlaylistArtCollage
 fun FolderPlaylistItem(
     folder: MusicFolder,
     modifier: Modifier = Modifier,
+    customShape: Shape? = null,
     onClick: () -> Unit,
     onPlayClick: (() -> Unit)? = null
 ) {
@@ -61,7 +63,7 @@ fun FolderPlaylistItem(
         label = "folderPlaylistItemContainer"
     )
 
-    val cardShape = RoundedCornerShape(18.dp)
+    val cardShape = customShape ?: RoundedCornerShape(20.dp)
     val previewSongs = remember(folder) { folder.collectAllSongs().take(9) }
 
     Card(
@@ -77,13 +79,13 @@ fun FolderPlaylistItem(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+                .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
                     .size(58.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(10.dp))
             ) {
                 PlaylistArtCollage(
                     songs = previewSongs,

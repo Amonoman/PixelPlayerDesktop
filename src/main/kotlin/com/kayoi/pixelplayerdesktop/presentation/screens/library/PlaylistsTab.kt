@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -51,6 +51,7 @@ import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryActi
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.PlaylistListItem
 import com.kayoi.pixelplayerdesktop.presentation.screens.PlaylistDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
+import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 import com.kayoi.pixelplayerdesktop.utils.DirectoryPicker
 
 @Composable
@@ -223,13 +224,13 @@ fun PlaylistsTab(
                         state = playlistsListState,
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(start = 24.dp, end = 28.dp, top = 4.dp, bottom = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        items(
+                        itemsIndexed(
                             items = filteredPlaylists,
-                            key = { it.id },
-                            contentType = { "playlist_list_item" }
-                        ) { pl ->
+                            key = { _, it -> it.id },
+                            contentType = { _, _ -> "playlist_list_item" }
+                        ) { index, pl ->
                             val plSongs = remember(pl.songIds, songs) {
                                 songs.filter { pl.songIds.contains(it.id) }
                             }
@@ -240,6 +241,7 @@ fun PlaylistsTab(
                             PlaylistListItem(
                                 playlist = pl,
                                 playlistSongs = plSongs,
+                                customShape = ShapeCache.ConnectedGroup.getShape(index, filteredPlaylists.size),
                                 onClick = { onSelectPlaylist(pl.id) },
                                 onPlayClick = {
                                     if (plSongs.isNotEmpty()) {

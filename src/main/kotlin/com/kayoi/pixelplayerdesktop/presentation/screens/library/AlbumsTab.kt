@@ -1,22 +1,19 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.library
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed as gridItemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -26,7 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 import com.kayoi.pixelplayerdesktop.data.model.Album
@@ -44,6 +40,7 @@ import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryEmpt
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryTabKind
 import com.kayoi.pixelplayerdesktop.presentation.screens.AlbumDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
+import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 
 @Composable
 fun AlbumsTab(
@@ -148,7 +145,14 @@ fun AlbumsTab(
                 storageFilter = storageFilter
             )
         } else {
-            Box(modifier = Modifier.fillMaxSize()) {
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val gridAvailableWidth = maxWidth - 24.dp - 28.dp
+                val gridColumnCount = remember(gridAvailableWidth) {
+                    val minSize = 150.dp
+                    val spacing = 6.dp
+                    ((gridAvailableWidth + spacing) / (minSize + spacing)).toInt().coerceAtLeast(1)
+                }
+
                 val songsForAlbum: (Album) -> List<Song> = remember(songs) {
                     { album ->
                         songs.filter {
@@ -167,13 +171,13 @@ fun AlbumsTab(
                         state = albumsListState,
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(start = 24.dp, end = 28.dp, top = 4.dp, bottom = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        items(
+                        itemsIndexed(
                             items = filteredAlbums,
-                            key = { it.title + it.artist },
-                            contentType = { "album_list_item" }
-                        ) { album ->
+                            key = { _, it -> it.title + it.artist },
+                            contentType = { _, _ -> "album_list_item" }
+                        ) { index, album ->
                             val albumSongs = remember(album, songs) { songsForAlbum(album) }
                             val artist = remember(album.artist, allArtists) {
                                 allArtists.find { it.name.equals(album.artist, ignoreCase = true) }
@@ -185,6 +189,7 @@ fun AlbumsTab(
                             AlbumListItem(
                                 album = album,
                                 isDarkTheme = isDarkTheme,
+                                customShape = ShapeCache.ConnectedGroup.getShape(index, filteredAlbums.size),
                                 onClick = { onSelectAlbum(album) },
                                 onPlay = { viewModel.playSongs(albumSongs, 0) },
                                 onPlayNext = { viewModel.playSongsNext(albumSongs) },
@@ -209,15 +214,15 @@ fun AlbumsTab(
                         state = albumsGridState,
                         columns = GridCells.Adaptive(minSize = 150.dp),
                         contentPadding = PaddingValues(start = 24.dp, end = 28.dp, top = 4.dp, bottom = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        items(
+                        gridItemsIndexed(
                             items = filteredAlbums,
-                            key = { it.title + it.artist },
-                            contentType = { "album_grid_item" }
-                        ) { album ->
+                            key = { _, it -> it.title + it.artist },
+                            contentType = { _, _ -> "album_grid_item" }
+                        ) { index, album ->
                             val albumSongs = remember(album, songs) { songsForAlbum(album) }
                             val artist = remember(album.artist, allArtists) {
                                 allArtists.find { it.name.equals(album.artist, ignoreCase = true) }
@@ -229,6 +234,7 @@ fun AlbumsTab(
                             AlbumGridItem(
                                 album = album,
                                 isDarkTheme = isDarkTheme,
+                                customShape = ShapeCache.ConnectedGrid.getShape(index, filteredAlbums.size, gridColumnCount),
                                 onClick = { onSelectAlbum(album) },
                                 onPlay = { viewModel.playSongs(albumSongs, 0) },
                                 onPlayNext = { viewModel.playSongsNext(albumSongs) },

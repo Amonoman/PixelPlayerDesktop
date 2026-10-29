@@ -44,6 +44,7 @@ import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.EnhancedSongListItem
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
+import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 
 @Composable
 fun RecentlyAddedScreen(
@@ -81,7 +82,7 @@ fun RecentlyAddedScreen(
             state = lazyListState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             item(key = "recently_added_header") {
                 Column(
@@ -124,6 +125,7 @@ fun RecentlyAddedScreen(
                     EnhancedSongListItem(
                         modifier = Modifier.padding(horizontal = horizontalPadding),
                         song = song,
+                        customShape = ShapeCache.ConnectedGroup.getShape(index, filteredSongs.size),
                         isCurrentSong = isCurrentPlaying,
                         isPlaying = isCurrentPlaying && isPlaying,
                         showAlbumArt = true,

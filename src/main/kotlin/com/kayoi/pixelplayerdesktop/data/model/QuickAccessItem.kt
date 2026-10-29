@@ -24,10 +24,10 @@ data class QuickAccessItem(
     companion object {
         const val MAX_PINNED_CUSTOM_ITEMS = 10
         const val MAX_RECENTLY_ADDED_SONGS = 50
-        const val MAX_MOST_PLAYED_SONGS = 50
+        const val MAX_MOST_LISTENED_SONGS = 50
 
         const val PRESET_RECENTLY_ADDED = "recently_added"
-        const val PRESET_MOST_PLAYED = "most_played"
+        const val PRESET_MOST_LISTENED = "most_listened"
         const val PRESET_RECENTLY_PLAYED = "recently_played"
 
         val DEFAULT_ITEMS: List<QuickAccessItem> = listOf(
@@ -40,10 +40,10 @@ data class QuickAccessItem(
                 order = 0
             ),
             QuickAccessItem(
-                id = PRESET_MOST_PLAYED,
+                id = PRESET_MOST_LISTENED,
                 title = "Most Listened",
                 type = QuickAccessType.SMART_PRESET,
-                targetKey = PRESET_MOST_PLAYED,
+                targetKey = PRESET_MOST_LISTENED,
                 isEnabled = true,
                 order = 1
             ),

@@ -368,9 +368,9 @@ fun ArtistDetailScreen(
                                 contentType = "album_header"
                             ) {
                                 val headerShape = if (isExpanded && hasSongs) {
-                                    RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 4.dp, bottomEnd = 4.dp)
+                                    RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
                                 } else {
-                                    RoundedCornerShape(24.dp)
+                                    RoundedCornerShape(20.dp)
                                 }
 
                                 Box(
@@ -405,25 +405,10 @@ fun ArtistDetailScreen(
                                     val effectiveIndex = if (globalIndex != -1) globalIndex else 0
                                     val isLastSong = songIndex == section.songs.lastIndex
 
-                                    val songShape = when {
-                                        section.songs.size == 1 -> RoundedCornerShape(16.dp)
-                                        songIndex == 0 -> RoundedCornerShape(
-                                            topStart = 16.dp,
-                                            topEnd = 16.dp,
-                                            bottomStart = 4.dp,
-                                            bottomEnd = 4.dp
-                                        )
-                                        isLastSong -> RoundedCornerShape(
-                                            topStart = 4.dp,
-                                            topEnd = 4.dp,
-                                            bottomStart = 16.dp,
-                                            bottomEnd = 16.dp
-                                        )
-                                        else -> RoundedCornerShape(4.dp)
-                                    }
+                                    val songShape = ShapeCache.ConnectedGroup.getShape(songIndex, section.songs.size)
 
                                     val cardContainerShape = if (isLastSong) {
-                                        RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
+                                        RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
                                     } else {
                                         RoundedCornerShape(0.dp)
                                     }
@@ -436,7 +421,7 @@ fun ArtistDetailScreen(
                                             .padding(
                                                 start = 8.dp,
                                                 end = 8.dp,
-                                                bottom = if (isLastSong) 8.dp else 2.dp
+                                                bottom = if (isLastSong) 8.dp else 4.dp
                                             )
                                     ) {
                                         EnhancedSongListItem(
