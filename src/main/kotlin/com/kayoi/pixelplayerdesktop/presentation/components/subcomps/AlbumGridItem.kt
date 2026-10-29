@@ -58,7 +58,9 @@ fun AlbumGridItem(
     onPlayNext: (() -> Unit)? = null,
     onAddToQueue: (() -> Unit)? = null,
     onAddToPlaylist: (() -> Unit)? = null,
-    onNavigateToArtist: (() -> Unit)? = null
+    onNavigateToArtist: (() -> Unit)? = null,
+    isPinned: Boolean = false,
+    onTogglePin: (() -> Unit)? = null
 ) {
     val currentMaterialColorScheme = MaterialTheme.colorScheme
     var isMenuExpanded by remember { mutableStateOf(false) }
@@ -204,7 +206,9 @@ fun AlbumGridItem(
                     onPlayNext = onPlayNext,
                     onAddToQueue = onAddToQueue,
                     onAddToPlaylist = onAddToPlaylist,
-                    onNavigateToArtist = onNavigateToArtist
+                    onNavigateToArtist = onNavigateToArtist,
+                    isPinned = isPinned,
+                    onTogglePin = onTogglePin
                 )
             }
         }

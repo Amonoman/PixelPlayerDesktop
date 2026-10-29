@@ -1,10 +1,5 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.library
 
-import com.kayoi.pixelplayerdesktop.generated.resources.Res
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_playlist_play
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_add
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_upload_file
-import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -38,9 +33,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.painterResource
+
 import com.kayoi.pixelplayerdesktop.data.model.Playlist
+import com.kayoi.pixelplayerdesktop.data.model.QuickAccessType
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_playlist_play
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_add
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_upload_file
 import com.kayoi.pixelplayerdesktop.presentation.components.CreatePlaylistDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveScrollBar
 import com.kayoi.pixelplayerdesktop.presentation.components.TrackDialogInput
@@ -76,6 +78,10 @@ fun PlaylistsTab(
     } else {
         val colors = MaterialTheme.colorScheme
         val currentPlaylistSortOption by viewModel.libraryStateHolder.playlistSortOption.collectAsState()
+        val quickAccessItems by viewModel.quickAccessItems.collectAsState()
+        val pinnedPlaylistIds = remember(quickAccessItems) {
+            quickAccessItems.filter { it.type == QuickAccessType.PLAYLIST }.map { it.targetKey }.toSet()
+        }
         val playlistsListState = rememberLazyListState()
         var lastHandledPlaylistSortKey by remember { mutableStateOf(currentPlaylistSortOption.storageKey) }
         var pendingPlaylistSortScrollReset by remember { mutableStateOf(false) }
@@ -227,6 +233,10 @@ fun PlaylistsTab(
                             val plSongs = remember(pl.songIds, songs) {
                                 songs.filter { pl.songIds.contains(it.id) }
                             }
+                            val isPinned = pl.id in pinnedPlaylistIds
+                            val onTogglePin = remember(isPinned, pl) {
+                                { viewModel.togglePin("playlist_${pl.id}", pl.name, QuickAccessType.PLAYLIST, pl.id, isPinned) }
+                            }
                             PlaylistListItem(
                                 playlist = pl,
                                 playlistSongs = plSongs,
@@ -242,7 +252,9 @@ fun PlaylistsTab(
                                     DirectoryPicker.saveM3uFile(defaultFileName = "${pl.name}.m3u") { targetFile ->
                                         viewModel.exportPlaylistToM3u(pl.id, targetFile)
                                     }
-                                }
+                                },
+                                isPinned = isPinned,
+                                onTogglePin = onTogglePin
                             )
                         }
                     }

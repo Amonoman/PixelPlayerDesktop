@@ -1,7 +1,9 @@
 package com.kayoi.pixelplayerdesktop.data.preferences
 
-import com.kayoi.pixelplayerdesktop.data.model.EqualizerPreset
 import kotlinx.serialization.Serializable
+
+import com.kayoi.pixelplayerdesktop.data.model.EqualizerPreset
+import com.kayoi.pixelplayerdesktop.data.model.QuickAccessItem
 
 @Serializable
 data class UserSettings(
@@ -69,5 +71,6 @@ data class UserSettings(
     val jellyfinUserId: String? = null,
     val jellyfinEnabled: Boolean = false,
     val checkUpdatesOnStartup: Boolean = true,
-    val lastDismissedUpdateVersion: String? = null
+    val lastDismissedUpdateVersion: String? = null,
+    val quickAccessItems: List<QuickAccessItem> = QuickAccessItem.DEFAULT_ITEMS
 )

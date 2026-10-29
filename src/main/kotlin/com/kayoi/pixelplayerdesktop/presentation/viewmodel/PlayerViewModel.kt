@@ -1,31 +1,35 @@
 package com.kayoi.pixelplayerdesktop.presentation.viewmodel
 
-import com.kayoi.pixelplayerdesktop.data.metadata.AudioMetadataDetails
-import com.kayoi.pixelplayerdesktop.data.metadata.BatchMetadataResult
-import com.kayoi.pixelplayerdesktop.data.metadata.BatchSongMetadataUpdate
-import com.kayoi.pixelplayerdesktop.data.metadata.EditableSongMetadata
-import com.kayoi.pixelplayerdesktop.data.metadata.MetadataEditResult
-import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineReleaseMetadata
-import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineTrackMetadata
-import com.kayoi.pixelplayerdesktop.data.model.Album
-import com.kayoi.pixelplayerdesktop.data.model.Artist
-import com.kayoi.pixelplayerdesktop.data.model.EqualizerPreset
-import com.kayoi.pixelplayerdesktop.data.model.Lyrics
-import com.kayoi.pixelplayerdesktop.data.model.Playlist
-import com.kayoi.pixelplayerdesktop.data.model.Song
-import com.kayoi.pixelplayerdesktop.data.model.SortOption
-import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
-import com.kayoi.pixelplayerdesktop.data.playlist.M3uParseResult
-import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
-import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
-import com.kayoi.pixelplayerdesktop.platform.mediasession.MediaSessionBridge
 import java.io.File
+
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+
+import com.kayoi.pixelplayerdesktop.data.metadata.AudioMetadataDetails
+import com.kayoi.pixelplayerdesktop.data.metadata.BatchMetadataResult
+import com.kayoi.pixelplayerdesktop.data.metadata.BatchSongMetadataUpdate
+import com.kayoi.pixelplayerdesktop.data.metadata.EditableSongMetadata
+import com.kayoi.pixelplayerdesktop.data.metadata.MetadataEditResult
+import com.kayoi.pixelplayerdesktop.data.model.Album
+import com.kayoi.pixelplayerdesktop.data.model.Artist
+import com.kayoi.pixelplayerdesktop.data.model.EqualizerPreset
+import com.kayoi.pixelplayerdesktop.data.model.Lyrics
+import com.kayoi.pixelplayerdesktop.data.model.Playlist
+import com.kayoi.pixelplayerdesktop.data.model.QuickAccessItem
+import com.kayoi.pixelplayerdesktop.data.model.QuickAccessType
+import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.data.model.SortOption
+import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineReleaseMetadata
+import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineTrackMetadata
+import com.kayoi.pixelplayerdesktop.data.playlist.M3uParseResult
+import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
+import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
+import com.kayoi.pixelplayerdesktop.platform.mediasession.MediaSessionBridge
 
 class PlayerViewModel(
     val playbackStateHolder: PlaybackStateHolder,
@@ -286,6 +290,19 @@ class PlayerViewModel(
     fun exportPlaylistToM3u(playlistId: String, targetFile: File, onComplete: ((Result<Unit>) -> Unit)? = null) =
         libraryStateHolder.exportPlaylistToM3u(playlistId, targetFile, onComplete)
     fun toggleFavorite(song: Song) = playbackStateHolder.toggleFavorite(song)
+    val quickAccessItems = libraryStateHolder.quickAccessItems
+    fun pinToQuickAccess(item: QuickAccessItem, onResult: ((Boolean) -> Unit)? = null) =
+        libraryStateHolder.pinToQuickAccess(item, onResult)
+    fun unpinFromQuickAccess(id: String) = libraryStateHolder.unpinFromQuickAccess(id)
+    fun setQuickAccessItems(items: List<QuickAccessItem>) = libraryStateHolder.setQuickAccessItems(items)
+    fun togglePin(
+        id: String,
+        title: String,
+        type: QuickAccessType,
+        targetKey: String,
+        isPinned: Boolean,
+        onResult: ((Boolean) -> Unit)? = null
+    ) = libraryStateHolder.togglePin(id, title, type, targetKey, isPinned, onResult)
 
     val isDarkMode = themeStateHolder.isDarkMode
     val isDynamicColorEnabled = themeStateHolder.isDynamicColorEnabled

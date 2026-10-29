@@ -1,12 +1,7 @@
 package com.kayoi.pixelplayerdesktop.data.repository
 
-import com.kayoi.pixelplayerdesktop.data.model.EqualizerPreset
-import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtColorAccuracy
-import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
-import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
-import com.kayoi.pixelplayerdesktop.data.preferences.UserSettings
-import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
-import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
+import java.io.File
+
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +11,16 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import java.io.File
+
+import com.kayoi.pixelplayerdesktop.data.model.EqualizerPreset
+import com.kayoi.pixelplayerdesktop.data.model.QuickAccessItem
+import com.kayoi.pixelplayerdesktop.data.model.QuickAccessType
+import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtColorAccuracy
+import com.kayoi.pixelplayerdesktop.data.preferences.AlbumArtPaletteStyle
+import com.kayoi.pixelplayerdesktop.data.preferences.LyricsSourcePreference
+import com.kayoi.pixelplayerdesktop.data.preferences.UserSettings
+import com.kayoi.pixelplayerdesktop.domain.repository.SettingsRepository
+import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
 
 class SettingsRepositoryImpl(
     private val settingsFile: File = DesktopPathProvider.settingsFile,
@@ -360,6 +364,53 @@ class SettingsRepositoryImpl(
 
     override suspend fun setLastDismissedUpdateVersion(version: String?) {
         updateSettings { it.copy(lastDismissedUpdateVersion = version) }
+    }
+
+    override suspend fun setQuickAccessItems(items: List<QuickAccessItem>) {
+        updateSettings { it.copy(quickAccessItems = items) }
+    }
+
+    override suspend fun pinToQuickAccess(item: QuickAccessItem): Boolean {
+        var success = false
+        updateSettings { current ->
+            if (current.quickAccessItems.any { it.id == item.id }) {
+                success = true
+                current.copy(
+                    quickAccessItems = current.quickAccessItems.map {
+                        if (it.id == item.id) item.copy(order = it.order, isEnabled = true) else it
+                    }
+                )
+            } else {
+                val customCount = current.quickAccessItems.count { it.type != QuickAccessType.SMART_PRESET }
+                if (item.type != QuickAccessType.SMART_PRESET && customCount >= QuickAccessItem.MAX_PINNED_CUSTOM_ITEMS) {
+                    success = false
+                    current
+                } else {
+                    success = true
+                    val nextOrder = (current.quickAccessItems.maxOfOrNull { it.order } ?: -1) + 1
+                    current.copy(quickAccessItems = current.quickAccessItems + item.copy(order = nextOrder, isEnabled = true))
+                }
+            }
+        }
+        return success
+    }
+
+    override suspend fun unpinFromQuickAccess(id: String) {
+        updateSettings { current ->
+            current.copy(
+                quickAccessItems = current.quickAccessItems.mapNotNull { itm ->
+                    if (itm.id == id) {
+                        if (itm.type == QuickAccessType.SMART_PRESET) {
+                            itm.copy(isEnabled = false)
+                        } else {
+                            null
+                        }
+                    } else {
+                        itm
+                    }
+                }
+            )
+        }
     }
 
     private fun loadSettingsFromDisk(): UserSettings {

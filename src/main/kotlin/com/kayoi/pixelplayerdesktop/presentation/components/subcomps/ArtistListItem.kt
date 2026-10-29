@@ -59,7 +59,9 @@ fun ArtistListItem(
     onPlay: (() -> Unit)? = null,
     onPlayNext: (() -> Unit)? = null,
     onAddToQueue: (() -> Unit)? = null,
-    onAddToPlaylist: (() -> Unit)? = null
+    onAddToPlaylist: (() -> Unit)? = null,
+    isPinned: Boolean = false,
+    onTogglePin: (() -> Unit)? = null
 ) {
     val colors = MaterialTheme.colorScheme
     val cardShape = RoundedCornerShape(18.dp)
@@ -183,7 +185,9 @@ fun ArtistListItem(
                     onPlay = onPlay,
                     onPlayNext = onPlayNext,
                     onAddToQueue = onAddToQueue,
-                    onAddToPlaylist = onAddToPlaylist
+                    onAddToPlaylist = onAddToPlaylist,
+                    isPinned = isPinned,
+                    onTogglePin = onTogglePin
                 )
             }
         }

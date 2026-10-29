@@ -52,6 +52,7 @@ import com.kayoi.pixelplayerdesktop.presentation.components.EditSongMetadataDial
 import com.kayoi.pixelplayerdesktop.presentation.components.KeyboardShortcutsDialog
 import com.kayoi.pixelplayerdesktop.presentation.components.MiniPlayerBar
 import com.kayoi.pixelplayerdesktop.presentation.components.QueueSidePanel
+import com.kayoi.pixelplayerdesktop.presentation.components.QuickAccessSettingsDialog
 import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopBackDispatcher
 import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopBackHandler
 import com.kayoi.pixelplayerdesktop.presentation.navigation.DesktopNavDestination
@@ -113,6 +114,8 @@ fun MainAppScaffold(
     val showQueueHistory by viewModel.showQueueHistory.collectAsState()
     val storageFilter by viewModel.storageFilter.collectAsState()
     val showShortcutsDialog by viewModel.showShortcutsDialog.collectAsState()
+    val quickAccessItems by viewModel.quickAccessItems.collectAsState()
+    var showQuickAccessSettingsDialog by remember { mutableStateOf(false) }
     val showUpdateDialog = viewModel.updateStateHolder?.showUpdateDialog?.collectAsState()?.value ?: false
     val availableRelease = viewModel.updateStateHolder?.availableRelease?.collectAsState()?.value
 
@@ -255,9 +258,24 @@ fun MainAppScaffold(
         Row(modifier = Modifier.fillMaxSize()) {
             AppSidebar(
                 currentDestination = currentDestination,
+                currentTarget = currentTarget,
+                quickAccessItems = quickAccessItems,
+                albums = albums,
+                artists = artists,
+                playlists = playlists,
                 onNavigate = { destination ->
                     previousTargetBeforeSearch = null
                     nav.navigateToRoot(destination)
+                },
+                onNavigateToTarget = { target ->
+                    previousTargetBeforeSearch = null
+                    nav.navigate(target)
+                },
+                onUnpinQuickAccess = { id ->
+                    viewModel.unpinFromQuickAccess(id)
+                },
+                onOpenQuickAccessSettings = {
+                    showQuickAccessSettingsDialog = true
                 },
                 isCompact = isSidebarCompact
             )
@@ -320,6 +338,33 @@ fun MainAppScaffold(
                                                 viewModel = viewModel,
                                                 onBack = { nav.goBack() },
                                                 onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                                onDelete = { song -> songToDelete = song },
+                                                onEditMetadata = { song -> songToEditMetadata = song }
+                                            )
+                                        }
+                                        is DesktopNavTarget.RecentlyAdded -> {
+                                            RecentlyAddedScreen(
+                                                songs = songs,
+                                                currentSong = currentSong,
+                                                isPlaying = playerInfo.isPlaying,
+                                                viewModel = viewModel,
+                                                onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                                onDelete = { song -> songToDelete = song },
+                                                onEditMetadata = { song -> songToEditMetadata = song }
+                                            )
+                                        }
+                                        is DesktopNavTarget.MostPlayed -> {
+                                            MostPlayedScreen(
+                                                songs = songs,
+                                                albums = albums,
+                                                artists = artists,
+                                                currentSong = currentSong,
+                                                isPlaying = playerInfo.isPlaying,
+                                                viewModel = viewModel,
+                                                onSelectAlbum = { album -> nav.navigate(DesktopNavTarget.AlbumDetail(album)) },
+                                                onSelectArtist = { artist -> nav.navigate(DesktopNavTarget.ArtistDetail(artist)) },
+                                                onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                                onAddSongsToPlaylist = { albumSongs -> songsToAddToPlaylist = albumSongs },
                                                 onDelete = { song -> songToDelete = song },
                                                 onEditMetadata = { song -> songToEditMetadata = song }
                                             )
@@ -802,6 +847,16 @@ fun MainAppScaffold(
                     }
                 )
             }
+        }
+
+        if (showQuickAccessSettingsDialog) {
+            QuickAccessSettingsDialog(
+                items = quickAccessItems,
+                onDismiss = { showQuickAccessSettingsDialog = false },
+                onSave = { updatedItems ->
+                    viewModel.setQuickAccessItems(updatedItems)
+                }
+            )
         }
     }
 }

@@ -1,12 +1,5 @@
 package com.kayoi.pixelplayerdesktop.presentation.components.subcomps
 
-import com.kayoi.pixelplayerdesktop.generated.resources.Res
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_file_upload
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_edit
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_more_vert
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
-import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.PointerMatcher
@@ -16,7 +9,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.onClick
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -55,8 +48,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.painterResource
+
 import com.kayoi.pixelplayerdesktop.data.model.Playlist
 import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_file_upload
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_delete
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_edit
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_more_vert
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_push_pin
 import com.kayoi.pixelplayerdesktop.presentation.components.PlaylistCover
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -69,7 +71,9 @@ fun PlaylistListItem(
     onPlayClick: () -> Unit = {},
     onRenameClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
-    onExportClick: () -> Unit = {}
+    onExportClick: () -> Unit = {},
+    isPinned: Boolean = false,
+    onTogglePin: (() -> Unit)? = null
 ) {
     val colors = MaterialTheme.colorScheme
     val interactionSource = remember { MutableInteractionSource() }
@@ -215,6 +219,32 @@ fun PlaylistListItem(
                                 onExportClick()
                             }
                         )
+                        if (onTogglePin != null) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        if (isPinned) "Unpin from Quick Access" else "Pin to Quick Access",
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_rounded_push_pin),
+                                        contentDescription = null,
+                                        tint = colors.primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 2.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                onClick = {
+                                    isMenuExpanded = false
+                                    onTogglePin()
+                                }
+                            )
+                        }
                         DropdownMenuItem(
                             text = { Text("Delete", fontWeight = FontWeight.Medium, color = colors.error) },
                             leadingIcon = {

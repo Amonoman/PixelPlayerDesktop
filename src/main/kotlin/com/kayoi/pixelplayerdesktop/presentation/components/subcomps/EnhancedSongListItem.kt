@@ -89,10 +89,13 @@ fun EnhancedSongListItem(
     showAlbumArt: Boolean = true,
     albumArtSize: Dp = 48.dp,
     showDuration: Boolean = true,
+    customDurationText: String? = null,
+    customDurationColor: Color? = null,
     customShape: androidx.compose.ui.graphics.Shape? = null,
     containerColorOverride: Color? = null,
     isDragHandleVisible: Boolean = false,
     dragHandle: (@Composable () -> Unit)? = null,
+    leadingContent: (@Composable () -> Unit)? = null,
     showMoreOptionsButton: Boolean = true,
     onMoreOptionsClick: ((Song) -> Unit)? = null,
     onPlayNext: (() -> Unit)? = null,
@@ -199,6 +202,11 @@ fun EnhancedSongListItem(
                 }
             }
 
+            if (leadingContent != null) {
+                leadingContent()
+                Spacer(modifier = Modifier.width(10.dp))
+            }
+
             Row(
                 modifier = Modifier
                     .weight(1f)
@@ -258,7 +266,18 @@ fun EnhancedSongListItem(
                     )
                 }
 
-                if (showDuration && song.duration > 0) {
+                if (customDurationText != null) {
+                    Text(
+                        text = customDurationText,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        softWrap = false,
+                        color = customDurationColor ?: (if (isHighlighted) colors.onPrimaryContainer else colors.primary),
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                } else if (showDuration && song.duration > 0) {
                     Text(
                         text = formatDuration(song.duration),
                         style = MaterialTheme.typography.labelMedium,

@@ -88,4 +88,15 @@ class DesktopNavigatorTest {
         reg1.close()
         assertFalse(dispatcher.dispatchBack())
     }
+
+    @Test
+    fun `navigating to RecentlyAdded updates currentTarget and rootDestination`() {
+        val navigator = DesktopNavigator(DesktopNavTarget.Home)
+        val target = DesktopNavTarget.RecentlyAdded
+        navigator.navigate(target)
+
+        assertEquals(target, navigator.currentTarget)
+        assertEquals(DesktopNavDestination.HOME, navigator.currentDestination)
+        assertTrue(navigator.canGoBack)
+    }
 }

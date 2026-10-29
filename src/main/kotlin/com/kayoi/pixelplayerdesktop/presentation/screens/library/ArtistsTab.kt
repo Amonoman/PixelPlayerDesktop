@@ -28,7 +28,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+
 import com.kayoi.pixelplayerdesktop.data.model.Artist
+import com.kayoi.pixelplayerdesktop.data.model.QuickAccessType
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.SortOption
 import com.kayoi.pixelplayerdesktop.data.model.StorageFilter
@@ -77,6 +79,10 @@ fun ArtistsTab(
         val fetchDeezerImages by viewModel.fetchDeezerArtistImages.collectAsState()
         val isArtistsListView by viewModel.isArtistsListView.collectAsState()
         val storageFilter by viewModel.storageFilter.collectAsState()
+        val quickAccessItems by viewModel.quickAccessItems.collectAsState()
+        val pinnedArtistIds = remember(quickAccessItems) {
+            quickAccessItems.filter { it.type == QuickAccessType.ARTIST }.mapNotNull { it.targetKey.toLongOrNull() }.toSet()
+        }
         val artistsGridState = rememberLazyGridState()
         val artistsListState = rememberLazyListState()
         var lastHandledArtistSortKey by remember { mutableStateOf(currentArtistSortOption.storageKey) }
@@ -181,6 +187,10 @@ fun ArtistsTab(
                                 contentType = { "artist_list_item" }
                             ) { artist ->
                                 val artistSongs = remember(artist, songs) { songsForArtist(artist) }
+                                val isPinned = artist.id in pinnedArtistIds
+                                val onTogglePin = remember(isPinned, artist) {
+                                    { viewModel.togglePin("artist_${artist.id}", artist.name, QuickAccessType.ARTIST, artist.id.toString(), isPinned) }
+                                }
                                 ArtistListItem(
                                     artist = artist,
                                     fetchDeezerImages = fetchDeezerImages,
@@ -194,7 +204,9 @@ fun ArtistsTab(
                                         } else if (onAddToPlaylist != null && artistSongs.isNotEmpty()) {
                                             onAddToPlaylist(artistSongs.first())
                                         }
-                                    }
+                                    },
+                                    isPinned = isPinned,
+                                    onTogglePin = onTogglePin
                                 )
                             }
                         }
@@ -213,6 +225,10 @@ fun ArtistsTab(
                                 contentType = { "artist_grid_item" }
                             ) { artist ->
                                 val artistSongs = remember(artist, songs) { songsForArtist(artist) }
+                                val isPinned = artist.id in pinnedArtistIds
+                                val onTogglePin = remember(isPinned, artist) {
+                                    { viewModel.togglePin("artist_${artist.id}", artist.name, QuickAccessType.ARTIST, artist.id.toString(), isPinned) }
+                                }
                                 ArtistGridItem(
                                     artist = artist,
                                     fetchDeezerImages = fetchDeezerImages,
@@ -226,7 +242,9 @@ fun ArtistsTab(
                                         } else if (onAddToPlaylist != null && artistSongs.isNotEmpty()) {
                                             onAddToPlaylist(artistSongs.first())
                                         }
-                                    }
+                                    },
+                                    isPinned = isPinned,
+                                    onTogglePin = onTogglePin
                                 )
                             }
                         }
