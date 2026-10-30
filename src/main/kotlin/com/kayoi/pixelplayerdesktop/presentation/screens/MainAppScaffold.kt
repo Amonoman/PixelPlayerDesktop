@@ -115,6 +115,7 @@ fun MainAppScaffold(
     val storageFilter by viewModel.storageFilter.collectAsState()
     val showShortcutsDialog by viewModel.showShortcutsDialog.collectAsState()
     val quickAccessItems by viewModel.quickAccessItems.collectAsState()
+    val fetchDeezerImages by viewModel.fetchDeezerArtistImages.collectAsState()
     var showQuickAccessSettingsDialog by remember { mutableStateOf(false) }
     val showUpdateDialog = viewModel.updateStateHolder?.showUpdateDialog?.collectAsState()?.value ?: false
     val availableRelease = viewModel.updateStateHolder?.availableRelease?.collectAsState()?.value
@@ -263,6 +264,7 @@ fun MainAppScaffold(
                 albums = albums,
                 artists = artists,
                 playlists = playlists,
+                fetchDeezerImages = fetchDeezerImages,
                 onNavigate = { destination ->
                     previousTargetBeforeSearch = null
                     nav.navigateToRoot(destination)

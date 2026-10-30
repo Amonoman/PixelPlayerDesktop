@@ -44,6 +44,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,6 +66,7 @@ import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.Playlist
 import com.kayoi.pixelplayerdesktop.data.model.QuickAccessItem
 import com.kayoi.pixelplayerdesktop.data.model.QuickAccessType
+import com.kayoi.pixelplayerdesktop.data.network.deezer.DeezerClient
 import com.kayoi.pixelplayerdesktop.generated.resources.Res
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_app_logo
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_artist
@@ -88,6 +90,7 @@ fun AppSidebar(
     albums: List<Album> = emptyList(),
     artists: List<Artist> = emptyList(),
     playlists: List<Playlist> = emptyList(),
+    fetchDeezerImages: Boolean = true,
     onNavigate: (DesktopNavDestination) -> Unit,
     onNavigateToTarget: ((DesktopNavTarget) -> Unit)? = null,
     onUnpinQuickAccess: ((String) -> Unit)? = null,
@@ -210,16 +213,22 @@ fun AppSidebar(
                     map
                 }
             }
-            val artistImageMap = remember(artists, pinnedArtistKeys) {
+            val artistImageMap = remember(artists, albums, pinnedArtistKeys, enabledQuickAccess) {
                 if (pinnedArtistKeys.isEmpty()) emptyMap()
                 else {
                     val map = mutableMapOf<String, String?>()
-                    for (artist in artists) {
-                        val key = artist.id.toString()
-                        if (key in pinnedArtistKeys) {
-                            map[key] = artist.effectiveImageUrl
-                            if (map.size == pinnedArtistKeys.size) break
-                        }
+                    for (key in pinnedArtistKeys) {
+                        val artist = artists.find { it.id.toString() == key }
+                        val directImage = artist?.effectiveImageUrl
+                        val artistName = artist?.name ?: enabledQuickAccess.find { it.targetKey == key }?.title
+                        val fallbackAlbumArt = if (directImage.isNullOrBlank() && !artistName.isNullOrBlank()) {
+                            albums.firstOrNull { album ->
+                                (album.artist.equals(artistName, ignoreCase = true) ||
+                                    album.albumArtist?.equals(artistName, ignoreCase = true) == true) &&
+                                    !album.albumArtUriString.isNullOrBlank()
+                            }?.albumArtUriString
+                        } else null
+                        map[key] = directImage ?: fallbackAlbumArt
                     }
                     map
                 }
@@ -356,6 +365,7 @@ fun AppSidebar(
                                         displayTitle = displayTitle,
                                         artworkUri = artworkUri,
                                         isCompact = isCompact,
+                                        fetchDeezerImages = fetchDeezerImages,
                                         onClick = {
                                             if (onNavigateToTarget != null) {
                                                 when (item.type) {
@@ -563,10 +573,25 @@ private fun QuickAccessSidebarNavItem(
     displayTitle: String,
     artworkUri: String?,
     isCompact: Boolean,
+    fetchDeezerImages: Boolean = true,
     onClick: () -> Unit,
     onUnpin: () -> Unit,
     onOpenSettings: (() -> Unit)? = null
 ) {
+    var resolvedArtworkUri by remember(artworkUri) { mutableStateOf(artworkUri) }
+
+    LaunchedEffect(item.targetKey, item.type, displayTitle, fetchDeezerImages) {
+        if (item.type == QuickAccessType.ARTIST && displayTitle.isNotBlank()) {
+            val fetched = DeezerClient.getArtistImageUrl(
+                artistName = displayTitle,
+                fetchEnabled = fetchDeezerImages
+            )
+            if (!fetched.isNullOrBlank()) {
+                resolvedArtworkUri = fetched
+            }
+        }
+    }
+
     val isSelected = when (item.type) {
         QuickAccessType.SMART_PRESET -> {
             when (item.targetKey) {
@@ -649,10 +674,11 @@ private fun QuickAccessSidebarNavItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
-                    if (!artworkUri.isNullOrBlank()) {
+                    val currentArtworkUri = resolvedArtworkUri ?: artworkUri
+                    if (!currentArtworkUri.isNullOrBlank()) {
                         val shape = if (item.type == QuickAccessType.ARTIST) CircleShape else RoundedCornerShape(6.dp)
                         AsyncArtworkImage(
-                            artworkUri = artworkUri,
+                            artworkUri = currentArtworkUri,
                             targetSize = ArtworkSize.SMALL,
                             shape = shape,
                             placeholderIcon = iconResource,
