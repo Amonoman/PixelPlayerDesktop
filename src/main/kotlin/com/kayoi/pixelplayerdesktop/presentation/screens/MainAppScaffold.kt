@@ -355,8 +355,8 @@ fun MainAppScaffold(
                                                 onEditMetadata = { song -> songToEditMetadata = song }
                                             )
                                         }
-                                        is DesktopNavTarget.MostPlayed -> {
-                                            MostPlayedScreen(
+                                        is DesktopNavTarget.MostListened -> {
+                                            MostListenedScreen(
                                                 songs = songs,
                                                 albums = albums,
                                                 artists = artists,

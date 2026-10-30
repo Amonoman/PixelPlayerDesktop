@@ -83,6 +83,7 @@ import com.kayoi.pixelplayerdesktop.presentation.components.PlaylistCover
 import com.kayoi.pixelplayerdesktop.presentation.components.TrackDialogInput
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.EnhancedSongListItem
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
+import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 import com.kayoi.pixelplayerdesktop.utils.DirectoryPicker
 
 private data class PlaylistSongUiItem(val stableKey: String, val song: Song)
@@ -431,7 +432,7 @@ fun PlaylistDetailScreen(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(start = 16.dp, end = 20.dp, top = 6.dp, bottom = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     items(
                         count = localSongs.size,
@@ -472,6 +473,7 @@ fun PlaylistDetailScreen(
                                         scaleY = scale
                                     },
                                 song = song,
+                                customShape = ShapeCache.ConnectedGroup.getShape(index, localSongs.size),
                                 isCurrentSong = isSelected,
                                 isPlaying = playerInfo.isPlaying && isSelected,
                                 isDragging = isDragging,

@@ -179,7 +179,7 @@ fun AppSidebar(
                         QuickAccessType.SMART_PRESET -> when (item.targetKey) {
                             QuickAccessItem.PRESET_RECENTLY_PLAYED -> currentTarget is DesktopNavTarget.RecentlyPlayed
                             QuickAccessItem.PRESET_RECENTLY_ADDED -> currentTarget is DesktopNavTarget.RecentlyAdded
-                            QuickAccessItem.PRESET_MOST_PLAYED -> currentTarget is DesktopNavTarget.MostPlayed
+                            QuickAccessItem.PRESET_MOST_LISTENED -> currentTarget is DesktopNavTarget.MostListened
                             else -> false
                         }
                         QuickAccessType.ALBUM -> currentTarget is DesktopNavTarget.AlbumDetail && currentTarget.album.id.toString() == item.targetKey
@@ -373,7 +373,7 @@ fun AppSidebar(
                                                         when (item.targetKey) {
                                                             QuickAccessItem.PRESET_RECENTLY_PLAYED -> onNavigateToTarget(DesktopNavTarget.RecentlyPlayed)
                                                             QuickAccessItem.PRESET_RECENTLY_ADDED -> onNavigateToTarget(DesktopNavTarget.RecentlyAdded)
-                                                            QuickAccessItem.PRESET_MOST_PLAYED -> onNavigateToTarget(DesktopNavTarget.MostPlayed)
+                                                            QuickAccessItem.PRESET_MOST_LISTENED -> onNavigateToTarget(DesktopNavTarget.MostListened)
                                                         }
                                                     }
                                                     QuickAccessType.ALBUM -> {
@@ -597,7 +597,7 @@ private fun QuickAccessSidebarNavItem(
             when (item.targetKey) {
                 QuickAccessItem.PRESET_RECENTLY_PLAYED -> currentTarget is DesktopNavTarget.RecentlyPlayed
                 QuickAccessItem.PRESET_RECENTLY_ADDED -> currentTarget is DesktopNavTarget.RecentlyAdded
-                QuickAccessItem.PRESET_MOST_PLAYED -> currentTarget is DesktopNavTarget.MostPlayed
+                QuickAccessItem.PRESET_MOST_LISTENED -> currentTarget is DesktopNavTarget.MostListened
                 else -> false
             }
         }
@@ -615,7 +615,7 @@ private fun QuickAccessSidebarNavItem(
     val iconResource = when (item.type) {
         QuickAccessType.SMART_PRESET -> when (item.targetKey) {
             QuickAccessItem.PRESET_RECENTLY_ADDED -> Res.drawable.ic_rounded_auto_awesome
-            QuickAccessItem.PRESET_MOST_PLAYED -> Res.drawable.ic_automirrored_rounded_show_chart
+            QuickAccessItem.PRESET_MOST_LISTENED -> Res.drawable.ic_automirrored_rounded_show_chart
             QuickAccessItem.PRESET_RECENTLY_PLAYED -> Res.drawable.ic_rounded_history
             else -> Res.drawable.ic_rounded_auto_awesome
         }

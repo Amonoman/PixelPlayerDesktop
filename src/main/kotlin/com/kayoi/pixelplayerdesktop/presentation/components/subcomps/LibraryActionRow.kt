@@ -26,15 +26,19 @@ import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_upload_file
 import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -359,11 +363,34 @@ fun LibraryActionRow(
                             ),
                             modifier = Modifier.size(genHeight)
                         ) {
-                            Icon(
-                                painter = painterResource(if (isListView) Res.drawable.ic_rounded_grid_view else Res.drawable.ic_automirrored_rounded_view_list),
-                                contentDescription = if (isListView) "Switch to Grid view" else "Switch to List view",
-                                modifier = Modifier.size(20.dp)
-                            )
+                            AnimatedContent(
+                                targetState = isListView,
+                                transitionSpec = {
+                                    (slideInVertically(
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioLowBouncy,
+                                            stiffness = Spring.StiffnessMediumLow
+                                        ),
+                                        initialOffsetY = { height -> -height }
+                                    ) + fadeIn(animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)))
+                                        .togetherWith(
+                                            slideOutVertically(
+                                                animationSpec = spring(
+                                                    dampingRatio = Spring.DampingRatioNoBouncy,
+                                                    stiffness = Spring.StiffnessMediumLow
+                                                ),
+                                                targetOffsetY = { height -> height }
+                                            ) + fadeOut(animationSpec = tween(durationMillis = 140, easing = FastOutSlowInEasing))
+                                        )
+                                },
+                                label = "ViewModeIcon"
+                            ) { isList ->
+                                Icon(
+                                    painter = painterResource(if (isList) Res.drawable.ic_rounded_grid_view else Res.drawable.ic_automirrored_rounded_view_list),
+                                    contentDescription = viewModeTooltip,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
 
@@ -413,12 +440,47 @@ fun LibraryActionRow(
                         ) {
                             AnimatedContent(
                                 targetState = finalIcon,
+                                transitionSpec = {
+                                    (fadeIn(animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)) +
+                                            scaleIn(
+                                                initialScale = 0.7f,
+                                                animationSpec = spring(
+                                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                    stiffness = Spring.StiffnessMediumLow
+                                                )
+                                            ))
+                                        .togetherWith(
+                                            fadeOut(animationSpec = tween(durationMillis = 140, easing = FastOutSlowInEasing)) +
+                                                    scaleOut(
+                                                        targetScale = 0.7f,
+                                                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                                                    )
+                                        )
+                                },
                                 label = "StorageFilterIcon"
                             ) { icon ->
+                                val rotation by transition.animateFloat(
+                                    transitionSpec = {
+                                        spring(
+                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                            stiffness = Spring.StiffnessMediumLow
+                                        )
+                                    },
+                                    label = "StorageFilterRotation"
+                                ) { state ->
+                                    when (state) {
+                                        EnterExitState.PreEnter -> -90f
+                                        EnterExitState.Visible -> 0f
+                                        EnterExitState.PostExit -> 90f
+                                    }
+                                }
+
                                 Icon(
                                     painter = painterResource(icon),
                                     contentDescription = tooltipText,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .graphicsLayer { rotationZ = rotation }
                                 )
                             }
                         }

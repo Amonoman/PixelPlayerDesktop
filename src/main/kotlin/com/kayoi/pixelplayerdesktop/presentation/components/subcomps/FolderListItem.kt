@@ -41,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -51,6 +52,7 @@ import com.kayoi.pixelplayerdesktop.data.model.MusicFolder
 fun FolderListItem(
     folder: MusicFolder,
     modifier: Modifier = Modifier,
+    customShape: Shape? = null,
     onClick: () -> Unit,
     onPlayClick: (() -> Unit)? = null
 ) {
@@ -63,7 +65,7 @@ fun FolderListItem(
         label = "folderListItemContainer"
     )
 
-    val cardShape = RoundedCornerShape(18.dp)
+    val cardShape = customShape ?: RoundedCornerShape(20.dp)
 
     Card(
         modifier = modifier
@@ -78,13 +80,13 @@ fun FolderListItem(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 14.dp, vertical = 8.dp),
+                .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .background(colors.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {

@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp as lerpColor
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.text.font.FontWeight
@@ -80,7 +81,7 @@ private enum class MostListenedTab(val label: String, val icon: DrawableResource
 }
 
 @Composable
-fun MostPlayedScreen(
+fun MostListenedScreen(
     songs: List<Song>,
     albums: List<Album> = emptyList(),
     artists: List<Artist> = emptyList(),
@@ -104,7 +105,7 @@ fun MostPlayedScreen(
 
     val filteredSongs = remember(playedSongs) {
         playedSongs.sortedByDescending { it.playCount }
-            .take(QuickAccessItem.MAX_MOST_PLAYED_SONGS)
+            .take(QuickAccessItem.MAX_MOST_LISTENED_SONGS)
     }
 
     val filteredAlbums = remember(playedSongs, albums) {
@@ -129,7 +130,7 @@ fun MostPlayedScreen(
             if (totalPlays > 0L) Pair(album, totalPlays) else null
         }.sortedByDescending { it.second }
             .map { it.first }
-            .take(QuickAccessItem.MAX_MOST_PLAYED_SONGS)
+            .take(QuickAccessItem.MAX_MOST_LISTENED_SONGS)
     }
 
     val filteredArtists = remember(playedSongs, artists) {
@@ -163,7 +164,7 @@ fun MostPlayedScreen(
             if (totalPlays > 0L) Pair(artist, totalPlays) else null
         }.sortedByDescending { it.second }
             .map { it.first }
-            .take(QuickAccessItem.MAX_MOST_PLAYED_SONGS)
+            .take(QuickAccessItem.MAX_MOST_LISTENED_SONGS)
     }
 
     val songsByAlbum = remember(songs) {
@@ -267,7 +268,7 @@ fun MostPlayedScreen(
             state = activeListState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             item(key = "most_listened_header") {
                 Column(
@@ -316,6 +317,7 @@ fun MostPlayedScreen(
                             EnhancedSongListItem(
                                 modifier = Modifier.padding(horizontal = horizontalPadding),
                                 song = song,
+                                customShape = ShapeCache.ConnectedGroup.getShape(index, filteredSongs.size),
                                 isCurrentSong = isCurrentPlaying,
                                 isPlaying = isCurrentPlaying && isPlaying,
                                 showDuration = !isVeryCompact,
@@ -359,6 +361,7 @@ fun MostPlayedScreen(
                             MostListenedAlbumItem(
                                 album = album,
                                 rank = rank,
+                                customShape = ShapeCache.ConnectedGroup.getShape(index, filteredAlbums.size),
                                 modifier = Modifier.padding(horizontal = horizontalPadding),
                                 onClick = { onSelectAlbum?.invoke(album) },
                                 onPlay = { viewModel.playSongs(getAlbumSongs(album), 0) },
@@ -398,6 +401,7 @@ fun MostPlayedScreen(
                             MostListenedArtistItem(
                                 artist = artist,
                                 rank = rank,
+                                customShape = ShapeCache.ConnectedGroup.getShape(index, filteredArtists.size),
                                 modifier = Modifier.padding(horizontal = horizontalPadding),
                                 onClick = { onSelectArtist?.invoke(artist) },
                                 onPlay = { viewModel.playSongs(getArtistSongs(artist), 0) },
@@ -481,13 +485,13 @@ private fun MostListenedConnectedButtons(
         isCompact -> 26.dp
         else -> 28.dp
     }
-    val innerCorner = 6.dp
+    val innerCorner = 8.dp
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(rowHeight),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         tabs.forEachIndexed { index, tab ->
             val isSelected = selectedTab == tab
@@ -561,6 +565,7 @@ private fun MostListenedConnectedButtons(
 private fun MostListenedAlbumItem(
     album: Album,
     rank: Int,
+    customShape: Shape? = null,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     onPlay: (() -> Unit)? = null,
@@ -576,7 +581,7 @@ private fun MostListenedAlbumItem(
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val surfaceShape = RoundedCornerShape(18.dp)
+    val surfaceShape = customShape ?: RoundedCornerShape(20.dp)
     val hoverColor = colors.onSurface.copy(alpha = 0.06f)
     val effectiveContainerColor = if (isHovered) lerpColor(colors.surfaceContainerLow, hoverColor, 0.45f) else colors.surfaceContainerLow
 
@@ -592,7 +597,7 @@ private fun MostListenedAlbumItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 9.dp),
+                .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             MostListenedRankPill(rank = rank)
@@ -622,7 +627,7 @@ private fun MostListenedAlbumItem(
                     contentDescription = "${album.title} cover",
                     modifier = Modifier
                         .size(48.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(10.dp))
                 )
 
                 Spacer(modifier = Modifier.width(14.dp))
@@ -697,6 +702,7 @@ private fun MostListenedAlbumItem(
 private fun MostListenedArtistItem(
     artist: Artist,
     rank: Int,
+    customShape: Shape? = null,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     onPlay: (() -> Unit)? = null,
@@ -711,7 +717,7 @@ private fun MostListenedArtistItem(
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val surfaceShape = RoundedCornerShape(18.dp)
+    val surfaceShape = customShape ?: RoundedCornerShape(20.dp)
     val hoverColor = colors.onSurface.copy(alpha = 0.06f)
     val effectiveContainerColor = if (isHovered) lerpColor(colors.surfaceContainerLow, hoverColor, 0.45f) else colors.surfaceContainerLow
 
@@ -727,7 +733,7 @@ private fun MostListenedArtistItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 9.dp),
+                .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             MostListenedRankPill(rank = rank)

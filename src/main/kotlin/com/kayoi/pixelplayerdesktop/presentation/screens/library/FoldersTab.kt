@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -49,6 +48,7 @@ import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.FolderPlayl
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryActionRow
 import com.kayoi.pixelplayerdesktop.presentation.screens.FolderDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
+import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 import com.kayoi.pixelplayerdesktop.utils.FolderTreeBuilder
 
 @Composable
@@ -279,16 +279,17 @@ fun FoldersTab(
                         state = foldersListState,
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(start = 24.dp, end = 28.dp, top = 4.dp, bottom = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         if (isFoldersPlaylistView) {
-                            items(
+                            itemsIndexed(
                                 items = sortedFlattenedFolders,
-                                key = { it.path },
-                                contentType = { "folder_playlist_item" }
-                            ) { folder ->
+                                key = { _, it -> it.path },
+                                contentType = { _, _ -> "folder_playlist_item" }
+                            ) { index, folder ->
                                 FolderPlaylistItem(
                                     folder = folder,
+                                    customShape = ShapeCache.ConnectedGroup.getShape(index, sortedFlattenedFolders.size),
                                     onClick = { onSelectFolderDetail(folder) },
                                     onPlayClick = {
                                         val fSongs = folder.collectAllSongs()
@@ -299,13 +300,14 @@ fun FoldersTab(
                                 )
                             }
                         } else {
-                            items(
+                            itemsIndexed(
                                 items = currentTreeSubFolders,
-                                key = { "subfolder_${it.path}" },
-                                contentType = { "folder_tree_item" }
-                            ) { folder ->
+                                key = { _, it -> "subfolder_${it.path}" },
+                                contentType = { _, _ -> "folder_tree_item" }
+                            ) { index, folder ->
                                 FolderListItem(
                                     folder = folder,
+                                    customShape = ShapeCache.ConnectedGroup.getShape(index, currentTreeSubFolders.size),
                                     onClick = { onFolderTreePathChange(folder.path) },
                                     onPlayClick = {
                                         val fSongs = folder.collectAllSongs()
@@ -327,6 +329,7 @@ fun FoldersTab(
                                         song = song,
                                         isPlaying = isCurrentPlaying && isPlaying,
                                         isCurrentSong = isCurrentPlaying,
+                                        customShape = ShapeCache.ConnectedGroup.getShape(index, currentTreeSongs.size),
                                         isFavorite = favoriteSongIds.contains(song.id),
                                         onPlayNext = { viewModel.playSongNext(song) },
                                         onAddToQueue = { viewModel.addSongToQueue(song) },

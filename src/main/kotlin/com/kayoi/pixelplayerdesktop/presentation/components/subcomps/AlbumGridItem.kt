@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -53,6 +54,7 @@ fun AlbumGridItem(
     album: Album,
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier,
+    customShape: Shape? = null,
     onClick: () -> Unit,
     onPlay: (() -> Unit)? = null,
     onPlayNext: (() -> Unit)? = null,
@@ -108,8 +110,7 @@ fun AlbumGridItem(
         animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
         label = "albumGridOnContainerColor"
     )
-    val cardCornerRadius = 20.dp
-    val cardShape = RoundedCornerShape(cardCornerRadius)
+    val cardShape = customShape ?: RoundedCornerShape(22.dp)
 
     Card(
         modifier = modifier
@@ -166,7 +167,8 @@ fun AlbumGridItem(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                    .height(82.dp)
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
@@ -174,6 +176,7 @@ fun AlbumGridItem(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
+                    lineHeight = 20.sp,
                     color = onGradientColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -183,6 +186,7 @@ fun AlbumGridItem(
                     text = album.artist,
                     style = MaterialTheme.typography.bodySmall,
                     fontSize = 13.sp,
+                    lineHeight = 17.sp,
                     color = onGradientColor.copy(alpha = 0.85f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -193,6 +197,7 @@ fun AlbumGridItem(
                     text = songCountText,
                     style = MaterialTheme.typography.bodySmall,
                     fontSize = 12.sp,
+                    lineHeight = 16.sp,
                     color = onGradientColor.copy(alpha = 0.70f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis

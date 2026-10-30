@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,6 +68,7 @@ fun PlaylistListItem(
     playlist: Playlist,
     playlistSongs: List<Song>,
     modifier: Modifier = Modifier,
+    customShape: Shape? = null,
     onClick: () -> Unit,
     onPlayClick: () -> Unit = {},
     onRenameClick: () -> Unit = {},
@@ -85,7 +87,7 @@ fun PlaylistListItem(
         label = "playlistItemContainer"
     )
 
-    val cardShape = RoundedCornerShape(18.dp)
+    val cardShape = customShape ?: RoundedCornerShape(20.dp)
 
     Card(
         modifier = modifier
@@ -104,7 +106,7 @@ fun PlaylistListItem(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+                .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             PlaylistCover(

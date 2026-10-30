@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,6 +55,7 @@ import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 fun ArtistListItem(
     artist: Artist,
     modifier: Modifier = Modifier,
+    customShape: Shape? = null,
     fetchDeezerImages: Boolean = true,
     onClick: () -> Unit,
     onPlay: (() -> Unit)? = null,
@@ -64,7 +66,7 @@ fun ArtistListItem(
     onTogglePin: (() -> Unit)? = null
 ) {
     val colors = MaterialTheme.colorScheme
-    val cardShape = RoundedCornerShape(18.dp)
+    val cardShape = customShape ?: RoundedCornerShape(20.dp)
     var isMenuExpanded by remember { mutableStateOf(false) }
 
     var resolvedImageUrl by remember(artist.name, artist.effectiveImageUrl) {
@@ -101,7 +103,7 @@ fun ArtistListItem(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+                .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
 

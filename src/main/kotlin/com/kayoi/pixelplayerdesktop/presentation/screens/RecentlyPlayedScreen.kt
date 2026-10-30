@@ -1,11 +1,11 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
 
-import com.kayoi.pixelplayerdesktop.generated.resources.Res
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_history
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
-import org.jetbrains.compose.resources.painterResource
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -30,7 +30,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -66,14 +66,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.painterResource
+
 import com.kayoi.pixelplayerdesktop.data.model.Song
 import com.kayoi.pixelplayerdesktop.data.model.StatsTimeRange
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_history
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.EnhancedSongListItem
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 
 @Composable
 fun RecentlyPlayedScreen(
@@ -123,7 +126,7 @@ fun RecentlyPlayedScreen(
                 state = lazyListState,
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentPadding = PaddingValues(bottom = 28.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 item(key = "recently_played_header") {
                     Column(
@@ -177,11 +180,12 @@ fun RecentlyPlayedScreen(
                             )
                         }
 
-                        items(group.songs, key = { it.id }) { song ->
+                        itemsIndexed(group.songs, key = { _, song -> song.id }) { index, song ->
                             val isCurrentPlaying = currentSong?.id == song.id
                             EnhancedSongListItem(
                                 modifier = Modifier.padding(horizontal = horizontalPadding),
                                 song = song,
+                                customShape = ShapeCache.ConnectedGroup.getShape(index, group.songs.size),
                                 isCurrentSong = isCurrentPlaying,
                                 isPlaying = isCurrentPlaying && isPlaying,
                                 showAlbumArt = true,

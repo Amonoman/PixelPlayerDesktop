@@ -40,7 +40,7 @@ fun PlaylistCover(
     val shape = remember(playlist.coverShapeType) {
         when (playlist.coverShapeType) {
             "Circle" -> CircleShape
-            else -> RoundedCornerShape(12.dp)
+            else -> RoundedCornerShape(10.dp)
         }
     }
 

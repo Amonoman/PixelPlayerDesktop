@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -48,6 +49,7 @@ import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 fun ArtistGridItem(
     artist: Artist,
     modifier: Modifier = Modifier,
+    customShape: Shape? = null,
     fetchDeezerImages: Boolean = true,
     onClick: () -> Unit,
     onPlay: (() -> Unit)? = null,
@@ -58,7 +60,7 @@ fun ArtistGridItem(
     onTogglePin: (() -> Unit)? = null
 ) {
     val colors = MaterialTheme.colorScheme
-    val cardShape = RoundedCornerShape(20.dp)
+    val cardShape = customShape ?: RoundedCornerShape(22.dp)
     var isMenuExpanded by remember { mutableStateOf(false) }
 
     var resolvedImageUrl by remember(artist.name, artist.effectiveImageUrl) {
@@ -80,6 +82,7 @@ fun ArtistGridItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .height(180.dp)
             .clip(cardShape)
             .clickable(onClick = onClick)
             .onClick(
@@ -93,7 +96,7 @@ fun ArtistGridItem(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -135,6 +138,7 @@ fun ArtistGridItem(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
+                lineHeight = 20.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
@@ -148,6 +152,7 @@ fun ArtistGridItem(
                 text = songCountText,
                 style = MaterialTheme.typography.bodySmall,
                 fontSize = 12.5.sp,
+                lineHeight = 17.sp,
                 color = colors.onSurfaceVariant.copy(alpha = 0.75f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

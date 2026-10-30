@@ -1,22 +1,19 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens.library
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed as gridItemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -26,7 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 import com.kayoi.pixelplayerdesktop.data.model.Artist
@@ -43,6 +39,7 @@ import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryEmpt
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.LibraryTabKind
 import com.kayoi.pixelplayerdesktop.presentation.screens.ArtistDetailScreen
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
+import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_ARTIST_DELIMITERS
 import com.kayoi.pixelplayerdesktop.utils.DEFAULT_WORD_DELIMITERS
 import com.kayoi.pixelplayerdesktop.utils.collectArtistNames
@@ -146,7 +143,14 @@ fun ArtistsTab(
                     storageFilter = storageFilter
                 )
             } else {
-                Box(modifier = Modifier.fillMaxSize()) {
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    val gridAvailableWidth = maxWidth - 24.dp - 28.dp
+                    val gridColumnCount = remember(gridAvailableWidth) {
+                        val minSize = 150.dp
+                        val spacing = 6.dp
+                        ((gridAvailableWidth + spacing) / (minSize + spacing)).toInt().coerceAtLeast(1)
+                    }
+
                     val songsForArtist: (Artist) -> List<Song> = remember(songs) {
                         { artist ->
                             val filtered = songs.filter { song ->
@@ -179,13 +183,13 @@ fun ArtistsTab(
                             state = artistsListState,
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(start = 24.dp, end = 28.dp, top = 4.dp, bottom = 16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            items(
+                            itemsIndexed(
                                 items = filteredArtists,
-                                key = { it.name },
-                                contentType = { "artist_list_item" }
-                            ) { artist ->
+                                key = { _, it -> it.name },
+                                contentType = { _, _ -> "artist_list_item" }
+                            ) { index, artist ->
                                 val artistSongs = remember(artist, songs) { songsForArtist(artist) }
                                 val isPinned = artist.id in pinnedArtistIds
                                 val onTogglePin = remember(isPinned, artist) {
@@ -194,6 +198,7 @@ fun ArtistsTab(
                                 ArtistListItem(
                                     artist = artist,
                                     fetchDeezerImages = fetchDeezerImages,
+                                    customShape = ShapeCache.ConnectedGroup.getShape(index, filteredArtists.size),
                                     onClick = { onSelectArtist(artist) },
                                     onPlay = { viewModel.playSongs(artistSongs, 0) },
                                     onPlayNext = { viewModel.playSongsNext(artistSongs) },
@@ -215,15 +220,15 @@ fun ArtistsTab(
                             state = artistsGridState,
                             columns = GridCells.Adaptive(minSize = 150.dp),
                             contentPadding = PaddingValues(start = 24.dp, end = 28.dp, top = 4.dp, bottom = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(14.dp),
-                            verticalArrangement = Arrangement.spacedBy(14.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            items(
+                            gridItemsIndexed(
                                 items = filteredArtists,
-                                key = { it.name },
-                                contentType = { "artist_grid_item" }
-                            ) { artist ->
+                                key = { _, it -> it.name },
+                                contentType = { _, _ -> "artist_grid_item" }
+                            ) { index, artist ->
                                 val artistSongs = remember(artist, songs) { songsForArtist(artist) }
                                 val isPinned = artist.id in pinnedArtistIds
                                 val onTogglePin = remember(isPinned, artist) {
@@ -232,6 +237,7 @@ fun ArtistsTab(
                                 ArtistGridItem(
                                     artist = artist,
                                     fetchDeezerImages = fetchDeezerImages,
+                                    customShape = ShapeCache.ConnectedGrid.getShape(index, filteredArtists.size, gridColumnCount),
                                     onClick = { onSelectArtist(artist) },
                                     onPlay = { viewModel.playSongs(artistSongs, 0) },
                                     onPlayNext = { viewModel.playSongsNext(artistSongs) },

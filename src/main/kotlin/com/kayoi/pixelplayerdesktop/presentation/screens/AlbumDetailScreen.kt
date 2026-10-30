@@ -58,6 +58,7 @@ import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
 import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveScrollBar
 import com.kayoi.pixelplayerdesktop.presentation.components.songFastScrollLabel
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.EnhancedSongListItem
+import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.ColorSchemePair
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
@@ -415,7 +416,7 @@ fun AlbumDetailScreen(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(start = 24.dp, end = 28.dp, top = 8.dp, bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     songsByDisc.forEach { (discNumber, discSongs) ->
                         if (songsByDisc.size > 1) {
@@ -434,13 +435,14 @@ fun AlbumDetailScreen(
                             items = discSongs,
                             key = { _, song -> song.id },
                             contentType = { _, _ -> "album_detail_song" }
-                        ) { _, song ->
+                        ) { discIndex, song ->
                             val isCurrentPlaying = currentSong?.id == song.id
                             val globalIndex = albumSongs.indexOfFirst { it.id == song.id }
                             val effectiveIndex = if (globalIndex != -1) globalIndex else 0
 
                             EnhancedSongListItem(
                                 song = song,
+                                customShape = ShapeCache.ConnectedGroup.getShape(discIndex, discSongs.size),
                                 isPlaying = isCurrentPlaying && playerInfo.isPlaying,
                                 isCurrentSong = isCurrentPlaying,
                                 showAlbumArt = false,

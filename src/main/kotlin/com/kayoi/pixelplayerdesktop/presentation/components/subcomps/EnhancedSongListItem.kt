@@ -132,18 +132,18 @@ fun EnhancedSongListItem(
         if (!isHighlighted && customShape != null) {
             customShape
         } else if (!isHighlighted) {
-            RoundedCornerShape(18.dp)
+            RoundedCornerShape(20.dp)
         } else {
-            val radius = lerpDp(18.dp, 32.dp, highlightProgress)
+            val radius = lerpDp(20.dp, 32.dp, highlightProgress)
             RoundedCornerShape(radius)
         }
     }
 
     val albumShape = remember(highlightProgress, isHighlighted) {
         if (!isHighlighted) {
-            RoundedCornerShape(12.dp)
+            RoundedCornerShape(10.dp)
         } else {
-            val radius = lerpDp(12.dp, 24.dp, highlightProgress)
+            val radius = lerpDp(10.dp, 22.dp, highlightProgress)
             RoundedCornerShape(radius)
         }
     }
@@ -188,7 +188,7 @@ fun EnhancedSongListItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 9.dp),
+                .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             AnimatedVisibility(
