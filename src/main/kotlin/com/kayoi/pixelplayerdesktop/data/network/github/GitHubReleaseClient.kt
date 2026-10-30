@@ -47,10 +47,16 @@ class GitHubReleaseClient(
                 if (dto.draft) {
                     return@withContext null
                 }
+                val cleanReleaseNotes = dto.body
+                    ?.substringBefore("---")
+                    ?.replace(Regex("""^#{1,6}\s*""", RegexOption.MULTILINE), "")
+                    ?.trim()
+                    .orEmpty()
+
                 AppReleaseInfo(
                     versionTag = dto.tagName,
                     versionName = dto.name ?: dto.tagName,
-                    releaseNotes = dto.body.orEmpty(),
+                    releaseNotes = cleanReleaseNotes,
                     htmlUrl = dto.htmlUrl,
                     publishedAt = dto.publishedAt,
                     isPrerelease = dto.prerelease

@@ -206,7 +206,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ needs.build-linux.outputs.tag }}
         run: |
-          python3 -c '
+          python3 - << 'EOF'
           import subprocess, os
 
           prev_tag = ""
@@ -230,8 +230,13 @@ jobs:
           except Exception:
               out = ""
 
-          features, fixes, maintenance = [], [], []
+          features, fixes, all_commits = [], [], []
           repo_url = os.environ.get("GITHUB_SERVER_URL", "https://github.com") + "/" + os.environ.get("GITHUB_REPOSITORY", "adlifarizi/PixelPlayerDesktop")
+
+          def clean_title(text):
+              if ":" in text:
+                  text = text.split(":", 1)[1].strip()
+              return text[0].upper() + text[1:] if text else text
 
           for line in out.strip().split("\n"):
               if not line: continue
@@ -239,35 +244,43 @@ jobs:
               if len(parts) != 2: continue
               h, s = parts[0].strip(), parts[1].strip()
               link = f"[{h}]({repo_url}/commit/{h})"
+              all_commits.append(f"- {s} ({link})")
 
               lower = s.lower()
               if lower.startswith("feat"):
-                  clean = s.split(":", 1)[1].strip() if ":" in s else s
-                  features.append(f"- **{clean}** ({link})")
-              elif lower.startswith("fix"):
-                  clean = s.split(":", 1)[1].strip() if ":" in s else s
-                  fixes.append(f"- {clean} ({link})")
-              elif lower.startswith("refactor") or lower.startswith("build") or lower.startswith("perf") or lower.startswith("chore") or lower.startswith("docs"):
-                  clean = s.split(":", 1)[1].strip() if ":" in s else s
-                  maintenance.append(f"- {clean} ({link})")
-              else:
-                  maintenance.append(f"- {s} ({link})")
+                  features.append(f"- {clean_title(s)}")
+              elif lower.startswith("fix") or lower.startswith("perf"):
+                  fixes.append(f"- {clean_title(s)}")
 
           body_parts = []
+          user_notes = []
           if features:
-              body_parts.append("### Features & Enhancements\n" + "\n".join(features))
+              user_notes.append("### What's New\n" + "\n".join(features))
           if fixes:
-              body_parts.append("### Bug Fixes\n" + "\n".join(fixes))
-          if maintenance:
-              body_parts.append("### Build & Maintenance\n" + "\n".join(maintenance))
+              user_notes.append("### Fixes\n" + "\n".join(fixes))
+          if not user_notes:
+              user_notes.append("### What's New\n- Performance improvements and bug fixes")
 
-          if not body_parts:
-              body_parts.append("### Changes\n" + (out if out else "- Maintenance and bug fixes"))
+          body_parts.append("\n\n".join(user_notes))
+          body_parts.append("---")
+
+          tech_section = [
+              "### Detailed Changelog",
+              "<details>",
+              "<summary>Click to view all commits</summary>\n",
+              "\n".join(all_commits) if all_commits else "- No commit history",
+              "\n</details>"
+          ]
+          current_tag = os.environ.get("RELEASE_TAG", "")
+          if prev_tag and current_tag:
+              tech_section.append(f"\n**Full Changelog**: {repo_url}/compare/{prev_tag}...{current_tag}")
+
+          body_parts.append("\n".join(tech_section))
 
           full_body = "\n\n".join(body_parts) + "\n"
           with open("release-notes.md", "w") as f:
               f.write(full_body)
-          '
+          EOF
 
       - name: Download Linux Artifacts
         uses: actions/download-artifact@v4
