@@ -146,6 +146,7 @@ class PlayerViewModel(
     val replayGainMode = playbackStateHolder.replayGainMode
     val crossfadeEnabled = playbackStateHolder.crossfadeEnabled
     val crossfadeDurationSeconds = playbackStateHolder.crossfadeDurationSeconds
+    val audioFadeOnPlayPause = playbackStateHolder.audioFadeOnPlayPause
     val showQueueHistory = playbackStateHolder.showQueueHistory
     val closeToTray = playbackStateHolder.closeToTray
     val selectedAudioDevice = playbackStateHolder.selectedAudioDevice
@@ -162,6 +163,7 @@ class PlayerViewModel(
     fun setReplayGainMode(mode: String) = playbackStateHolder.setReplayGainMode(mode)
     fun setCrossfadeEnabled(enabled: Boolean) = playbackStateHolder.setCrossfadeEnabled(enabled)
     fun setCrossfadeDurationSeconds(duration: Int) = playbackStateHolder.setCrossfadeDurationSeconds(duration)
+    fun setAudioFadeOnPlayPause(enabled: Boolean) = playbackStateHolder.setAudioFadeOnPlayPause(enabled)
     fun setShowQueueHistory(show: Boolean) = playbackStateHolder.setShowQueueHistory(show)
     fun setCloseToTray(enabled: Boolean) = playbackStateHolder.setCloseToTray(enabled)
     fun setSelectedAudioDevice(device: String) = playbackStateHolder.setSelectedAudioDevice(device)

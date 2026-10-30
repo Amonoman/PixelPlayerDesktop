@@ -275,6 +275,10 @@ class SettingsRepositoryImpl(
         updateSettings { it.copy(crossfadeDurationSeconds = durationSeconds.coerceIn(1, 12)) }
     }
 
+    override suspend fun setAudioFadeOnPlayPause(enabled: Boolean) {
+        updateSettings { it.copy(audioFadeOnPlayPause = enabled) }
+    }
+
     override suspend fun setShowQueueHistory(show: Boolean) {
         updateSettings { it.copy(showQueueHistory = show) }
     }

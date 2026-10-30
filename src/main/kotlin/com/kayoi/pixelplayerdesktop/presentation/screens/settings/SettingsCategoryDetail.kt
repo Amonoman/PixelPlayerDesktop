@@ -5,6 +5,7 @@ import com.kayoi.pixelplayerdesktop.generated.resources.ic_lyrics
 import com.kayoi.pixelplayerdesktop.generated.resources.Res
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_queue_music
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_volume_down
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_automirrored_rounded_volume_up
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_clear_all
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_content_copy
 import com.kayoi.pixelplayerdesktop.generated.resources.ic_outlined_delete
@@ -930,6 +931,7 @@ fun SettingsCategoryDetail(
                 item {
                     val crossfadeEnabled by viewModel.crossfadeEnabled.collectAsState()
                     val crossfadeDuration by viewModel.crossfadeDurationSeconds.collectAsState()
+                    val audioFadeOnPlayPause by viewModel.audioFadeOnPlayPause.collectAsState()
                     val showQueueHistory by viewModel.showQueueHistory.collectAsState()
 
                     var crossfadeDurationDraft by remember(crossfadeDuration) {
@@ -938,8 +940,8 @@ fun SettingsCategoryDetail(
 
                     SettingsSubsection(title = "QUEUE AND TRANSITIONS") {
                         val crossfadeShape = when {
-                            crossfadeEnabled -> getGroupShape(0, 3)
-                            else -> getGroupShape(0, 2)
+                            crossfadeEnabled -> getGroupShape(0, 4)
+                            else -> getGroupShape(0, 3)
                         }
 
                         ExpressiveSwitchRow(
@@ -971,13 +973,29 @@ fun SettingsCategoryDetail(
                                     }
                                 },
                                 valueText = { value -> "${value.roundToInt()}s" },
-                                shape = getGroupShape(1, 3)
+                                shape = getGroupShape(1, 4)
                             )
                         }
 
+                        val audioFadeShape = when {
+                            crossfadeEnabled -> getGroupShape(2, 4)
+                            else -> getGroupShape(1, 3)
+                        }
+
+                        ExpressiveSwitchRow(
+                            title = "Audio Fade on Play/Pause",
+                            subtitle = "Smoothly fade audio in and out when playing or pausing",
+                            checked = audioFadeOnPlayPause,
+                            onCheckedChange = { viewModel.setAudioFadeOnPlayPause(it) },
+                            leadingIcon = {
+                                Icon(painterResource(Res.drawable.ic_automirrored_rounded_volume_up), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                            },
+                            shape = audioFadeShape
+                        )
+
                         val queueHistoryShape = when {
-                            crossfadeEnabled -> getGroupShape(2, 3)
-                            else -> getGroupShape(1, 2)
+                            crossfadeEnabled -> getGroupShape(3, 4)
+                            else -> getGroupShape(2, 3)
                         }
 
                         ExpressiveSwitchRow(

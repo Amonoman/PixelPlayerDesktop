@@ -43,6 +43,7 @@ data class UserSettings(
     val replayGainMode: String = "track",
     val crossfadeEnabled: Boolean = false,
     val crossfadeDurationSeconds: Int = 3,
+    val audioFadeOnPlayPause: Boolean = true,
     val showQueueHistory: Boolean = true,
     val closeToTray: Boolean = false,
     val selectedAudioDevice: String = "auto",

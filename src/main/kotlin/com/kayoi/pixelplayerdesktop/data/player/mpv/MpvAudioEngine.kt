@@ -87,6 +87,7 @@ class MpvAudioEngine(
     private var eventThreadB: Thread? = null
 
     private var playPauseFadeJob: Job? = null
+    private var isAudioFadeOnPlayPauseEnabled = true
 
     private val replayGainManager = ReplayGainManager()
     private var replayGainEnabled = false
@@ -418,7 +419,8 @@ class MpvAudioEngine(
             }
 
             val targetVol = getEffectiveVolume()
-            if (targetVol <= 0f) {
+            if (!isAudioFadeOnPlayPauseEnabled || targetVol <= 0f) {
+                setVolumeOnHandle(player, targetVol)
                 api.mpv_set_property_string(player, "pause", "no")
                 return
             }
@@ -466,6 +468,12 @@ class MpvAudioEngine(
             val targetVol = getEffectiveVolume()
             val currentVol = getVolumeOnHandle(player)
             val startVol = currentVol.coerceIn(0f, 100f)
+
+            if (!isAudioFadeOnPlayPauseEnabled) {
+                api.mpv_set_property_string(player, "pause", "yes")
+                setVolumeOnHandle(player, targetVol)
+                return
+            }
 
             playPauseFadeJob = engineScope.launch {
                 val durationMs = 300L
@@ -574,6 +582,17 @@ class MpvAudioEngine(
         equalizerBands = bands
         equalizerPreamp = preamp
         applyEqualizerToPlayers()
+    }
+
+    override fun setAudioFadeOnPlayPause(enabled: Boolean): Unit = synchronized(commandLock) {
+        isAudioFadeOnPlayPauseEnabled = enabled
+        if (!enabled) {
+            playPauseFadeJob?.cancel()
+            val (player, _) = playerPair.get()
+            if (player != null && !isClosed()) {
+                setVolumeOnHandle(player, getEffectiveVolume())
+            }
+        }
     }
 
     private fun applyEqualizerToPlayers() {

@@ -69,6 +69,10 @@ class PlaybackStateHolder(
         .map { it.crossfadeDurationSeconds }
         .stateIn(coroutineScope, SharingStarted.Eagerly, 3)
 
+    val audioFadeOnPlayPause: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.audioFadeOnPlayPause }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, true)
+
     val showQueueHistory: StateFlow<Boolean> = settingsRepository.settingsFlow
         .map { it.showQueueHistory }
         .stateIn(coroutineScope, SharingStarted.Eagerly, true)
@@ -91,6 +95,10 @@ class PlaybackStateHolder(
 
     fun setCrossfadeDurationSeconds(durationSeconds: Int) {
         coroutineScope.launch { settingsRepository.setCrossfadeDurationSeconds(durationSeconds) }
+    }
+
+    fun setAudioFadeOnPlayPause(enabled: Boolean) {
+        coroutineScope.launch { settingsRepository.setAudioFadeOnPlayPause(enabled) }
     }
 
     fun setShowQueueHistory(show: Boolean) {
@@ -516,6 +524,15 @@ class PlaybackStateHolder(
                             transitionSchedulerJob?.cancel()
                         }
                     }
+                }
+        }
+
+        coroutineScope.launch {
+            settingsRepository.settingsFlow
+                .map { it.audioFadeOnPlayPause }
+                .distinctUntilChanged()
+                .collect { enabled ->
+                    audioEngine.setAudioFadeOnPlayPause(enabled)
                 }
         }
 

@@ -55,6 +55,7 @@ interface SettingsRepository {
     suspend fun setReplayGainMode(mode: String)
     suspend fun setCrossfadeEnabled(enabled: Boolean)
     suspend fun setCrossfadeDurationSeconds(durationSeconds: Int)
+    suspend fun setAudioFadeOnPlayPause(enabled: Boolean)
     suspend fun setShowQueueHistory(show: Boolean)
     suspend fun setCloseToTray(enabled: Boolean)
     suspend fun setSelectedAudioDevice(device: String)
