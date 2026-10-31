@@ -69,6 +69,7 @@ fun LyricsView(
     isPlaying: Boolean = true,
     currentPositionMs: Long = 0L,
     alignment: String = "left",
+    textSize: String = "medium",
     syncOffsetMs: Int = 0,
     showRomanization: Boolean = true,
     modifier: Modifier = Modifier
@@ -187,8 +188,20 @@ fun LyricsView(
                 else -> 64.dp
             }
             val itemSpacing = if (isCompact) 8.dp else 12.dp
-            val mainFontSize = if (isVeryCompact) 19.sp else if (isCompact) 21.sp else 23.sp
-            val romanizationFontSize = if (isCompact) 13.5.sp else 16.5.sp
+            val (baseMainSize, baseRomanSize) = when (textSize.lowercase()) {
+                "small" -> 18.sp to 13.5.sp
+                "large" -> 28.sp to 19.5.sp
+                else -> 23.sp to 16.5.sp
+            }
+            val mainFontSize = when {
+                isVeryCompact -> (baseMainSize.value - 4f).sp
+                isCompact -> (baseMainSize.value - 2f).sp
+                else -> baseMainSize
+            }
+            val romanizationFontSize = when {
+                isCompact -> (baseRomanSize.value - 3f).sp
+                else -> baseRomanSize
+            }
 
             LaunchedEffect(activeIndex, isCompact, isVeryCompact) {
                 if (activeIndex in syncedLines.indices) {
@@ -326,6 +339,12 @@ fun LyricsView(
             val bottomPadding = if (isCompact) 20.dp else 56.dp
             val itemSpacing = if (isCompact) 8.dp else 12.dp
 
+            val (plainMainFontSize, plainRomanFontSize) = when (textSize.lowercase()) {
+                "small" -> 15.sp to 12.5.sp
+                "large" -> 21.sp to 17.sp
+                else -> 18.sp to 14.5.sp
+            }
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -350,7 +369,7 @@ fun LyricsView(
                 ) {
                     Text(
                         text = primary,
-                        style = MaterialTheme.typography.bodyLarge,
+                        fontSize = plainMainFontSize,
                         color = colors.onSurface.copy(alpha = 0.85f),
                         textAlign = lyricTextAlign,
                         modifier = Modifier.fillMaxWidth()
@@ -359,7 +378,7 @@ fun LyricsView(
                     if (showRomanization && !romanization.isNullOrBlank()) {
                         Text(
                             text = romanization,
-                            style = MaterialTheme.typography.bodyMedium,
+                            fontSize = plainRomanFontSize,
                             color = colors.onSurfaceVariant.copy(alpha = 0.7f),
                             textAlign = lyricTextAlign,
                             modifier = Modifier

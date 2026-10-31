@@ -243,6 +243,10 @@ class SettingsRepositoryImpl(
         updateSettings { it.copy(lyricsAlignment = alignment) }
     }
 
+    override suspend fun setLyricsTextSize(size: String) {
+        updateSettings { it.copy(lyricsTextSize = size) }
+    }
+
     override suspend fun setLyricsSyncOffset(songId: String, offsetMs: Int) {
         updateSettings { current ->
             val updatedMap = current.lyricsSyncOffsets.toMutableMap()

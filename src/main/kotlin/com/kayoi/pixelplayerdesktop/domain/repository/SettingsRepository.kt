@@ -49,6 +49,7 @@ interface SettingsRepository {
     suspend fun setNavBarCompactMode(enabled: Boolean)
     suspend fun setDefaultTab(tab: String)
     suspend fun setLyricsAlignment(alignment: String)
+    suspend fun setLyricsTextSize(size: String)
     suspend fun setLyricsSyncOffset(songId: String, offsetMs: Int)
     suspend fun setShowLyricsRomanization(enabled: Boolean)
     suspend fun setReplayGainEnabled(enabled: Boolean)

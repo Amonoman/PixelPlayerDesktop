@@ -37,6 +37,7 @@ data class UserSettings(
     val navBarCompactMode: Boolean = false,
     val defaultTab: String = "HOME",
     val lyricsAlignment: String = "left",
+    val lyricsTextSize: String = "medium",
     val lyricsSyncOffsets: Map<String, Int> = emptyMap(),
     val showLyricsRomanization: Boolean = true,
     val replayGainEnabled: Boolean = false,

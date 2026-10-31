@@ -136,6 +136,7 @@ fun ExpandedPlayerScreen(
     val colorAccuracy by viewModel.albumArtColorAccuracy.collectAsState()
     val showPlayerFileInfo by viewModel.showPlayerFileInfo.collectAsState()
     val lyricsAlignment by viewModel.lyricsAlignment.collectAsState()
+    val lyricsTextSize by viewModel.lyricsTextSize.collectAsState()
     val showLyricsRomanization by viewModel.showLyricsRomanization.collectAsState()
     val equalizerEnabled by viewModel.equalizerEnabled.collectAsState()
     val selectedAudioDevice by viewModel.selectedAudioDevice.collectAsState()
@@ -592,6 +593,8 @@ fun ExpandedPlayerScreen(
                                                     onDismissRequest = { showLyricsMenu = false },
                                                     currentAlignment = lyricsAlignment,
                                                     onAlignmentChange = { viewModel.setLyricsAlignment(it) },
+                                                    currentTextSize = lyricsTextSize,
+                                                    onTextSizeChange = { viewModel.setLyricsTextSize(it) },
                                                     hasLyrics = hasLyrics,
                                                     hasSyncedLyrics = hasSyncedLyrics,
                                                     hasRomanizedLyrics = hasRomanizedLyrics,
@@ -644,6 +647,7 @@ fun ExpandedPlayerScreen(
                                         currentPositionFlow = viewModel.currentPositionMs,
                                         isPlaying = playerInfo.isPlaying,
                                         alignment = lyricsAlignment,
+                                        textSize = lyricsTextSize,
                                         syncOffsetMs = playerInfo.lyricsSyncOffsetMs,
                                         showRomanization = showLyricsRomanization,
                                         onSeekToMs = { viewModel.seekTo(it) },

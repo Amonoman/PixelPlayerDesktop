@@ -74,6 +74,10 @@ class ThemeStateHolder(
         .map { it.lyricsAlignment }
         .stateIn(coroutineScope, SharingStarted.Eagerly, "left")
 
+    val lyricsTextSize: StateFlow<String> = settingsRepository.settingsFlow
+        .map { it.lyricsTextSize }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, "medium")
+
     val showLyricsRomanization: StateFlow<Boolean> = settingsRepository.settingsFlow
         .map { it.showLyricsRomanization }
         .stateIn(coroutineScope, SharingStarted.Eagerly, true)
@@ -149,6 +153,12 @@ class ThemeStateHolder(
     fun setLyricsAlignment(alignment: String) {
         coroutineScope.launch {
             settingsRepository.setLyricsAlignment(alignment)
+        }
+    }
+
+    fun setLyricsTextSize(size: String) {
+        coroutineScope.launch {
+            settingsRepository.setLyricsTextSize(size)
         }
     }
 }

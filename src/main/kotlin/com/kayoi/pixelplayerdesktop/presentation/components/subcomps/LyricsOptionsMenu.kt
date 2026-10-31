@@ -51,6 +51,8 @@ fun LyricsOptionsMenu(
     onDismissRequest: () -> Unit,
     currentAlignment: String,
     onAlignmentChange: (String) -> Unit,
+    currentTextSize: String = "medium",
+    onTextSizeChange: (String) -> Unit = {},
     hasLyrics: Boolean,
     hasSyncedLyrics: Boolean = false,
     hasRomanizedLyrics: Boolean = false,
@@ -145,6 +147,46 @@ fun LyricsOptionsMenu(
                     selected = currentAlignment == "right",
                     modifier = Modifier.weight(1f),
                     onClick = { onAlignmentChange("right") }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = "Text Size",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(colors.surfaceContainerLowest)
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                TextSizeSegment(
+                    label = "Small",
+                    selected = currentTextSize == "small",
+                    modifier = Modifier.weight(1f),
+                    onClick = { onTextSizeChange("small") }
+                )
+                TextSizeSegment(
+                    label = "Medium",
+                    selected = currentTextSize == "medium",
+                    modifier = Modifier.weight(1f),
+                    onClick = { onTextSizeChange("medium") }
+                )
+                TextSizeSegment(
+                    label = "Large",
+                    selected = currentTextSize == "large",
+                    modifier = Modifier.weight(1f),
+                    onClick = { onTextSizeChange("large") }
                 )
             }
 
@@ -256,6 +298,42 @@ private fun AlignmentSegment(
             modifier = Modifier.size(17.dp)
         )
         Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            color = contentColor
+        )
+    }
+}
+
+@Composable
+private fun TextSizeSegment(
+    label: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+    val bgColor by animateColorAsState(
+        targetValue = if (selected) colors.primaryContainer else Color.Transparent,
+        animationSpec = tween(durationMillis = 180),
+        label = "textSizeSegmentBg"
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (selected) colors.onPrimaryContainer else colors.onSurfaceVariant.copy(alpha = 0.75f),
+        animationSpec = tween(durationMillis = 180),
+        label = "textSizeSegmentContent"
+    )
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(bgColor)
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp, horizontal = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
         Text(
             text = label,
             fontSize = 12.sp,
