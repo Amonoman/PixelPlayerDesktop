@@ -22,3 +22,10 @@ data class Playlist(
     val coverShapeDetail4: Float? = null,
     val source: String = "LOCAL"
 )
+
+enum class PlaylistShapeType {
+    Circle,
+    SmoothRect,
+    RotatedPill,
+    Star
+}

@@ -194,7 +194,7 @@ fun PlaylistListItem(
                             .padding(horizontal = 4.dp, vertical = 4.dp)
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Rename", fontWeight = FontWeight.Medium) },
+                            text = { Text("Edit Playlist", fontWeight = FontWeight.Medium) },
                             leadingIcon = {
                                 Icon(painterResource(Res.drawable.ic_rounded_edit), contentDescription = null, modifier = Modifier.size(18.dp))
                             },

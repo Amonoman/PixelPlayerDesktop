@@ -55,6 +55,22 @@ object DesktopPathProvider {
         dir
     }
 
+    val artistImagesDir: File by lazy {
+        val dir = File(configDir, "artist_images")
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+        dir
+    }
+
+    val playlistCoversDir: File by lazy {
+        val dir = File(configDir, "playlist_covers")
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+        dir
+    }
+
     val databaseFile: File by lazy {
         File(configDir, "pixelplayer.db")
     }

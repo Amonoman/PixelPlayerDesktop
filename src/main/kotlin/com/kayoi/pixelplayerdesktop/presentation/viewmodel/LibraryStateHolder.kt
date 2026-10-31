@@ -533,10 +533,21 @@ class LibraryStateHolder(
         }
     }
 
-    fun createPlaylist(name: String, songIds: List<String> = emptyList()) {
+    fun createPlaylist(
+        name: String,
+        songIds: List<String> = emptyList(),
+        coverImageUri: String? = null,
+        coverColorArgb: Int? = null,
+        coverIconName: String? = null,
+        coverShapeType: String? = null
+    ) {
         coroutineScope.launch {
-            musicRepository.createPlaylist(name, songIds)
+            musicRepository.createPlaylist(name, songIds, coverImageUri, coverColorArgb, coverIconName, coverShapeType)
         }
+    }
+
+    suspend fun savePlaylistCoverImage(sourceFile: File): String? {
+        return musicRepository.savePlaylistCoverImage(sourceFile)
     }
 
     fun deletePlaylist(id: String) {
@@ -556,6 +567,14 @@ class LibraryStateHolder(
         coroutineScope.launch {
             musicRepository.addSongToPlaylist(playlistId, songId)
         }
+    }
+
+    suspend fun setCustomArtistImage(artistId: Long, sourceFile: File): String? {
+        return musicRepository.setCustomArtistImage(artistId, sourceFile)
+    }
+
+    suspend fun clearCustomArtistImage(artistId: Long) {
+        musicRepository.clearCustomArtistImage(artistId)
     }
 
     fun addSongsToPlaylist(playlistId: String, songIds: List<String>) {

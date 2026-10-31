@@ -1,12 +1,5 @@
 package com.kayoi.pixelplayerdesktop.presentation.screens
 
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_artist
-import com.kayoi.pixelplayerdesktop.generated.resources.Res
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_album
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_expand_more
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
-import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
-import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -29,6 +22,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -44,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,8 +53,27 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.openFilePicker
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.painterResource
 import com.kayoi.pixelplayerdesktop.data.model.Artist
 import com.kayoi.pixelplayerdesktop.data.model.Song
+import com.kayoi.pixelplayerdesktop.data.network.deezer.DeezerClient
+import com.kayoi.pixelplayerdesktop.generated.resources.Res
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_artist
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_album
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_edit
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_expand_more
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_image
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_more_vert
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_play_arrow
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_restart_alt
+import com.kayoi.pixelplayerdesktop.generated.resources.ic_rounded_shuffle
 import com.kayoi.pixelplayerdesktop.presentation.components.AsyncArtworkImage
 import com.kayoi.pixelplayerdesktop.presentation.components.ExpressiveScrollBar
 import com.kayoi.pixelplayerdesktop.presentation.components.subcomps.EnhancedSongListItem
@@ -66,10 +81,7 @@ import com.kayoi.pixelplayerdesktop.presentation.viewmodel.PlayerViewModel
 import com.kayoi.pixelplayerdesktop.ui.theme.ShapeCache
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.ColorSchemePair
 import com.kayoi.pixelplayerdesktop.ui.theme.dynamic.DynamicColorProcessor
-import com.kayoi.pixelplayerdesktop.data.network.deezer.DeezerClient
 import com.kayoi.pixelplayerdesktop.utils.shapes.RoundedStarShape
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 data class ArtistAlbumSection(
     val albumId: Long,
@@ -106,17 +118,13 @@ fun ArtistDetailScreen(
         mutableStateOf(artist.effectiveImageUrl)
     }
 
-    LaunchedEffect(artist.name, fetchDeezerImages) {
-        if (resolvedImageUrl.isNullOrBlank() && artist.name.isNotBlank()) {
-            val fetched = DeezerClient.getArtistImageUrl(
-                artistName = artist.name,
-                fetchEnabled = fetchDeezerImages
-            )
-            if (!fetched.isNullOrBlank()) {
-                resolvedImageUrl = fetched
-            }
-        }
+    val scope = rememberCoroutineScope()
+    var currentCustomImageUri by remember(artist.id, artist.customImageUri) {
+        mutableStateOf(artist.customImageUri)
     }
+    var isOptionsExpanded by remember { mutableStateOf(false) }
+
+    val hasCustomImage = !currentCustomImageUri.isNullOrBlank()
 
     var colorSchemePair by remember(
         resolvedImageUrl,
@@ -137,6 +145,52 @@ fun ArtistDetailScreen(
             }
             if (extracted != null) {
                 colorSchemePair = extracted
+            }
+        }
+    }
+
+    val pickCustomImage: () -> Unit = {
+        scope.launch {
+            val file = FileKit.openFilePicker(
+                type = FileKitType.Image,
+                dialogSettings = FileKitDialogSettings(title = "Select Artist Image")
+            )
+            if (file != null) {
+                val internalPath = viewModel.setCustomArtistImage(artist.id, file.file)
+                if (internalPath != null) {
+                    currentCustomImageUri = internalPath
+                    val bustUrl = "$internalPath?t=${System.currentTimeMillis()}"
+                    resolvedImageUrl = bustUrl
+                    colorSchemePair = null
+                }
+            }
+        }
+    }
+
+    val clearCustomImage: () -> Unit = {
+        scope.launch {
+            viewModel.clearCustomArtistImage(artist.id)
+            currentCustomImageUri = null
+            val fallbackUrl = artist.imageUrl?.takeIf { it.isNotBlank() }
+                ?: if (artist.name.isNotBlank()) {
+                    DeezerClient.getArtistImageUrl(
+                        artistName = artist.name,
+                        fetchEnabled = fetchDeezerImages
+                    )
+                } else null
+            resolvedImageUrl = fallbackUrl
+            colorSchemePair = null
+        }
+    }
+
+    LaunchedEffect(artist.name, fetchDeezerImages) {
+        if (resolvedImageUrl.isNullOrBlank() && artist.name.isNotBlank()) {
+            val fetched = DeezerClient.getArtistImageUrl(
+                artistName = artist.name,
+                fetchEnabled = fetchDeezerImages
+            )
+            if (!fetched.isNullOrBlank()) {
+                resolvedImageUrl = fetched
             }
         }
     }
@@ -255,7 +309,8 @@ fun ArtistDetailScreen(
                             artworkUri = resolvedImageUrl,
                             modifier = Modifier
                                 .size(coverSize)
-                                .clip(ShapeCache.ExpressiveAvatar),
+                                .clip(ShapeCache.ExpressiveAvatar)
+                                .clickable(onClick = pickCustomImage),
                             placeholderIcon = Res.drawable.ic_artist,
                             placeholderIconSize = 52.dp,
                             containerColor = colors.surfaceContainerHighest,
@@ -291,30 +346,88 @@ fun ArtistDetailScreen(
                             )
                         }
 
-                        Spacer(modifier = Modifier.width(24.dp))
+                        Spacer(modifier = Modifier.width(20.dp))
 
-                        FloatingActionButton(
-                            onClick = {
-                                if (artistSongs.isNotEmpty()) {
-                                    viewModel.shuffleSongs(artistSongs)
-                                }
-                            },
-                            shape = RoundedStarShape(sides = 8, curve = 0.05, rotation = 0f),
-                            containerColor = colors.primaryContainer,
-                            contentColor = colors.onPrimaryContainer,
-                            elevation = FloatingActionButtonDefaults.elevation(
-                                defaultElevation = 0.dp,
-                                pressedElevation = 0.dp,
-                                focusedElevation = 0.dp,
-                                hoveredElevation = 0.dp
-                            ),
-                            modifier = Modifier.size(92.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_rounded_shuffle),
-                                contentDescription = "Shuffle",
-                                modifier = Modifier.size(28.dp)
-                            )
+                            Box {
+                                FilledTonalIconButton(
+                                    onClick = { isOptionsExpanded = true },
+                                    modifier = Modifier.size(if (isWide) 48.dp else 42.dp),
+                                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                        containerColor = colors.surfaceContainerHighest,
+                                        contentColor = colors.onSurface
+                                    )
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_rounded_more_vert),
+                                        contentDescription = "Artist options",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+
+                                DropdownMenu(
+                                    expanded = isOptionsExpanded,
+                                    onDismissRequest = { isOptionsExpanded = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("Change artist image") },
+                                        leadingIcon = {
+                                            Icon(
+                                                painter = painterResource(Res.drawable.ic_rounded_image),
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        },
+                                        onClick = {
+                                            isOptionsExpanded = false
+                                            pickCustomImage()
+                                        }
+                                    )
+                                    if (hasCustomImage) {
+                                        DropdownMenuItem(
+                                            text = { Text("Reset to default image") },
+                                            leadingIcon = {
+                                                Icon(
+                                                    painter = painterResource(Res.drawable.ic_rounded_restart_alt),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            },
+                                            onClick = {
+                                                isOptionsExpanded = false
+                                                clearCustomImage()
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+
+                            FloatingActionButton(
+                                onClick = {
+                                    if (artistSongs.isNotEmpty()) {
+                                        viewModel.shuffleSongs(artistSongs)
+                                    }
+                                },
+                                shape = RoundedStarShape(sides = 8, curve = 0.05, rotation = 0f),
+                                containerColor = colors.primaryContainer,
+                                contentColor = colors.onPrimaryContainer,
+                                elevation = FloatingActionButtonDefaults.elevation(
+                                    defaultElevation = 0.dp,
+                                    pressedElevation = 0.dp,
+                                    focusedElevation = 0.dp,
+                                    hoveredElevation = 0.dp
+                                ),
+                                modifier = Modifier.size(if (isWide) 92.dp else 80.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_rounded_shuffle),
+                                    contentDescription = "Shuffle",
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
                         }
                     }
                 }

@@ -1,7 +1,10 @@
 package com.kayoi.pixelplayerdesktop.data.repository
 
+import java.awt.RenderingHints
+import java.awt.image.BufferedImage
 import java.io.File
 import java.util.UUID
+import javax.imageio.ImageIO
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -33,6 +36,7 @@ import com.kayoi.pixelplayerdesktop.data.network.musicbrainz.OnlineTrackMetadata
 import com.kayoi.pixelplayerdesktop.data.playlist.M3uManager
 import com.kayoi.pixelplayerdesktop.data.playlist.M3uParseResult
 import com.kayoi.pixelplayerdesktop.domain.repository.MusicRepository
+import com.kayoi.pixelplayerdesktop.utils.DesktopPathProvider
 
 class MusicRepositoryImpl(
     private val database: PixelPlayerDatabase,
@@ -124,6 +128,44 @@ class MusicRepositoryImpl(
         return musicDao.getSongsByArtist(artistId, minDurationMs)
     }
 
+    override suspend fun setCustomArtistImage(artistId: Long, sourceFile: File): String? = withContext(ioDispatcher) {
+        try {
+            val sourceImage = ImageIO.read(sourceFile) ?: return@withContext null
+            val maxDim = maxOf(sourceImage.width, sourceImage.height)
+            val targetMax = 1024
+            val (targetW, targetH) = if (maxDim > targetMax) {
+                val scale = targetMax.toDouble() / maxDim.toDouble()
+                ((sourceImage.width * scale).toInt().coerceAtLeast(1)) to ((sourceImage.height * scale).toInt().coerceAtLeast(1))
+            } else {
+                sourceImage.width to sourceImage.height
+            }
+            val scaled = BufferedImage(targetW, targetH, BufferedImage.TYPE_INT_RGB)
+            val g = scaled.createGraphics()
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+            g.drawImage(sourceImage, 0, 0, targetW, targetH, null)
+            g.dispose()
+
+            val destFile = File(DesktopPathProvider.artistImagesDir, "artist_art_${artistId}.jpg")
+            ImageIO.write(scaled, "jpg", destFile)
+            val internalPath = destFile.absolutePath
+            musicDao.updateArtistCustomImage(artistId, internalPath)
+            internalPath
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    override suspend fun clearCustomArtistImage(artistId: Long) = withContext(ioDispatcher) {
+        try {
+            val destFile = File(DesktopPathProvider.artistImagesDir, "artist_art_${artistId}.jpg")
+            if (destFile.exists()) {
+                destFile.delete()
+            }
+            musicDao.updateArtistCustomImage(artistId, null)
+        } catch (_: Exception) {
+        }
+    }
+
     override fun getAllGenresFlow(): Flow<List<Genre>> = flow {
         emit(musicDao.getAllGenres())
         database.tableInvalidationFlow.collect { table ->
@@ -150,23 +192,77 @@ class MusicRepositoryImpl(
         return playlistDao.getPlaylistById(id)
     }
 
-    override suspend fun createPlaylist(name: String, songIds: List<String>): Playlist {
+    override suspend fun createPlaylist(
+        name: String,
+        songIds: List<String>,
+        coverImageUri: String?,
+        coverColorArgb: Int?,
+        coverIconName: String?,
+        coverShapeType: String?
+    ): Playlist {
         val playlist = Playlist(
             id = UUID.randomUUID().toString(),
             name = name,
             songIds = songIds,
             createdAt = System.currentTimeMillis(),
-            lastModified = System.currentTimeMillis()
+            lastModified = System.currentTimeMillis(),
+            coverImageUri = coverImageUri,
+            coverColorArgb = coverColorArgb,
+            coverIconName = coverIconName,
+            coverShapeType = coverShapeType
         )
         playlistDao.insertPlaylist(playlist)
         return playlist
     }
 
+    override suspend fun savePlaylistCoverImage(sourceFile: File): String? = withContext(ioDispatcher) {
+        try {
+            val sourceImage = ImageIO.read(sourceFile) ?: return@withContext null
+            val maxDim = maxOf(sourceImage.width, sourceImage.height)
+            val targetMax = 1024
+            val (targetW, targetH) = if (maxDim > targetMax) {
+                val scale = targetMax.toDouble() / maxDim.toDouble()
+                ((sourceImage.width * scale).toInt().coerceAtLeast(1)) to ((sourceImage.height * scale).toInt().coerceAtLeast(1))
+            } else {
+                sourceImage.width to sourceImage.height
+            }
+            val scaled = BufferedImage(targetW, targetH, BufferedImage.TYPE_INT_RGB)
+            val g = scaled.createGraphics()
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+            g.drawImage(sourceImage, 0, 0, targetW, targetH, null)
+            g.dispose()
+
+            val destFile = File(DesktopPathProvider.playlistCoversDir, "playlist_cover_${UUID.randomUUID()}.jpg")
+            ImageIO.write(scaled, "jpg", destFile)
+            destFile.absolutePath
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     override suspend fun updatePlaylist(playlist: Playlist) {
+        val existing = playlistDao.getPlaylistById(playlist.id)
+        if (existing?.coverImageUri != null && existing.coverImageUri != playlist.coverImageUri) {
+            try {
+                val f = File(existing.coverImageUri.removePrefix("file://").substringBefore("?"))
+                if (f.exists() && f.absolutePath.startsWith(DesktopPathProvider.playlistCoversDir.absolutePath)) {
+                    f.delete()
+                }
+            } catch (_: Exception) {}
+        }
         playlistDao.insertPlaylist(playlist.copy(lastModified = System.currentTimeMillis()))
     }
 
     override suspend fun deletePlaylist(id: String) {
+        val existing = playlistDao.getPlaylistById(id)
+        if (existing?.coverImageUri != null) {
+            try {
+                val f = File(existing.coverImageUri.removePrefix("file://").substringBefore("?"))
+                if (f.exists() && f.absolutePath.startsWith(DesktopPathProvider.playlistCoversDir.absolutePath)) {
+                    f.delete()
+                }
+            } catch (_: Exception) {}
+        }
         playlistDao.deletePlaylist(id)
     }
 

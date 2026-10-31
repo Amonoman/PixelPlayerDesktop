@@ -772,6 +772,22 @@ class MusicDao(
         }
     }
 
+    suspend fun updateArtistCustomImage(artistId: Long, customImageUri: String?) = withContext(ioDispatcher) {
+        database.withConnection { conn ->
+            val sql = "UPDATE artists SET custom_image_uri = ? WHERE id = ?"
+            conn.prepareStatement(sql).use { stmt ->
+                if (customImageUri != null) {
+                    stmt.setString(1, customImageUri)
+                } else {
+                    stmt.setNull(1, Types.VARCHAR)
+                }
+                stmt.setLong(2, artistId)
+                stmt.executeUpdate()
+            }
+            database.notifyTableChanged("artists")
+        }
+    }
+
     suspend fun getSongsByArtist(artistId: Long, minDurationMs: Long = 0L): List<Song> = withContext(ioDispatcher) {
         database.withConnection(readOnly = true) { conn ->
             val durationFilter = if (minDurationMs > 0L) "AND s.duration >= ?" else ""

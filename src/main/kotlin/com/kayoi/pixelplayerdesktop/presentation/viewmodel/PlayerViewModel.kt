@@ -275,7 +275,17 @@ class PlayerViewModel(
     fun resetWordDelimiters() = libraryStateHolder.resetWordDelimiters()
     fun setExtractArtistFromTitle(enabled: Boolean) = libraryStateHolder.setExtractArtistFromTitle(enabled)
     fun onSearchQueryChanged(query: String) = libraryStateHolder.onSearchQueryChanged(query)
-    fun createPlaylist(name: String, songIds: List<String> = emptyList()) = libraryStateHolder.createPlaylist(name, songIds)
+    suspend fun setCustomArtistImage(artistId: Long, sourceFile: File): String? = libraryStateHolder.setCustomArtistImage(artistId, sourceFile)
+    suspend fun clearCustomArtistImage(artistId: Long) = libraryStateHolder.clearCustomArtistImage(artistId)
+    fun createPlaylist(
+        name: String,
+        songIds: List<String> = emptyList(),
+        coverImageUri: String? = null,
+        coverColorArgb: Int? = null,
+        coverIconName: String? = null,
+        coverShapeType: String? = null
+    ) = libraryStateHolder.createPlaylist(name, songIds, coverImageUri, coverColorArgb, coverIconName, coverShapeType)
+    suspend fun savePlaylistCoverImage(sourceFile: File): String? = libraryStateHolder.savePlaylistCoverImage(sourceFile)
     fun deletePlaylist(id: String) = libraryStateHolder.deletePlaylist(id)
     fun deleteSong(song: Song) {
         playbackStateHolder.removeSongFromQueue(song.id)

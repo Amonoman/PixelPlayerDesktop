@@ -275,9 +275,16 @@ fun PlaylistsTab(
         if (showCreatePlaylistDialog) {
             CreatePlaylistDialog(
                 title = "New Playlist",
+                showCoverCustomization = true,
                 onDismiss = { showCreatePlaylistDialog = false },
-                onConfirm = { name ->
-                    viewModel.createPlaylist(name)
+                onConfirm = { name, coverImageUri, coverColorArgb, coverIconName, coverShapeType ->
+                    viewModel.createPlaylist(
+                        name = name,
+                        coverImageUri = coverImageUri,
+                        coverColorArgb = coverColorArgb,
+                        coverIconName = coverIconName,
+                        coverShapeType = coverShapeType
+                    )
                     showCreatePlaylistDialog = false
                 }
             )
@@ -285,12 +292,25 @@ fun PlaylistsTab(
 
         playlistToRename?.let { pl ->
             CreatePlaylistDialog(
-                title = "Rename Playlist",
+                title = "Edit Playlist",
                 initialName = pl.name,
                 confirmButtonText = "Save",
+                showCoverCustomization = true,
+                initialCoverImageUri = pl.coverImageUri,
+                initialCoverColor = pl.coverColorArgb,
+                initialCoverIconName = pl.coverIconName,
+                initialCoverShapeType = pl.coverShapeType,
                 onDismiss = { playlistToRename = null },
-                onConfirm = { newName ->
-                    viewModel.renamePlaylist(pl.id, newName)
+                onConfirm = { newName, coverUri, colorArgb, iconName, shapeType ->
+                    viewModel.updatePlaylist(
+                        pl.copy(
+                            name = newName,
+                            coverImageUri = coverUri,
+                            coverColorArgb = colorArgb,
+                            coverIconName = iconName,
+                            coverShapeType = shapeType
+                        )
+                    )
                     playlistToRename = null
                 }
             )

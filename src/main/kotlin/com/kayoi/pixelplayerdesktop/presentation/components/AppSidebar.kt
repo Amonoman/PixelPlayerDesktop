@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -236,10 +237,10 @@ fun AppSidebar(
             val playlistMap = remember(playlists, pinnedPlaylistKeys) {
                 if (pinnedPlaylistKeys.isEmpty()) emptyMap()
                 else {
-                    val map = mutableMapOf<String, Pair<String?, String>>()
+                    val map = mutableMapOf<String, Playlist>()
                     for (playlist in playlists) {
                         if (playlist.id in pinnedPlaylistKeys) {
-                            map[playlist.id] = Pair(playlist.coverImageUri, playlist.name)
+                            map[playlist.id] = playlist
                             if (map.size == pinnedPlaylistKeys.size) break
                         }
                     }
@@ -347,14 +348,15 @@ fun AppSidebar(
 
                             if (enabledQuickAccess.isNotEmpty()) {
                                 enabledQuickAccess.forEach { item ->
+                                    val matchedPlaylist = if (item.type == QuickAccessType.PLAYLIST) playlistMap[item.targetKey] else null
                                     val artworkUri = when (item.type) {
                                         QuickAccessType.ALBUM -> albumArtMap[item.targetKey]
                                         QuickAccessType.ARTIST -> artistImageMap[item.targetKey]
-                                        QuickAccessType.PLAYLIST -> playlistMap[item.targetKey]?.first
+                                        QuickAccessType.PLAYLIST -> matchedPlaylist?.coverImageUri
                                         QuickAccessType.SMART_PRESET -> null
                                     }
                                     val displayTitle = if (item.type == QuickAccessType.PLAYLIST) {
-                                        playlistMap[item.targetKey]?.second ?: item.title
+                                        matchedPlaylist?.name ?: item.title
                                     } else {
                                         item.title
                                     }
@@ -364,6 +366,9 @@ fun AppSidebar(
                                         currentTarget = currentTarget,
                                         displayTitle = displayTitle,
                                         artworkUri = artworkUri,
+                                        playlistCoverColorArgb = matchedPlaylist?.coverColorArgb,
+                                        playlistCoverIconName = matchedPlaylist?.coverIconName,
+                                        playlistCoverShapeType = matchedPlaylist?.coverShapeType,
                                         isCompact = isCompact,
                                         fetchDeezerImages = fetchDeezerImages,
                                         onClick = {
@@ -572,6 +577,9 @@ private fun QuickAccessSidebarNavItem(
     currentTarget: DesktopNavTarget?,
     displayTitle: String,
     artworkUri: String?,
+    playlistCoverColorArgb: Int? = null,
+    playlistCoverIconName: String? = null,
+    playlistCoverShapeType: String? = null,
     isCompact: Boolean,
     fetchDeezerImages: Boolean = true,
     onClick: () -> Unit,
@@ -688,6 +696,28 @@ private fun QuickAccessSidebarNavItem(
                             contentDescription = displayTitle,
                             modifier = Modifier.size(24.dp)
                         )
+                    } else if (playlistCoverColorArgb != null) {
+                        val bg = Color(playlistCoverColorArgb)
+                        val iconTint = if (isColorDark(bg)) Color.White else Color.Black
+                        val pShape = remember(playlistCoverShapeType) { getPlaylistShape(playlistCoverShapeType) }
+                        val isPill = playlistCoverShapeType == "RotatedPill"
+                        val shapeMod = if (isPill) Modifier.graphicsLayer(rotationZ = 45f) else Modifier
+                        val iconMod = if (isPill) Modifier.graphicsLayer(rotationZ = -45f) else Modifier
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .then(shapeMod)
+                                .clip(pShape)
+                                .background(bg),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(getPlaylistIconByName(playlistCoverIconName)),
+                                contentDescription = displayTitle,
+                                tint = iconTint,
+                                modifier = Modifier.size(13.dp).then(iconMod)
+                            )
+                        }
                     } else {
                         Icon(
                             painter = painterResource(iconResource),

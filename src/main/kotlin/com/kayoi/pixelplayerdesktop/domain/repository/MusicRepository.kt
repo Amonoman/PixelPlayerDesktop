@@ -41,13 +41,23 @@ interface MusicRepository {
     suspend fun getAllArtists(sortOption: SortOption = SortOption.ArtistNameAZ, minDurationMs: Long = 0L): List<Artist>
     suspend fun getArtistById(id: Long, minDurationMs: Long = 0L): Artist?
     suspend fun getSongsByArtist(artistId: Long, minDurationMs: Long = 0L): List<Song>
+    suspend fun setCustomArtistImage(artistId: Long, sourceFile: File): String?
+    suspend fun clearCustomArtistImage(artistId: Long)
 
     fun getAllGenresFlow(): Flow<List<Genre>>
     suspend fun getSongsByGenre(genreName: String): List<Song>
 
     fun getAllPlaylistsFlow(sortOption: SortOption = SortOption.PlaylistNameAZ): Flow<List<Playlist>>
     suspend fun getPlaylistById(id: String): Playlist?
-    suspend fun createPlaylist(name: String, songIds: List<String> = emptyList()): Playlist
+    suspend fun createPlaylist(
+        name: String,
+        songIds: List<String> = emptyList(),
+        coverImageUri: String? = null,
+        coverColorArgb: Int? = null,
+        coverIconName: String? = null,
+        coverShapeType: String? = null
+    ): Playlist
+    suspend fun savePlaylistCoverImage(sourceFile: File): String?
     suspend fun updatePlaylist(playlist: Playlist)
     suspend fun deletePlaylist(id: String)
     suspend fun addSongToPlaylist(playlistId: String, songId: String)

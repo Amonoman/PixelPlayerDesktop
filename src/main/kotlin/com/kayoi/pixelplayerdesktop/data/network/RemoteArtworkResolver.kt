@@ -25,7 +25,9 @@ class RemoteArtworkResolver(
     suspend fun resolveArtworkBytes(uri: String): ByteArray? = withContext(Dispatchers.IO) {
         if (uri.isBlank()) return@withContext null
 
-        val localFile = File(uri)
+        val cleanUri = if (uri.startsWith("file://")) uri.removePrefix("file://") else uri
+        val filePath = cleanUri.substringBefore("?")
+        val localFile = File(filePath)
         if (localFile.exists() && localFile.isFile && localFile.length() > 0) {
             return@withContext runCatching { localFile.readBytes() }.getOrNull()
         }

@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -163,6 +164,7 @@ fun PlaylistDetailScreen(
 
     var showAddSongsDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
+    var showEditCoverDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var isRemoveModeEnabled by remember { mutableStateOf(false) }
     var isReorderModeEnabled by remember { mutableStateOf(false) }
@@ -218,7 +220,9 @@ fun PlaylistDetailScreen(
                         playlist = playlist,
                         playlistSongs = plainSongs,
                         size = coverSize,
-                        modifier = Modifier.clip(RoundedCornerShape(20.dp))
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .clickable { showEditCoverDialog = true }
                     )
 
                     Spacer(modifier = Modifier.width(20.dp))
@@ -240,14 +244,35 @@ fun PlaylistDetailScreen(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        Text(
-                            text = playlist.name,
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = playlist.name,
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onSurface,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            FilledTonalIconButton(
+                                onClick = { showEditCoverDialog = true },
+                                modifier = Modifier.size(32.dp),
+                                shape = CircleShape,
+                                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                    containerColor = colors.surfaceContainerHighest,
+                                    contentColor = colors.onSurfaceVariant
+                                )
+                            ) {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_rounded_edit),
+                                    contentDescription = "Edit Playlist",
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(6.dp))
 
@@ -280,6 +305,7 @@ fun PlaylistDetailScreen(
                         onPlay = { viewModel.playSongs(plainSongs, 0) },
                         onShuffle = { viewModel.shuffleSongs(plainSongs) },
                         onAddSongs = { showAddSongsDialog = true },
+                        onEditPlaylist = { showEditCoverDialog = true },
                         onRename = { showRenameDialog = true },
                         onExport = {
                             DirectoryPicker.saveM3uFile(defaultFileName = "${playlist.name}.m3u") { targetFile ->
@@ -307,7 +333,9 @@ fun PlaylistDetailScreen(
                             playlist = playlist,
                             playlistSongs = plainSongs,
                             size = coverSize,
-                            modifier = Modifier.clip(RoundedCornerShape(if (isVeryCompact) 12.dp else 16.dp))
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(if (isVeryCompact) 12.dp else 16.dp))
+                                .clickable { showEditCoverDialog = true }
                         )
 
                         Spacer(modifier = Modifier.width(if (isVeryCompact) 12.dp else 16.dp))
@@ -329,14 +357,35 @@ fun PlaylistDetailScreen(
 
                             Spacer(modifier = Modifier.height(2.dp))
 
-                            Text(
-                                text = playlist.name,
-                                style = if (isVeryCompact) MaterialTheme.typography.titleMedium else if (isCompact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.onSurface,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = playlist.name,
+                                    style = if (isVeryCompact) MaterialTheme.typography.titleMedium else if (isCompact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.onSurface,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false)
+                                )
+                                FilledTonalIconButton(
+                                    onClick = { showEditCoverDialog = true },
+                                    modifier = Modifier.size(28.dp),
+                                    shape = CircleShape,
+                                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                        containerColor = colors.surfaceContainerHighest,
+                                        contentColor = colors.onSurfaceVariant
+                                    )
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_rounded_edit),
+                                        contentDescription = "Edit Playlist",
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
 
                             Spacer(modifier = Modifier.height(2.dp))
 
@@ -368,6 +417,7 @@ fun PlaylistDetailScreen(
                         onPlay = { viewModel.playSongs(plainSongs, 0) },
                         onShuffle = { viewModel.shuffleSongs(plainSongs) },
                         onAddSongs = { showAddSongsDialog = true },
+                        onEditPlaylist = { showEditCoverDialog = true },
                         onRename = { showRenameDialog = true },
                         onExport = {
                             DirectoryPicker.saveM3uFile(defaultFileName = "${playlist.name}.m3u") { targetFile ->
@@ -537,6 +587,32 @@ fun PlaylistDetailScreen(
         )
     }
 
+    if (showEditCoverDialog) {
+        CreatePlaylistDialog(
+            title = "Edit Playlist Cover",
+            initialName = playlist.name,
+            confirmButtonText = "Save",
+            showCoverCustomization = true,
+            initialCoverImageUri = playlist.coverImageUri,
+            initialCoverColor = playlist.coverColorArgb,
+            initialCoverIconName = playlist.coverIconName,
+            initialCoverShapeType = playlist.coverShapeType,
+            onDismiss = { showEditCoverDialog = false },
+            onConfirm = { name, coverImageUri, coverColorArgb, coverIconName, coverShapeType ->
+                viewModel.updatePlaylist(
+                    playlist.copy(
+                        name = name,
+                        coverImageUri = coverImageUri,
+                        coverColorArgb = coverColorArgb,
+                        coverIconName = coverIconName,
+                        coverShapeType = coverShapeType
+                    )
+                )
+                showEditCoverDialog = false
+            }
+        )
+    }
+
     if (showRenameDialog) {
         CreatePlaylistDialog(
             title = "Rename Playlist",
@@ -608,6 +684,7 @@ private fun PlaylistHeaderActions(
     onPlay: () -> Unit,
     onShuffle: () -> Unit,
     onAddSongs: () -> Unit,
+    onEditPlaylist: () -> Unit = {},
     onRename: () -> Unit,
     onExport: () -> Unit = {},
     onDelete: () -> Unit,
@@ -788,6 +865,26 @@ private fun PlaylistHeaderActions(
                 }
             }
 
+            FilledTonalButton(
+                onClick = onEditPlaylist,
+                shape = CircleShape,
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = colors.surfaceContainerHigh,
+                    contentColor = colors.onSurface
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 1.dp, pressedElevation = 3.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp),
+                modifier = Modifier.height(chipHeight)
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_rounded_edit),
+                    contentDescription = "Edit Playlist",
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(5.dp))
+                Text("Edit", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+            }
+
             Box {
                 FilledTonalIconButton(
                     onClick = { isMenuExpanded = true },
@@ -818,6 +915,20 @@ private fun PlaylistHeaderActions(
                             .border(1.dp, colors.outlineVariant.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
                             .padding(horizontal = 4.dp, vertical = 4.dp)
                     ) {
+                        DropdownMenuItem(
+                            text = { Text("Edit Playlist", fontWeight = FontWeight.Medium) },
+                            leadingIcon = {
+                                Icon(painterResource(Res.drawable.ic_rounded_edit), contentDescription = null, modifier = Modifier.size(18.dp))
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            onClick = {
+                                isMenuExpanded = false
+                                onEditPlaylist()
+                            }
+                        )
                         DropdownMenuItem(
                             text = { Text("Rename Playlist", fontWeight = FontWeight.Medium) },
                             leadingIcon = {

@@ -81,7 +81,7 @@ class ArtistImagesModuleHandler(
                 var customPath: String? = null
                 if (!entry.customImageBase64.isNullOrBlank()) {
                     try {
-                        val file = File(DesktopPathProvider.artworkCacheDir, "artist_art_${artistId}.jpg")
+                        val file = File(DesktopPathProvider.artistImagesDir, "artist_art_${artistId}.jpg")
                         file.writeBytes(Base64.getDecoder().decode(entry.customImageBase64))
                         customPath = file.absolutePath
                     } catch (_: Exception) {}

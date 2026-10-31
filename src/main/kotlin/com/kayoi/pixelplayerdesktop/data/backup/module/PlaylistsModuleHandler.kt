@@ -154,7 +154,7 @@ class PlaylistsModuleHandler(
             if (coverImages != null && coverImages.containsKey(pl.id)) {
                 val base64 = coverImages[pl.id]
                 if (!base64.isNullOrBlank()) {
-                    val file = File(DesktopPathProvider.artworkCacheDir, "playlist_cover_${pl.id}.jpg")
+                    val file = File(DesktopPathProvider.playlistCoversDir, "playlist_cover_${pl.id}.jpg")
                     try {
                         file.writeBytes(Base64.getDecoder().decode(base64))
                         restoredCoverUri = file.absolutePath
